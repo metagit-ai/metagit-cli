@@ -1,0 +1,20 @@
+[project]
+name = "metagit-detect"
+version = "0.1.0"
+description = "MetaGit project detection agent"
+requires-python = ">=3.12"
+dependencies = [
+    "logging>=0.4.9.6",
+    "loguru>=0.7.3",
+    "pydantic>=2.11.4",
+    "requests>=2.32.3",
+    "click>=8.1.7",
+    "dotenv>=0.9.9",
+    "ruff>=0.11.11",
+    "gitpython>=3.1.44",
+]
+
+[lint]
+select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
+ignore = ['W291', 'W292', 'W293', 'E501']
+exclude = ["app/**", "tools/**", ".venv"]

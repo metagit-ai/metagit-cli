@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+silent: true
+tasks:
+  build:
+    desc: "Build the Golang project"
+    cmds:
+      - go build -o dist/{{.PROJECT}}
+
+  test:
+    desc: "Run unit tests"
+    cmds:
+      - go test ./...
+
+  lint:
+    desc: "Lint the Golang code"
+    cmds:
+      - golint ./...
+
+  vet:
+    desc: "Vet the Golang code"
+    cmds:
+      - go vet ./...
+
+  fmt:
+    desc: "Format the Golang code"
+    cmds:
+      - go fmt ./...
+
+  coverage:
+    desc: "Run test coverage analysis"
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out
+
+  run:
+    desc: "Run the Golang application"
+    cmds:
+      - go run main.go
+
+  clean:
+    desc: "Clean up generated files"
+    cmds:
+      - rm -f dist/{{.PROJECT}} coverage.out
+
+  deploy:
+    desc: "Deploy the Golang application"
+    cmds:
+      - echo Add deployment commands here
+
+  release:
+    desc: "Create a release of the Golang application"
+    cmds:
+      - echo Add release commands here
+
+  docs:
+    desc: "Generate documentation"
+    cmds:
+      - echo Add documentation generation commands here
+
+  ci:
+    desc: "Run CI pipeline"
+    cmds:
+      - echo Add CI pipeline commands here

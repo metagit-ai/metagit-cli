@@ -1,0 +1,133 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+silent: true
+env:
+  PROJECT:
+    sh: 'echo "$(basename $(pwd))"'
+  LOCAL_BIN_PATH:
+    sh: 'echo "{{.ROOT_DIR}}/.venv/bin"'
+  BUILD_DATE:
+    sh: "date '+%Y-%m-%d-%H:%M:%S'"
+  BUILD_DATE_SHORT:
+    sh: "date '+%Y-%m-%d-%H%M%S'"
+  GIT_LATEST_TAG:
+    sh: 'git tag -l 2>/dev/null | sort -r -V | head -n 1 2>/dev/null || echo "not a git repo"'
+  TERM: screen-256color
+  DOCS_PATH: "{{.ROOT_DIR}}/docs"
+  PYTHON_VENV_PATH: "{{.ROOT_DIR}}/.venv"
+  SCRIPT_PATH: "{{.ROOT_DIR}}/scripts"
+  VERSION: '{{default "unknown" .GIT_LATEST_TAG}}'
+
+dotenv:
+  - ".env"
+  - ".SECRETS.env"
+
+includes:
+  docker:
+    taskfile: ./tasks/Taskfile.docker.yml
+    optional: true
+  github:
+    taskfile: ./tasks/Taskfile.github.yml
+    optional: true
+  git:
+    taskfile: ./tasks/Taskfile.git.yml
+    optional: true
+  precommit:
+    taskfile: ./tasks/Taskfile.precommit.yml
+    optional: true
+  python:
+    taskfile: ./tasks/Taskfile.python.yml
+    optional: true
+
+tasks:
+  default:
+    cmds:
+      - |
+        task -l
+
+  show:
+    desc: Show task variables
+    cmds:
+      - |
+        echo "ROOT_PATH: {{.ROOT_DIR}}"
+        echo "PROJECT: {{.PROJECT}}"
+        echo "VERSION: {{.VERSION}}"
+        echo "OS: {{OS}}"
+        echo "ARCH: {{ARCH}}"
+        echo "LOCAL_BIN_PATH: {{.LOCAL_BIN_PATH}}"
+        echo "PYTHON_VENV_PATH: {{.PYTHON_VENV_PATH}}"
+        echo "SCRIPT_PATH: {{.SCRIPT_PATH}}"
+        echo "BUILD_DATE: {{.BUILD_DATE}}"
+        echo "GIT_LATEST_TAG: {{.GIT_LATEST_TAG}}"
+
+  show:all:
+    desc: Show all variables for task namespaces
+    cmds:
+      - |
+        echo "## Show ##";
+        task show
+        echo ""
+        for taskitem in $(task -l | cut -d " " -f2 | grep show | sed 's/.$//'); do
+          if [[ "$taskitem" != "show:all" ]]; then
+            echo "## Show - ${taskitem} ##";
+            task $taskitem;
+            echo "";
+          fi
+        done
+
+  list:
+    desc: List tasks by namespace (task list -- <namespace>)
+    cmds:
+      - |
+        if [[ "{{.CLI_ARGS}}" != "" ]]; then
+          task -l | grep {{default "" .CLI_ARGS}}
+        else
+          task -l
+        fi
+
+  toc:
+    desc: Update the table of contents in README.md
+    cmds:
+      - |
+        source {{.LOCAL_BIN_PATH}}/activate
+        mdtoc README.md
+
+  secrets:
+    desc: Create template .SECRETS file if one does not already exist.
+    cmds:
+      - cp ./config/.SECRETS.example.env ./.SECRETS.env
+    status:
+      - "test -f .SECRETS.env"
+
+  autocomplete:
+    desc: Setup task autocomplete (zsh)
+    cmds:
+      - sudo curl https://raw.githubusercontent.com/go-task/task/main/completion/zsh/_task \
+        -o /usr/local/share/zsh/site-functions/_task
+    status:
+      - "test -f /usr/local/share/zsh/site-functions/_task"
+
+  install:
+    desc: Install everything required to run most scripts.
+    cmds:
+      - |
+        uv sync
+
+  run:
+    desc: Run the app
+    cmds:
+      - |
+        uv run app/launcher.py
+
+  lint:
+    desc: Run python linting
+    cmds:
+      - |
+        uv run ruff check .
+
+  format:
+    desc: Run python formatting
+    cmds:
+      - |
+        uv run ruff format .

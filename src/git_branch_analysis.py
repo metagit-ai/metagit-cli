@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+import logging
+import re
+from typing import List, Literal, Optional
+
+from git import InvalidGitRepositoryError, NoSuchPathError, Repo
+from pydantic import BaseModel, Field
+
+from src.common.logging import AppLogger, LoggerConfig
+
+logger = AppLogger(LoggerConfig()).get_logger()
+
+
+class BranchInfo(BaseModel):
+    name: str
+    is_remote: bool = Field(default=False)
+
+
+class GitBranchAnalysis(BaseModel):
+    branches: List[BranchInfo]
+    strategy_guess: Optional[
+        Literal[
+            "Git Flow",
+            "GitHub Flow",
+            "GitLab Flow",
+            "Trunk-Based Development",
+            "Release Branching",
+            "Unknown",
+        ]
+    ] = "Unknown"
+
+    @classmethod
+    def from_repo(cls, repo_path: str = ".") -> "GitBranchAnalysis":
+        """
+        Analyze the git repository at the given path and return branch information and a strategy guess.
+        Uses GitPython for all git operations.
+        """
+        try:
+            repo = Repo(repo_path)
+        except (InvalidGitRepositoryError, NoSuchPathError) as e:
+            logging.error(f"Invalid git repository at '{repo_path}': {e}")
+            raise ValueError(f"Invalid git repository at '{repo_path}': {e}")
+
+        # Get local branches
+        local_branches = [
+            BranchInfo(name=branch.name, is_remote=False) for branch in repo.branches
+        ]
+        logger.info(f"Found {len(local_branches)} local branches")
+
+        # Get remote branches
+        remote_branches = []
+        for remote in repo.remotes:
+            for ref in remote.refs:
+                # Remove remote name prefix (e.g., 'origin/')
+                branch_name = ref.name.split("/", 1)[1] if "/" in ref.name else ref.name
+                remote_branches.append(BranchInfo(name=branch_name, is_remote=True))
+        logger.info(f"Found {len(remote_branches)} remote branches")
+
+        # Combine and deduplicate branches (prefer local if name overlaps)
+        all_branches_dict = {b.name: b for b in remote_branches}
+        for b in local_branches:
+            all_branches_dict[b.name] = b  # local takes precedence
+
+        branches = list(all_branches_dict.values())
+
+        strategy = cls.infer_strategy(branches)
+        return cls(branches=branches, strategy_guess=strategy)
+
+    @staticmethod
+    def infer_strategy(branches: List[BranchInfo]) -> str:
+        names = [b.name for b in branches]
+
+        def has(pattern: str) -> bool:
+            return any(re.search(pattern, name) for name in names)
+
+        if "main" in names or "master" in names:
+            if has(r"^develop$") and has(r"^feature/") and has(r"^release/"):
+                return "Git Flow"
+            elif has(r"^feature/") and not has(r"^develop$"):
+                return "GitHub Flow"
+            elif has(r"^release/") and not has(r"^feature/"):
+                return "Release Branching"
+            elif not has(r"/"):
+                return "Trunk-Based Development"
+            elif has(r"^env/") or has(r"^staging") or has(r"^production"):
+                return "GitLab Flow"
+
+        return "Unknown"
