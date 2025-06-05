@@ -16,7 +16,8 @@ from src.git_project import ProjectAnalysis
 def main(repo_path: str):
     project = ProjectAnalysis(path=repo_path)
     project.run_all()
-    print(project.summary())
+    # print(project.summary())
+    print(project.to_yaml())
 
 
 if __name__ == "__main__":
