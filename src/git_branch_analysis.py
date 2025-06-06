@@ -2,14 +2,17 @@
 
 import logging
 import re
-from typing import List, Literal, Optional
+from typing import Any, List, Literal, Optional
 
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field
 
-from src.common.logging import AppLogger, LoggerConfig
-
-logger = AppLogger(LoggerConfig()).get_logger()
+default_logger = logging.getLogger("CIConfigAnalysis")
+default_logger.setLevel(logging.INFO)
+if not default_logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    default_logger.addHandler(handler)
 
 
 class BranchInfo(BaseModel):
@@ -29,13 +32,21 @@ class GitBranchAnalysis(BaseModel):
             "Unknown",
         ]
     ] = "Unknown"
+    model_config = {
+        "extra": "allow",
+        "exclude": {"logger"},
+    }
 
     @classmethod
-    def from_repo(cls, repo_path: str = ".") -> "GitBranchAnalysis":
+    def from_repo(
+        cls, repo_path: str = ".", logger: Optional[Any] = None
+    ) -> "GitBranchAnalysis":
         """
         Analyze the git repository at the given path and return branch information and a strategy guess.
         Uses GitPython for all git operations.
         """
+        logger = logger or default_logger
+
         try:
             repo = Repo(repo_path)
         except (InvalidGitRepositoryError, NoSuchPathError) as e:
@@ -46,7 +57,7 @@ class GitBranchAnalysis(BaseModel):
         local_branches = [
             BranchInfo(name=branch.name, is_remote=False) for branch in repo.branches
         ]
-        logger.info(f"Found {len(local_branches)} local branches")
+        logger.debug(f"Found {len(local_branches)} local branches")
 
         # Get remote branches
         remote_branches = []
@@ -55,7 +66,7 @@ class GitBranchAnalysis(BaseModel):
                 # Remove remote name prefix (e.g., 'origin/')
                 branch_name = ref.name.split("/", 1)[1] if "/" in ref.name else ref.name
                 remote_branches.append(BranchInfo(name=branch_name, is_remote=True))
-        logger.info(f"Found {len(remote_branches)} remote branches")
+        logger.debug(f"Found {len(remote_branches)} remote branches")
 
         # Combine and deduplicate branches (prefer local if name overlaps)
         all_branches_dict = {b.name: b for b in remote_branches}

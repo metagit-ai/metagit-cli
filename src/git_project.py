@@ -1,29 +1,40 @@
 #!/usr/bin/env python3
 
+import logging
+from typing import Any, Optional
+
 import yaml
 from dotenv import load_dotenv
-
-load_dotenv()
-
-
-from typing import Optional
-
 from pydantic import BaseModel
 
 from src.git_branch_analysis import GitBranchAnalysis
 from src.git_cicd_analysis import CIConfigAnalysis
+
+load_dotenv()
+
+default_logger = logging.getLogger("ProjectAnalysis")
+default_logger.setLevel(logging.INFO)
+if not default_logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    default_logger.addHandler(handler)
 
 
 class ProjectAnalysis(BaseModel):
     path: str
     branch_analysis: Optional[GitBranchAnalysis] = None
     ci_config_analysis: Optional[CIConfigAnalysis] = None
+    logger: Optional[Any] = None
     # commit_analysis: Optional[GitCommitAnalysis] = None
     # tag_analysis: Optional[GitTagAnalysis] = None
 
+    def model_post_init(self, __context):
+        # Use provided logger or fallback to top-level default_logger
+        self.logger = self.logger or default_logger
+
     def run_all(self):
-        self.branch_analysis = GitBranchAnalysis.from_repo(self.path)
-        self.ci_config_analysis = CIConfigAnalysis.from_repo(self.path)
+        self.branch_analysis = GitBranchAnalysis.from_repo(self.path, self.logger)
+        self.ci_config_analysis = CIConfigAnalysis.from_repo(self.path, self.logger)
         # Future calls:
         # self.commit_analysis = GitCommitAnalysis.from_repo(self.path)
         # self.tag_analysis = GitTagAnalysis.from_repo(self.path)
@@ -43,10 +54,29 @@ class ProjectAnalysis(BaseModel):
             lines.append("CI/CD analysis not available.")
         return "\n".join(lines)
 
+    def remove_logger(self, obj):
+        if isinstance(obj, dict):
+            return {k: self.remove_logger(v) for k, v in obj.items() if k != "logger"}
+        elif isinstance(obj, list):
+            return [self.remove_logger(item) for item in obj]
+        else:
+            return obj
+
+    # def to_yaml(self) -> str:
+    #     # Use model_dump for Pydantic v2+, else dict for v1
+    #     data = self.model_dump() if hasattr(self, "model_dump") else self.dict()
+    #     data = remove_logger(data)
+    #     return yaml.safe_dump(data, sort_keys=False, default_flow_style=False)
+
     def to_yaml(self) -> str:
         """
         Convert the ProjectAnalysis model (including all nested models) to a YAML string.
         """
         # Use pydantic's .model_dump() for dict conversion (v2+), else .dict()
-        data = self.model_dump() if hasattr(self, "model_dump") else self.dict()
+        data = (
+            self.model_dump(exclude={"logger"})
+            if hasattr(self, "model_dump")
+            else dict(self, exclude={"logger"})
+        )
+        data = self.remove_logger(data)
         return yaml.safe_dump(data, sort_keys=False, default_flow_style=False)

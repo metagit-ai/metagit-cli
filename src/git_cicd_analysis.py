@@ -1,23 +1,42 @@
 #!/usr/bin/env python
 
+import logging
 import os
-from typing import Optional
+from typing import Any, Optional
 
+import yaml
+from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel
 
-from src.utils.logging import LoggerConfig, UnifiedLogger
+# from src.utils.logging import LoggerConfig, UnifiedLogger
 
-logger = UnifiedLogger(LoggerConfig()).get_logger()
+# Top-level logger instance for fallback
+# default_logger = UnifiedLogger(LoggerConfig()).get_logger()
+default_logger = logging.getLogger("CIConfigAnalysis")
+default_logger.setLevel(logging.INFO)
+if not default_logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    default_logger.addHandler(handler)
 
 
 class CIConfigAnalysis(BaseModel):
-    detected_tool: Optional[str] = None
+    devops_platform: Optional[str] = None
     repo_provider: Optional[str] = None
     origin_url: Optional[str] = None
+    ci_config_path: Optional[str] = None
+    detected_tool: Optional[str] = None
+    logger: Optional[Any] = None
+    model_config = {
+        "extra": "allow",
+        "exclude": {"logger"},
+    }
 
     @classmethod
-    def from_repo(cls, repo_path: str = ".") -> "CIConfigAnalysis":
-        from git import InvalidGitRepositoryError, NoSuchPathError, Repo
+    def from_repo(
+        cls, repo_path: str = ".", logger: Optional[Any] = None
+    ) -> "CIConfigAnalysis":
+        logger = logger or default_logger
 
         ci_tools = {
             ".github/workflows": "GitHub Actions",
@@ -28,17 +47,17 @@ class CIConfigAnalysis(BaseModel):
             "Jenkinsfile": "Jenkins",
             ".drone.yml": "Drone CI",
         }
-
-        detected_tool = None
+        devops_platform = None
+        ci_config_path = None
         for path, name in ci_tools.items():
             full_path = os.path.join(repo_path, path)
             if os.path.isdir(full_path) or os.path.isfile(full_path):
-                detected_tool = name
+                devops_platform = name
+                ci_config_path = path
                 break
 
         origin_url = None
         repo_provider = None
-        hosting_provider = None
         try:
             repo = Repo(repo_path)
             if repo.remotes:
@@ -46,8 +65,7 @@ class CIConfigAnalysis(BaseModel):
                 if origin and origin.urls:
                     origin_url = next(iter(origin.urls), None)
         except (InvalidGitRepositoryError, NoSuchPathError) as e:
-            if logger:
-                logger.error(f"Invalid git repository at '{repo_path}': {e}")
+            logger.error(f"Invalid git repository at '{repo_path}': {e}")
             origin_url = None
 
         if origin_url:
@@ -62,16 +80,17 @@ class CIConfigAnalysis(BaseModel):
                 repo_provider = "Azure DevOps"
             else:
                 repo_provider = "Unknown"
-            if logger:
-                logger.info(
-                    f"Detected repo provider: {repo_provider} from URL: {origin_url}"
-                )
+            logger.debug(
+                f"Detected repo provider: {repo_provider} from URL: {origin_url}"
+            )
         else:
-            if logger:
-                logger.info("No origin URL found for repo provider detection.")
+            logger.debug("No origin URL found for repo provider detection.")
 
         return cls(
-            detected_tool=detected_tool,
+            devops_platform=devops_platform,
             repo_provider=repo_provider,
             origin_url=origin_url,
+            ci_config_path=ci_config_path,
+            detected_tool=devops_platform,
+            logger=logger,
         )

@@ -4,6 +4,9 @@
 import click
 
 from src.git_project import ProjectAnalysis
+from src.utils.logging import LoggerConfig, UnifiedLogger
+
+logger = UnifiedLogger(LoggerConfig()).get_logger()
 
 
 @click.command()
@@ -14,10 +17,15 @@ from src.git_project import ProjectAnalysis
     help="Path to the git repository to analyze.",
 )
 def main(repo_path: str):
-    project = ProjectAnalysis(path=repo_path)
-    project.run_all()
+    project = ProjectAnalysis(path=repo_path, logger=logger)
+    logger.debug(f"Analyzing project at: {repo_path}")
+    try:
+        project.run_all()
+    except Exception as e:
+        logger.error(f"Error analyzing project at {repo_path}: {e}")
+        return
     # print(project.summary())
-    print(project.to_yaml())
+    click.echo(project.to_yaml())
 
 
 if __name__ == "__main__":
