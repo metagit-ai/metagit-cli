@@ -25,9 +25,8 @@ tasks:
     cmds:
       - |
         GITHUB_UI_PATH=$(git remote get-url origin 2>/dev/null | sed -Ee 's/.*:(.+)\.git/\1/' | awk '{print "https://www.github.com/" $1}')
-
         echo "path: ${GITHUB_UI_PATH}"
-        if [[ "$OSTYPE" == "darwin"* ]]; then
+        if [[ "{{OS}}" == "darwin"* ]]; then
           open ${GITHUB_UI_PATH}
         else
           xdg-open ${GITHUB_UI_PATH}
