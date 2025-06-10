@@ -59,7 +59,7 @@ def appconfig_validate(ctx, config_path: str = None):
             config_data = yaml.safe_load(f)
         # Step 2: Validate structure with Pydantic model
         try:
-            config = Config(**config_data["config"])
+            _ = Config(**config_data["config"])
         except ValidationError as ve:
             logger.error(f"Model validation failed: {ve}")
             sys.exit(1)
@@ -91,7 +91,7 @@ def appconfig_validate(ctx, config_path: str = None):
 @click.pass_context
 def appconfig_get(ctx, name, show_keys, output):
     """Display appconfig value"""
-    logger = ctx.obj["logger"]
+    # logger = ctx.obj["logger"]
     config = ctx.obj["config"]
     get_config(appconfig=config, name=name, show_keys=show_keys, output=output)
 

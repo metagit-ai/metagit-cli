@@ -18,8 +18,6 @@ It can be used as a handy facility for running the task from a command line.
 .. moduleauthor:: Zachary Loeber <zloeber@gmail.com>
 """
 
-import os
-import sys
 from pathlib import Path
 
 import click

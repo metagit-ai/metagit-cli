@@ -4,7 +4,6 @@ import logging
 import os
 from typing import Any, Optional
 
-import yaml
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel
 
