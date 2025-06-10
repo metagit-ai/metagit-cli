@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import logging
 from typing import Any, Optional
 
@@ -7,8 +8,8 @@ import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from src.git_branch_analysis import GitBranchAnalysis
-from src.git_cicd_analysis import CIConfigAnalysis
+from metagit_detect.git_branch_analysis import GitBranchAnalysis
+from metagit_detect.git_cicd_analysis import CIConfigAnalysis
 
 load_dotenv()
 
@@ -62,12 +63,6 @@ class ProjectAnalysis(BaseModel):
         else:
             return obj
 
-    # def to_yaml(self) -> str:
-    #     # Use model_dump for Pydantic v2+, else dict for v1
-    #     data = self.model_dump() if hasattr(self, "model_dump") else self.dict()
-    #     data = remove_logger(data)
-    #     return yaml.safe_dump(data, sort_keys=False, default_flow_style=False)
-
     def to_yaml(self) -> str:
         """
         Convert the ProjectAnalysis model (including all nested models) to a YAML string.
@@ -80,3 +75,15 @@ class ProjectAnalysis(BaseModel):
         )
         data = self.remove_logger(data)
         return yaml.safe_dump(data, sort_keys=False, default_flow_style=False)
+
+    def to_json(self) -> str:
+        """
+        Convert the ProjectAnalysis model (including all nested models) to a JSON string.
+        """
+        data = (
+            self.model_dump(exclude={"logger"})
+            if hasattr(self, "model_dump")
+            else dict(self, exclude={"logger"})
+        )
+        data = self.remove_logger(data)
+        return json.dumps(data, indent=4)

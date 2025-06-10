@@ -1,0 +1,6 @@
+research_project:
+  description: >
+    Research the project and provide a detailed report on the project elements.
+  expected_output: >
+    A detailed report on the project elements.
+  agent: project_researcher

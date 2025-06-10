@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+logging class that does general logging via loguru and prints to the console via rich.
+"""
+
 import json
 import logging
 import sys
@@ -44,6 +48,15 @@ class LoggerConfig(BaseModel):
     )
 
 
+LOG_LEVELS: Dict[int, int] = {
+    0: logging.NOTSET,
+    1: logging.ERROR,
+    2: logging.WARN,
+    3: logging.INFO,
+    4: logging.DEBUG,
+}  #: a mapping of `verbose` option counts to logging levels
+
+
 class UnifiedLogger:
     """
     A unified logging system that combines structured logging with rich console output.
@@ -57,6 +70,8 @@ class UnifiedLogger:
         """
         self.config = config
         self.debug_mode = config.log_level == "DEBUG" or config.log_level == "TRACE"
+        self._stdout_handler_id = None
+        self._file_handler_id = None
 
         # Initialize rich console if enabled
         if config.use_rich_console:
@@ -99,7 +114,7 @@ class UnifiedLogger:
             serialize = False
 
         # Console sink
-        logger.add(
+        self._stdout_handler_id = logger.add(
             sys.stdout,
             level=config.log_level,
             format=log_format,
@@ -111,7 +126,7 @@ class UnifiedLogger:
 
         # File sink (optional)
         if config.log_to_file:
-            logger.add(
+            self._file_handler_id = logger.add(
                 config.log_file_path,
                 level=config.log_level,
                 format=log_format,
@@ -124,6 +139,63 @@ class UnifiedLogger:
             )
 
         self._intercept_std_logging()
+
+    def set_level(
+        self, level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"]
+    ) -> None:
+        """
+        Set the logging level for all handlers.
+        Args:
+            level: The new logging level to set
+        """
+        self.config.log_level = level
+        self.debug_mode = level == "DEBUG" or level == "TRACE"
+
+        # Update stdout handler
+        if self._stdout_handler_id is not None:
+            logger.remove(self._stdout_handler_id)
+            self._stdout_handler_id = logger.add(
+                sys.stdout,
+                level=level,
+                format=(
+                    "{message}"
+                    if self.config.json_logs or self.config.minimal_console
+                    else (
+                        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+                        "<level>{level: <8}</level> | "
+                        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+                        "<level>{message}</level>"
+                    )
+                ),
+                backtrace=self.config.backtrace,
+                diagnose=self.config.diagnose,
+                serialize=self.config.json_logs,
+                enqueue=True,
+            )
+
+        # Update file handler if it exists
+        if self._file_handler_id is not None and self.config.log_to_file:
+            logger.remove(self._file_handler_id)
+            self._file_handler_id = logger.add(
+                self.config.log_file_path,
+                level=level,
+                format=(
+                    "{message}"
+                    if self.config.json_logs or self.config.minimal_console
+                    else (
+                        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+                        "<level>{level: <8}</level> | "
+                        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+                        "<level>{message}</level>"
+                    )
+                ),
+                rotation=self.config.rotation,
+                retention=self.config.retention,
+                backtrace=self.config.backtrace,
+                diagnose=self.config.diagnose,
+                serialize=self.config.json_logs,
+                enqueue=True,
+            )
 
     def _intercept_std_logging(self):
         """Intercept standard logging module output to loguru."""
@@ -290,3 +362,80 @@ class UnifiedLogger:
                         border_style=style,
                     )
                 )
+
+    def header(self, text, console=None):
+        """
+        Add a header log
+        """
+        if console is None:
+            console = self.console
+
+        subject = "======== {0} ========".format(text).upper()
+        border = "=" * len(subject)
+
+        if console:
+            self.line()
+            self.console.print(border, style="white")
+            self.console.print(subject, style="white")
+            self.console.print(border, style="white")
+            self.line()
+
+    def param(self, text, value, status, console=True):
+        """
+        Add a parameter/setting log
+        """
+        if value and console:
+            self.header("SETTING " + text)
+            self.status(status)
+        else:
+            self.debug(f"{text}: {value} - {status}")
+
+    def config_element(self, name="", value="", separator=": ", console=True):
+        """
+        Display a configuration element
+        """
+        log_output = "{0}{1}{2}".format(str(name), str(separator), str(value))
+        if console:
+            self.console.print(str(name), style="cyan bold", end="")
+            self.console.print(str(separator), style="magenta", end="")
+            self.console.print(str(value), style="white")
+        else:
+            self.debug(log_output)
+
+    def footer(self, text, console=True):
+        """
+        Add a footer log
+        """
+        if console:
+            self.info(text.upper())
+            self.line()
+        else:
+            self.debug(text)
+
+    def proc_out(self, text, console=True):
+        """
+        Process output
+        """
+        if console:
+            self.console.print(text, style="dim")
+        else:
+            self.debug(text)
+
+    def line(self, console=True):
+        """
+        Add a blank line
+        """
+        if console:
+            self.console.print("")
+        else:
+            self.debug("")
+
+    def echo(self, text, color="", dim=False, console=True):
+        """
+        Generic echo to screen (replaces print/pprint)
+        """
+        if console:
+            style = f"{color} {'dim' if dim else ''}"
+            self.console.print(text, style=style)
+        else:
+            self.debug(text)

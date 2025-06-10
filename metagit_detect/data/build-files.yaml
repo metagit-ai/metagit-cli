@@ -1,0 +1,48 @@
+build_files:
+  general:
+    - Makefile
+    - CMakeLists.txt
+    - build.gradle
+    - build.gradle.kts
+    - pom.xml
+    - setup.py
+    - setup.cfg
+    - requirements.txt
+    - Taskfile.yaml
+    - tasks.json
+    - BUCK
+  javascript:
+    - package.json
+    - webpack.config.js
+    - vite.config.js
+    - rollup.config.js
+    - gulpfile.js
+    - Gruntfile.js
+  ci_cd:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - .travis.yml
+    - Jenkinsfile
+    - circleci/config.yml
+    - bitrise.yml
+  testing:
+    - Jestfile.js
+    - jest.config.js
+    - karma.conf.js
+    - tox.ini
+    - .eslintrc.js
+    - .eslintrc.json
+    - .prettierrc
+  containerization:
+    - Dockerfile
+    - docker-compose.yml
+    - skaffold.yaml
+  infrastructure:
+    - terraform.tf
+    - Pulumi.yaml
+  python:
+    - pyproject.toml
+    - requirements.txt
+    - setup.py
+    - setup.cfg
+    - tox.ini

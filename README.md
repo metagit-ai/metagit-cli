@@ -25,6 +25,22 @@ Agent code used to automatically detect a project repository for situational awa
 - Version management strategy
 - Generated Artifacts
 
+# Configuration
+
+`./.configure.sh`
+
+
 # Use
 
-`task run`
+```bash
+uv run -m metagit_detect.cli
+
+# Show current config
+uv run -m metagit_detect.cli appconfig show
+
+# Dump new/default config
+uv run -m metagit_detect.cli appconfig create
+
+# Run generic detection for current path
+uv run -m metagit_detect.cli detect repo
+```

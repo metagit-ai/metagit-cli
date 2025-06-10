@@ -15,8 +15,6 @@ vscode
 .env
 __pycache__
 __pycache__/*
-data
-data/*
 db/
 db/*
 stop_venv.bat

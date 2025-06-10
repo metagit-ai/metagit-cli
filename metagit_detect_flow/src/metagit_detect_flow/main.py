@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 from random import randint
 
+from crewai.flow import Flow, listen, start
 from pydantic import BaseModel
 
-from crewai.flow import Flow, listen, start
-
-from metagit_detect_flow.crews.poem_crew.poem_crew import PoemCrew
+from metagit_detect_flow.crews.research_crew.research_crew import ResearchCrew
 
 
 class PoemState(BaseModel):

@@ -1,0 +1,15 @@
+{
+  ".github/*": "github",
+  ".gitlab-ci.yml": "gitlab",
+  ".travis.yml": "travis",
+  "appveyor.yml": "appveyor",
+  "circle.yml": "circleci",
+  "codeship-steps.yml": "codeship",
+  "bitbucket-pipelines.yml": "bitbucket",
+  "wercker.yml": "wercker",
+  "azure-pipelines.yml": "azure-pipelines",
+  "jenkinsfile": "jenkins",
+  "docker-compose.yml": "docker",
+  "docker-cloud.yml": "docker-cloud",
+  "docker-stack.yml": "docker-stack"
+}

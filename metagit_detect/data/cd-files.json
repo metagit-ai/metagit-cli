@@ -1,0 +1,5 @@
+{
+  "**/*.tf": "terraform",
+  "skaffold.yaml": "skaffold",
+  "Pulumi.yaml": "pulumi"
+}

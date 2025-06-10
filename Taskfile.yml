@@ -118,7 +118,7 @@ tasks:
     desc: Run the app
     cmds:
       - |
-        python -m examples.analyze-repo
+        uv run -m metagit_detect.example
 
   lint:
     desc: Run python linting
