@@ -1,5 +1,5 @@
 [env]
-_.source = '.env'
+_.source = '.envrc'
 
 [settings]
 python.uv_venv_auto = true

@@ -2,7 +2,6 @@
 Detect cli command group
 """
 
-from __future__ import absolute_import
 
 import click
 
@@ -13,7 +12,6 @@ from metagit_detect.git_project import ProjectAnalysis
 @click.pass_context
 def detect(ctx):
     """Detect the codebase."""
-    pass
 
 
 @detect.command("repo")

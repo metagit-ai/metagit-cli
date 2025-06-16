@@ -1,7 +1,6 @@
 """
-Appconfig subcommand
+Workspace subcommand
 """
-
 
 import os
 import sys
@@ -17,14 +16,14 @@ from utils.yaml_class import yaml
 
 @click.group()
 @click.pass_context
-def appconfig(ctx):
-    """Work with the Application configuration"""
+def workspace(ctx):
+    """Workspace subcommand"""
 
 
-@appconfig.command("show")
+@workspace.command("info")
 @click.pass_context
-def appconfig_show(ctx):
-    """Show current configuration"""
+def workspace_show(ctx):
+    """Show current workspace"""
     config = ctx.obj["config"].model_dump()
 
     config_as_dict = {
@@ -43,10 +42,10 @@ def appconfig_show(ctx):
     logger.echo(output)
 
 
-@appconfig.command("validate")
+@workspace.command("validate")
 @click.option("--config-path", help="Path to the configuration file", default=None)
 @click.pass_context
-def appconfig_validate(ctx, config_path: str = None):
+def workspace_validate(ctx, config_path: str = None):
     """Validate a configuration file"""
     logger = ctx.obj["logger"]
     if not config_path:
@@ -68,17 +67,7 @@ def appconfig_validate(ctx, config_path: str = None):
         sys.exit(1)
 
 
-# @appconfig.command("checksum")
-# @click.pass_context
-# def appconfig_checksum(ctx):
-#     """Checksum of current configuration"""
-#     config = Config()
-#     config.load(configfile=ctx.appconfigfile)
-#     checksum = config.checksum()
-#     logger.echo(checksum, console=True)
-
-
-@appconfig.command("get")
+@workspace.command("get")
 @click.option("--name", default="", help="Appconfig element to target")
 @click.option(
     "--show-keys",
@@ -88,16 +77,16 @@ def appconfig_validate(ctx, config_path: str = None):
 )
 @click.option("--output", default="json", help="Output format (json/yaml)")
 @click.pass_context
-def appconfig_get(ctx, name, show_keys, output):
-    """Display appconfig value"""
+def workspace_get(ctx, name, show_keys, output):
+    """Display workspace value"""
     # logger = ctx.obj["logger"]
     config = ctx.obj["config"]
-    get_config(appconfig=config, name=name, show_keys=show_keys, output=output)
+    get_config(workspace=config, name=name, show_keys=show_keys, output=output)
 
 
-@appconfig.command("create")
+@workspace.command("create")
 @click.pass_context
-def appconfig_create(ctx):
+def workspace_create(ctx):
     """Create default application config"""
     config: Config = load_config(
         config_path=os.path.join(DATA_PATH, "metagit.config.yaml")

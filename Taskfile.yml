@@ -131,3 +131,10 @@ tasks:
     cmds:
       - |
         uv run ruff format .
+  
+  start:mcp:
+    desc: Start MCP servers
+    cmds:
+      - |
+        docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN} -e GITHUB_READ_ONLY=1 -e GITHUB_DYNAMIC_TOOLSETS=1 ghcr.io/github/github-mcp-server
+        

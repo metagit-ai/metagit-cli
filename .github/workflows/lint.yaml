@@ -1,0 +1,30 @@
+name: Lint
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}  # Explicitly define which commit to check out
+          persist-credentials: false  # Don't persist credentials for subsequent actions
+
+      - name: Install mise
+        uses: jdx/mise-action@v2
+
+      - name: Set up environment
+        run: |
+          mise install -y
+          uv sync --dev
+
+      - name: Run lint
+        run: uv run ruff check .

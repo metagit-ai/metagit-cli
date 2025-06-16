@@ -1,0 +1,168 @@
+
+name: metagit_detect
+description: Discover and document a codebase's purpose, architecture, and flow
+url: https://github.com/metagit-io/metagit_detect
+# monorepo, umbrella, application, gitops, infrastructure, service, library, tool, framework, platform, other
+kind: application
+# optional branch, if not provided, it will be inferred as the current branch
+branch: main
+# optional branch checksum, if not provided, it will be inferred as the current branch checksum
+checksum: 1234567890
+# optional last updated, if not provided, it will be inferred as the current branch last updated
+last_updated: 
+# optional documentation url or local path
+documentation:
+  - README.md
+# optional license
+license: UNLICENSED
+# optional maintainers
+maintainers:
+  - name: zloeber
+    email: zloebe@gmail.com
+    role: owner
+# trunk, gitflow, githubflow, gitlabflow
+branch_strategy: trunk
+# optional branch count, if not provided, it will be inferred as the current branch count
+branch_count: 1
+
+# Optional task management
+taskers:
+  - kind: Taskfile
+  - kind: Makefile
+
+# optional branches
+branches:
+  - name: main
+    release: true # optional release
+    environment: production # optional environment
+    description: The main branch # optional description
+
+# optional artifacts
+artifacts:
+  - type: docker
+    definition: Dockerfile
+    location: docker://metagit-io/metagit_detect:latest
+    version_strategy: semver
+  - type: github_release
+    definition: metagit CLI
+    location: https://github.com/metagit-io/metagit_detect/releases/latest/download/metagit_detect.tar.gz
+    version_strategy: semver
+  - type: static_website
+    definition: metagit.ai
+    location: https://metagit.ai
+    version_strategy: none
+
+# optional secrets management: aws_secrets_manager, ansible_vault, hashicorp_vault, env_file
+secrets_management: []
+
+# optional environment variables
+environment_variables:
+  - name: GITHUB_TOKEN
+    required: true
+    description: GITHUB_TOKEN for the project
+    ref: .github/workflows/metagit.yml
+
+# optional ci/cd
+ci_cd:
+  platform: GitHub # e.g., GitHub Actions, GitLab CI, CircleCI, etc.
+
+
+# optional deployment
+deployment:
+  # strategy: blue/green, rolling, manual, gitops, pipeline
+  strategy: pipeline
+  # optional environments
+  environments:
+    - name: dev # e.g., dev, staging, prod
+      url: https://dev.metagit.ai
+      region: us-east-1
+      auth_required: true
+    - name: prod # e.g., dev, staging, prod
+      url: https://prod.metagit.ai
+      region: us-east-1
+      auth_required: true
+  infrastructure:
+    provisioning_tool: Terraform # e.g., Terraform, CloudFormation
+    hosting: EC2 # e.g., EC2, Kubernetes, Vercel
+
+# optional observability
+observability:
+  # optional logging provider: console, cloudwatch, elk, sentry
+  logging_provider: console
+  # optional monitoring tools: prometheus, datadog, grafana, newrelic, sentry
+  monitoring_providers: 
+    - prometheus
+  # optional alerting channels: slack, teams, email, sms, webhook
+  alerting_channels: []
+    # - name: slack
+    #   type: slack
+    #   url: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    # - name: email
+    #   type: email
+    #   url: test@test.com
+  # optional dashboards
+  dashboards:
+    - name: metagit_detect
+      tool: grafana
+      url: https://grafana.com/grafana/dashboards/1234567890
+
+# Local paths in the project with their own metadata, can be used for monorepo definitions
+paths: &project_paths
+  - name: metagit_detect
+    # optional path, assumed to be the root of the project
+    path: ./metagit_detect
+    # optional url (if not provided, it will be inferred from the repository url and ignored entirely if the path is provided)
+    url: https://github.com/metagit-io/metagit_detect
+    # optional description
+    description: The main project path
+    # optional sync setting, assumed to be false for local project paths
+    sync: false
+    language: python
+    # optional language version
+    language_version: 3.12
+    # optional language package manager
+    package_manager: uv
+    # frameworks used
+    frameworks:
+      - CrewAI
+      - Click
+
+dependencies: &dependencies
+  - name: dragonflydb_latest
+    kind: image
+    path: ./docker-compose.yml
+    # optional sync setting, assumed to be true for images where the url is a docker image
+    # will be false for images where the url is a git repository
+    sync: false
+    url: https://github.com/dragonflydb/dragonfly
+    description: DragonflyDB is a modern, in-memory database that is designed to be fast, scalable, and easy to use.
+  - name: ubuntu_latest
+    kind: image
+    path: ./.gitlab/workflows/metagit.yml
+    url: null
+    # optional sync setting, assumed to be true for images where the url is a docker image
+    # will be false for images where the url is a git repository or is empty
+    sync: false
+    description: DragonflyDB is a modern, in-memory database that is designed to be fast, scalable, and easy to use.
+
+# optional components
+components:
+  - kind: entry_point
+    path: metagit_detect/cli.py
+    description: The main project path that includes the CLI and data models
+    language: python
+    language_version: 3.12
+
+# optional workspace
+workspace:
+  # optional override of the default workspace path
+  path: ./.metagit
+  # optional override of the default auto sync setting
+  auto_sync: false
+  # optional override of the default sync on start setting
+  sync_on_start: false
+  projects:
+    - name: local
+      repos: 
+        - *project_paths
+        - *dependencies

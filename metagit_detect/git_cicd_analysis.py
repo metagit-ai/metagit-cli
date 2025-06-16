@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel
@@ -20,12 +20,12 @@ if not default_logger.handlers:
 
 
 class CIConfigAnalysis(BaseModel):
-    devops_platform: Optional[str] = None
-    repo_provider: Optional[str] = None
-    origin_url: Optional[str] = None
-    ci_config_path: Optional[str] = None
-    detected_tool: Optional[str] = None
-    logger: Optional[Any] = None
+    devops_platform: str | None = None
+    repo_provider: str | None = None
+    origin_url: str | None = None
+    ci_config_path: str | None = None
+    detected_tool: str | None = None
+    logger: Any | None = None
     model_config = {
         "extra": "allow",
         "exclude": {"logger"},
@@ -33,7 +33,7 @@ class CIConfigAnalysis(BaseModel):
 
     @classmethod
     def from_repo(
-        cls, repo_path: str = ".", logger: Optional[Any] = None
+        cls, repo_path: str = ".", logger: Any | None = None
     ) -> "CIConfigAnalysis":
         logger = logger or default_logger
 

@@ -73,7 +73,7 @@ def merge_dicts(a, b, path=None):
 
 def parse_checksum_file(file_path: str):
     checksums = {}
-    with open(file_path, "r") as file:
+    with open(file_path) as file:
         for line in file:
             checksum, filepath = line.strip().split("  ", 1)
             checksums[filepath] = checksum

@@ -10,7 +10,6 @@ dependencies = [
     "requests>=2.32.3",
     "click>=8.1.7",
     "dotenv>=0.9.9",
-    "ruff>=0.11.11",
     "gitpython>=3.1.44",
     "rich>=14.0.0",
     "pyyaml>=6.0.2",
@@ -24,3 +23,9 @@ dependencies = [
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
 ignore = ['W291', 'W292', 'W293', 'E501']
 exclude = ["app/**", "tools/**", ".venv"]
+
+[dependency-groups]
+dev = [
+    "hatch>=1.13.0",
+    "ruff>=0.11.11",
+]

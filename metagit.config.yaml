@@ -73,19 +73,3 @@ config:
 #       - name: gitlab
 #         values: []
 
-workspace:
-  # optional override of the default workspace path
-  path: ./.metagit
-  # optional override of the default auto sync setting
-  auto_sync: false
-  # optional override of the default sync on start setting
-  sync_on_start: false
-  # optional override of the default projects setting
-  projects:
-    default:
-      repos:
-        - name: local
-          url: ""
-          path: ./
-          branches:
-            - main

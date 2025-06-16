@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 yaml class that can load yaml files with includes and envvars and check for duplicate keys.
 """
 
-from __future__ import absolute_import, with_statement
 
 import functools
 import json
@@ -75,7 +73,7 @@ class ExtLoader(yaml.Loader, metaclass=ExtLoaderMeta):
             os.path.join(self._root, self.construct_scalar(node))
         )
         extension = os.path.splitext(file_name)[1].lstrip(".")
-        with open(file_name, "r") as f:
+        with open(file_name) as f:
             if extension in ("yaml", "yml"):
                 data = yaml.load(f, Loader=yaml.FullLoader)
             elif extension in ("json",):

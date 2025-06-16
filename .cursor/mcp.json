@@ -1,10 +1,12 @@
 {
   "mcpServers": {
-    "sequential-thinking": {
-      "command": "npx",
+    "sequentialthinking": {
+      "command": "docker",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
+        "run",
+        "--rm",
+        "-i",
+        "mcp/sequentialthinking"
       ]
     },
     "playwrite": {
@@ -12,6 +14,21 @@
       "args": [
         "-y",
         "@playwright/mcp@latest"
+      ]
+    },
+    "github": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "-e",
+        "GITHUB_READ_ONLY=1",
+        "-e",
+        "GITHUB_DYNAMIC_TOOLSETS=1",
+        "ghcr.io/github/github-mcp-server"
       ]
     }
   }

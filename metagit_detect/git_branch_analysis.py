@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import Any, List, Literal, Optional
+from typing import Any, Literal
 
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field
@@ -21,17 +21,8 @@ class BranchInfo(BaseModel):
 
 
 class GitBranchAnalysis(BaseModel):
-    branches: List[BranchInfo]
-    strategy_guess: Optional[
-        Literal[
-            "Git Flow",
-            "GitHub Flow",
-            "GitLab Flow",
-            "Trunk-Based Development",
-            "Release Branching",
-            "Unknown",
-        ]
-    ] = "Unknown"
+    branches: list[BranchInfo]
+    strategy_guess: Literal["Git Flow", "GitHub Flow", "GitLab Flow", "Trunk-Based Development", "Release Branching", "Unknown"] | None = "Unknown"
     model_config = {
         "extra": "allow",
         "exclude": {"logger"},
@@ -39,7 +30,7 @@ class GitBranchAnalysis(BaseModel):
 
     @classmethod
     def from_repo(
-        cls, repo_path: str = ".", logger: Optional[Any] = None
+        cls, repo_path: str = ".", logger: Any | None = None
     ) -> "GitBranchAnalysis":
         """
         Analyze the git repository at the given path and return branch information and a strategy guess.
@@ -50,7 +41,7 @@ class GitBranchAnalysis(BaseModel):
         try:
             repo = Repo(repo_path)
         except (InvalidGitRepositoryError, NoSuchPathError) as e:
-            logging.error(f"Invalid git repository at '{repo_path}': {e}")
+            logging.exception(f"Invalid git repository at '{repo_path}': {e}")
             raise ValueError(f"Invalid git repository at '{repo_path}': {e}")
 
         # Get local branches
@@ -79,7 +70,7 @@ class GitBranchAnalysis(BaseModel):
         return cls(branches=branches, strategy_guess=strategy)
 
     @staticmethod
-    def infer_strategy(branches: List[BranchInfo]) -> str:
+    def infer_strategy(branches: list[BranchInfo]) -> str:
         names = [b.name for b in branches]
 
         def has(pattern: str) -> bool:

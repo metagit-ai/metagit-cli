@@ -1,6 +1,6 @@
 """Tool for asking human input."""
 
-from typing import Callable, Type
+from collections.abc import Callable
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -38,7 +38,7 @@ class HumanTool(BaseTool):
         " This tool version is suitable when you need answers that span over"
         " several lines."
     )
-    args_schema: Type[BaseModel] = MyToolInput
+    args_schema: type[BaseModel] = MyToolInput
     prompt_func: Callable[[str], None] = _print_func
     input_func: Callable[[], str] = input_func
 

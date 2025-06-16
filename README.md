@@ -44,3 +44,7 @@ uv run -m metagit_detect.cli appconfig create
 # Run generic detection for current path
 uv run -m metagit_detect.cli detect repo
 ```
+
+# MCP Servers
+
+[Sequential Thinking](https://github.com/modelcontextprotocol/servers/tree/HEAD/src/sequentialthinking)

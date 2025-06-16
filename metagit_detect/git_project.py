@@ -2,7 +2,7 @@
 
 import json
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import yaml
 from dotenv import load_dotenv
@@ -23,6 +23,10 @@ if not default_logger.handlers:
 
 class ProjectAnalysis(BaseModel):
     path: str
+    url: Optional[str] = None
+    branch: Optional[str] = None
+    checksum: Optional[Union[str, int]] = None
+    last_updated: Optional[str] = None
     branch_analysis: Optional[GitBranchAnalysis] = None
     ci_config_analysis: Optional[CIConfigAnalysis] = None
     logger: Optional[Any] = None

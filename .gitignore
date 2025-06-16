@@ -7,10 +7,6 @@ miniconda
 flat.txt
 flatten_files_for_gpt.py
 flatten_all_files_for_gpt.py
-.vscode/
-.vs
-.vs/
-.vs/*
 vscode
 .env
 __pycache__
@@ -18,3 +14,4 @@ __pycache__/*
 db/
 db/*
 stop_venv.bat
+.ruff*

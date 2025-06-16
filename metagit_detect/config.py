@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import json
 from pathlib import Path
-from typing import List
 
 import click
 import yaml as base_yaml
@@ -18,13 +16,13 @@ failure_blurb: str = "Failed! ❌"
 
 class Boundary(BaseModel):
     name: str
-    values: List[str]
+    values: list[str]
 
 
 class Profiles(BaseModel):
     profile_config_path: str
     default_profile: str
-    boundaries: List[Boundary]
+    boundaries: list[Boundary]
 
 
 class Workspace(BaseModel):
@@ -83,7 +81,7 @@ def load_config(config_path: str) -> Config:
         # Validate and convert to Pydantic model
         return Config(**config_data["config"])
     except Exception as e:
-        raise click.ClickException(f"Error loading configuration: {str(e)}")
+        raise click.ClickException(f"Error loading configuration: {e!s}")
 
 
 def get_config(appconfig: Config, name="", show_keys=False, output="json", logger=None):

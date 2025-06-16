@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 logging class that does general logging via loguru and prints to the console via rich.
@@ -8,7 +7,7 @@ logging class that does general logging via loguru and prints to the console via
 import json
 import logging
 import sys
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -48,10 +47,10 @@ class LoggerConfig(BaseModel):
     )
 
 
-LOG_LEVELS: Dict[int, int] = {
+LOG_LEVELS: dict[int, int] = {
     0: logging.NOTSET,
     1: logging.ERROR,
-    2: logging.WARN,
+    2: logging.WARNING,
     3: logging.INFO,
     4: logging.DEBUG,
 }  #: a mapping of `verbose` option counts to logging levels
@@ -231,7 +230,7 @@ class UnifiedLogger:
         logger.info(f"Agent {agent_name}: {message}")
 
     def print_task_status(
-        self, task_name: str, status: str, details: Optional[str] = None
+        self, task_name: str, status: str, details: str | None = None
     ) -> None:
         """Print task status information with rich formatting."""
         content = f"{task_name}\nStatus: {status}"
@@ -248,7 +247,7 @@ class UnifiedLogger:
         self._format_output(message, status_type, "Crew Status")
         logger.info(f"Crew Status: {message}")
 
-    def print_input(self, input_data: Dict[str, Any]) -> None:
+    def print_input(self, input_data: dict[str, Any]) -> None:
         """Print formatted input data with rich formatting."""
         if self.debug_mode:
             content = json.dumps(input_data, indent=2)
@@ -280,14 +279,14 @@ class UnifiedLogger:
         self._format_output(message, "info", "Information")
         logger.info(message)
 
-    def print_json(self, data: Dict[str, Any], title: str = "JSON Data") -> None:
+    def print_json(self, data: dict[str, Any], title: str = "JSON Data") -> None:
         """Print formatted JSON data with rich formatting."""
         content = json.dumps(data, indent=2)
         self._format_output(content, "json", title)
         logger.debug(f"{title}: {json.dumps(data)}")
 
     def print_debug_json(
-        self, data: Dict[str, Any], title: str = "Debug JSON Data"
+        self, data: dict[str, Any], title: str = "Debug JSON Data"
     ) -> None:
         """
         Print JSON data with debug formatting, only showing output in debug mode.
@@ -326,7 +325,7 @@ class UnifiedLogger:
         logger.exception(message)
 
     def _format_output(
-        self, message: str, style: str, title: Optional[str] = None
+        self, message: str, style: str, title: str | None = None
     ) -> None:
         """
         Internal method to format output based on terse mode.
@@ -345,23 +344,21 @@ class UnifiedLogger:
                 self.console.print(f"[{style}]{title}:[/{style}] {message}")
             else:
                 self.console.print(f"[{style}]{message}[/{style}]")
+        elif title:
+            self.console.print(
+                Panel(
+                    message,
+                    title=f"[{style}]{title}[/{style}]",
+                    border_style=style,
+                )
+            )
         else:
-            # In normal mode, use panels with borders and titles
-            if title:
-                self.console.print(
-                    Panel(
-                        message,
-                        title=f"[{style}]{title}[/{style}]",
-                        border_style=style,
-                    )
+            self.console.print(
+                Panel(
+                    message,
+                    border_style=style,
                 )
-            else:
-                self.console.print(
-                    Panel(
-                        message,
-                        border_style=style,
-                    )
-                )
+            )
 
     def header(self, text, console=None):
         """
@@ -370,7 +367,7 @@ class UnifiedLogger:
         if console is None:
             console = self.console
 
-        subject = "======== {0} ========".format(text).upper()
+        subject = f"======== {text} ========".upper()
         border = "=" * len(subject)
 
         if console:
@@ -394,7 +391,7 @@ class UnifiedLogger:
         """
         Display a configuration element
         """
-        log_output = "{0}{1}{2}".format(str(name), str(separator), str(value))
+        log_output = f"{name!s}{separator!s}{value!s}"
         if console:
             self.console.print(str(name), style="cyan bold", end="")
             self.console.print(str(separator), style="magenta", end="")
