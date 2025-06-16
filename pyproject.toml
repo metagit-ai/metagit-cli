@@ -17,6 +17,8 @@ dependencies = [
     "pygithub>=2.6.1",
     "jsonschema>=4.24.0",
     "python-dotenv>=1.1.0",
+    "rapidfuzz>=3.13.0",
+    "prompt-toolkit>=3.0.51",
 ]
 
 [lint]

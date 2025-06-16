@@ -25,6 +25,7 @@ import click
 from metagit_detect import DEFAULT_CONFIG, __version__
 from metagit_detect.commands.appconfig import appconfig
 from metagit_detect.commands.detect import detect
+from metagit_detect.commands.workspace import workspace
 from metagit_detect.config import load_config
 from utils.logging import LOG_LEVELS, LoggerConfig, UnifiedLogger
 
@@ -86,6 +87,7 @@ def version(ctx):
 
 cli.add_command(detect)
 cli.add_command(appconfig)
+cli.add_command(workspace)
 
 
 if __name__ == "__main__":
