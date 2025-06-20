@@ -7,7 +7,7 @@ on:
 
 jobs:
   call-test-lint:
-    uses: ./.github/workflows/test-lint.yml
+    uses: ./.github/workflows/lint.yaml
     permissions:
       contents: read
     with:

@@ -2,16 +2,19 @@
 Detect cli command group
 """
 
-
 import click
 
-from metagit_detect.git_project import ProjectAnalysis
+from metagit.core.detect.project import ProjectAnalysis
 
 
-@click.group("detect")
+@click.group(name="detect", invoke_without_command=True)
 @click.pass_context
 def detect(ctx):
-    """Detect the codebase."""
+    """Detection subcommands"""
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
 
 
 @detect.command("repo")

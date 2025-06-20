@@ -2,7 +2,6 @@
 Appconfig subcommand
 """
 
-
 import os
 import sys
 
@@ -10,15 +9,19 @@ import click
 import yaml as base_yaml
 from pydantic import ValidationError
 
-from metagit_detect import DATA_PATH
-from metagit_detect.config import Config, get_config, load_config
-from utils.yaml_class import yaml
+from metagit import DATA_PATH
+from metagit.core.appconfig import AppConfig, get_config, load_config
+from metagit.core.utils.yaml_class import yaml
 
 
-@click.group()
+@click.group(name="appconfig", invoke_without_command=True)
 @click.pass_context
 def appconfig(ctx):
-    """Work with the Application configuration"""
+    """Application configuration subcommands"""
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
 
 
 @appconfig.command("show")
@@ -58,7 +61,7 @@ def appconfig_validate(ctx, config_path: str = None):
             config_data = yaml.safe_load(f)
         # Step 2: Validate structure with Pydantic model
         try:
-            _ = Config(**config_data["config"])
+            _ = AppConfig(**config_data["config"])
         except ValidationError as ve:
             logger.error(f"Model validation failed: {ve}")
             sys.exit(1)
@@ -99,7 +102,7 @@ def appconfig_get(ctx, name, show_keys, output):
 @click.pass_context
 def appconfig_create(ctx):
     """Create default application config"""
-    config: Config = load_config(
+    config: AppConfig = load_config(
         config_path=os.path.join(DATA_PATH, "metagit.config.yaml")
     )
     base_yaml.Dumper.ignore_aliases = lambda *args: True

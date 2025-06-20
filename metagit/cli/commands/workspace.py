@@ -4,63 +4,78 @@ Workspace subcommand
 
 import os
 import sys
+from pathlib import Path
 
 import click
-import yaml as base_yaml
-from pydantic import ValidationError
 
-from metagit_detect import DATA_PATH
-from metagit_detect.config import Config, get_config, load_config
-from utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
-from utils.yaml_class import yaml
+from metagit.core.config.manager import ConfigManager
+from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
 
 
-@click.group()
+@click.group(name="workspace", invoke_without_command=True)
+@click.option(
+    "--config", default=".metagit.yml", help="Path to the metagit definition file"
+)
 @click.pass_context
-def workspace(ctx):
-    """Workspace subcommand"""
-    pass
+def workspace(ctx, config):
+    """Workspace subcommands"""
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
+
+    logger = ctx.obj["logger"]
+    try:
+        local_config = ConfigManager(config).load_config()
+    except Exception as e:
+        logger.error(f"Failed to load metagit definition file: {e}")
+        sys.exit(1)
+    ctx.obj["local_config"] = local_config
 
 
-@workspace.command("test")
+@workspace.command("select")
+@click.option(
+    "--project",
+    default=None,
+    help="Project within workspace to select target paths from",
+)
 @click.pass_context
-def workspace_test(ctx):
-    """Show current workspace"""
-    from dataclasses import dataclass
+def workspace_select(ctx, project: str = None):
+    """Select workspace project repo to work on"""
+    logger = ctx.obj["logger"]
+    config = ctx.obj["config"]
+    if project is None:
+        project = config.workspace.default_project
+    workspace_path = config.workspace.path
+    project_path = os.path.join(workspace_path, project)
 
-    # Example with string items
+    if not Path(project_path).exists(follow_symlinks=True):
+        logger.warning(f"Project path does not exist for project: {project_path}")
+        logger.warning(
+            f"You can sync the project with `metagit workspace sync --project {project_path}`"
+        )
+        return
+    else:
+        logger.info(f"Project path: {project_path}")
+
+    projects: list[str] = [f.name for f in Path(project_path).iterdir() if f.is_dir()]
+    if len(projects) == 0:
+        logger.warning(f"No projects found in workspace: {project_path}")
+        return
+
     config = FuzzyFinderConfig(
-        items=["apple", "banana", "cherry", "date", "elderberry"],
-        prompt_text="Search: ",
-        max_results=3,
-        score_threshold=60.0,
+        items=projects,
+        prompt_text="🔍 Search projects: ",
+        max_results=10,
+        score_threshold=70.0,
+        highlight_color="bold white bg:#0066cc",
+        normal_color="cyan",
+        prompt_color="bold green",
+        separator_color="gray",
     )
     finder = FuzzyFinder(config)
     selected = finder.run()
-    print(f"Selected: {selected}")
-
-    # Example with object items
-    @dataclass
-    class Fruit:
-        name: str
-        description: str
-
-    fruits = [
-        Fruit(name="Apple", description="A sweet red fruit"),
-        Fruit(name="Banana", description="A long yellow fruit"),
-        Fruit(name="Cherry", description="A small red fruit"),
-    ]
-    config = FuzzyFinderConfig(
-        items=fruits,
-        display_field="name",
-        prompt_text="Select fruit: ",
-        max_results=2,
-        enable_preview=True,
-        preview_field="description",
-    )
-    finder = FuzzyFinder(config)
-    selected = finder.run()
-    print(f"Selected: {selected}")
+    logger.echo(f"Selected: {selected}")
 
 
 # @workspace.command("info")

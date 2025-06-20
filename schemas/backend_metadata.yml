@@ -1,0 +1,142 @@
+project:
+  name: example-service
+  slug: example-service
+  repo_url: https://github.com/org/example-service
+  provider: github
+  project_type: application  # [application, library, cli, api, infra, etc.]
+  languages:
+    - python
+    - javascript
+  frameworks:
+    - fastapi
+    - react
+  runtime_environments:
+    - python3.11
+    - node18
+  build_tools:
+    - poetry
+    - npm
+  deployment_targets:
+    - aws-lambda
+    - ecs
+
+metrics:
+  sloc: 8124
+  file_count: 152
+  dependency_count: 42
+
+artifacts:
+  containers:
+    - name: example-service
+      image: ghcr.io/org/example-service:latest
+      dockerfile_path: ./Dockerfile
+      base_image: python:3.11-slim
+      exposed_ports: [8000]
+      env_vars:
+        - ENV
+        - DEBUG
+  libraries:
+    - name: example-lib
+      version: 1.2.0
+      output_type: wheel
+      language: python
+      exported_modules:
+        - example.auth
+        - example.utils
+      compatible_with:
+        - python3.8
+        - python3.11
+  cli_tools:
+    - name: example-cli
+      entrypoint: cli.py
+      flags:
+        - --config
+        - --dry-run
+
+components:
+  - name: auth_utils
+    type: module
+    path: src/example/auth/utils.py
+    language: python
+    functions:
+      - name: hash_password
+        parameters: [password: str]
+        returns: str
+        docstring: "Hash a plaintext password using bcrypt."
+        examples:
+          - "hash_password('mypassword')"
+      - name: verify_password
+        parameters: [plain: str, hashed: str]
+        returns: bool
+  - name: HealthCheckRoute
+    type: class
+    path: src/example/routes/health.py
+    description: "Provides /health endpoint."
+
+semantics:
+  inferred_tags:
+    - auth
+    - api
+    - observability
+  tech_stack:
+    - fastapi
+    - pydantic
+    - postgresql
+  role: backend
+  domain_tags:
+    - account-management
+    - user-authentication
+
+dependencies:
+  internal:
+    - repo: shared-utils
+      path: ./libs/shared-utils
+      version: latest
+  external:
+    - name: pydantic
+      version: 2.1.0
+      license: MIT
+    - name: requests
+      version: 2.31.0
+      license: Apache-2.0
+
+ownership:
+  maintainers:
+    - name: Jane Doe
+      email: jane@company.com
+  last_commit: 2025-06-17T14:20:00Z
+  recent_contributors:
+    - alice
+    - bob
+  open_issues:
+    - "Fix flaky auth tests"
+    - "Add rate limiting to login route"
+
+quality:
+  test_coverage: 88
+  lint_score: 9.2
+  security_scan:
+    last_scan: 2025-06-15
+    high_risk_issues: 0
+  build_status: passing
+  ci_pipeline: github-actions
+
+agent_assist:
+  actionable_exports:
+    - hash_password
+    - verify_password
+  openapi_endpoints:
+    - GET /health
+    - POST /login
+  test_coverage_map:
+    - function: hash_password
+      covered: true
+    - function: send_email
+      covered: false
+  embeddings_index: embeddings/example-service.index
+
+navigation:
+  ast_available: true
+  call_graph_available: true
+  semantic_search_index: search/example-service.vecdb
+

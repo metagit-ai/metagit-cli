@@ -1,47 +1,57 @@
-
 name: metagit_detect
 description: Discover and document a codebase's purpose, architecture, and flow
 url: https://github.com/metagit-io/metagit_detect
-# monorepo, umbrella, application, gitops, infrastructure, service, library, tool, framework, platform, other
+# monorepo, umbrella, application, gitops, infrastructure, service, library, website, other
 kind: application
-# optional branch, if not provided, it will be inferred as the current branch
-branch: main
-# optional branch checksum, if not provided, it will be inferred as the current branch checksum
-checksum: 1234567890
-# optional last updated, if not provided, it will be inferred as the current branch last updated
-last_updated: 
-# optional documentation url or local path
+# monorepo, umbrella, application, gitops, infrastructure, service, library, website, other
+structure: monorepo
+# optional documentation urls or local paths
 documentation:
   - README.md
-# optional license
-license: UNLICENSED
+license:
+  kind: None
+  file: ""
 # optional maintainers
 maintainers:
   - name: zloeber
     email: zloebe@gmail.com
     role: owner
-# trunk, gitflow, githubflow, gitlabflow
+# trunk, gitflow, githubflow, gitlabflow, fork
 branch_strategy: trunk
-# optional branch count, if not provided, it will be inferred as the current branch count
-branch_count: 1
 
-# Optional task management
+# Optional task management tools: Taskfile, Makefile, Jest, NPM, Atmos, etc.
 taskers:
   - kind: Taskfile
-  - kind: Makefile
 
-# optional branches
-branches:
-  - name: main
-    release: true # optional release
-    environment: production # optional environment
-    description: The main branch # optional description
+# # optional release branches
+# branches:
+#   - name: main
+#     # optional: which environment is this branch for
+#     environment: production
+# optional branch naming patterns
+# branch_naming:
+#   - kind: trunk
+#     pattern: "main"
+#   - kind: gitflow
+#     pattern: "feature/{name}"
+#   - kind: githubflow
+#     pattern: "feature/{name}"
+#   - kind: gitlabflow
+#     pattern: "feature/{name}"
+#   - kind: fork
+#     pattern: "{username}/{name}"
+# # optional branch, if not provided, it will be inferred as the current branch
+# branch: main
+# # optional branch checksum, if not provided, it will be inferred as the current branch checksum
+# checksum: 1234567890
+# # optional last updated, if not provided, it will be inferred as the current branch last updated
+# last_updated: 2025-06-17
 
-# optional artifacts
+# Generated artifacts
 artifacts:
   - type: docker
     definition: Dockerfile
-    location: docker://metagit-io/metagit_detect:latest
+    location: docker://docker.io/metagit-io/metagit_detect:latest
     version_strategy: semver
   - type: github_release
     definition: metagit CLI
@@ -55,17 +65,49 @@ artifacts:
 # optional secrets management: aws_secrets_manager, ansible_vault, hashicorp_vault, env_file
 secrets_management: []
 
-# optional environment variables
-environment_variables:
+# secret definitions
+secrets:
   - name: GITHUB_TOKEN
-    required: true
-    description: GITHUB_TOKEN for the project
+    kind: remote_jwt
     ref: .github/workflows/metagit.yml
+  - name: OPENAI_API_KEY
+    kind: remote_api_key
+    ref: .env
+  - name: GITHUB_PERSONAL_ACCESS_TOKEN
+    kind: remote_api_key
+    ref: .env
+  - name: OPENROUTER_API_KEY
+    kind: remote_api_key
+    ref: .env
+  - name: POSTGRES_PASSWORD
+    kind: generated_string
+    ref: .env
+
+variables:
+  - name: OPENAI_MODEL_NAME
+    kind: string
+    ref: .env
+  - name: OPENAI_API_BASE
+    kind: string
+    ref: .env
+  - name: OPENAI_PROXY_MODELS
+    kind: string
+    ref: .env
+  - name: POSTGRES_USER
+    kind: string
+    ref: .env
+  - name: POSTGRES_DB
+    kind: string
+    ref: .env
 
 # optional ci/cd
-ci_cd:
-  platform: GitHub # e.g., GitHub Actions, GitLab CI, CircleCI, etc.
-
+cicd:
+  platform: GitHub # e.g., GitHub, GitLab, CircleCI, Jenkins, jx
+  pipelines:
+    - name: metagit_detect
+      ref: .github/workflows/metagit.yml
+      variables:
+        - name: GITHUB_TOKEN
 
 # optional deployment
 deployment:
@@ -75,12 +117,8 @@ deployment:
   environments:
     - name: dev # e.g., dev, staging, prod
       url: https://dev.metagit.ai
-      region: us-east-1
-      auth_required: true
     - name: prod # e.g., dev, staging, prod
       url: https://prod.metagit.ai
-      region: us-east-1
-      auth_required: true
   infrastructure:
     provisioning_tool: Terraform # e.g., Terraform, CloudFormation
     hosting: EC2 # e.g., EC2, Kubernetes, Vercel
@@ -107,14 +145,19 @@ observability:
       url: https://grafana.com/grafana/dashboards/1234567890
 
 # Local paths in the project with their own metadata, can be used for monorepo definitions
-paths: &project_paths
+paths:
   - name: metagit_detect
+      # optional description
+    description: The main project path
+    kind: application
+    # optional reference in the current project for the target project, only used for dependencies
+    ref: null
     # optional path, assumed to be the root of the project
     path: ./metagit_detect
-    # optional url (if not provided, it will be inferred from the repository url and ignored entirely if the path is provided)
-    url: https://github.com/metagit-io/metagit_detect
-    # optional description
-    description: The main project path
+    # optional branch, if not provided and the path is not ./ the target project is considered local
+    branches: []
+    # optional url (if not provided, it will be inferred from the repository url)
+    url: null
     # optional sync setting, assumed to be false for local project paths
     sync: false
     language: python
@@ -127,42 +170,52 @@ paths: &project_paths
       - CrewAI
       - Click
 
-dependencies: &dependencies
+dependencies:
   - name: dragonflydb_latest
-    kind: image
-    path: ./docker-compose.yml
+    description: DragonflyDB is a modern, in-memory database that is designed to be fast, scalable, and easy to use.
+    kind: docker_image
+    path: null
+    # optional reference in the current project for the target project
+    ref: ./docker-compose.yml
+    # optional url if able to be found
+    url: https://github.com/dragonflydb/dragonfly
     # optional sync setting, assumed to be true for images where the url is a docker image
     # will be false for images where the url is a git repository
     sync: false
-    url: https://github.com/dragonflydb/dragonfly
-    description: DragonflyDB is a modern, in-memory database that is designed to be fast, scalable, and easy to use.
   - name: ubuntu_latest
-    kind: image
+    description: Ubuntu is a Linux distribution based on Debian and composed mostly of free and open-source software.
+    kind: docker_image
     path: ./.gitlab/workflows/metagit.yml
     url: null
     # optional sync setting, assumed to be true for images where the url is a docker image
     # will be false for images where the url is a git repository or is empty
     sync: false
-    description: DragonflyDB is a modern, in-memory database that is designed to be fast, scalable, and easy to use.
 
 # optional components
 components:
-  - kind: entry_point
-    path: metagit_detect/cli.py
+  - name: metagit_detect_cli
     description: The main project path that includes the CLI and data models
+    kind: application
+    path: metagit_detect/cli.py# optional reference in the current project for the target project, only used for dependencies
+    branches: []
+    sync: false
     language: python
     language_version: 3.12
 
 # optional workspace
-workspace:
-  # optional override of the default workspace path
-  path: ./.metagit
-  # optional override of the default auto sync setting
-  auto_sync: false
-  # optional override of the default sync on start setting
-  sync_on_start: false
-  projects:
-    - name: local
-      repos: 
-        - *project_paths
-        - *dependencies
+# workspace:
+#   projects:
+#     - name: default
+#       repos: 
+#         - *project_paths
+#         - *dependencies
+#     - name: project2
+#       repos:
+#         - name: some_other_project
+#           description: Some other project
+#           url: https://github.com/metagit-io/some_other_project
+#           kind: application
+#           path: ./some_other_project
+#           branches: []
+#           sync: true
+

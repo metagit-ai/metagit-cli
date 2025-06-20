@@ -1,0 +1,26 @@
+# Example umbrella workspace for metagit projects that can be checked into version control 
+# This can then be used by metagit to create/update a workspace with all the projects and dependencies
+# locally for development or in a CI/CD pipeline
+name: metagit
+description: Umbrella workspace for metagit projects
+url: https://github.com/metagit-io/metagit_umbrella
+kind: umbrella
+workspace:
+  projects:
+    - name: default
+      repos:
+        - name: metagit_detect
+          url: https://github.com/metagit-io/metagit_detect
+          path: ./
+          branches:
+            - main
+        - name: metagit_infrastructure
+          url: https://github.com/metagit-io/metagit_infrastructure
+          branches:
+            - main
+        - name: metagit_cli
+          url: https://github.com/metagit-io/metagit_cli
+        - name: metagit_api
+          url: https://github.com/metagit-io/metagit_api
+        - name: metagit_web
+          url: https://github.com/metagit-io/metagit_web

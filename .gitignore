@@ -1,17 +1,18 @@
-.venv/
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+
+# Virtual environments
+.venv
 venv
-venv/
-miniconda/
-miniconda
-*.db
-flat.txt
-flatten_files_for_gpt.py
-flatten_all_files_for_gpt.py
-vscode
+
 .env
 __pycache__
 __pycache__/*
-db/
-db/*
-stop_venv.bat
 .ruff*
+.DS_Store

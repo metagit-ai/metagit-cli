@@ -137,4 +137,12 @@ tasks:
     cmds:
       - |
         docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN} -e GITHUB_READ_ONLY=1 -e GITHUB_DYNAMIC_TOOLSETS=1 ghcr.io/github/github-mcp-server
-        
+  
+  fake:workspace:
+    desc: Create a test workspace folder structure with 10 projects
+    cmds:
+      - |
+        for i in {1..10}; do
+          echo "Creating workspace $i"
+          mkdir -p "./.metagit/default/project-$i"
+        done

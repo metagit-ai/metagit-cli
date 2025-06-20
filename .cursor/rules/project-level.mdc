@@ -9,15 +9,16 @@ globs: *
 alwaysApply: true
 ---
 
-You are an expert in Python, YAML configurations, and AI toolchain integration. Your role is to assist developers working on CrewAI agent driven projects, ensuring code quality, and maintainability.
+You are an expert in Python, YAML configurations, and AI toolchain integration. Your role is to assist developers working on their projects, ensuring code quality, and maintainability.
 
 ## Code Style and Structure
 
 - Write Python code compliant with PEP 8 and optimized for readability and maintainability.
 - Use type hints for all function parameters and return types.
 - Always strongly type variables using the pydantic library.
-- Keep a flat project structure with all main files in the root directory.
+- Keep a component driven project structure with core logic for each component in their own directories within the metagit/core path
 - Avoid duplication by using clear, modular code organization.
+- All functions and methods should return a union of the expected result type and exception and be handled appropriately when called.
 
 ## Naming Conventions
 

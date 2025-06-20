@@ -6,7 +6,7 @@ import os
 import re
 from collections.abc import MutableMapping
 
-import utils.yaml_class as yaml
+import metagit.core.utils.yaml_class as yaml
 
 __all__ = ["env_override", "regex_replace", "flatten_dict", "to_yaml", "merge_dicts"]
 

@@ -1,14 +1,23 @@
+import os
+import sys
 import uuid
+from contextlib import contextmanager
 from typing import Any, List, Optional, Union
 
-from prompt_toolkit import Application
+from prompt_toolkit import Application, print_formatted_text
 from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.formatted_text import HTML
+from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import HSplit, Layout, Window
 from prompt_toolkit.layout.controls import BufferControl
-from pydantic import BaseModel, Field, validator
+from prompt_toolkit.styles import Style
+from pydantic import BaseModel, Field, field_validator
 from rapidfuzz import fuzz, process
+
+"""
+This is a fuzzy finder that uses prompt_toolkit and rapidfuzz to find items in a list.
+I'm only doing this because I don't want to have to wrap the fzf binary in a python script.
+"""
 
 
 class FuzzyFinderConfig(BaseModel):
@@ -46,20 +55,29 @@ class FuzzyFinderConfig(BaseModel):
     preview_field: Optional[str] = Field(
         None, description="Field name to use for preview if items are objects."
     )
+    # Styling options
+    highlight_color: str = Field(
+        "bold white bg:#4444aa", description="Color/style for highlighted items."
+    )
+    normal_color: str = Field("white", description="Color/style for normal items.")
+    prompt_color: str = Field("bold cyan", description="Color/style for prompt text.")
+    separator_color: str = Field("gray", description="Color/style for separator line.")
 
-    @validator("items")
-    def validate_items(cls, v, values):
+    @field_validator("items")
+    @classmethod
+    def validate_items(cls, v, info):
         """Ensure items are valid and consistent with display_field."""
         if not v:
             raise ValueError("Items list cannot be empty.")
-        if values.get("display_field") and not isinstance(v[0], str):
-            if not hasattr(v[0], values["display_field"]):
+        if info.data.get("display_field") and not isinstance(v[0], str):
+            if not hasattr(v[0], info.data["display_field"]):
                 raise ValueError(
-                    f"Objects must have field '{values['display_field']}'."
+                    f"Objects must have field '{info.data['display_field']}'."
                 )
         return v
 
-    @validator("scorer")
+    @field_validator("scorer")
+    @classmethod
     def validate_scorer(cls, v):
         """Ensure scorer is valid."""
         valid_scorers = ["partial_ratio", "ratio", "token_sort_ratio"]
@@ -67,15 +85,16 @@ class FuzzyFinderConfig(BaseModel):
             raise ValueError(f"Scorer must be one of {valid_scorers}.")
         return v
 
-    @validator("preview_field")
-    def validate_preview_field(cls, v, values):
+    @field_validator("preview_field")
+    @classmethod
+    def validate_preview_field(cls, v, info):
         """Ensure preview_field is valid if enable_preview is True."""
-        if values.get("enable_preview") and not v:
+        if info.data.get("enable_preview") and not v:
             raise ValueError(
                 "preview_field must be specified when enable_preview is True."
             )
-        if v and values.get("items") and not isinstance(values["items"][0], str):
-            if not hasattr(values["items"][0], v):
+        if v and info.data.get("items") and not isinstance(info.data["items"][0], str):
+            if not hasattr(info.data["items"][0], v):
                 raise ValueError(f"Objects must have field '{v}' for preview.")
         return v
 
@@ -112,18 +131,57 @@ class FuzzyFinder:
         """Initialize the fuzzy finder with a configuration."""
         self.config = config
         self.input_buffer = Buffer()
-        self.output_buffer = Buffer(multiline=True)
         self.selected_items = []
         self.highlighted_index = 0  # Track the highlighted item
         self.current_results = []  # Track current search results
 
-        # Setup UI components
-        self.input_window = Window(BufferControl(buffer=self.input_buffer), height=1)
-        self.output_window = Window(BufferControl(buffer=self.output_buffer))
+        # Create dynamic style based on configuration
+        self.style = Style.from_dict(
+            {
+                "prompt": self.config.prompt_color,
+                "highlighted": self.config.highlight_color,
+                "normal": self.config.normal_color,
+                "separator": self.config.separator_color,
+                "query": "bold yellow",
+            }
+        )
 
-        # Setup layout
+        from prompt_toolkit.layout.containers import Float, FloatContainer
+        from prompt_toolkit.layout.controls import FormattedTextControl
+
+        # Create a styled prompt control
+        prompt_control = FormattedTextControl(
+            lambda: [("class:prompt", self.config.prompt_text)]
+        )
+
+        # Create input window with floating prompt
+        self.input_window = Window(
+            BufferControl(buffer=self.input_buffer),
+            height=1,
+            char=" ",
+            style="class:normal",
+        )
+
+        # Create a float container to overlay the prompt
+        self.input_container = FloatContainer(
+            content=self.input_window,
+            floats=[
+                Float(
+                    Window(prompt_control, height=1),
+                    left=0,
+                    top=0,
+                )
+            ],
+        )
+
+        # Output window uses FormattedTextControl for styling
+        self.output_control = FormattedTextControl(text="")
+        self.output_window = Window(self.output_control)
+
+        # Setup layout with styled separator
+        separator_window = Window(height=1, char="-", style="class:separator")
         self.layout = Layout(
-            HSplit([self.input_window, Window(height=1, char="-"), self.output_window])
+            HSplit([self.input_container, separator_window, self.output_window])
         )
 
         # Setup key bindings
@@ -135,7 +193,10 @@ class FuzzyFinder:
 
         # Initialize application
         self.app = Application(
-            layout=self.layout, key_bindings=self.bindings, full_screen=True
+            layout=self.layout,
+            key_bindings=self.bindings,
+            full_screen=True,
+            style=self.style,
         )
 
     def _setup_key_bindings(self):
@@ -170,6 +231,11 @@ class FuzzyFinder:
                 self.highlighted_index += 1
                 self._update_output_buffer()
 
+    def _display_prompt(self):
+        """Display the styled prompt text."""
+        # This is now handled by the FloatContainer in the layout
+        pass
+
     def _search(self, query: str) -> List[str]:
         """Perform fuzzy search based on the query."""
         choices = [self.config.get_display_value(item) for item in self.config.items]
@@ -193,10 +259,13 @@ class FuzzyFinder:
         formatted_lines = []
         for i, item in enumerate(self.current_results):
             if i == self.highlighted_index:
-                formatted_lines.append(HTML(f"<ansiblue>{item}</ansiblue>"))
+                formatted_lines.append(("class:highlighted", f"▶ {item}\n"))
             else:
-                formatted_lines.append(item)
-        self.output_buffer.text = "\n".join(str(line) for line in formatted_lines)
+                formatted_lines.append(("class:normal", f"  {item}\n"))
+        if formatted_lines:
+            self.output_control.text = formatted_lines
+        else:
+            self.output_control.text = ""
 
     def _on_text_changed(self, _):
         """Update output buffer when input changes."""
@@ -209,9 +278,24 @@ class FuzzyFinder:
 
     def run(self) -> Optional[Union[str, List[str]]]:
         """Run the fuzzy finder and return selected item(s)."""
+        # Display the prompt text
+        self._display_prompt()
+
         # Initialize output buffer with initial results
         self._on_text_changed(None)
-        result = self.app.run()
+        with suppress_stdout():
+            result = self.app.run()
         if self.config.multi_select:
             return self.selected_items  # Return list for multi-select
         return result  # Return single item or None
+
+
+@contextmanager
+def suppress_stdout():
+    with open(os.devnull, "w") as devnull:
+        old_stdout = sys.stdout
+        sys.stdout = devnull
+        try:
+            yield
+        finally:
+            sys.stdout = old_stdout

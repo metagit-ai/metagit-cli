@@ -1,0 +1,80 @@
+repo:
+  name: my-repo-name
+  description: Brief summary of the project
+  url: https://github.com/org/my-repo
+  visibility: public | private | internal
+  owner:
+    org: org-name
+    team: platform-team
+    contact: dev-team@example.com
+
+project:
+  type: application | library | microservice | cli | iac | config | data-science | plugin | template | docs | test | other
+  domain: web | mobile | devops | ml | database | security | finance | gaming | iot | agent | other
+  language:
+    primary: python
+    secondary: [bash, terraform]
+  framework: [django, fastapi]
+  package_managers: [pip, poetry]
+  build_tool: make | cmake | bazel | none
+  deploy_targets: [ecs, lambda, kubernetes]
+
+metadata:
+  tags: [ml, nlp, internal-tool, devops, infra, agentic, data-science, cli, website, other]
+  created_at: 2021-08-15
+  last_commit_at: 2025-06-18
+  default_branch: main
+  license: MIT | Apache-2.0 | proprietary
+  topics: [nlp, fastapi, containerized]
+  forked_from: null | https://github.com/upstream/original
+  archived: false
+  template: false
+  has_ci: true
+  has_tests: true
+  has_docs: true
+  has_docker: true
+  has_iac: true
+
+metrics:
+  stars: 15
+  forks: 3
+  open_issues: 2
+  pull_requests:
+    open: 1
+    merged_last_30d: 4
+  contributors: 6
+  commit_frequency: weekly | daily | monthly
+
+ci_cd:
+  platform: github-actions | gitlab | jenkins | circleci | none
+  pipelines: [test, lint, build, deploy]
+  status_badges: true
+
+dependencies:
+  external_services: [s3, postgres, stripe-api]
+  critical_libs: [torch, pandas]
+
+iac:
+  type: terraform | cloudformation | pulumi | none
+  environments:
+    - name: dev
+      cloud: aws
+      region: us-west-2
+      config_path: infra/dev
+    - name: prod
+      cloud: aws
+      region: us-east-1
+      config_path: infra/prod
+
+agentic:
+  reusable_components:
+    - name: embed_text
+      path: lib/embedding.py
+      description: Generates sentence embeddings using SentenceTransformers
+  entrypoints:
+    - name: main_app
+      file: app/main.py
+      function: run_app()
+  test_interface:
+    test_framework: pytest
+    test_coverage: 85%

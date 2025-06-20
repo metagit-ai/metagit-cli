@@ -1,7 +1,6 @@
 config:
   version: "0.1.0"
   description: "Configuration for metagit CLI"
-
   # Reserved for future use
   api_url: ""
   # Reserved for future use
@@ -25,7 +24,6 @@ config:
     # Default workspace path, should be added to .gitignore
     path: ./.metagit
     default_project: default
-
 
   profiles:
     # Profiles are used to define multiple configurations for different organizations
@@ -57,17 +55,3 @@ config:
           - 192.168.*
           - 10.0.*
           - 172.16.*
-
-# These are the equivalent of a tenant in a multi-tenant application
-# default boundaries are inherited from the global boundaries
-# profiles:
-#   default:
-#     name: "Personal"
-#     boundaries:
-#       - name: github
-#         values: []
-#       - name: jfrog
-#         values: []
-#       - name: gitlab
-#         values: []
-

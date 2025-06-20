@@ -1,7 +1,17 @@
 [project]
-name = "metagit-detect"
+name = "metagit-ai"
 version = "0.1.0"
-description = "MetaGit project detection agent"
+description = "Metagit-ai multi-repo management tool"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Zachary Loeber", email = "zloeber@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 requires-python = ">=3.12"
 dependencies = [
     "logging>=0.4.9.6",
@@ -13,7 +23,6 @@ dependencies = [
     "gitpython>=3.1.44",
     "rich>=14.0.0",
     "pyyaml>=6.0.2",
-    "crewai[tools]<=0.121.0",
     "pygithub>=2.6.1",
     "jsonschema>=4.24.0",
     "python-dotenv>=1.1.0",
@@ -21,13 +30,36 @@ dependencies = [
     "prompt-toolkit>=3.0.51",
 ]
 
+[project.optional-dependencies]
+standard = ["crewai[tools]"]
+test = ["pytest", "pytest-cov"]
+dev = ["ruff", "black", "isort", "mypy"]
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings"]
+lint = ["ruff", "black", "isort", "mypy"]
+format = ["black", "isort"]
+typecheck = ["mypy"]
+
+
+[project.scripts]
+metagit = "metagit.cli.main:main"
+
 [lint]
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
 ignore = ['W291', 'W292', 'W293', 'E501']
-exclude = ["app/**", "tools/**", ".venv"]
+exclude = [".venv"]
 
 [dependency-groups]
 dev = [
-    "hatch>=1.13.0",
+    "mypy>=1.16.1",
     "ruff>=0.11.11",
 ]
+
+[tool.setuptools.packages.find]
+where = ["metagit"]
+include = ["cli"]
+exclude = []
+namespaces = false
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

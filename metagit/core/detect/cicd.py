@@ -7,7 +7,7 @@ from typing import Any
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel
 
-# from src.utils.logging import LoggerConfig, UnifiedLogger
+# from src.metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 # Top-level logger instance for fallback
 # default_logger = UnifiedLogger(LoggerConfig()).get_logger()

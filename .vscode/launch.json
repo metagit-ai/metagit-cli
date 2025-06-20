@@ -18,6 +18,14 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Example console form prompt",
+      "type": "debugpy",
+      "module": "examples.prompt_user",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal"
     }
   ]
 }
