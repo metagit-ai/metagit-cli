@@ -7,7 +7,7 @@ logging class that does general logging via loguru and prints to the console via
 import json
 import logging
 import sys
-from typing import Any, Literal
+from typing import Any, Literal, Union
 
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -141,298 +141,387 @@ class UnifiedLogger:
 
     def set_level(
         self, level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"]
-    ) -> None:
+    ) -> Union[None, Exception]:
         """
         Set the logging level for all handlers.
         Args:
             level: The new logging level to set
         """
-        self.config.log_level = level
-        self.debug_mode = level == "DEBUG" or level == "TRACE"
+        try:
+            self.config.log_level = level
+            self.debug_mode = level == "DEBUG" or level == "TRACE"
 
-        # Update stdout handler
-        if self._stdout_handler_id is not None:
-            logger.remove(self._stdout_handler_id)
-            self._stdout_handler_id = logger.add(
-                sys.stdout,
-                level=level,
-                format=(
-                    "{message}"
-                    if self.config.json_logs or self.config.minimal_console
-                    else (
-                        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
-                        "<level>{level: <8}</level> | "
-                        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-                        "<level>{message}</level>"
-                    )
-                ),
-                backtrace=self.config.backtrace,
-                diagnose=self.config.diagnose,
-                serialize=self.config.json_logs,
-                enqueue=True,
-            )
-
-        # Update file handler if it exists
-        if self._file_handler_id is not None and self.config.log_to_file:
-            logger.remove(self._file_handler_id)
-            self._file_handler_id = logger.add(
-                self.config.log_file_path,
-                level=level,
-                format=(
-                    "{message}"
-                    if self.config.json_logs or self.config.minimal_console
-                    else (
-                        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
-                        "<level>{level: <8}</level> | "
-                        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-                        "<level>{message}</level>"
-                    )
-                ),
-                rotation=self.config.rotation,
-                retention=self.config.retention,
-                backtrace=self.config.backtrace,
-                diagnose=self.config.diagnose,
-                serialize=self.config.json_logs,
-                enqueue=True,
-            )
-
-    def _intercept_std_logging(self):
-        """Intercept standard logging module output to loguru."""
-
-        class InterceptHandler(logging.Handler):
-            def emit(self, record):
-                level = logger.level(record.levelname).name
-                frame, depth = logging.currentframe(), 2
-                while frame.f_code.co_filename == logging.__file__:
-                    frame = frame.f_back
-                    depth += 1
-                logger.opt(depth=depth, exception=record.exc_info).log(
-                    level, record.getMessage()
+            # Update stdout handler
+            if self._stdout_handler_id is not None:
+                logger.remove(self._stdout_handler_id)
+                self._stdout_handler_id = logger.add(
+                    sys.stdout,
+                    level=level,
+                    format=(
+                        "{message}"
+                        if self.config.json_logs or self.config.minimal_console
+                        else (
+                            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+                            "<level>{level: <8}</level> | "
+                            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+                            "<level>{message}</level>"
+                        )
+                    ),
+                    backtrace=self.config.backtrace,
+                    diagnose=self.config.diagnose,
+                    serialize=self.config.json_logs,
+                    enqueue=True,
                 )
 
-        logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+            # Update file handler if it exists
+            if self._file_handler_id is not None and self.config.log_to_file:
+                logger.remove(self._file_handler_id)
+                self._file_handler_id = logger.add(
+                    self.config.log_file_path,
+                    level=level,
+                    format=(
+                        "{message}"
+                        if self.config.json_logs or self.config.minimal_console
+                        else (
+                            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+                            "<level>{level: <8}</level> | "
+                            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+                            "<level>{message}</level>"
+                        )
+                    ),
+                    rotation=self.config.rotation,
+                    retention=self.config.retention,
+                    backtrace=self.config.backtrace,
+                    diagnose=self.config.diagnose,
+                    serialize=self.config.json_logs,
+                    enqueue=True,
+                )
+            return None
+        except Exception as e:
+            return e
 
-    def get_logger(self):
+    def _intercept_std_logging(self) -> Union[None, Exception]:
+        """Intercept standard logging module output to loguru."""
+        try:
+
+            class InterceptHandler(logging.Handler):
+                def emit(self, record: logging.LogRecord) -> None:
+                    try:
+                        level = logger.level(record.levelname).name
+                    except ValueError:
+                        level = record.levelno
+                    frame, depth = logging.currentframe(), 2
+                    while frame and frame.f_code.co_filename == logging.__file__:
+                        frame = frame.f_back
+                        depth += 1
+                    logger.opt(depth=depth, exception=record.exc_info).log(
+                        level, record.getMessage()
+                    )
+
+            logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+            return None
+        except Exception as e:
+            return e
+
+    def get_logger(self) -> Union[Any, Exception]:
         """Get the underlying loguru logger instance."""
-        return logger
+        try:
+            return logger
+        except Exception as e:
+            return e
 
-    def print_debug(self, message: str, title: str = "Debug Information") -> None:
+    def print_debug(
+        self, message: str, title: str = "Debug Information"
+    ) -> Union[None, Exception]:
         """Print debug messages with rich formatting."""
-        if self.debug_mode:
-            self._format_output(message, "debug", title)
-            logger.debug(message)
+        try:
+            if self.debug_mode:
+                self._format_output(message, "debug", title)
+                logger.debug(message)
+            return None
+        except Exception as e:
+            return e
 
     def print_agent_message(
         self, agent_name: str, message: str, style: str = "agent"
-    ) -> None:
+    ) -> Union[None, Exception]:
         """Print a message from an agent with rich formatting."""
-        self._format_output(message, style, agent_name)
-        logger.info(f"Agent {agent_name}: {message}")
+        try:
+            self._format_output(message, style, agent_name)
+            logger.info(f"Agent {agent_name}: {message}")
+            return None
+        except Exception as e:
+            return e
 
     def print_task_status(
-        self, task_name: str, status: str, details: str | None = None
-    ) -> None:
+        self, task_name: str, status: str, details: Union[str, None] = None
+    ) -> Union[None, Exception]:
         """Print task status information with rich formatting."""
-        content = f"{task_name}\nStatus: {status}"
-        if details:
-            content += f"\n\n{details}"
-        self._format_output(content, "task", "Task Update")
-        logger.info(
-            f"Task {task_name} - Status: {status}"
-            + (f" - {details}" if details else "")
-        )
+        try:
+            content = f"{task_name}\nStatus: {status}"
+            if details:
+                content += f"\n\n{details}"
+            self._format_output(content, "task", "Task Update")
+            logger.info(
+                f"Task {task_name} - Status: {status}"
+                + (f" - {details}" if details else "")
+            )
+            return None
+        except Exception as e:
+            return e
 
-    def print_crew_status(self, message: str, status_type: str = "info") -> None:
+    def print_crew_status(
+        self, message: str, status_type: str = "info"
+    ) -> Union[None, Exception]:
         """Print crew status messages with rich formatting."""
-        self._format_output(message, status_type, "Crew Status")
-        logger.info(f"Crew Status: {message}")
+        try:
+            self._format_output(message, status_type, "Crew Status")
+            logger.info(f"Crew Status: {message}")
+            return None
+        except Exception as e:
+            return e
 
-    def print_input(self, input_data: dict[str, Any]) -> None:
-        """Print formatted input data with rich formatting."""
-        if self.debug_mode:
-            content = json.dumps(input_data, indent=2)
-            self._format_output(content, "input", "Input Data")
-            logger.debug(f"Input Data: {json.dumps(input_data)}")
+    def print_input(self, input_data: dict[str, Any]) -> Union[None, Exception]:
+        """Print input data with rich formatting."""
+        try:
+            self._format_output(str(input_data), "input", "Input Data")
+            logger.info(f"Input: {input_data}")
+            return None
+        except Exception as e:
+            return e
 
-    def print_output(self, output_data: Any) -> None:
-        """Print formatted output data with rich formatting."""
-        content = (
-            json.dumps(output_data, indent=2)
-            if isinstance(output_data, dict)
-            else str(output_data)
-        )
-        self._format_output(content, "output", "Output")
-        logger.info(f"Output: {output_data}")
+    def print_output(self, output_data: Any) -> Union[None, Exception]:
+        """Print output data with rich formatting."""
+        try:
+            self._format_output(str(output_data), "output", "Output Data")
+            logger.info(f"Output: {output_data}")
+            return None
+        except Exception as e:
+            return e
 
-    def print_error(self, error_message: str) -> None:
+    def print_error(self, error_message: str) -> Union[None, Exception]:
         """Print error messages with rich formatting."""
-        self._format_output(error_message, "error", "Error")
-        logger.error(error_message)
+        try:
+            self._format_output(error_message, "error", "Error")
+            logger.error(error_message)
+            return None
+        except Exception as e:
+            return e
 
-    def print_success(self, message: str) -> None:
+    def print_success(self, message: str) -> Union[None, Exception]:
         """Print success messages with rich formatting."""
-        self._format_output(message, "success", "Success")
-        logger.info(f"Success: {message}")
+        try:
+            self._format_output(message, "success", "Success")
+            logger.info(message)
+            return None
+        except Exception as e:
+            return e
 
-    def print_info(self, message: str) -> None:
-        """Print general information messages with rich formatting."""
-        self._format_output(message, "info", "Information")
-        logger.info(message)
+    def print_info(self, message: str) -> Union[None, Exception]:
+        """Print informational messages with rich formatting."""
+        try:
+            self._format_output(message, "info", "Info")
+            logger.info(message)
+            return None
+        except Exception as e:
+            return e
 
-    def print_json(self, data: dict[str, Any], title: str = "JSON Data") -> None:
-        """Print formatted JSON data with rich formatting."""
-        content = json.dumps(data, indent=2)
-        self._format_output(content, "json", title)
-        logger.debug(f"{title}: {json.dumps(data)}")
+    def print_json(
+        self, data: dict[str, Any], title: str = "JSON Data"
+    ) -> Union[None, Exception]:
+        """Print JSON data with rich formatting and syntax highlighting."""
+        try:
+            json_str = json.dumps(data, indent=2)
+            self._format_output(json_str, "json", title)
+            logger.info(json_str)
+            return None
+        except Exception as e:
+            return e
 
     def print_debug_json(
         self, data: dict[str, Any], title: str = "Debug JSON Data"
-    ) -> None:
-        """
-        Print JSON data with debug formatting, only showing output in debug mode.
-        Uses print_json for the actual output formatting.
+    ) -> Union[None, Exception]:
+        """Print JSON data only if in debug mode."""
+        try:
+            if self.debug_mode:
+                self.print_json(data, title)
+            return None
+        except Exception as e:
+            return e
 
-        Args:
-            data: Dictionary containing the JSON data to print
-            title: Optional title for the debug panel
-        """
-        if self.debug_mode:
-            self.print_json(data, title)
-
-    # Direct logging methods
-    def debug(self, message: str) -> None:
+    # Direct loguru methods
+    def debug(self, message: str) -> Union[None, Exception]:
         """Log a debug message."""
-        logger.debug(message)
+        try:
+            logger.debug(message)
+            return None
+        except Exception as e:
+            return e
 
-    def info(self, message: str) -> None:
+    def info(self, message: str) -> Union[None, Exception]:
         """Log an info message."""
-        logger.info(message)
+        try:
+            logger.info(message)
+            return None
+        except Exception as e:
+            return e
 
-    def warning(self, message: str) -> None:
+    def warning(self, message: str) -> Union[None, Exception]:
         """Log a warning message."""
-        logger.warning(message)
+        try:
+            logger.warning(message)
+            return None
+        except Exception as e:
+            return e
 
-    def error(self, message: str) -> None:
+    def error(self, message: str) -> Union[None, Exception]:
         """Log an error message."""
-        logger.error(message)
+        try:
+            logger.error(message)
+            return None
+        except Exception as e:
+            return e
 
-    def critical(self, message: str) -> None:
+    def critical(self, message: str) -> Union[None, Exception]:
         """Log a critical message."""
-        logger.critical(message)
+        try:
+            logger.critical(message)
+            return None
+        except Exception as e:
+            return e
 
-    def exception(self, message: str) -> None:
-        """Log an exception message with traceback."""
-        logger.exception(message)
+    def exception(self, message: str) -> Union[None, Exception]:
+        """Log an exception with traceback."""
+        try:
+            logger.exception(message)
+            return None
+        except Exception as e:
+            return e
 
     def _format_output(
-        self, message: str, style: str, title: str | None = None
-    ) -> None:
+        self, message: str, style: str, title: Union[str, None] = None
+    ) -> Union[None, Exception]:
         """
-        Internal method to format output based on terse mode.
-
+        Helper to format and print output using rich console.
         Args:
-            message: The message to display
-            style: The style to use for formatting
-            title: Optional title for the output
+            message (str): The message to print.
+            style (str): The rich style to use.
+            title (str, optional): The panel title. Defaults to None.
         """
-        if not self.console:
-            return
+        try:
+            if self.console and not self.config.minimal_console:
+                if self.config.terse:
+                    self.console.print(f"[{style}]{message}[/{style}]")
+                else:
+                    panel_title = f"[{style}]{title}[/{style}]" if title else None
+                    self.console.print(
+                        Panel(
+                            f"[{style}]{message}[/{style}]",
+                            title=panel_title,
+                            expand=False,
+                        )
+                    )
+            elif not self.config.json_logs:
+                # Fallback for non-rich, non-json logging
+                print(f"{title}: {message}" if title else message)
+            return None
+        except Exception as e:
+            return e
 
-        if self.config.terse:
-            # In terse mode, just print the message with style
-            if title:
-                self.console.print(f"[{style}]{title}:[/{style}] {message}")
+    def header(self, text: str, console: bool = None) -> Union[None, Exception]:
+        """Prints a header"""
+        try:
+            if console is None:
+                console = self.config.use_rich_console
+            if console:
+                self.console.rule(f"[bold green]{text}")
             else:
-                self.console.print(f"[{style}]{message}[/{style}]")
-        elif title:
-            self.console.print(
-                Panel(
-                    message,
-                    title=f"[{style}]{title}[/{style}]",
-                    border_style=style,
+                print(f"### {text} ###")
+            return None
+        except Exception as e:
+            return e
+
+    def param(
+        self, text: str, value: str, status: str, console: bool = True
+    ) -> Union[None, Exception]:
+        """Prints a parameter line"""
+        try:
+            if console:
+                self.console.print(
+                    f"[dim] {text} [/dim][bold cyan]{value}[/bold cyan] [bold green]({status})[/bold green]"
                 )
-            )
-        else:
-            self.console.print(
-                Panel(
-                    message,
-                    border_style=style,
+            else:
+                print(f"{text} {value} ({status})")
+            return None
+        except Exception as e:
+            return e
+
+    def config_element(
+        self,
+        name: str = "",
+        value: str = "",
+        separator: str = ": ",
+        console: bool = True,
+    ) -> Union[None, Exception]:
+        """Prints a config element"""
+        try:
+            if console:
+                self.console.print(
+                    f"[bold white]  {name}[/bold white]{separator}{value}"
                 )
-            )
+            else:
+                print(f"  {name}{separator}{value}")
+            return None
+        except Exception as e:
+            return e
 
-    def header(self, text, console=None):
-        """
-        Add a header log
-        """
-        if console is None:
-            console = self.console
+    def footer(self, text: str, console: bool = True) -> Union[None, Exception]:
+        """Prints a footer"""
+        try:
+            if console:
+                self.console.rule(f"[bold green]{text}")
+            else:
+                print(f"### {text} ###")
+            return None
+        except Exception as e:
+            return e
 
-        subject = f"======== {text} ========".upper()
-        border = "=" * len(subject)
+    def proc_out(self, text: str, console: bool = True) -> Union[None, Exception]:
+        """Prints a process output"""
+        try:
+            if console:
+                self.console.print(f"[dim]{text}[/dim]")
+            else:
+                print(text)
+            return None
+        except Exception as e:
+            return e
 
-        if console:
-            self.line()
-            self.console.print(border, style="white")
-            self.console.print(subject, style="white")
-            self.console.print(border, style="white")
-            self.line()
+    def line(self, console: bool = True) -> Union[None, Exception]:
+        """Prints a line"""
+        try:
+            if console:
+                self.console.print("")
+            else:
+                print("")
+            return None
+        except Exception as e:
+            return e
 
-    def param(self, text, value, status, console=True):
-        """
-        Add a parameter/setting log
-        """
-        if value and console:
-            self.header("SETTING " + text)
-            self.status(status)
-        else:
-            self.debug(f"{text}: {value} - {status}")
-
-    def config_element(self, name="", value="", separator=": ", console=True):
-        """
-        Display a configuration element
-        """
-        log_output = f"{name!s}{separator!s}{value!s}"
-        if console:
-            self.console.print(str(name), style="cyan bold", end="")
-            self.console.print(str(separator), style="magenta", end="")
-            self.console.print(str(value), style="white")
-        else:
-            self.debug(log_output)
-
-    def footer(self, text, console=True):
-        """
-        Add a footer log
-        """
-        if console:
-            self.info(text.upper())
-            self.line()
-        else:
-            self.debug(text)
-
-    def proc_out(self, text, console=True):
-        """
-        Process output
-        """
-        if console:
-            self.console.print(text, style="dim")
-        else:
-            self.debug(text)
-
-    def line(self, console=True):
-        """
-        Add a blank line
-        """
-        if console:
-            self.console.print("")
-        else:
-            self.debug("")
-
-    def echo(self, text, color="", dim=False, console=True):
-        """
-        Generic echo to screen (replaces print/pprint)
-        """
-        if console:
-            style = f"{color} {'dim' if dim else ''}"
-            self.console.print(text, style=style)
-        else:
-            self.debug(text)
+    def echo(
+        self, text: str, color: str = "", dim: bool = False, console: bool = True
+    ) -> Union[None, Exception]:
+        """Prints a text"""
+        try:
+            if console:
+                if color:
+                    self.console.print(f"[{color}]{text}[/{color}]")
+                elif dim:
+                    self.console.print(f"[dim]{text}[/dim]")
+                else:
+                    self.console.print(text)
+            else:
+                print(text)
+            return None
+        except Exception as e:
+            return e

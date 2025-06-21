@@ -1,26 +1,34 @@
 """Tool for asking human input."""
 
 from collections.abc import Callable
+from typing import Union
 
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
 
-def _print_func(text: str) -> None:
-    print("\n")
-    print(text)
+def _print_func(text: str) -> Union[None, Exception]:
+    try:
+        print("\n")
+        print(text)
+        return None
+    except Exception as e:
+        return e
 
 
-def input_func() -> str:
-    print("Insert your text. Press Ctrl-D (or Ctrl-Z on Windows) to end.")
-    contents = []
-    while True:
-        try:
-            line = input()
-        except EOFError:
-            break
-        contents.append(line)
-    return "\n".join(contents)
+def input_func() -> Union[str, Exception]:
+    try:
+        print("Insert your text. Press Ctrl-D (or Ctrl-Z on Windows) to end.")
+        contents = []
+        while True:
+            try:
+                line = input()
+            except EOFError:
+                break
+            contents.append(line)
+        return "\n".join(contents)
+    except Exception as e:
+        return e
 
 
 class MyToolInput(BaseModel):
@@ -42,7 +50,12 @@ class HumanTool(BaseTool):
     prompt_func: Callable[[str], None] = _print_func
     input_func: Callable[[], str] = input_func
 
-    def _run(self, query: str) -> str:
+    def _run(self, query: str) -> Union[str, Exception]:
         """Use the Multi Line Human input tool."""
-        self.prompt_func(query)
-        return self.input_func()
+        try:
+            prompt_result = self.prompt_func(query)
+            if isinstance(prompt_result, Exception):
+                return prompt_result
+            return self.input_func()
+        except Exception as e:
+            return e

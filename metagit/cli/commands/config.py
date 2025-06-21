@@ -19,38 +19,48 @@ from metagit.core.utils.yaml_class import yaml
     default=".metagit.yml",
 )
 @click.pass_context
-def config(ctx, config_path: str):
+def config(ctx: click.Context, config_path: str) -> None:
     """Configuration subcommands"""
-    # If no subcommand is provided, show help
-    if ctx.invoked_subcommand is None:
-        click.echo(ctx.get_help())
-        return
-
-    ctx.obj["config_path"] = config_path
+    try:
+        # If no subcommand is provided, show help
+        if ctx.invoked_subcommand is None:
+            click.echo(ctx.get_help())
+            return
+        ctx.obj["config_path"] = config_path
+    except Exception as e:
+        logger = ctx.obj.get("logger")
+        if logger:
+            logger.error(f"An error occurred in the config command: {e}")
+        else:
+            click.echo(f"An error occurred: {e}", err=True)
+        ctx.abort()
 
 
 @config.command("show")
 @click.pass_context
-def config_show(ctx):
+def config_show(ctx: click.Context) -> None:
     """Show metagit configuration"""
     logger = ctx.obj["logger"]
-    config_path = ctx.obj["config_path"]
     try:
-        config = ConfigManager(config_path=config_path).load_config()
+        config_path = ctx.obj["config_path"]
+        config_manager = ConfigManager(config_path=config_path)
+        config_result = config_manager.load_config()
+        if isinstance(config_result, Exception):
+            raise config_result
+
+        yaml.Dumper.ignore_aliases = lambda *args: True
+        output = yaml.dump(
+            config_result.model_dump(exclude_unset=True, exclude_none=True),
+            default_flow_style=False,
+            sort_keys=False,
+            indent=2,
+            line_break=True,
+        )
+        logger.echo(output)
     except Exception as e:
         logger.error(f"Failed to load metagit configuration file: {e}")
         logger.debug(f"Error: {e}")
-        sys.exit(1)
-
-    yaml.Dumper.ignore_aliases = lambda *args: True
-    output = yaml.dump(
-        config.model_dump(),
-        default_flow_style=False,
-        sort_keys=False,
-        indent=2,
-        line_break=True,
-    )
-    logger.echo(output)
+        ctx.abort()
 
 
 @config.command("create")
@@ -77,39 +87,53 @@ def config_show(ctx):
 )
 @click.pass_context
 def config_create(
-    ctx, output_path: str, name: str, description: str, url: str, kind: str
-):
+    ctx: click.Context,
+    output_path: str,
+    name: str,
+    description: str,
+    url: str,
+    kind: str,
+) -> None:
     """Create default application config"""
     logger = ctx.obj["logger"]
-    config = ConfigManager().create_config(
-        name=name, description=description, url=url, kind=kind
-    )
-    yaml.Dumper.ignore_aliases = lambda *args: True
-    output = yaml.dump(
-        config.model_dump(exclude_unset=True, exclude_none=True),
-        default_flow_style=False,
-        sort_keys=False,
-        indent=2,
-        line_break=True,
-    )
-    if output_path is None:
-        logger.echo(output)
-    else:
-        with open(output_path, "w", encoding="utf-8") as f:
-            yaml.dump(output, f)
+    try:
+        config_manager = ConfigManager()
+        config_result = config_manager.create_config(
+            name=name, description=description, url=url, kind=kind
+        )
+        if isinstance(config_result, Exception):
+            raise config_result
+        yaml.Dumper.ignore_aliases = lambda *args: True
+        output = yaml.dump(
+            config_result.model_dump(exclude_unset=True, exclude_none=True),
+            default_flow_style=False,
+            sort_keys=False,
+            indent=2,
+            line_break=True,
+        )
+        if output_path is None:
+            logger.echo(output)
+        else:
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(output)
+    except Exception as e:
+        logger.error(f"Failed to create config: {e}")
+        ctx.abort()
 
 
 @config.command("validate")
 @click.pass_context
-def config_validate(ctx):
+def config_validate(ctx: click.Context) -> None:
     """Validate metagit configuration"""
     logger = ctx.obj["logger"]
-    config_path = ctx.obj["config_path"]
     try:
-        _ = ConfigManager(config_path=config_path).load_config()
+        config_path = ctx.obj["config_path"]
+        config_manager = ConfigManager(config_path=config_path)
+        result = config_manager.load_config()
+        if isinstance(result, Exception):
+            raise result
+        logger.echo("Configuration is valid")
     except Exception as e:
         logger.error(f"Failed to load metagit configuration file: {e}")
         logger.debug(f"Error: {e}")
-        sys.exit(1)
-
-    logger.echo("Configuration is valid")
+        ctx.abort()

@@ -48,7 +48,7 @@ class UserPrompt:
         model_class: Type[T],
         existing_data: Optional[Dict[str, Any]] = None,
         title: str = None,
-    ) -> T:
+    ) -> Union[T, Exception]:
         """
         Prompt the user for all required fields of a Pydantic model.
 
@@ -62,81 +62,95 @@ class UserPrompt:
         Raises:
             ValueError: If the model_class is not a valid Pydantic model
         """
-        if not issubclass(model_class, BaseModel):
-            raise ValueError(f"{model_class} is not a valid Pydantic model")
+        try:
+            if not issubclass(model_class, BaseModel):
+                return ValueError(f"{model_class} is not a valid Pydantic model")
 
-        existing_data = existing_data or {}
-        field_data = {}
-        prompt_instance = UserPrompt()
+            existing_data = existing_data or {}
+            field_data = {}
+            prompt_instance = UserPrompt()
 
-        # Get model fields
-        model_fields = model_class.model_fields
+            # Get model fields
+            model_fields = model_class.model_fields
 
-        if title:
-            # Print title
-            title_text = FormattedText([("class:title", f"\n=== {title} ===\n")])
-            print_formatted_text(title_text)
+            if title:
+                # Print title
+                title_text = FormattedText([("class:title", f"\n=== {title} ===\n")])
+                print_formatted_text(title_text)
 
-        for field_name, field_info in model_fields.items():
-            # Skip if field already has a value
-            if field_name in existing_data:
-                field_data[field_name] = existing_data[field_name]
-                success_text = FormattedText(
-                    [
-                        ("class:success", f"✓ {field_name}: "),
-                        ("class:prompt", f"{existing_data[field_name]} (pre-filled)"),
-                    ]
-                )
-                print_formatted_text(success_text)
-                continue
-
-            # Check if field is required
-            is_required = field_info.is_required()
-
-            if is_required:
-                value = prompt_instance._prompt_for_field(field_name, field_info)
-                field_data[field_name] = value
-            else:
-                # For optional fields, ask if user wants to provide a value
-                while True:
-                    optional_text = FormattedText(
+            for field_name, field_info in model_fields.items():
+                # Skip if field already has a value
+                if field_name in existing_data:
+                    field_data[field_name] = existing_data[field_name]
+                    success_text = FormattedText(
                         [
+                            ("class:success", f"✓ {field_name}: "),
                             (
-                                "class:optional",
-                                f"\n{field_name} (optional) - Would you like to provide a value? (y/n): ",
-                            )
+                                "class:prompt",
+                                f"{existing_data[field_name]} (pre-filled)",
+                            ),
                         ]
                     )
-                    response = (
-                        prompt_instance.session.prompt(optional_text).strip().lower()
-                    )
-                    if response in ["y", "yes"]:
-                        value = prompt_instance._prompt_for_field(
-                            field_name, field_info
+                    print_formatted_text(success_text)
+                    continue
+
+                # Check if field is required
+                is_required = field_info.is_required()
+
+                if is_required:
+                    value = prompt_instance._prompt_for_field(field_name, field_info)
+                    if isinstance(value, Exception):
+                        return value
+                    field_data[field_name] = value
+                else:
+                    # For optional fields, ask if user wants to provide a value
+                    while True:
+                        optional_text = FormattedText(
+                            [
+                                (
+                                    "class:optional",
+                                    f"\n{field_name} (optional) - Would you like to provide a value? (y/n): ",
+                                )
+                            ]
                         )
-                        field_data[field_name] = value
-                        break
-                    elif response in ["n", "no"]:
-                        break
-                    else:
-                        print_formatted_text(
-                            FormattedText(
-                                [("class:error", "Please enter 'y' or 'n'\n")]
+                        response = (
+                            prompt_instance.session.prompt(optional_text)
+                            .strip()
+                            .lower()
+                        )
+                        if response in ["y", "yes"]:
+                            value = prompt_instance._prompt_for_field(
+                                field_name, field_info
                             )
-                        )
+                            if isinstance(value, Exception):
+                                return value
+                            field_data[field_name] = value
+                            break
+                        elif response in ["n", "no"]:
+                            break
+                        else:
+                            print_formatted_text(
+                                FormattedText(
+                                    [("class:error", "Please enter 'y' or 'n'\n")]
+                                )
+                            )
 
-        # Create and validate the model instance
-        try:
-            return model_class(**field_data)
-        except ValidationError as e:
-            error_text = FormattedText(
-                [("class:error", f"\n❌ Validation error: {e}\n")]
-            )
-            print_formatted_text(error_text)
-            # Retry with corrected data
-            return UserPrompt.prompt_for_model(model_class, field_data)
+            # Create and validate the model instance
+            try:
+                return model_class(**field_data)
+            except ValidationError as e:
+                error_text = FormattedText(
+                    [("class:error", f"\n❌ Validation error: {e}\n")]
+                )
+                print_formatted_text(error_text)
+                # Retry with corrected data
+                return UserPrompt.prompt_for_model(model_class, field_data)
+        except Exception as e:
+            return e
 
-    def _prompt_for_field(self, field_name: str, field_info: Any) -> Any:
+    def _prompt_for_field(
+        self, field_name: str, field_info: Any
+    ) -> Union[Any, Exception]:
         """
         Prompt the user for a specific field value.
 
@@ -147,86 +161,98 @@ class UserPrompt:
         Returns:
             The user input value, converted to appropriate type
         """
-        field_type = field_info.annotation
-        description = field_info.description or ""
-
-        # Get the actual default value for Pydantic v2
         try:
-            default_value = field_info.get_default()
-            # Filter out PydanticUndefined
-            if str(default_value) == "PydanticUndefined":
-                default_value = None
-        except Exception:
-            default_value = None
+            field_type = field_info.annotation
+            description = field_info.description or ""
 
-        # Build formatted prompt message
-        prompt_parts = [("class:field", f"\n{field_name}")]
-
-        if description:
-            prompt_parts.extend(
-                [
-                    ("class:prompt", " ("),
-                    ("class:description", description),
-                    ("class:prompt", ")"),
-                ]
-            )
-
-        if default_value is not None and default_value != ...:
-            prompt_parts.extend(
-                [
-                    ("class:prompt", " [default: "),
-                    ("class:default", str(default_value)),
-                    ("class:prompt", ")"),
-                ]
-            )
-
-        prompt_parts.append(("class:prompt", ": "))
-
-        prompt_text = FormattedText(prompt_parts)
-
-        # Create validator for the field type
-        validator = self._create_field_validator(field_type, field_info, field_name)
-
-        # Get user input with validation
-        while True:
+            # Get the actual default value for Pydantic v2
             try:
-                user_input = self.session.prompt(
-                    prompt_text, validator=validator
-                ).strip()
+                default_value = field_info.get_default()
+                # Filter out PydanticUndefined
+                if str(default_value) == "PydanticUndefined":
+                    default_value = None
+            except Exception:
+                default_value = None
 
-                # Handle default value
-                if (
-                    not user_input
-                    and default_value is not None
-                    and default_value != ...
-                ):
-                    return default_value
+            # Build formatted prompt message
+            prompt_parts = [("class:field", f"\n{field_name}")]
 
-                # Handle empty input for required fields
-                if not user_input and field_info.is_required():
-                    error_text = FormattedText(
-                        [
-                            (
-                                "class:error",
-                                "❌ This field is required. Please provide a value.\n",
-                            )
-                        ]
-                    )
+            if description:
+                prompt_parts.extend(
+                    [
+                        ("class:prompt", " ("),
+                        ("class:description", description),
+                        ("class:prompt", ")"),
+                    ]
+                )
+
+            if default_value is not None and default_value != ...:
+                prompt_parts.extend(
+                    [
+                        ("class:prompt", " [default: "),
+                        ("class:default", str(default_value)),
+                        ("class:prompt", ")"),
+                    ]
+                )
+
+            prompt_parts.append(("class:prompt", ": "))
+
+            prompt_text = FormattedText(prompt_parts)
+
+            # Create validator for the field type
+            validator = self._create_field_validator(field_type, field_info, field_name)
+            if isinstance(validator, Exception):
+                return validator
+
+            # Get user input with validation
+            while True:
+                try:
+                    user_input = self.session.prompt(
+                        prompt_text, validator=validator
+                    ).strip()
+
+                    # Handle default value
+                    if (
+                        not user_input
+                        and default_value is not None
+                        and default_value != ...
+                    ):
+                        return default_value
+
+                    # Handle empty input for required fields
+                    if not user_input and field_info.is_required():
+                        error_text = FormattedText(
+                            [
+                                (
+                                    "class:error",
+                                    "❌ This field is required. Please provide a value.\n",
+                                )
+                            ]
+                        )
+                        print_formatted_text(error_text)
+                        continue
+
+                    # Convert and return the input
+                    converted_value = self._convert_input(user_input, field_type)
+                    if isinstance(converted_value, Exception):
+                        # This should be caught by the validator, but as a fallback
+                        error_text = FormattedText(
+                            [("class:error", f"❌ {converted_value}\n")]
+                        )
+                        print_formatted_text(error_text)
+                        continue
+                    return converted_value
+
+                except PTValidationError as e:
+                    error_text = FormattedText([("class:error", f"❌ {e.message}\n")])
                     print_formatted_text(error_text)
                     continue
-
-                # Convert and return the input
-                converted_value = self._convert_input(user_input, field_type)
-                return converted_value
-
-            except PTValidationError as e:
-                error_text = FormattedText([("class:error", f"❌ {e.message}\n")])
-                print_formatted_text(error_text)
-                continue
+        except Exception as e:
+            return e
 
     def _create_field_validator(
         self, field_type: Any, field_info: Any = None, field_name: str = None
-    ) -> Optional[Validator]:
+    ) -> Union[Optional[Validator], Exception]:
         """
         Create a validator for the given field type.
 
@@ -238,124 +264,115 @@ class UserPrompt:
         Returns:
             A prompt_toolkit Validator instance or None
         """
+        try:
 
-        def validate_type(text: str) -> bool:
-            if not text:
-                return True  # Allow empty input for optional fields
+            def validate_type(text: str) -> bool:
+                if not text:
+                    return True  # Allow empty input for optional fields
 
-            # Check if this is a boolean field
-            is_bool_field = False
+                # Check if this is a boolean field
+                is_bool_field = False
 
-            # Method 1: Check if field_info.annotation is bool
-            if field_info and hasattr(field_info, "annotation"):
-                is_bool_field = field_info.annotation == bool
+                # Method 1: Check if field_info.annotation is bool
+                if field_info and hasattr(field_info, "annotation"):
+                    if (
+                        hasattr(field_info.annotation, "__origin__")
+                        and field_info.annotation.__origin__ is Union
+                    ):
+                        # Handle Optional[bool], which is Union[bool, None]
+                        if bool in field_info.annotation.__args__:
+                            is_bool_field = True
+                    elif field_info.annotation is bool:
+                        is_bool_field = True
 
-            # Method 2: Check if field_type is bool
-            elif field_type == bool:
-                is_bool_field = True
+                if is_bool_field:
+                    if text.strip().lower() in ["true", "false", "y", "n", "yes", "no"]:
+                        return True
+                    else:
+                        raise PTValidationError(
+                            message="Please enter 'true', 'false', 'y', or 'n'"
+                        )
 
-            # Method 3: Check if field name suggests boolean
-            elif field_name and field_name.startswith(
-                ("is_", "has_", "can_", "should_", "will_")
-            ):
-                is_bool_field = True
+                # For other types, try to convert
+                try:
+                    self._convert_input(text, field_type)
+                    return True
+                except (ValueError, TypeError) as e:
+                    raise PTValidationError(message=f"Invalid value: {e}")
 
-            if is_bool_field:
-                return text.lower() in [
-                    "true",
-                    "false",
-                    "yes",
-                    "no",
-                    "y",
-                    "n",
-                    "1",
-                    "0",
-                ]
-            try:
-                self._convert_input(text, field_type)
-                return True
-            except (ValueError, TypeError):
-                return False
-
-        return Validator.from_callable(
-            validate_type,
-            error_message=f"Invalid input for type {field_type}",
-            move_cursor_to_end=True,
-        )
+            return Validator.from_callable(validate_type)
+        except Exception as e:
+            return e
 
     @staticmethod
-    def _convert_input(user_input: str, target_type: Any) -> Any:
+    def _convert_input(user_input: str, target_type: Any) -> Union[Any, Exception]:
         """
-        Convert user input string to the target type.
+        Convert user input to the target type, handling various types like lists and JSON.
 
         Args:
             user_input: Raw user input string
             target_type: Target type to convert to
 
         Returns:
-            Converted value of the target type
+            The converted value
         """
-        if not user_input:
-            return None
+        try:
+            # Handle Optional types
+            if hasattr(target_type, "__origin__") and target_type.__origin__ is Union:
+                # Get the non-None type from Optional[T] or Union[T, None]
+                args = [arg for arg in target_type.__args__ if arg is not type(None)]
+                if len(args) == 1:
+                    target_type = args[0]
+                else:
+                    # For complex unions, we can't reliably convert, so just return string
+                    return user_input
 
-        # Handle common types
-        if target_type == str:
-            return user_input
-
-        elif target_type == int:
-            return int(user_input)
-
-        elif target_type == float:
-            return float(user_input)
-
-        elif target_type == bool:
-            return user_input.lower() in ["true", "yes", "y", "1"]
-
-        elif target_type == list:
-            # Try to parse as JSON list, otherwise split by comma
-            try:
-                return json.loads(user_input)
-            except json.JSONDecodeError:
-                return [item.strip() for item in user_input.split(",") if item.strip()]
-
-        elif target_type == dict:
-            # Try to parse as JSON dict
-            return json.loads(user_input)
-
-        elif hasattr(target_type, "__origin__") and target_type.__origin__ is Union:
-            # Handle Union types (e.g., Optional[str])
-            # Try each type in the union
-            for union_type in target_type.__args__:
-                if union_type == type(None):  # NoneType
-                    continue
-                try:
-                    return UserPrompt._convert_input(user_input, union_type)
-                except (ValueError, TypeError):
-                    continue
-            raise ValueError(
-                f"Could not convert '{user_input}' to any of the union types"
-            )
-
-        elif hasattr(target_type, "__origin__") and target_type.__origin__ is list:
-            # Handle List[T] types
-            item_type = target_type.__args__[0]
-            try:
-                parsed_list = json.loads(user_input)
-                return [
-                    UserPrompt._convert_input(str(item), item_type)
-                    for item in parsed_list
+            # Handle lists
+            if hasattr(target_type, "__origin__") and target_type.__origin__ in (
+                list,
+                List,
+            ):
+                item_type = (
+                    target_type.__args__[0] if target_type.__args__ else str
+                )  # Default to list of strings
+                # Split by comma and strip whitespace
+                items = [item.strip() for item in user_input.split(",")]
+                # Convert each item to the target type
+                converted_list = [
+                    UserPrompt._convert_input(item, item_type) for item in items
                 ]
-            except json.JSONDecodeError:
-                # Split by comma and convert each item
-                items = [item.strip() for item in user_input.split(",") if item.strip()]
-                return [UserPrompt._convert_input(item, item_type) for item in items]
+                exception_items = [
+                    item for item in converted_list if isinstance(item, Exception)
+                ]
+                if exception_items:
+                    return exception_items[0]
+                return converted_list
 
-        else:
-            # For custom types, try to construct directly
+            # Handle JSON/Dict
+            if user_input.startswith("{") and user_input.endswith("}"):
+                try:
+                    return json.loads(user_input)
+                except json.JSONDecodeError:
+                    raise ValueError("Invalid JSON format")
+
+            # Handle boolean conversion
+            if target_type is bool:
+                if user_input.lower() in ["true", "y", "yes"]:
+                    return True
+                elif user_input.lower() in ["false", "n", "no"]:
+                    return False
+                else:
+                    raise ValueError(f"Cannot convert '{user_input}' to boolean")
+
+            # Default conversion
             try:
                 return target_type(user_input)
             except (ValueError, TypeError):
-                raise ValueError(f"Cannot convert '{user_input}' to type {target_type}")
+                raise ValueError(
+                    f"Cannot convert '{user_input}' to type {target_type.__name__}"
+                )
+        except Exception as e:
+            return e
 
     @staticmethod
     def prompt_for_single_field(
@@ -363,7 +380,7 @@ class UserPrompt:
         field_type: Type[Any],
         description: str = "",
         default: Any = None,
-    ) -> Any:
+    ) -> Union[Any, Exception]:
         """
         Prompt the user for a single field value.
 
@@ -376,54 +393,28 @@ class UserPrompt:
         Returns:
             The user input value, converted to the specified type
         """
-        prompt_instance = UserPrompt()
+        try:
+            prompt_instance = UserPrompt()
+            field_info = {
+                "annotation": field_type,
+                "description": description,
+                "default": default,
+            }
+            # Mock field_info object for _prompt_for_field
+            from types import SimpleNamespace
 
-        # Build formatted prompt message
-        prompt_parts = [("class:field", f"\n{field_name}")]
-
-        if description:
-            prompt_parts.extend(
-                [
-                    ("class:prompt", " ("),
-                    ("class:description", description),
-                    ("class:prompt", ")"),
-                ]
+            mock_field_info = SimpleNamespace(
+                annotation=field_type,
+                description=description,
+                is_required=lambda: default is None,
+                get_default=lambda: default,
             )
-
-        if default is not None and default != ...:
-            prompt_parts.extend(
-                [
-                    ("class:prompt", " [default: "),
-                    ("class:default", str(default)),
-                    ("class:prompt", ")"),
-                ]
-            )
-
-        prompt_parts.append(("class:prompt", ": "))
-
-        prompt_text = FormattedText(prompt_parts)
-        validator = prompt_instance._create_field_validator(
-            field_type, None, field_name
-        )
-
-        while True:
-            try:
-                user_input = prompt_instance.session.prompt(
-                    prompt_text, validator=validator
-                ).strip()
-
-                if not user_input and default is not None and default != ...:
-                    return default
-
-                return prompt_instance._convert_input(user_input, field_type)
-
-            except PTValidationError as e:
-                error_text = FormattedText([("class:error", f"❌ {e.message}\n")])
-                print_formatted_text(error_text)
-                continue
+            return prompt_instance._prompt_for_field(field_name, mock_field_info)
+        except Exception as e:
+            return e
 
     @staticmethod
-    def confirm_action(message: str = "Continue?") -> bool:
+    def confirm_action(message: str = "Continue?") -> Union[bool, Exception]:
         """
         Prompt the user for a yes/no confirmation.
 
@@ -431,20 +422,22 @@ class UserPrompt:
             message: The confirmation message
 
         Returns:
-            True if user confirms, False otherwise
+            bool: True if user confirms, False otherwise
         """
-        prompt_instance = UserPrompt()
+        try:
+            session = PromptSession(style=PROMPT_STYLE)
+            prompt_text = FormattedText([("class:field", f"\n{message} (y/n): ")])
 
-        while True:
-            confirm_text = FormattedText([("class:prompt", f"\n{message} (y/n): ")])
-            response = prompt_instance.session.prompt(confirm_text).strip().lower()
-
-            if response in ["y", "yes"]:
-                return True
-            elif response in ["n", "no"]:
-                return False
-            else:
-                error_text = FormattedText(
-                    [("class:error", "Please enter 'y' or 'n'\n")]
-                )
-                print_formatted_text(error_text)
+            while True:
+                response = session.prompt(prompt_text).strip().lower()
+                if response in ["y", "yes"]:
+                    return True
+                elif response in ["n", "no"]:
+                    return False
+                else:
+                    error_text = FormattedText(
+                        [("class:error", "❌ Please enter 'y' or 'n'.\n")]
+                    )
+                    print_formatted_text(error_text)
+        except Exception as e:
+            return e

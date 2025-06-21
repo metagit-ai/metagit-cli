@@ -1,0 +1,9 @@
+site_name: Metagit-AI Documentation
+theme:
+  name: material
+nav:
+  - 'index.md'
+  - 'Terminology': 'terminology.md'
+  - 'CLI Reference': 'cli_reference.md'
+markdown_extensions:
+  - mkdocs-click 

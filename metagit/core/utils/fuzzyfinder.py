@@ -1,8 +1,7 @@
 import os
 import sys
-import uuid
 from contextlib import contextmanager
-from typing import Any, List, Optional, Union
+from typing import Any, Callable, Dict, Generator, List, Optional, Union
 
 from prompt_toolkit import Application, print_formatted_text
 from prompt_toolkit.buffer import Buffer
@@ -55,6 +54,7 @@ class FuzzyFinderConfig(BaseModel):
     preview_field: Optional[str] = Field(
         None, description="Field name to use for preview if items are objects."
     )
+    sort_items: bool = Field(True, description="Whether to sort the items.")
     # Styling options
     highlight_color: str = Field(
         "bold white bg:#4444aa", description="Color/style for highlighted items."
@@ -65,7 +65,7 @@ class FuzzyFinderConfig(BaseModel):
 
     @field_validator("items")
     @classmethod
-    def validate_items(cls, v, info):
+    def validate_items(cls, v: List[Any], info: Any) -> List[Any]:
         """Ensure items are valid and consistent with display_field."""
         if not v:
             raise ValueError("Items list cannot be empty.")
@@ -78,7 +78,7 @@ class FuzzyFinderConfig(BaseModel):
 
     @field_validator("scorer")
     @classmethod
-    def validate_scorer(cls, v):
+    def validate_scorer(cls, v: str) -> str:
         """Ensure scorer is valid."""
         valid_scorers = ["partial_ratio", "ratio", "token_sort_ratio"]
         if v not in valid_scorers:
@@ -87,7 +87,7 @@ class FuzzyFinderConfig(BaseModel):
 
     @field_validator("preview_field")
     @classmethod
-    def validate_preview_field(cls, v, info):
+    def validate_preview_field(cls, v: Optional[str], info: Any) -> Optional[str]:
         """Ensure preview_field is valid if enable_preview is True."""
         if info.data.get("enable_preview") and not v:
             raise ValueError(
@@ -98,30 +98,39 @@ class FuzzyFinderConfig(BaseModel):
                 raise ValueError(f"Objects must have field '{v}' for preview.")
         return v
 
-    def get_scorer_function(self):
+    def get_scorer_function(self) -> Union[Callable[..., float], Exception]:
         """Return the rapidfuzz scorer function based on configuration."""
-        scorer_map = {
-            "partial_ratio": fuzz.partial_ratio,
-            "ratio": fuzz.ratio,
-            "token_sort_ratio": fuzz.token_sort_ratio,
-        }
-        return scorer_map[self.scorer]
+        try:
+            scorer_map: Dict[str, Callable[..., float]] = {
+                "partial_ratio": fuzz.partial_ratio,
+                "ratio": fuzz.ratio,
+                "token_sort_ratio": fuzz.token_sort_ratio,
+            }
+            return scorer_map[self.scorer]
+        except Exception as e:
+            return e
 
-    def get_display_value(self, item: Any) -> str:
+    def get_display_value(self, item: Any) -> Union[str, Exception]:
         """Extract the display value from an item."""
-        if isinstance(item, str):
-            return item
-        if self.display_field:
-            return str(getattr(item, self.display_field))
-        raise ValueError("display_field must be specified for non-string items.")
+        try:
+            if isinstance(item, str):
+                return item
+            if self.display_field:
+                return str(getattr(item, self.display_field))
+            return ValueError("display_field must be specified for non-string items.")
+        except Exception as e:
+            return e
 
-    def get_preview_value(self, item: Any) -> Optional[str]:
+    def get_preview_value(self, item: Any) -> Union[Optional[str], Exception]:
         """Extract the preview value from an item if preview is enabled."""
-        if not self.enable_preview or not self.preview_field:
-            return None
-        if isinstance(item, str):
-            return item
-        return str(getattr(item, self.preview_field))
+        try:
+            if not self.enable_preview or not self.preview_field:
+                return None
+            if isinstance(item, str):
+                return item
+            return str(getattr(item, self.preview_field))
+        except Exception as e:
+            return e
 
 
 class FuzzyFinder:
@@ -133,7 +142,7 @@ class FuzzyFinder:
         self.input_buffer = Buffer()
         self.selected_items = []
         self.highlighted_index = 0  # Track the highlighted item
-        self.current_results = []  # Track current search results
+        self.current_results: List[Any] = []  # Track current search results
 
         # Create dynamic style based on configuration
         self.style = Style.from_dict(
@@ -192,110 +201,178 @@ class FuzzyFinder:
         self.input_buffer.on_text_changed += self._on_text_changed
 
         # Initialize application
-        self.app = Application(
+        self.app: Application[Any] = Application(
             layout=self.layout,
             key_bindings=self.bindings,
             full_screen=True,
             style=self.style,
         )
 
-    def _setup_key_bindings(self):
+    def _setup_key_bindings(self) -> Union[None, Exception]:
         """Configure key bindings for the finder, including navigation."""
+        try:
 
-        @self.bindings.add("c-c")
-        def _(event):
-            event.app.exit(result=None)
+            @self.bindings.add("c-c")
+            def _(event: Any) -> None:
+                event.app.exit(result=None)
 
-        @self.bindings.add("enter")
-        def _(event):
-            if self.config.multi_select:
-                # In multi-select mode, toggle selection (not implemented here)
-                pass
-            else:
-                selected = (
-                    self.current_results[self.highlighted_index]
-                    if self.current_results
-                    else None
-                )
-                event.app.exit(result=selected if selected else None)
+            @self.bindings.add("enter")
+            def _(event: Any) -> None:
+                if self.config.multi_select:
+                    # In multi-select mode, toggle selection (not implemented here)
+                    pass
+                else:
+                    selected = (
+                        self.current_results[self.highlighted_index]
+                        if self.current_results
+                        else None
+                    )
+                    event.app.exit(result=selected if selected else None)
 
-        @self.bindings.add("up")
-        def _(event):
-            if self.highlighted_index > 0:
-                self.highlighted_index -= 1
-                self._update_output_buffer()
+            @self.bindings.add("up")
+            def _(event: Any) -> None:
+                if self.highlighted_index > 0:
+                    self.highlighted_index -= 1
+                    self._update_output_buffer()
 
-        @self.bindings.add("down")
-        def _(event):
-            if self.highlighted_index < len(self.current_results) - 1:
-                self.highlighted_index += 1
-                self._update_output_buffer()
+            @self.bindings.add("down")
+            def _(event: Any) -> None:
+                if self.highlighted_index < len(self.current_results) - 1:
+                    self.highlighted_index += 1
+                    self._update_output_buffer()
 
-    def _display_prompt(self):
+            return None
+        except Exception as e:
+            return e
+
+    def _display_prompt(self) -> None:
         """Display the styled prompt text."""
         # This is now handled by the FloatContainer in the layout
         pass
 
-    def _search(self, query: str) -> List[str]:
+    def _search(self, query: str) -> Union[List[Any], Exception]:
         """Perform fuzzy search based on the query."""
-        choices = [self.config.get_display_value(item) for item in self.config.items]
-        if not query:
-            return choices[: self.config.max_results]
-        if not self.config.case_sensitive:
-            query = query.lower()
-            choices = [c.lower() if isinstance(c, str) else c for c in choices]
-        results = process.extract(
-            query,
-            choices,
-            scorer=self.config.get_scorer_function(),
-            limit=self.config.max_results,
-        )
-        return [
-            item for item, score, _ in results if score >= self.config.score_threshold
-        ]
+        try:
+            items_to_search = self.config.items
+            if self.config.sort_items:
+                try:
+                    # Sort items based on their display value
+                    items_to_search = sorted(
+                        items_to_search,
+                        key=lambda item: str(self.config.get_display_value(item) or ""),
+                    )
+                except Exception as e:
+                    # If sorting fails (e.g., unorderable types), proceed without sorting
+                    pass
 
-    def _update_output_buffer(self):
-        """Update output buffer with current results, highlighting the selected item."""
-        formatted_lines = []
-        for i, item in enumerate(self.current_results):
-            if i == self.highlighted_index:
-                formatted_lines.append(("class:highlighted", f"▶ {item}\n"))
-            else:
-                formatted_lines.append(("class:normal", f"  {item}\n"))
-        if formatted_lines:
-            self.output_control.text = formatted_lines
-        else:
-            self.output_control.text = ""
+            choices_with_originals = [
+                (self.config.get_display_value(item), item) for item in items_to_search
+            ]
+            # check for exception
+            choice_exceptions = [
+                c[0] for c in choices_with_originals if isinstance(c[0], Exception)
+            ]
+            if choice_exceptions:
+                return choice_exceptions[0]
 
-    def _on_text_changed(self, _):
-        """Update output buffer when input changes."""
-        query = self.input_buffer.text
-        self.current_results = self._search(query)
-        self.highlighted_index = min(
-            self.highlighted_index, max(0, len(self.current_results) - 1)
-        )
-        self._update_output_buffer()
+            choices = [str(c[0]) for c in choices_with_originals]
 
-    def run(self) -> Optional[Union[str, List[str]]]:
-        """Run the fuzzy finder and return selected item(s)."""
-        # Display the prompt text
-        self._display_prompt()
+            if not query:
+                return [item[1] for item in choices_with_originals][
+                    : self.config.max_results
+                ]
 
-        # Initialize output buffer with initial results
-        self._on_text_changed(None)
-        with suppress_stdout():
-            result = self.app.run()
-        if self.config.multi_select:
-            return self.selected_items  # Return list for multi-select
-        return result  # Return single item or None
+            if not self.config.case_sensitive:
+                query = query.lower()
+
+            scorer_func = self.config.get_scorer_function()
+            if isinstance(scorer_func, Exception):
+                return scorer_func
+
+            results = process.extract(
+                query,
+                choices,
+                scorer=scorer_func,
+                limit=self.config.max_results,
+            )
+
+            # Map results back to original items
+            original_results = []
+            for result_str, score, index in results:
+                if score >= self.config.score_threshold:
+                    original_results.append(choices_with_originals[index][1])
+            return original_results
+        except Exception as e:
+            return e
+
+    def _update_output_buffer(self) -> Union[None, Exception]:
+        """Update the output buffer with the current search results and highlight."""
+        try:
+            formatted_text: List[Any] = []
+            for i, result in enumerate(self.current_results):
+                display_value = self.config.get_display_value(result)
+                if isinstance(display_value, Exception):
+                    return display_value
+                if i == self.highlighted_index:
+                    formatted_text.append(("class:highlighted", f"> {display_value}\n"))
+                else:
+                    formatted_text.append(("class:normal", f"  {display_value}\n"))
+            self.output_control.text = FormattedText(formatted_text)
+            return None
+        except Exception as e:
+            return e
+
+    def _on_text_changed(self, _: Any) -> Union[None, Exception]:
+        """Handle text changes in the input buffer."""
+        try:
+            search_results = self._search(self.input_buffer.text)
+            if isinstance(search_results, Exception):
+                # How to show this to the user? For now, just exit.
+                self.app.exit(result=search_results)
+                return None
+            self.current_results = search_results
+            self.highlighted_index = 0
+            update_result = self._update_output_buffer()
+            if isinstance(update_result, Exception):
+                self.app.exit(result=update_result)
+                return update_result
+            return None
+        except Exception as e:
+            self.app.exit(result=e)
+            return e
+
+    def run(self) -> Union[Optional[Union[str, List[str], Any]], Exception]:
+        """Run the fuzzy finder application."""
+        try:
+            # Initialize with empty search
+            init_result = self._on_text_changed(None)
+            if isinstance(init_result, Exception):
+                return init_result
+
+            with suppress_stdout() as so:
+                if isinstance(so, Exception):
+                    return so
+                result: Optional[Union[str, List[str], Any]] = self.app.run()
+
+            if self.config.multi_select:
+                return self.selected_items
+            return result
+        except Exception as e:
+            return e
 
 
 @contextmanager
-def suppress_stdout():
-    with open(os.devnull, "w") as devnull:
-        old_stdout = sys.stdout
+def suppress_stdout() -> Generator[Any, None, None]:
+    """A context manager to suppress stdout, for cleaner full-screen app display."""
+    original_stdout = sys.stdout
+    devnull = None
+    try:
+        devnull = open(os.devnull, "w")
         sys.stdout = devnull
-        try:
-            yield
-        finally:
-            sys.stdout = old_stdout
+        yield
+    except Exception as e:
+        yield e
+    finally:
+        if devnull:
+            devnull.close()
+        sys.stdout = original_stdout

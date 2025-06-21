@@ -8,8 +8,9 @@ This package provides a class for managing .metagit.yml configuration files.
 from pathlib import Path
 from typing import Optional, Union
 
-from metagit.core.config.models import MetagitConfig, Workspace, WorkspaceProject
+from metagit.core.config.models import MetagitConfig
 from metagit.core.utils.yaml_class import yaml
+from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
 class ConfigManager:
@@ -31,7 +32,7 @@ class ConfigManager:
         self._config: Optional[MetagitConfig] = None
 
     @property
-    def config(self) -> Optional[MetagitConfig]:
+    def config(self) -> Union[MetagitConfig, None, Exception]:
         """
         Get the loaded configuration.
 
@@ -40,7 +41,7 @@ class ConfigManager:
         """
         return self._config
 
-    def load_config(self) -> MetagitConfig:
+    def load_config(self) -> Union[MetagitConfig, Exception]:
         """
         Load and validate a .metagit.yml configuration file.
 
@@ -52,16 +53,21 @@ class ConfigManager:
             yaml.YAMLError: If the YAML file is malformed
             ValidationError: If the configuration doesn't match the expected schema
         """
-        if not Path(self.config_path).exists():
-            raise FileNotFoundError(f"Configuration file not found: {self.config_path}")
+        try:
+            if not Path(self.config_path).exists():
+                return FileNotFoundError(
+                    f"Configuration file not found: {self.config_path}"
+                )
 
-        with open(self.config_path, "r", encoding="utf-8") as f:
-            yaml_data = yaml.safe_load(f)
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                yaml_data = yaml.safe_load(f)
 
-        self._config = MetagitConfig(**yaml_data)
-        return self._config
+            self._config = MetagitConfig(**yaml_data)
+            return self._config
+        except Exception as e:
+            return e
 
-    def validate_config(self) -> bool:
+    def validate_config(self) -> Union[bool, Exception]:
         """
         Validate a .metagit.yml configuration file without loading it into memory.
 
@@ -69,10 +75,12 @@ class ConfigManager:
             bool: True if the configuration is valid, False otherwise
         """
         try:
-            self.load_config()
+            load_result = self.load_config()
+            if isinstance(load_result, Exception):
+                return False
             return True
-        except Exception:
-            return False
+        except Exception as e:
+            return e
 
     def create_config(
         self,
@@ -80,7 +88,7 @@ class ConfigManager:
         description: Optional[str] = None,
         url: Optional[str] = None,
         kind: Optional[str] = None,
-    ) -> Union[MetagitConfig, str]:
+    ) -> Union[MetagitConfig, str, Exception]:
         """
         Create a .metagit.yml project configuration file.
 
@@ -90,26 +98,29 @@ class ConfigManager:
         Returns:
             MetagitConfig or str: The created configuration object or YAML string
         """
-        workspace = None
-        if kind == "umbrella":
-            workspace = Workspace(
-                projects=[
-                    WorkspaceProject(
-                        name="default",
-                        repos=[],
-                    )
-                ],
+        try:
+            workspace = None
+            if kind == "umbrella":
+                workspace = Workspace(
+                    projects=[
+                        WorkspaceProject(
+                            name="default",
+                            repos=[],
+                        )
+                    ],
+                )
+            project_config = MetagitConfig(
+                name=name,
+                description=description,
+                url=url,
+                kind=kind,
+                workspace=workspace,
             )
-        project_config = MetagitConfig(
-            name=name,
-            description=description,
-            url=url,
-            kind=kind,
-            workspace=workspace,
-        )
-        return project_config
+            return project_config
+        except Exception as e:
+            return e
 
-    def reload_config(self) -> MetagitConfig:
+    def reload_config(self) -> Union[MetagitConfig, Exception]:
         """
         Reload the configuration from disk.
 
@@ -121,7 +132,7 @@ class ConfigManager:
 
     def save_config(
         self, config: Optional[MetagitConfig] = None, output_path: Optional[Path] = None
-    ) -> None:
+    ) -> Union[None, Exception]:
         """
         Save a configuration to a YAML file.
 
@@ -129,12 +140,16 @@ class ConfigManager:
             config: Configuration to save. If None, uses the loaded config.
             output_path: Path where to save the configuration. If None, uses the instance config_path.
         """
-        config_to_save = config or self._config
-        if config_to_save is None:
-            raise ValueError(
-                "No configuration to save. Load a config first or provide one."
-            )
+        try:
+            config_to_save = config or self._config
+            if config_to_save is None:
+                return ValueError(
+                    "No configuration to save. Load a config first or provide one."
+                )
 
-        save_path = output_path or self.config_path
-        with open(save_path, "w", encoding="utf-8") as f:
-            yaml.dump(config_to_save.model_dump(), f)
+            save_path = output_path or self.config_path
+            with open(save_path, "w", encoding="utf-8") as f:
+                yaml.dump(config_to_save.model_dump(), f)
+            return None
+        except Exception as e:
+            return e

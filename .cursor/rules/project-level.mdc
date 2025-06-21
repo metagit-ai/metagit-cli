@@ -19,6 +19,7 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Keep a component driven project structure with core logic for each component in their own directories within the metagit/core path
 - Avoid duplication by using clear, modular code organization.
 - All functions and methods should return a union of the expected result type and exception and be handled appropriately when called.
+- All file paths should be os agnostic when constructed using os.join
 
 ## Naming Conventions
 

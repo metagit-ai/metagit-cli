@@ -4,7 +4,7 @@ url: https://github.com/metagit-io/metagit_detect
 # monorepo, umbrella, application, gitops, infrastructure, service, library, website, other
 kind: application
 # monorepo, umbrella, application, gitops, infrastructure, service, library, website, other
-structure: monorepo
+#structure: monorepo
 # optional documentation urls or local paths
 documentation:
   - README.md
