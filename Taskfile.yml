@@ -126,6 +126,11 @@ tasks:
       - |
         uv run ruff check .
 
+  lint:fix:
+    desc: Run python linting and fix issues
+    cmds:
+      - |
+        uv run ruff check --fix .
   format:
     desc: Run python formatting
     cmds:
