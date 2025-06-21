@@ -10,23 +10,17 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, List, Optional, Union
 
-from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    ValidationError,
+    field_serializer,
+    field_validator,
+)
 
-
-class ProjectKind(str, Enum):
-    """Enumeration of project kinds."""
-
-    MONOREPO = "monorepo"
-    UMBRELLA = "umbrella"
-    APPLICATION = "application"
-    GITOPS = "gitops"
-    INFRASTRUCTURE = "infrastructure"
-    SERVICE = "service"
-    LIBRARY = "library"
-    WEBSITE = "website"
-    OTHER = "other"
-    DOCKER_IMAGE = "docker_image"
-    REPOSITORY = "repository"
+from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.workspace.models import Workspace
 
 
 class LicenseKind(str, Enum):
@@ -48,6 +42,8 @@ class BranchStrategy(str, Enum):
     GITHUBFLOW = "githubflow"
     GITLABFLOW = "gitlabflow"
     FORK = "fork"
+    NONE = "none"
+    CUSTOM = "custom"
 
 
 class TaskerKind(str, Enum):
@@ -66,6 +62,19 @@ class ArtifactType(str, Enum):
     DOCKER = "docker"
     GITHUB_RELEASE = "github_release"
     STATIC_WEBSITE = "static_website"
+    PYTHON_PACKAGE = "python_package"
+    NODE_PACKAGE = "node_package"
+    RUBY_PACKAGE = "ruby_package"
+    JAVA_PACKAGE = "java_package"
+    C_PACKAGE = "c_package"
+    CPP_PACKAGE = "cpp_package"
+    CSHARP_PACKAGE = "csharp_package"
+    GO_PACKAGE = "go_package"
+    RUST_PACKAGE = "rust_package"
+    PHP_PACKAGE = "php_package"
+    DOTNET_PACKAGE = "dotnet_package"
+    ELIXIR_PACKAGE = "elixir_package"
+    HASKELL_PACKAGE = "haskell_package"
 
 
 class VersionStrategy(str, Enum):
@@ -73,6 +82,7 @@ class VersionStrategy(str, Enum):
 
     SEMVER = "semver"
     NONE = "none"
+    CUSTOM = "custom"
 
 
 class SecretKind(str, Enum):
@@ -81,6 +91,8 @@ class SecretKind(str, Enum):
     REMOTE_JWT = "remote_jwt"
     REMOTE_API_KEY = "remote_api_key"
     GENERATED_STRING = "generated_string"
+    CUSTOM = "custom"
+    DYNAMIC = "dynamic"
 
 
 class VariableKind(str, Enum):
@@ -99,6 +111,8 @@ class CICDPlatform(str, Enum):
     CIRCLECI = "CircleCI"
     JENKINS = "Jenkins"
     JX = "jx"
+    TEKTON = "tekton"
+    CUSTOM = "custom"
 
 
 class DeploymentStrategy(str, Enum):
@@ -116,14 +130,39 @@ class ProvisioningTool(str, Enum):
 
     TERRAFORM = "Terraform"
     CLOUDFORMATION = "CloudFormation"
+    CDKTF = "CDKTF"
+    AWS_CDK = "AWS CDK"
+    BICEP = "Bicep"
 
 
 class Hosting(str, Enum):
     """Enumeration of hosting options."""
 
     EC2 = "EC2"
+    VMWARE = "VMware"
+    ORACLE = "Oracle"
     KUBERNETES = "Kubernetes"
     VERCEL = "Vercel"
+    ECS = "ECS"
+    AWS_LAMBDA = "AWS Lambda"
+    AWS_FARGATE = "AWS Fargate"
+    AWS_EKS = "AWS EKS"
+    AWS_ECS = "AWS ECS"
+    AWS_ECS_FARGATE = "AWS ECS Fargate"
+    AWS_ECS_FARGATE_SPOT = "AWS ECS Fargate Spot"
+    AWS_ECS_FARGATE_SPOT_SPOT = "AWS ECS Fargate Spot Spot"
+    ELASTIC_BEANSTALK = "Elastic Beanstalk"
+    AZURE_APP_SERVICE = "Azure App Service"
+    AZURE_FUNCTIONS = "Azure Functions"
+    AZURE_CONTAINER_INSTANCES = "Azure Container Instances"
+    AZURE_CONTAINER_APPS = "Azure Container Apps"
+    AZURE_CONTAINER_APPS_ENVIRONMENT = "Azure Container Apps Environment"
+    AZURE_CONTAINER_APPS_ENVIRONMENT_SERVICE = (
+        "Azure Container Apps Environment Service"
+    )
+    AZURE_CONTAINER_APPS_ENVIRONMENT_SERVICE_SERVICE = (
+        "Azure Container Apps Environment Service Service"
+    )
 
 
 class LoggingProvider(str, Enum):
@@ -277,7 +316,7 @@ class Pipeline(BaseModel):
     variables: Optional[List[str]] = Field(None, description="Pipeline variables")
 
     @field_validator("variables", mode="before")
-    def validate_variables(cls, v):
+    def validate_variables(cls, v: Any) -> Any:
         """Convert variable dictionaries to strings if needed."""
         if v is None:
             return v
@@ -413,84 +452,6 @@ class Observability(BaseModel):
 
         use_enum_values = True
         extra = "forbid"
-
-
-class ProjectPath(BaseModel):
-    """Model for project path, dependency, component, or workspace project information."""
-
-    name: str = Field(..., description="Project path name")
-    description: Optional[str] = Field(None, description="Project description")
-    kind: Optional[ProjectKind] = Field(None, description="Project kind")
-    ref: Optional[str] = Field(
-        None,
-        description="Reference in the current project for the target project, used in dependencies",
-    )
-    path: Optional[str] = Field(None, description="Project path")
-    branches: Optional[List[str]] = Field(None, description="Project branches")
-    url: Optional[HttpUrl] = Field(None, description="Project URL")
-    sync: Optional[bool] = Field(None, description="Sync setting")
-    language: Optional[str] = Field(None, description="Programming language")
-    language_version: Optional[Union[str, float, int]] = Field(
-        None, description="Language version"
-    )
-    package_manager: Optional[str] = Field(None, description="Package manager")
-    frameworks: Optional[List[str]] = Field(None, description="Frameworks used")
-
-    @field_validator("language_version", mode="before")
-    def validate_language_version(cls, v):
-        """Convert language version to string."""
-        if v is None:
-            return v
-        return str(v)
-
-    @field_serializer("url")
-    def serialize_url(self, url: Optional[HttpUrl], _info: Any) -> Optional[str]:
-        """Serialize the URL to a string."""
-        return str(url) if url else None
-
-    class Config:
-        """Pydantic configuration."""
-
-        use_enum_values = True
-        extra = "forbid"
-
-
-class WorkspaceProject(BaseModel):
-    """Model for workspace project."""
-
-    name: str = Field(..., description="Workspace project name")
-    repos: List[ProjectPath] = Field(..., description="Repository list")
-
-    @field_validator("repos", mode="before")
-    def validate_repos(cls, v):
-        """Handle YAML anchors and complex repo structures."""
-        if isinstance(v, list):
-            # Flatten any nested lists that might come from YAML anchors
-            flattened = []
-            for item in v:
-                if isinstance(item, list):
-                    flattened.extend(item)
-                else:
-                    flattened.append(item)
-            return flattened
-        return v
-
-    class Config:
-        """Pydantic configuration."""
-
-        use_enum_values = True
-        extra = "forbid"
-
-
-class Workspace(BaseModel):
-    """Model for workspace configuration."""
-
-    projects: List[WorkspaceProject] = Field(..., description="Workspace projects")
-
-    class Config:
-        """Pydantic configuration."""
-
-        use_enum_values = True
 
 
 class MetagitConfig(BaseModel):

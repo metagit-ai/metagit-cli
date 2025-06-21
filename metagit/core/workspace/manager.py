@@ -6,24 +6,31 @@ This package provides a class for managing workspaces.
 """
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
-from metagit.config.models import Workspace, WorkspaceProject
+from metagit.core.appconfig.models import AppConfig
 from metagit.core.utils.yaml_class import yaml
+from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
-def get_workspace_path(config: AppConfig) -> str:
+def get_workspace_path(config: AppConfig) -> Union[str, Exception]:
     """
     Get the workspace path from the config.
     """
-    return config.workspace.path
+    try:
+        return config.workspace.path
+    except Exception as e:
+        return e
 
 
-def get_synced_projects(config: AppConfig) -> list[WorkspaceProject]:
+def get_synced_projects(config: AppConfig) -> Union[List[WorkspaceProject], Exception]:
     """
     Get the synced projects from the config.
     """
-    return config.workspace.projects
+    try:
+        return config.workspace.projects
+    except Exception as e:
+        return e
 
 
 class WorkspaceManager:
@@ -34,7 +41,7 @@ class WorkspaceManager:
     workspaces with proper error handling and validation.
     """
 
-    def __init__(self, workspace_path: str):
+    def __init__(self, workspace_path: str) -> None:
         """
         Initialize the MetagitWorkspaceManager.
 

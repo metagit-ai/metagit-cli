@@ -932,6 +932,7 @@ dependencies = [
     { name = "rapidfuzz" },
     { name = "requests" },
     { name = "rich" },
+    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
@@ -1006,6 +1007,7 @@ requires-dist = [
     { name = "rich", specifier = ">=14.0.0" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'lint'" },
+    { name = "tqdm", specifier = ">=4.66.4" },
 ]
 provides-extras = ["standard", "test", "dev", "docs", "lint", "format", "typecheck"]
 

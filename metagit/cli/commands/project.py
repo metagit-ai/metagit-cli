@@ -1,115 +1,114 @@
 """
-Project cli command group
+Project subcommand
 """
 
 import os
 import sys
+from pathlib import Path
 
 import click
 
-from metagit import DATA_PATH
+from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import ConfigManager
-from metagit.core.utils.yaml_class import yaml
+from metagit.core.config.models import MetagitConfig
+from metagit.core.project.manager import ProjectManager
+from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
+from metagit.core.utils.logging import UnifiedLogger
+from metagit.core.workspace.models import WorkspaceProject
 
 
 @click.group(name="project", invoke_without_command=True)
 @click.option(
-    "--config-path",
-    help="Path to the metagit configuration file",
-    default=".metagit.yml",
+    "--config", default=".metagit.yml", help="Path to the metagit definition file"
+)
+@click.option(
+    "--project",
+    default=None,
+    help="Project within workspace to operate on",
 )
 @click.pass_context
-def project(ctx, config_path: str):
+def project(ctx: click.Context, config: str, project: str = None) -> None:
     """Project subcommands"""
+    logger = ctx.obj["logger"]
+    app_config: AppConfig = ctx.obj["config"]
+    try:
+        config_manager: ConfigManager = ConfigManager(config)
+        local_config: MetagitConfig = config_manager.load_config()
+        if isinstance(local_config, Exception):
+            raise local_config
+    except Exception as e:
+        logger.error(f"Failed to load metagit definition file: {e}")
+        sys.exit(1)
+    ctx.obj["local_config"] = local_config
+    if not project:
+        project: str = app_config.default_project
+    ctx.obj["project"] = project
     # If no subcommand is provided, show help
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         return
 
-    ctx.obj["config_path"] = config_path
 
-
-@project.command("detect")
+@project.command("select")
 @click.pass_context
-def project_detect(ctx):
-    """Run detection for a project"""
-    logger = ctx.obj["logger"]
-    config_path = ctx.obj["config_path"]
+def project_select(ctx: click.Context) -> None:
+    """Select workspace project repo to work on"""
+    logger: UnifiedLogger = ctx.obj["logger"]
+    project: str = ctx.obj["project"]
+    app_config: AppConfig = ctx.obj["config"]
     try:
-        config = ConfigManager(config_path=config_path).load_config()
+        workspace_path = app_config.workspace.path
+        project_path: str = os.path.join(workspace_path, project)
+
+        if not Path(project_path).exists(follow_symlinks=True):
+            logger.warning(f"Path does not exist for this project: {project_path}")
+            logger.warning(
+                f"You can sync the project with `metagit workspace sync --project {project_path}`"
+            )
+            return
+        else:
+            logger.info(f"Project path: {project_path}")
+
+        repos: list[str] = [f.name for f in Path(project_path).iterdir() if f.is_dir()]
+        if len(repos) == 0:
+            logger.warning(f"No repos found in project: {project_path}")
+            return
+
+        finder_config = FuzzyFinderConfig(
+            items=repos,
+            prompt_text="🔍 Search repos: ",
+            max_results=20,
+            score_threshold=70.0,
+            highlight_color="bold white bg:#0066cc",
+            normal_color="cyan",
+            prompt_color="bold green",
+            separator_color="gray",
+        )
+        finder = FuzzyFinder(finder_config)
+        selected = finder.run()
+        if isinstance(selected, Exception):
+            raise selected
+        logger.echo(f"Selected: {selected}")
     except Exception as e:
-        logger.error(f"Failed to load metagit configuration file: {e}")
-        logger.debug(f"Error: {e}")
-        sys.exit(1)
-
-    yaml.Dumper.ignore_aliases = lambda *args: True
-    output = yaml.dump(
-        config.model_dump(),
-        default_flow_style=False,
-        sort_keys=False,
-        indent=2,
-        line_break=True,
-    )
-    logger.echo(output)
+        logger.error(f"Failed to select project repo: {e}")
+        ctx.abort()
 
 
-@project.command("create")
-@click.option(
-    "--output-path",
-    help="Path to the metagit configuration file",
-    default=None,
-)
-@click.option("--name", help="Project name")
-@click.option(
-    "--description",
-    help="Project description",
-    default="Project description",
-)
-@click.option(
-    "--url",
-    help="Project URL",
-    default="https://github.com/metagit-io/metagit_detect",
-)
-@click.option(
-    "--kind",
-    help="Project kind",
-    default="application",
-)
+@project.command("sync")
 @click.pass_context
-def config_create(
-    ctx, output_path: str, name: str, description: str, url: str, kind: str
-):
-    """Create default application config"""
+def project_sync(ctx: click.Context) -> None:
+    """Sync project within workspace"""
     logger = ctx.obj["logger"]
-    config = ConfigManager().create_config(
-        name=name, description=description, url=url, kind=kind
+    app_config: AppConfig = ctx.obj["config"]
+    project: str = ctx.obj["project"]
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    project_manager: ProjectManager = ProjectManager(app_config.workspace.path, logger)
+    workspace_project: WorkspaceProject = next(
+        p for p in local_config.workspace.projects if p.name == project
     )
-    yaml.Dumper.ignore_aliases = lambda *args: True
-    output = yaml.dump(
-        config.model_dump(exclude_unset=True, exclude_none=True),
-        default_flow_style=False,
-        sort_keys=False,
-        indent=2,
-        line_break=True,
-    )
-    if output_path is None:
-        logger.echo(output)
+    sync_result: bool = project_manager.sync(workspace_project)
+    if sync_result:
+        logger.info(f"Project {project} synced successfully")
     else:
-        with open(output_path, "w", encoding="utf-8") as f:
-            yaml.dump(output, f)
-
-
-@config.command("validate")
-@click.pass_context
-def config_validate(ctx):
-    """Validate metagit configuration"""
-    logger = ctx.obj["logger"]
-    config_path = ctx.obj["config_path"]
-    try:
-        _ = ConfigManager(config_path=config_path).load_config()
-    except Exception as e:
-        logger.error(f"Failed to load metagit configuration file: {e}")
-        logger.debug(f"Error: {e}")
-        sys.exit(1)
-
-    logger.echo("Configuration is valid")
+        logger.error(f"Failed to sync project {project}")
+        ctx.abort()

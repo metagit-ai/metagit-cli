@@ -28,13 +28,14 @@ dependencies = [
     "python-dotenv>=1.1.0",
     "rapidfuzz>=3.13.0",
     "prompt-toolkit>=3.0.51",
+    "tqdm>=4.66.4",
 ]
 
 [project.optional-dependencies]
 standard = ["crewai[tools]"]
 test = ["pytest", "pytest-cov"]
 dev = ["ruff", "black", "isort", "mypy"]
-docs = ["mkdocs", "mkdocs-material", "mkdocstrings"]
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click"]
 lint = ["ruff", "black", "isort", "mypy"]
 format = ["black", "isort"]
 typecheck = ["mypy"]
@@ -55,9 +56,9 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["metagit"]
-include = ["cli"]
-exclude = []
+where = ["."]
+include = ["metagit*"]
+exclude = ["metagit.tests*"]
 namespaces = false
 
 [build-system]

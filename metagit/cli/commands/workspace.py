@@ -17,16 +17,20 @@ from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
     "--config", default=".metagit.yml", help="Path to the metagit definition file"
 )
 @click.pass_context
-def workspace(ctx, config):
+def workspace(ctx: click.Context, config: str) -> None:
     """Workspace subcommands"""
+
+    logger = ctx.obj["logger"]
     # If no subcommand is provided, show help
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         return
 
-    logger = ctx.obj["logger"]
     try:
-        local_config = ConfigManager(config).load_config()
+        config_manager = ConfigManager(config)
+        local_config = config_manager.load_config()
+        if isinstance(local_config, Exception):
+            raise local_config
     except Exception as e:
         logger.error(f"Failed to load metagit definition file: {e}")
         sys.exit(1)
@@ -40,42 +44,50 @@ def workspace(ctx, config):
     help="Project within workspace to select target paths from",
 )
 @click.pass_context
-def workspace_select(ctx, project: str = None):
+def workspace_select(ctx: click.Context, project: str = None) -> None:
     """Select workspace project repo to work on"""
     logger = ctx.obj["logger"]
-    config = ctx.obj["config"]
-    if project is None:
-        project = config.workspace.default_project
-    workspace_path = config.workspace.path
-    project_path = os.path.join(workspace_path, project)
+    try:
+        config = ctx.obj["config"]
+        if project is None:
+            project: str = config.workspace.default_project
+        workspace_path = config.workspace.path
+        project_path: str = os.path.join(workspace_path, project)
 
-    if not Path(project_path).exists(follow_symlinks=True):
-        logger.warning(f"Project path does not exist for project: {project_path}")
-        logger.warning(
-            f"You can sync the project with `metagit workspace sync --project {project_path}`"
+        if not Path(project_path).exists(follow_symlinks=True):
+            logger.warning(f"Project path does not exist for project: {project_path}")
+            logger.warning(
+                f"You can sync the project with `metagit workspace sync --project {project_path}`"
+            )
+            return
+        else:
+            logger.info(f"Project path: {project_path}")
+
+        projects: list[str] = [
+            f.name for f in Path(project_path).iterdir() if f.is_dir()
+        ]
+        if len(projects) == 0:
+            logger.warning(f"No projects found in workspace: {project_path}")
+            return
+
+        finder_config = FuzzyFinderConfig(
+            items=projects,
+            prompt_text="🔍 Search projects: ",
+            max_results=20,
+            score_threshold=70.0,
+            highlight_color="bold white bg:#0066cc",
+            normal_color="cyan",
+            prompt_color="bold green",
+            separator_color="gray",
         )
-        return
-    else:
-        logger.info(f"Project path: {project_path}")
-
-    projects: list[str] = [f.name for f in Path(project_path).iterdir() if f.is_dir()]
-    if len(projects) == 0:
-        logger.warning(f"No projects found in workspace: {project_path}")
-        return
-
-    config = FuzzyFinderConfig(
-        items=projects,
-        prompt_text="🔍 Search projects: ",
-        max_results=10,
-        score_threshold=70.0,
-        highlight_color="bold white bg:#0066cc",
-        normal_color="cyan",
-        prompt_color="bold green",
-        separator_color="gray",
-    )
-    finder = FuzzyFinder(config)
-    selected = finder.run()
-    logger.echo(f"Selected: {selected}")
+        finder = FuzzyFinder(finder_config)
+        selected = finder.run()
+        if isinstance(selected, Exception):
+            raise selected
+        logger.echo(f"Selected: {selected}")
+    except Exception as e:
+        logger.error(f"Failed to select workspace project: {e}")
+        ctx.abort()
 
 
 # @workspace.command("info")
