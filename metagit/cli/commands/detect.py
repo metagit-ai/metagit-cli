@@ -11,18 +11,10 @@ from metagit.core.repository.project import ProjectAnalysis
 @click.pass_context
 def detect(ctx: click.Context) -> None:
     """Detection subcommands"""
-    try:
-        # If no subcommand is provided, show help
-        if ctx.invoked_subcommand is None:
-            click.echo(ctx.get_help())
-            return
-    except Exception as e:
-        logger = ctx.obj.get("logger")
-        if logger:
-            logger.error(f"An error occurred in the detect command: {e}")
-        else:
-            click.echo(f"An error occurred: {e}", err=True)
-        ctx.abort()
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
 
 
 @detect.command("repo")

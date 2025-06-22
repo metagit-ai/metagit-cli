@@ -1,17 +1,40 @@
-research_task:
+structure_task:
   description: >
-    Conduct a thorough research about {topic}
-    Make sure you find any interesting and relevant information given
-    the current year is {current_year}.
+    Traverse the codebase at {path}. Count files, extract file types, and identify entry points.
+    Your final answer MUST include `num_files`, `file_types`, and `entry_points`.
   expected_output: >
-    A list with 10 bullet points of the most relevant information about {topic}
-  agent: researcher
+    {
+      "num_files": int,
+      "file_types": List[str],
+      "entry_points": List[str]
+    }
 
-reporting_task:
+dependency_task:
   description: >
-    Review the context you got and expand each topic into a full section for a report.
-    Make sure the report is detailed and contains any and all relevant information.
+    Parse pyproject.toml, requirements.txt, and Dockerfile at {path}.
+    Identify dependencies, Docker usage, and .env or config presence.
+    Output must include: `main_dependencies`, `uses_docker`, `uses_env_files`.
   expected_output: >
-    A fully fledged report with the main topics, each with a full section of information.
-    Formatted as markdown without '```'
-  agent: reporting_analyst
+    {
+      "main_dependencies": List[str],
+      "uses_docker": bool,
+      "uses_env_files": bool
+    }
+
+logic_task:
+  description: >
+    Analyze main modules at {path} and summarize key classes and functions.
+    Output must include `modules`, `key_classes`, and `key_functions`.
+  expected_output: >
+    {
+      "modules": List[str],
+      "key_classes": List[str],
+      "key_functions": List[str]
+    }
+
+formatting_task:
+  description: >
+    Using structure_task, dependency_task, and logic_task outputs, build a MetagitConfig object.
+    Your final output MUST match the full MetagitConfig pydantic class structure.
+  expected_output: >
+    A dict that can be used to instantiate a MetagitConfig pydantic object.

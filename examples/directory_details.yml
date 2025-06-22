@@ -1,0 +1,23 @@
+- path: /Users/zacharyloeber/Zach-Projects/Personal/metagit-detect
+  num_files: 18
+  file_types:
+    programming:
+      - kind: Python
+        percent: 70
+      - kind: Shell
+        percent: 10
+    data:
+      - kind: YAML
+        percent: 5
+      - kind: JSON
+        percent: 5
+      - kind: TOML
+        percent: 5
+    prose:
+      - kind: Markdown
+        percent: 10
+    other:
+      - kind: Other
+        percent: 5
+
+  subpaths: []

@@ -117,7 +117,7 @@ class ProjectManager:
         project_dir = os.path.join(self.workspace_path, project.name)
         os.makedirs(project_dir, exist_ok=True)
         tqdm.write(
-            f"Concurrently syncing project '{project.name}' in '{project_dir}'..."
+            f"Syncing {project.name} project to {project_dir}..."
         )
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -130,7 +130,7 @@ class ProjectManager:
                 try:
                     future.result()
                 except Exception as exc:
-                    tqdm.write(f"'{repo.name}' generated an exception: {exc}")
+                    tqdm.write(f"{repo.name} generated an exception: {exc}")
                     return False
         
         # Create VS Code workspace file after successful sync
@@ -193,22 +193,22 @@ class ProjectManager:
         elif repo.url:
             self._sync_remote(repo, target_path, position)
         else:
-            tqdm.write(f"Skipping '{repo.name}': No local path or remote URL provided.")
+            tqdm.write(f"Skipping {repo.name}: No local path or remote URL provided.")
 
     def _sync_local(self, repo: ProjectPath, target_path: str, position: int) -> None:
         """Handle syncing of a local repository via symlink."""
         source_path = Path(repo.path).expanduser().resolve()
         if not source_path.exists():
-            tqdm.write(f"Source path for '{repo.name}' does not exist: {source_path}")
+            tqdm.write(f"Source path for {repo.name} does not exist: {source_path}")
             return
 
-        desc = f"'{repo.name}'"
+        desc = f"  🔗 {repo.name}"
         if os.path.exists(target_path) or os.path.islink(target_path):
             with tqdm(
                 total=1,
                 desc=desc,
                 position=position,
-                bar_format="{l_bar}Already exists{r_bar}",
+                bar_format="{l_bar} 🟠 Already exists{r_bar}",
             ) as pbar:
                 pbar.update(1)
             return
@@ -223,7 +223,7 @@ class ProjectManager:
             ) as pbar:
                 pbar.update(1)
         except OSError as e:
-            tqdm.write(f"Failed to create symbolic link for '{repo.name}': {e}")
+            tqdm.write(f"Failed to create symbolic link for {repo.name}: {e}")
 
     def _sync_remote(self, repo: ProjectPath, target_path: str, position: int) -> None:
         """Handle syncing of a remote repository via git clone."""
@@ -248,13 +248,13 @@ class ProjectManager:
                     self.pbar.set_postfix_str(message.strip(), refresh=True)
                 self.pbar.update(0)  # Manually update the progress bar
 
-        desc = f"'{repo.name}'"
+        desc = f"  ⤵️ {repo.name}"
         if os.path.exists(target_path):
             with tqdm(
                 total=1,
                 desc=desc,
                 position=position,
-                bar_format="{l_bar}Already exists{r_bar}",
+                bar_format="{l_bar} 🟠 Already exists{r_bar}",
             ) as pbar:
                 pbar.update(1)
             return
@@ -273,11 +273,11 @@ class ProjectManager:
                     target_path,
                     progress=CloneProgressHandler(pbar),
                 )
-                pbar.set_description(f"{desc} Cloned")
+                pbar.set_description(f"  ✅ {desc} Cloned")
             except git.exc.GitCommandError as e:
-                pbar.set_description(f"{desc} Failed")
+                pbar.set_description(f"  ❌ {desc} Failed")
                 tqdm.write(
-                    f"Failed to clone repository '{repo.name}'.\n"
+                    f"Failed to clone repository {repo.name}.\n"
                     f"URL: {repo.url}\n"
                     f"Error: {e.stderr}"
                 )

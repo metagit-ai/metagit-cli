@@ -213,6 +213,12 @@ class Maintainer(BaseModel):
     email: str = Field(..., description="Maintainer email")
     role: str = Field(..., description="Maintainer role")
 
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        extra = "forbid"
+
 
 class License(BaseModel):
     """Model for project license information."""
@@ -453,6 +459,177 @@ class Observability(BaseModel):
         extra = "forbid"
 
 
+class Visibility(str, Enum):
+    """Enumeration of repository visibility types."""
+
+    PUBLIC = "public"
+    PRIVATE = "private"
+    INTERNAL = "internal"
+
+
+class ProjectType(str, Enum):
+    """Enumeration of project types."""
+
+    APPLICATION = "application"
+    LIBRARY = "library"
+    MICROSERVICE = "microservice"
+    CLI = "cli"
+    IAC = "iac"
+    CONFIG = "config"
+    DATA_SCIENCE = "data-science"
+    PLUGIN = "plugin"
+    TEMPLATE = "template"
+    DOCS = "docs"
+    TEST = "test"
+    OTHER = "other"
+
+
+class ProjectDomain(str, Enum):
+    """Enumeration of project domains."""
+
+    WEB = "web"
+    MOBILE = "mobile"
+    DEVOPS = "devops"
+    ML = "ml"
+    DATABASE = "database"
+    SECURITY = "security"
+    FINANCE = "finance"
+    GAMING = "gaming"
+    IOT = "iot"
+    AGENT = "agent"
+    OTHER = "other"
+
+
+class BuildTool(str, Enum):
+    """Enumeration of build tools."""
+
+    MAKE = "make"
+    CMAKE = "cmake"
+    BAZEL = "bazel"
+    NONE = "none"
+
+
+class LicenseType(str, Enum):
+    """Enumeration of license types."""
+
+    MIT = "MIT"
+    APACHE_2_0 = "Apache-2.0"
+    PROPRIETARY = "proprietary"
+
+
+class Owner(BaseModel):
+    """Model for repository owner information."""
+
+    org: str = Field(..., description="Organization name")
+    team: str = Field(..., description="Team name")
+    contact: str = Field(..., description="Contact email")
+
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        extra = "forbid"
+
+
+class Language(BaseModel):
+    """Model for project language information."""
+
+    primary: str = Field(..., description="Primary programming language")
+    secondary: Optional[List[str]] = Field(None, description="Secondary programming languages")
+
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        extra = "forbid"
+
+
+class Project(BaseModel):
+    """Model for project information."""
+
+    type: ProjectType = Field(..., description="Project type")
+    domain: ProjectDomain = Field(..., description="Project domain")
+    language: Language = Field(..., description="Language information")
+    framework: Optional[List[str]] = Field(None, description="Frameworks used")
+    package_managers: Optional[List[str]] = Field(None, description="Package managers used")
+    build_tool: Optional[BuildTool] = Field(None, description="Build tool used")
+    deploy_targets: Optional[List[str]] = Field(None, description="Deployment targets")
+
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        extra = "forbid"
+
+
+class RepoMetadata(BaseModel):
+    """Model for repository metadata."""
+
+    tags: Optional[List[str]] = Field(None, description="Repository tags")
+    created_at: Optional[datetime] = Field(None, description="Repository creation date")
+    last_commit_at: Optional[datetime] = Field(None, description="Last commit date")
+    default_branch: Optional[str] = Field(None, description="Default branch name")
+    license: Optional[LicenseType] = Field(None, description="License type")
+    topics: Optional[List[str]] = Field(None, description="Repository topics")
+    forked_from: Optional[Union[HttpUrl, str]] = Field(None, description="Forked from repository URL")
+    archived: Optional[bool] = Field(False, description="Whether repository is archived")
+    template: Optional[bool] = Field(False, description="Whether repository is a template")
+    has_ci: Optional[bool] = Field(False, description="Whether repository has CI/CD")
+    has_tests: Optional[bool] = Field(False, description="Whether repository has tests")
+    has_docs: Optional[bool] = Field(False, description="Whether repository has documentation")
+    has_docker: Optional[bool] = Field(False, description="Whether repository has Docker configuration")
+    has_iac: Optional[bool] = Field(False, description="Whether repository has Infrastructure as Code")
+
+    @field_serializer("forked_from")
+    def serialize_forked_from(self, forked_from: Optional[Union[HttpUrl, str]], _info: Any) -> Optional[str]:
+        """Serialize the forked_from URL to a string."""
+        return str(forked_from) if forked_from else None
+
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        extra = "forbid"
+
+
+class CommitFrequency(str, Enum):
+    """Enumeration of commit frequency types."""
+
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+
+
+class PullRequests(BaseModel):
+    """Model for pull request metrics."""
+
+    open: int = Field(..., description="Number of open pull requests")
+    merged_last_30d: int = Field(..., description="Number of pull requests merged in last 30 days")
+
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        extra = "forbid"
+
+
+class Metrics(BaseModel):
+    """Model for repository metrics."""
+
+    stars: int = Field(..., description="Number of stars")
+    forks: int = Field(..., description="Number of forks")
+    open_issues: int = Field(..., description="Number of open issues")
+    pull_requests: PullRequests = Field(..., description="Pull request metrics")
+    contributors: int = Field(..., description="Number of contributors")
+    commit_frequency: CommitFrequency = Field(..., description="Commit frequency")
+
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        extra = "forbid"
+
+
 class MetagitConfig(BaseModel):
     """Main model for .metagit.yml configuration file."""
 
@@ -493,6 +670,8 @@ class MetagitConfig(BaseModel):
     observability: Optional[Observability] = Field(
         None, description="Observability configuration"
     )
+    metrics: Optional[Metrics] = Field(None, description="Repository metrics")
+    metadata: Optional[RepoMetadata] = Field(None, description="Repository metadata")
     paths: Optional[List[ProjectPath]] = Field(None, description="Project paths")
     dependencies: Optional[List[ProjectPath]] = Field(
         None, description="Project dependencies"

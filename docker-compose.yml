@@ -1,15 +1,30 @@
 services:
-  dragonfly:
-    image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
+  opensearch:
+    image: 'opensearchproject/opensearch:latest'
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
     ulimits:
-      memlock: -1
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
-      - "6379:6379"
-    # For better performance, consider `host` mode instead `port` to avoid docker NAT.
-    # `host` mode is NOT currently supported in Swarm Mode.
-    # https://docs.docker.com/compose/compose-file/compose-file-v3/#network_mode
-    # network_mode: "host"
+      - "9200:9200"
+      - "9600:9600"
     volumes:
-      - dragonflydata:/data
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - opensearch-net
+
 volumes:
-  dragonflydata:
+  opensearch-data:
+
+networks:
+  opensearch-net:
+    driver: bridge
