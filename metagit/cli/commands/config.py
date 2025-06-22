@@ -2,12 +2,9 @@
 Config cli command group
 """
 
-import os
-import sys
 
 import click
 
-from metagit import DATA_PATH
 from metagit.core.config.manager import ConfigManager
 from metagit.core.utils.yaml_class import yaml
 

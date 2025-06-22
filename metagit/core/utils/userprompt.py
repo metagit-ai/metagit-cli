@@ -4,7 +4,6 @@ UserPrompt utility for dynamically prompting users for Pydantic object propertie
 """
 
 import json
-import re
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 from prompt_toolkit import PromptSession
@@ -13,7 +12,7 @@ from prompt_toolkit.shortcuts import print_formatted_text
 from prompt_toolkit.styles import Style
 from prompt_toolkit.validation import ValidationError as PTValidationError
 from prompt_toolkit.validation import Validator
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ValidationError
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -48,13 +47,18 @@ class UserPrompt:
         model_class: Type[T],
         existing_data: Optional[Dict[str, Any]] = None,
         title: str = None,
+        fields_to_prompt: Optional[List[str]] = None,
     ) -> Union[T, Exception]:
         """
-        Prompt the user for all required fields of a Pydantic model.
+        Prompt the user for fields of a Pydantic model.
 
         Args:
             model_class: The Pydantic model class to prompt for
             existing_data: Optional existing data to pre-populate fields
+            title: Optional title to display at the top of the prompt
+            fields_to_prompt: Optional list of field names to prompt for. 
+                             If None, prompts for all fields. If specified, 
+                             only prompts for these fields and uses defaults/None for others.
 
         Returns:
             An instance of the specified Pydantic model
@@ -94,6 +98,18 @@ class UserPrompt:
                     print_formatted_text(success_text)
                     continue
 
+                # If fields_to_prompt is specified, only prompt for those fields
+                if fields_to_prompt is not None and field_name not in fields_to_prompt:
+                    # Use default value or None for non-prompted fields
+                    try:
+                        default_value = field_info.get_default()
+                        if str(default_value) == "PydanticUndefined":
+                            default_value = None
+                        field_data[field_name] = default_value
+                    except Exception:
+                        field_data[field_name] = None
+                    continue
+
                 # Check if field is required
                 is_required = field_info.is_required()
 
@@ -103,37 +119,13 @@ class UserPrompt:
                         return value
                     field_data[field_name] = value
                 else:
-                    # For optional fields, ask if user wants to provide a value
-                    while True:
-                        optional_text = FormattedText(
-                            [
-                                (
-                                    "class:optional",
-                                    f"\n{field_name} (optional) - Would you like to provide a value? (y/n): ",
-                                )
-                            ]
-                        )
-                        response = (
-                            prompt_instance.session.prompt(optional_text)
-                            .strip()
-                            .lower()
-                        )
-                        if response in ["y", "yes"]:
-                            value = prompt_instance._prompt_for_field(
-                                field_name, field_info
-                            )
-                            if isinstance(value, Exception):
-                                return value
-                            field_data[field_name] = value
-                            break
-                        elif response in ["n", "no"]:
-                            break
-                        else:
-                            print_formatted_text(
-                                FormattedText(
-                                    [("class:error", "Please enter 'y' or 'n'\n")]
-                                )
-                            )
+                    # For optional fields, prompt directly with [Optional] indicator
+                    value = prompt_instance._prompt_for_optional_field(field_name, field_info)
+                    if isinstance(value, Exception):
+                        return value
+                    # Only assign if a value was provided (not None)
+                    if value is not None:
+                        field_data[field_name] = value
 
             # Create and validate the model instance
             try:
@@ -144,7 +136,7 @@ class UserPrompt:
                 )
                 print_formatted_text(error_text)
                 # Retry with corrected data
-                return UserPrompt.prompt_for_model(model_class, field_data)
+                return UserPrompt.prompt_for_model(model_class, field_data, title, fields_to_prompt)
         except Exception as e:
             return e
 
@@ -231,6 +223,108 @@ class UserPrompt:
                         )
                         print_formatted_text(error_text)
                         continue
+
+                    # Convert and return the input
+                    converted_value = self._convert_input(user_input, field_type)
+                    if isinstance(converted_value, Exception):
+                        # This should be caught by the validator, but as a fallback
+                        error_text = FormattedText(
+                            [("class:error", f"❌ {converted_value}\n")]
+                        )
+                        print_formatted_text(error_text)
+                        continue
+                    return converted_value
+
+                except PTValidationError as e:
+                    error_text = FormattedText([("class:error", f"❌ {e.message}\n")])
+                    print_formatted_text(error_text)
+                    continue
+        except Exception as e:
+            return e
+
+    def _prompt_for_optional_field(
+        self, field_name: str, field_info: Any
+    ) -> Union[Any, Exception]:
+        """
+        Prompt the user for an optional field value.
+
+        Args:
+            field_name: Name of the field
+            field_info: Field information from Pydantic
+
+        Returns:
+            The user input value (converted to appropriate type) or None if no value provided
+        """
+        try:
+            field_type = field_info.annotation
+            description = field_info.description or ""
+
+            # Get the actual default value for Pydantic v2
+            try:
+                default_value = field_info.get_default()
+                # Filter out PydanticUndefined
+                if str(default_value) == "PydanticUndefined":
+                    default_value = None
+            except Exception:
+                default_value = None
+
+            # Build formatted prompt message with [Optional] indicator
+            prompt_parts = [("class:field", f"\n{field_name}")]
+
+            if description:
+                prompt_parts.extend(
+                    [
+                        ("class:prompt", " ("),
+                        ("class:description", description),
+                        ("class:prompt", ")"),
+                    ]
+                )
+
+            # Add [Optional] indicator
+            prompt_parts.extend(
+                [
+                    ("class:prompt", " ["),
+                    ("class:optional", "Optional"),
+                    ("class:prompt", "]"),
+                ]
+            )
+
+            if default_value is not None and default_value != ...:
+                prompt_parts.extend(
+                    [
+                        ("class:prompt", " [default: "),
+                        ("class:default", str(default_value)),
+                        ("class:prompt", ")"),
+                    ]
+                )
+
+            prompt_parts.append(("class:prompt", ": "))
+
+            prompt_text = FormattedText(prompt_parts)
+
+            # Create validator for the field type
+            validator = self._create_field_validator(field_type, field_info, field_name)
+            if isinstance(validator, Exception):
+                return validator
+
+            # Get user input with validation
+            while True:
+                try:
+                    user_input = self.session.prompt(
+                        prompt_text, validator=validator
+                    ).strip()
+
+                    # Handle empty input for optional fields - return None
+                    if not user_input:
+                        return None
+
+                    # Handle default value
+                    if (
+                        not user_input
+                        and default_value is not None
+                        and default_value != ...
+                    ):
+                        return default_value
 
                     # Convert and return the input
                     converted_value = self._convert_input(user_input, field_type)
@@ -395,7 +489,7 @@ class UserPrompt:
         """
         try:
             prompt_instance = UserPrompt()
-            field_info = {
+            _ = {
                 "annotation": field_type,
                 "description": description,
                 "default": default,
@@ -441,3 +535,29 @@ class UserPrompt:
                     print_formatted_text(error_text)
         except Exception as e:
             return e
+
+    @staticmethod
+    def prompt_for_model_fields(
+        model_class: Type[T],
+        fields_to_prompt: List[str],
+        existing_data: Optional[Dict[str, Any]] = None,
+        title: str = None,
+    ) -> Union[T, Exception]:
+        """
+        Prompt the user for specific fields of a Pydantic model.
+
+        Args:
+            model_class: The Pydantic model class to prompt for
+            fields_to_prompt: List of field names to prompt for
+            existing_data: Optional existing data to pre-populate fields
+            title: Optional title to display at the top of the prompt
+
+        Returns:
+            An instance of the specified Pydantic model
+
+        Raises:
+            ValueError: If the model_class is not a valid Pydantic model
+        """
+        return UserPrompt.prompt_for_model(
+            model_class, existing_data, title, fields_to_prompt
+        )

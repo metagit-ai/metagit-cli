@@ -4,7 +4,7 @@ Detect cli command group
 
 import click
 
-from metagit.core.detect.project import ProjectAnalysis
+from metagit.core.repository.project import ProjectAnalysis
 
 
 @click.group(name="detect", invoke_without_command=True)

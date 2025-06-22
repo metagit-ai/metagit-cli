@@ -19,7 +19,6 @@ It can be used as a handy facility for running the task from a command line.
 """
 
 from pathlib import Path
-from typing import Union
 
 import click
 
@@ -30,7 +29,7 @@ from metagit.cli.commands.detect import detect
 from metagit.cli.commands.project import project
 from metagit.cli.commands.workspace import workspace
 from metagit.core.appconfig import load_config
-from metagit.core.utils.logging import LOG_LEVELS, LoggerConfig, UnifiedLogger
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 CONTEXT_SETTINGS: dict = dict(help_option_names=["-h", "--help"], max_content_width=120)
 
@@ -99,7 +98,6 @@ def info(ctx: click.Context) -> None:
     Display the current configuration.
     """
     try:
-        cfg = ctx.obj["config"]
         click.echo("Metagit CLI:")
         click.echo(f"Version: {__version__}")
         click.echo(f"Config Path: {ctx.obj['config_path']}")

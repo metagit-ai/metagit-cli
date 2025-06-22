@@ -10,8 +10,12 @@ from typing import Union
 import git
 from tqdm import tqdm
 
+from metagit.core.config.models import MetagitConfig
+from metagit.core.config.manager import ConfigManager
 from metagit.core.project.models import ProjectPath
 from metagit.core.utils.logging import UnifiedLogger
+from metagit.core.utils.userprompt import UserPrompt
+from metagit.core.utils.common import create_vscode_workspace
 from metagit.core.workspace.models import WorkspaceProject
 
 
@@ -32,18 +36,86 @@ class ProjectManager:
         self.logger = logger
         self.logger.set_level("INFO")
 
+    def add(self,
+            config_path: Path,
+            project_name: str,
+            repo: Union[ProjectPath, None], 
+            metagit_config: MetagitConfig) -> Union[ProjectPath, Exception]:
+        """
+        Add a repository to a specific project in the configuration.
+
+        Args:
+            project_name: The name of the project to add the repository to.
+            repo: The ProjectPath object representing the repository to add. If None, will prompt for data.
+            metagit_config: The MetagitConfig instance to work with configuration data.
+
+        Returns:
+            Union[ProjectPath, Exception]: ProjectPath if successful, Exception if failed.
+        """
+        config_manager = ConfigManager(metagit_config)
+        try:
+            # Validate inputs
+            if not project_name or not isinstance(project_name, str):
+                raise ValueError("Project name must be a non-empty string")
+            
+            # Check if workspace configuration exists
+            if not metagit_config.workspace:
+                raise ValueError("No workspace configuration found in the config file")
+            # Find the target project
+            target_project = None
+            for project in metagit_config.workspace.projects:
+                if project.name == project_name:
+                    target_project = project
+                    break
+
+            if not target_project:
+                raise ValueError(f"Project '{project_name}' not found in workspace configuration")
+            
+            # If repo is None, prompt for ProjectPath data
+            if repo is None:
+                self.logger.debug("No repository data provided. Prompting for ProjectPath information...")
+                repo_result = UserPrompt.prompt_for_model(
+                    ProjectPath,
+                    title="Add git repository or local path to project group",
+                    fields_to_prompt=["name", "path", "url"]
+                )
+                if isinstance(repo_result, Exception):
+                    return repo_result
+                repo = repo_result
+
+            # Check if name already exists in the project
+            for existing_repo in target_project.repos:
+                if existing_repo.name == repo.name:
+                    raise ValueError(f"Repository '{repo.name}' already exists in project '{project_name}'")
+            
+            # Add the repository to the project
+            target_project.repos.append(repo)
+            
+            # Save the updated configuration
+            save_result = config_manager.save_config(metagit_config, config_path)
+            if isinstance(save_result, Exception):
+                return save_result
+            
+            self.logger.debug(f"Successfully added repository '{repo.name}' to project '{project_name}' in configuration")
+            return repo
+            
+        except Exception as e:
+            self.logger.error(f"Failed to add repository '{repo.name if repo else 'unknown'}' to project '{project_name}': {str(e)}")
+            return e
+
     def sync(self, project: WorkspaceProject) -> bool:
         """
         Sync a workspace project concurrently.
 
         Iterates through each repository in the project and either creates a
         symbolic link for local paths or clones it if it's a remote repository.
+        After syncing, creates a VS Code workspace file.
 
         Returns:
             bool: True if sync is successful, False otherwise.
         """
-        project_dir = self.workspace_path / project.name
-        project_dir.mkdir(parents=True, exist_ok=True)
+        project_dir = os.path.join(self.workspace_path, project.name)
+        os.makedirs(project_dir, exist_ok=True)
         tqdm.write(
             f"Concurrently syncing project '{project.name}' in '{project_dir}'..."
         )
@@ -60,15 +132,61 @@ class ProjectManager:
                 except Exception as exc:
                     tqdm.write(f"'{repo.name}' generated an exception: {exc}")
                     return False
+        
+        # Create VS Code workspace file after successful sync
+        workspace_result = self._create_vscode_workspace(project, project_dir)
+        if isinstance(workspace_result, Exception):
+            tqdm.write(f"Failed to create VS Code workspace file: {workspace_result}")
+            # Don't fail the entire sync for workspace file creation issues
+        else:
+            tqdm.write(f"Created VS Code workspace file: {workspace_result}")
+        
         return True
 
-    def _sync_repo(self, repo: ProjectPath, project_dir: Path, position: int) -> None:
+    def _create_vscode_workspace(self, project: WorkspaceProject, project_dir: str) -> Union[str, Exception]:
+        """
+        Create a VS Code workspace file for the project.
+        
+        Args:
+            project: The workspace project containing repository information
+            project_dir: The directory where the project is located
+            
+        Returns:
+            Path to the created workspace file on success, Exception on failure
+        """
+        try:
+            # Get list of repository names that were successfully synced
+            repo_names = []
+            for repo in project.repos:
+                repo_path = os.path.join(project_dir, repo.name)
+                if os.path.exists(repo_path):
+                    repo_names.append(repo.name)
+            
+            if not repo_names:
+                return Exception("No repositories found to include in workspace")
+            
+            # Create workspace file content
+            workspace_content = create_vscode_workspace(project.name, repo_names)
+            if isinstance(workspace_content, Exception):
+                return workspace_content
+            
+            # Write workspace file
+            workspace_file_path = os.path.join(project_dir, "workspace.code-workspace")
+            with open(workspace_file_path, 'w') as f:
+                f.write(workspace_content)
+            
+            return workspace_file_path
+            
+        except Exception as e:
+            return e
+
+    def _sync_repo(self, repo: ProjectPath, project_dir: str, position: int) -> None:
         """
         Sync a single repository.
 
         This method is called by the thread pool executor.
         """
-        target_path = project_dir / repo.name
+        target_path = os.path.join(project_dir, repo.name)
 
         if repo.path:
             self._sync_local(repo, target_path, position)
@@ -77,7 +195,7 @@ class ProjectManager:
         else:
             tqdm.write(f"Skipping '{repo.name}': No local path or remote URL provided.")
 
-    def _sync_local(self, repo: ProjectPath, target_path: Path, position: int) -> None:
+    def _sync_local(self, repo: ProjectPath, target_path: str, position: int) -> None:
         """Handle syncing of a local repository via symlink."""
         source_path = Path(repo.path).expanduser().resolve()
         if not source_path.exists():
@@ -85,7 +203,7 @@ class ProjectManager:
             return
 
         desc = f"'{repo.name}'"
-        if target_path.exists() or target_path.is_symlink():
+        if os.path.exists(target_path) or os.path.islink(target_path):
             with tqdm(
                 total=1,
                 desc=desc,
@@ -107,7 +225,7 @@ class ProjectManager:
         except OSError as e:
             tqdm.write(f"Failed to create symbolic link for '{repo.name}': {e}")
 
-    def _sync_remote(self, repo: ProjectPath, target_path: Path, position: int) -> None:
+    def _sync_remote(self, repo: ProjectPath, target_path: str, position: int) -> None:
         """Handle syncing of a remote repository via git clone."""
 
         class CloneProgressHandler(git.RemoteProgress):
@@ -131,7 +249,7 @@ class ProjectManager:
                 self.pbar.update(0)  # Manually update the progress bar
 
         desc = f"'{repo.name}'"
-        if target_path.exists():
+        if os.path.exists(target_path):
             with tqdm(
                 total=1,
                 desc=desc,
@@ -152,7 +270,7 @@ class ProjectManager:
             try:
                 git.Repo.clone_from(
                     str(repo.url),
-                    str(target_path),
+                    target_path,
                     progress=CloneProgressHandler(pbar),
                 )
                 pbar.set_description(f"{desc} Cloned")

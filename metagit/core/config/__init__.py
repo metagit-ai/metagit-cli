@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Project package for metagit_detect.
+Project package for metagit.
 
 This package provides Pydantic models and methods for parsing and validating
 .metagit.yml configuration files.

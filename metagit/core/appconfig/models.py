@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from pydantic import BaseModel
+from metagit import __version__
 
 success_blurb: str = "Success! ✅"
 failure_blurb: str = "Failed! ❌"
@@ -31,8 +32,9 @@ class LLM(BaseModel):
 
 
 class AppConfig(BaseModel):
-    version: str
-    description: str
+    version: str = __version__
+    description: str = "Metagit configuration"
+    editor: str = "code"
     # Reserved for future use
     api_url: str
     # Reserved for future use

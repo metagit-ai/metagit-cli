@@ -3,7 +3,7 @@ import sys
 from contextlib import contextmanager
 from typing import Any, Callable, Dict, Generator, List, Optional, Union
 
-from prompt_toolkit import Application, print_formatted_text
+from prompt_toolkit import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.key_binding import KeyBindings
@@ -261,7 +261,7 @@ class FuzzyFinder:
                         items_to_search,
                         key=lambda item: str(self.config.get_display_value(item) or ""),
                     )
-                except Exception as e:
+                except Exception:
                     # If sorting fails (e.g., unorderable types), proceed without sorting
                     pass
 

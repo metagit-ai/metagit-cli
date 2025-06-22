@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Union
 
-import click
 import yaml as base_yaml
 
 from metagit.core.appconfig.models import AppConfig

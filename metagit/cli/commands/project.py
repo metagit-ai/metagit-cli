@@ -2,20 +2,19 @@
 Project subcommand
 """
 
-import os
 import sys
-from pathlib import Path
 
 import click
+import yaml
 
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import ConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager
-from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.models import WorkspaceProject
-
+from metagit.cli.commands.project_repo import repo, repo_select
+from metagit.core.utils.click import call_click_command_with_ctx
 
 @click.group(name="project", invoke_without_command=True)
 @click.option(
@@ -30,68 +29,64 @@ from metagit.core.workspace.models import WorkspaceProject
 def project(ctx: click.Context, config: str, project: str = None) -> None:
     """Project subcommands"""
     logger = ctx.obj["logger"]
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
     app_config: AppConfig = ctx.obj["config"]
+    if not project:
+        project: str = app_config.default_project
+    ctx.obj["project"] = project
+    ctx.obj["config_path"] = config
     try:
         config_manager: ConfigManager = ConfigManager(config)
         local_config: MetagitConfig = config_manager.load_config()
+        ctx.obj["local_config"] = local_config
         if isinstance(local_config, Exception):
             raise local_config
     except Exception as e:
         logger.error(f"Failed to load metagit definition file: {e}")
         sys.exit(1)
-    ctx.obj["local_config"] = local_config
-    if not project:
-        project: str = app_config.default_project
-    ctx.obj["project"] = project
-    # If no subcommand is provided, show help
-    if ctx.invoked_subcommand is None:
-        click.echo(ctx.get_help())
-        return
+
+
+# Add repo group to project group
+project.add_command(repo)
+
+
+@project.command("list")
+@click.pass_context
+def project_list(ctx: click.Context) -> None:
+    """List the current project configuration in YAML format"""
+    logger: UnifiedLogger = ctx.obj["logger"]
+    project: str = ctx.obj["project"]
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    
+    try:
+        # Find the current project in the workspace
+        workspace_project: WorkspaceProject = next(
+            (p for p in local_config.workspace.projects if p.name == project), None
+        )
+        
+        if not workspace_project:
+            logger.error(f"Project '{project}' not found in workspace configuration")
+            ctx.abort()
+        
+        # Convert the entire WorkspaceProject to YAML and display
+        project_dict = workspace_project.model_dump(exclude_none=True)
+        yaml_output = yaml.dump(project_dict, default_flow_style=False, sort_keys=False)
+        logger.echo(yaml_output)
+        
+    except Exception as e:
+        logger.error(f"Failed to list project: {e}")
+        ctx.abort()
 
 
 @project.command("select")
 @click.pass_context
 def project_select(ctx: click.Context) -> None:
-    """Select workspace project repo to work on"""
-    logger: UnifiedLogger = ctx.obj["logger"]
-    project: str = ctx.obj["project"]
-    app_config: AppConfig = ctx.obj["config"]
-    try:
-        workspace_path = app_config.workspace.path
-        project_path: str = os.path.join(workspace_path, project)
-
-        if not Path(project_path).exists(follow_symlinks=True):
-            logger.warning(f"Path does not exist for this project: {project_path}")
-            logger.warning(
-                f"You can sync the project with `metagit workspace sync --project {project_path}`"
-            )
-            return
-        else:
-            logger.info(f"Project path: {project_path}")
-
-        repos: list[str] = [f.name for f in Path(project_path).iterdir() if f.is_dir()]
-        if len(repos) == 0:
-            logger.warning(f"No repos found in project: {project_path}")
-            return
-
-        finder_config = FuzzyFinderConfig(
-            items=repos,
-            prompt_text="🔍 Search repos: ",
-            max_results=20,
-            score_threshold=70.0,
-            highlight_color="bold white bg:#0066cc",
-            normal_color="cyan",
-            prompt_color="bold green",
-            separator_color="gray",
-        )
-        finder = FuzzyFinder(finder_config)
-        selected = finder.run()
-        if isinstance(selected, Exception):
-            raise selected
-        logger.echo(f"Selected: {selected}")
-    except Exception as e:
-        logger.error(f"Failed to select project repo: {e}")
-        ctx.abort()
+    """Shortcut: Uses 'project repo select' to select workspace project repo to work on"""
+    # Call the repo_select function
+    call_click_command_with_ctx(repo_select, ctx)
 
 
 @project.command("sync")

@@ -5,11 +5,9 @@ Class for managing workspaces.
 This package provides a class for managing workspaces.
 """
 
-from pathlib import Path
 from typing import List, Optional, Union
 
 from metagit.core.appconfig.models import AppConfig
-from metagit.core.utils.yaml_class import yaml
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 

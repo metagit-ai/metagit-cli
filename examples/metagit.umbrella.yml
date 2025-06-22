@@ -1,20 +1,18 @@
-# Example umbrella workspace for metagit projects that can be checked into version control 
-# This can then be used by metagit to create/update a workspace with all the projects and dependencies
-# locally for development or in a CI/CD pipeline
-name: example_workspace
 description: Umbrella workspace for metagit projects
-url: https://github.com/metagit-io/metagit_umbrella
 kind: umbrella
+name: example_workspace
+url: https://github.com/metagit-io/metagit_umbrella
 workspace:
   projects:
-    - name: default
-      repos:
-        - name: taskfiles
-          url: git@github.com:zloeber/taskfiles.git
-        - name: dotfiles
-          url: git@github.com:zloeber/dotfiles.git
-        - name: k8s-lab-terraform-libvirt
-          url: git@github.com:zloeber/k8s-lab-terraform-libvirt.git
-        - name: metagit
-          path: ./metagit
-
+  - name: default
+    repos:
+    - name: taskfiles
+      url: git@github.com:zloeber/taskfiles.git
+    - name: dotfiles
+      url: git@github.com:zloeber/dotfiles.git
+    - name: k8s-lab-terraform-libvirt
+      url: git@github.com:zloeber/k8s-lab-terraform-libvirt.git
+    - name: metagit
+      path: ./metagit
+    - name: metagit_cli
+      path: ./metagit/cli

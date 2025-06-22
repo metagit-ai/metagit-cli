@@ -4,12 +4,95 @@ common functions
 
 import os
 import re
-from collections.abc import MutableMapping
+import subprocess
+#from collections.abc import MutableMapping
 from typing import Any, Dict, Generator, List, MutableMapping, Union
 
 import metagit.core.utils.yaml_class as yaml
 
-__all__ = ["env_override", "regex_replace", "flatten_dict", "to_yaml", "merge_dicts"]
+__all__ = ["env_override", "regex_replace", "flatten_dict", "to_yaml", "merge_dicts", "open_editor", "create_vscode_workspace"]
+
+
+def create_vscode_workspace(project_name: str, repo_paths: List[str]) -> Union[str, Exception]:
+    """
+    Create VS Code workspace file content.
+    
+    Args:
+        project_name: The name of the project
+        repo_paths: List of repository paths to include in the workspace
+        
+    Returns:
+        JSON string representing the VS Code workspace file content
+    """
+    try:
+        workspace_data = {
+            "folders": [],
+            "settings": {
+                "files.exclude": {
+                    "**/.git": True,
+                    "**/.DS_Store": True,
+                    "**/node_modules": True,
+                    "**/__pycache__": True,
+                    "**/*.pyc": True
+                },
+                "search.exclude": {
+                    "**/node_modules": True,
+                    "**/bower_components": True,
+                    "**/*.code-search": True
+                }
+            },
+            "extensions": {
+                "recommendations": [
+                    "ms-python.python",
+                    "ms-vscode.vscode-json",
+                    "redhat.vscode-yaml",
+                    "ms-vscode.vscode-typescript-next"
+                ]
+            }
+        }
+        
+        # Add each repository as a folder in the workspace
+        for repo_path in repo_paths:
+            workspace_data["folders"].append({
+                "name": os.path.basename(repo_path),
+                "path": f"./{os.path.basename(repo_path)}"
+            })
+        
+        # Convert to JSON string
+        import json
+        return json.dumps(workspace_data, indent=2)
+    except Exception as e:
+        return e
+
+
+def open_editor(editor: str, path: str) -> Union[None, Exception]:
+    """
+    Open a path in the specified editor in an OS-agnostic way.
+    
+    Args:
+        editor: The editor command to use (e.g., 'code', 'vim', 'nano')
+        path: The path to open in the editor
+        
+    Returns:
+        None on success, Exception on failure
+    """
+    try:
+        # Ensure the path exists
+        if not os.path.exists(path):
+            return Exception(f"Path does not exist: {path}")
+        
+        # Use subprocess to open the editor
+        # This works cross-platform as subprocess handles the differences
+        result = subprocess.run([editor, path], capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            return Exception(f"Failed to open editor '{editor}': {result.stderr}")
+        
+        return None
+    except FileNotFoundError:
+        return Exception(f"Editor '{editor}' not found in PATH")
+    except Exception as e:
+        return e
 
 
 def _flatten_dict_gen(

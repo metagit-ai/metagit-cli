@@ -14,7 +14,6 @@ from pydantic import (
     BaseModel,
     Field,
     HttpUrl,
-    ValidationError,
     field_serializer,
     field_validator,
 )

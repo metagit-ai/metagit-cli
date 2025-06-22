@@ -149,7 +149,7 @@ class ConfigManager:
 
             save_path = output_path or self.config_path
             with open(save_path, "w", encoding="utf-8") as f:
-                yaml.dump(config_to_save.model_dump(), f)
+                yaml.dump(config_to_save.model_dump(exclude_none=True, exclude_defaults=True), f)
             return None
         except Exception as e:
             return e

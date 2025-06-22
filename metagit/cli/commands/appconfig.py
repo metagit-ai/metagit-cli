@@ -12,7 +12,6 @@ from pydantic import ValidationError
 
 from metagit import DATA_PATH
 from metagit.core.appconfig import AppConfig, get_config, load_config
-from metagit.core.utils.yaml_class import yaml
 
 
 @click.group(name="appconfig", invoke_without_command=True)
