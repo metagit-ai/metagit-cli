@@ -197,7 +197,7 @@
   
   
   <span class="md-ellipsis">
-    Welcome to Metagit-AI
+    Metagit
     
   </span>
   
@@ -363,7 +363,7 @@
   -h, --help          Show this message and exit.
 </code></pre>
 <h3 id="create_1">create</h3>
-<p>Create default application config</p>
+<p>Create metagit config files</p>
 <p><strong>Usage:</strong></p>
 <pre><code class="language-text">metagit config create [OPTIONS]
 </code></pre>
@@ -417,18 +417,73 @@
 <p><strong>Options:</strong></p>
 <pre><code class="language-text">  -h, --help  Show this message and exit.
 </code></pre>
+<h2 id="init">init</h2>
+<p>Initialize local metagit environment by creating .metagit.yml and updating .gitignore</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-text">metagit init [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<pre><code class="language-text">  -f, --force  Force overwrite of existing .metagit.yml file
+  -h, --help   Show this message and exit.
+</code></pre>
 <h2 id="project">project</h2>
 <p>Project subcommands</p>
 <p><strong>Usage:</strong></p>
 <pre><code class="language-text">metagit project [OPTIONS] COMMAND [ARGS]...
 </code></pre>
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --config TEXT   Path to the metagit definition file
-  --project TEXT  Project within workspace to operate on
-  -h, --help      Show this message and exit.
+<pre><code class="language-text">  -c, --config TEXT   Path to the metagit definition file
+  -p, --project TEXT  Project within workspace to operate on
+  -h, --help          Show this message and exit.
 </code></pre>
-<h3 id="select">select</h3>
+<h3 id="list">list</h3>
+<p>List the current project configuration in YAML format</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-text">metagit project list [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<pre><code class="language-text">  -h, --help  Show this message and exit.
+</code></pre>
+<h3 id="repo_1">repo</h3>
+<p>Repository subcommands</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-text">metagit project repo [OPTIONS] COMMAND [ARGS]...
+</code></pre>
+<p><strong>Options:</strong></p>
+<pre><code class="language-text">  -h, --help  Show this message and exit.
+</code></pre>
+<h4 id="add">add</h4>
+<p>Add a repository to the current project</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-text">metagit project repo add [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<pre><code class="language-text">  --name TEXT                     Repository name
+  --description TEXT              Repository description
+  --kind [monorepo|umbrella|application|gitops|infrastructure|service|library|website|other|docker_image|repository]
+                                  Project kind
+  --ref TEXT                      Reference in the current project for the target project
+  --path TEXT                     Local project path
+  --branches TEXT                 Project branches (can be specified multiple times)
+  --url TEXT                      Repository URL
+  --sync / --no-sync              Sync setting
+  --language TEXT                 Programming language
+  --language-version TEXT         Language version
+  --package-manager TEXT          Package manager
+  --frameworks TEXT               Frameworks used (can be specified multiple times)
+  --prompt                        Use interactive prompts instead of command line parameters
+  -h, --help                      Show this message and exit.
+</code></pre>
+<h4 id="select">select</h4>
 <p>Select workspace project repo to work on</p>
+<p><strong>Usage:</strong></p>
+<pre><code class="language-text">metagit project repo select [OPTIONS]
+</code></pre>
+<p><strong>Options:</strong></p>
+<pre><code class="language-text">  -h, --help  Show this message and exit.
+</code></pre>
+<h3 id="select_1">select</h3>
+<p>Shortcut: Uses 'project repo select' to select workspace project repo to work on</p>
 <p><strong>Usage:</strong></p>
 <pre><code class="language-text">metagit project select [OPTIONS]
 </code></pre>
@@ -460,7 +515,7 @@
 <pre><code class="language-text">  --config TEXT  Path to the metagit definition file
   -h, --help     Show this message and exit.
 </code></pre>
-<h3 id="select_1">select</h3>
+<h3 id="select_2">select</h3>
 <p>Select workspace project repo to work on</p>
 <p><strong>Usage:</strong></p>
 <pre><code class="language-text">metagit workspace select [OPTIONS]

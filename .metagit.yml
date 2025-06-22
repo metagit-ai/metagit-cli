@@ -145,7 +145,7 @@ observability:
       url: https://grafana.com/grafana/dashboards/1234567890
 
 # Local paths in the project with their own metadata, can be used for monorepo definitions
-paths:
+paths: &project_paths
   - name: metagit_detect
       # optional description
     description: The main project path
@@ -170,7 +170,7 @@ paths:
       - CrewAI
       - Click
 
-dependencies:
+dependencies: &dependencies
   - name: dragonflydb_latest
     description: DragonflyDB is a modern, in-memory database that is designed to be fast, scalable, and easy to use.
     kind: docker_image
@@ -196,26 +196,25 @@ components:
   - name: metagit_detect_cli
     description: The main project path that includes the CLI and data models
     kind: application
-    path: metagit_detect/cli.py# optional reference in the current project for the target project, only used for dependencies
+    path: metagit_detect/cli.py
     branches: []
     sync: false
     language: python
     language_version: 3.12
 
-# optional workspace
-# workspace:
-#   projects:
-#     - name: default
-#       repos: 
-#         - *project_paths
-#         - *dependencies
-#     - name: project2
-#       repos:
-#         - name: some_other_project
-#           description: Some other project
-#           url: https://github.com/metagit-io/some_other_project
-#           kind: application
-#           path: ./some_other_project
-#           branches: []
-#           sync: true
+workspace:
+  projects:
+    - name: default
+      repos: 
+        - *project_paths
+        - *dependencies
+    - name: project2
+      repos:
+        - name: some_other_project
+          description: Some other project
+          url: https://github.com/metagit-io/some_other_project
+          kind: application
+          path: ./some_other_project
+          branches: []
+          sync: true
 

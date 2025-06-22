@@ -89,9 +89,8 @@ tasks:
   toc:
     desc: Update the table of contents in README.md
     cmds:
-      - |
-        source {{.LOCAL_BIN_PATH}}/activate
-        mdtoc README.md
+      - uv pip install -e ".[docs]"
+      - uv run mdtoc README.md
 
   secrets:
     desc: Create template .SECRETS file if one does not already exist.
@@ -151,3 +150,11 @@ tasks:
           echo "Creating workspace $i"
           mkdir -p "./.metagit/default/project-$i"
         done
+
+  docs:
+    desc: Build the docs
+    cmds:
+      - |
+        uv pip install -e ".[docs]"
+      - uv run mdtoc README.md
+      - uv run mkdocs build

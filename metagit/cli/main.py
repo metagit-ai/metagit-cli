@@ -26,6 +26,7 @@ from metagit import DEFAULT_CONFIG, __version__
 from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.config import config
 from metagit.cli.commands.detect import detect
+from metagit.cli.commands.init import init
 from metagit.cli.commands.project import project
 from metagit.cli.commands.workspace import workspace
 from metagit.core.appconfig import load_config
@@ -127,6 +128,7 @@ cli.add_command(appconfig)
 cli.add_command(project)
 cli.add_command(workspace)
 cli.add_command(config)
+cli.add_command(init)
 
 
 def main() -> None:

@@ -7,6 +7,7 @@ import click
 
 from metagit.core.config.manager import ConfigManager
 from metagit.core.utils.yaml_class import yaml
+from metagit.core.config.manager import create_metagit_config
 
 
 @click.group(name="config", invoke_without_command=True)
@@ -66,21 +67,21 @@ def config_show(ctx: click.Context) -> None:
     help="Path to the metagit configuration file",
     default=None,
 )
-@click.option("--name", help="Project name")
+@click.option("--name", help="Project name", default=None)
 @click.option(
     "--description",
     help="Project description",
-    default="Project description",
+    default=None,
 )
 @click.option(
     "--url",
     help="Project URL",
-    default="https://github.com/metagit-io/metagit_detect",
+    default=None,
 )
 @click.option(
     "--kind",
     help="Project kind",
-    default="application",
+    default=None,
 )
 @click.pass_context
 def config_create(
@@ -91,31 +92,24 @@ def config_create(
     url: str,
     kind: str,
 ) -> None:
-    """Create default application config"""
+    """Create metagit config files"""
     logger = ctx.obj["logger"]
+
     try:
-        config_manager = ConfigManager()
-        config_result = config_manager.create_config(
-            name=name, description=description, url=url, kind=kind
+        config_file = create_metagit_config(
+            name=name, description=description, url=url, kind=kind, as_yaml=True
         )
-        if isinstance(config_result, Exception):
-            raise config_result
-        yaml.Dumper.ignore_aliases = lambda *args: True
-        output = yaml.dump(
-            config_result.model_dump(exclude_unset=True, exclude_none=True),
-            default_flow_style=False,
-            sort_keys=False,
-            indent=2,
-            line_break=True,
-        )
-        if output_path is None:
-            logger.echo(output)
-        else:
-            with open(output_path, "w", encoding="utf-8") as f:
-                f.write(output)
+        if isinstance(config_file, Exception):
+            raise config_file
     except Exception as e:
         logger.error(f"Failed to create config: {e}")
         ctx.abort()
+
+    if output_path is None:
+        logger.echo(config_file)
+    else:
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(config_file)
 
 
 @config.command("validate")

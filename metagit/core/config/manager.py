@@ -11,7 +11,8 @@ from typing import Optional, Union
 from metagit.core.config.models import MetagitConfig
 from metagit.core.utils.yaml_class import yaml
 from metagit.core.workspace.models import Workspace, WorkspaceProject
-
+from metagit.core.utils.logging import UnifiedLogger, LoggerConfig
+from git import Repo
 
 class ConfigManager:
     """
@@ -153,3 +154,63 @@ class ConfigManager:
             return None
         except Exception as e:
             return e
+
+def create_metagit_config(
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    url: Optional[str] = None,
+    kind: Optional[str] = None,
+    logger: Optional[UnifiedLogger] = None,
+    as_yaml: bool = False,
+) -> Union[MetagitConfig, str, Exception]:
+    """
+    Create a top level .metagit.yml configuration file.
+    """
+    logger = logger or UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
+    if name is None:
+        try:
+            git_repo = Repo(Path.cwd())
+            name = Path(git_repo.working_dir).name
+        except Exception:
+            name = Path.cwd().name
+
+    if description is None:
+      description = git_repo.description or "No description"
+    if url is None:
+      url = git_repo.remote().url or None
+    if kind is None:
+      kind = "application"
+    try:
+      config_manager = ConfigManager()
+      config_result = config_manager.create_config(
+          name=name, description=description, url=url, kind=kind
+      )
+      if isinstance(config_result, Exception):
+          raise config_result
+    except Exception as e:
+        logger.error(f"Failed to create config: {e}")
+        return e
+    config_manager.paths = []
+    config_manager.dependencies = []
+    config_manager.components = []
+    config_manager.workspace = Workspace(
+        projects=[
+            WorkspaceProject(
+                name="default",
+                repos=[],
+            )
+        ],
+    )
+
+    if as_yaml:
+      yaml.Dumper.ignore_aliases = lambda *args: True
+      output = yaml.dump(
+          config_result.model_dump(exclude_unset=True, exclude_none=True),
+          default_flow_style=False,
+          sort_keys=False,
+          indent=2,
+          line_break=True,
+      )
+      return output
+    else:
+      return config_result

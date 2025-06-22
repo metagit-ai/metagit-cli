@@ -896,6 +896,19 @@ wheels = [
 ]
 
 [[package]]
+name = "mdtoc"
+version = "1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+    { name = "xtermcolor" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7f/2b/cacefaf25af104eaf05292968aa156fc753332e2cd3d741cecd9eceeb343/mdtoc-1.3.tar.gz", hash = "sha256:ea6899a990ee64109094346fae927eececdd4b5e0dfefb42fb9bc1fda6a87d89", size = 7158, upload-time = "2019-03-18T15:47:30.413Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/95/83/41aab7eb45cb79bd81e1974affe12caf92f905be115da6a2af84ac4cdc74/mdtoc-1.3-py3-none-any.whl", hash = "sha256:2c807d32cf9f85740c10c3621c0f455e5d646089e7703c9fe4f3ba9d84d14b8e", size = 8871, upload-time = "2019-03-18T15:47:28.964Z" },
+]
+
+[[package]]
 name = "mdurl"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -943,6 +956,7 @@ dev = [
     { name = "ruff" },
 ]
 docs = [
+    { name = "mdtoc" },
     { name = "mkdocs" },
     { name = "mkdocs-click" },
     { name = "mkdocs-material" },
@@ -990,6 +1004,7 @@ requires-dist = [
     { name = "jsonschema", specifier = ">=4.24.0" },
     { name = "logging", specifier = ">=0.4.9.6" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "mdtoc", marker = "extra == 'docs'" },
     { name = "mkdocs", marker = "extra == 'docs'" },
     { name = "mkdocs-click", marker = "extra == 'docs'" },
     { name = "mkdocs-material", marker = "extra == 'docs'" },
@@ -2117,6 +2132,12 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/09/5e/1655cf481e079c1f22d0cabdd4e51733679932718dc23bf2db175f329b76/wrapt-1.17.2-cp313-cp313t-win_amd64.whl", hash = "sha256:eaf675418ed6b3b31c7a989fd007fa7c3be66ce14e5c3b27336383604c9da85c", size = 40750, upload-time = "2025-01-14T10:35:03.378Z" },
     { url = "https://files.pythonhosted.org/packages/2d/82/f56956041adef78f849db6b289b282e72b55ab8045a75abad81898c28d19/wrapt-1.17.2-py3-none-any.whl", hash = "sha256:b18f2d1533a71f069c7f82d524a52599053d4c7166e9dd374ae2136b7f40f7c8", size = 23594, upload-time = "2025-01-14T10:35:44.018Z" },
 ]
+
+[[package]]
+name = "xtermcolor"
+version = "1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/46/c17b53f040396fb6bc0ee6afd0e809c12580791a61b801728708b48b6711/xtermcolor-1.3.tar.gz", hash = "sha256:66dd9f4b1489ba8a24d5be746fbbd70ecbe55a9cc1795ab552e9734e14bdbcdd", size = 3839, upload-time = "2014-02-18T17:46:25.221Z" }
 
 [[package]]
 name = "yarl"

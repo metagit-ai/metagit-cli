@@ -18,8 +18,8 @@ from pydantic import (
     field_validator,
 )
 
-from metagit.core.project.models import ProjectKind, ProjectPath
-from metagit.core.workspace.models import Workspace
+from metagit.core.project.models import ProjectKind, ProjectPath, GitUrl
+from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
 class LicenseKind(str, Enum):
@@ -635,7 +635,7 @@ class MetagitConfig(BaseModel):
 
     name: str = Field(..., description="Project name")
     description: Optional[str] = Field(None, description="Project description")
-    url: Optional[HttpUrl] = Field(None, description="Project URL")
+    url: Optional[Union[HttpUrl, GitUrl]] = Field(None, description="Project URL")
     kind: Optional[ProjectKind] = Field(None, description="Project kind")
     documentation: Optional[List[str]] = Field(
         None, description="Documentation URLs or paths"
@@ -687,6 +687,28 @@ class MetagitConfig(BaseModel):
     ) -> Optional[str]:
         """Serialize the URL to a string."""
         return str(url) if url else None
+
+    @property
+    def local_workspace_project(self) -> WorkspaceProject:
+        """Create a 'local' workspace project combining paths, dependencies, and components."""
+        all_repos: List[ProjectPath] = []
+        
+        # Add paths if they exist
+        if self.paths:
+            all_repos.extend(self.paths)
+        
+        # Add dependencies if they exist
+        if self.dependencies:
+            all_repos.extend(self.dependencies)
+        
+        # Add components if they exist
+        if self.components:
+            all_repos.extend(self.components)
+        
+        return WorkspaceProject(
+            name="local",
+            repos=all_repos
+        )
 
     class Config:
         """Pydantic configuration."""
