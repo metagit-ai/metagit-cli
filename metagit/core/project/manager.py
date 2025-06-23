@@ -36,7 +36,6 @@ class ProjectManager:
         self.workspace_path = Path(workspace_path)
         self.logger = logger
         self.logger.set_level("INFO")
-        self.config_manager = MetagitConfigManager(metagit_config=metagit_config)
 
     def add(
         self,
@@ -67,7 +66,7 @@ class ProjectManager:
                 raise ValueError("No workspace configuration found in the config file")
             # Find the target project
             target_project = None
-            for project in metagit_config.workspace.projects:
+            for project in config_manager.workspace.projects:
                 if project.name == project_name:
                     target_project = project
                     break
