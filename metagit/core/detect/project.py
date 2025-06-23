@@ -8,8 +8,8 @@ import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from metagit.core.repository.branch import GitBranchAnalysis
-from metagit.core.repository.cicd import CIConfigAnalysis
+from metagit.core.detect.branch import GitBranchAnalysis
+from metagit.core.detect.cicd import CIConfigAnalysis
 
 load_dotenv()
 

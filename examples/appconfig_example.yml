@@ -1,0 +1,36 @@
+config:
+  version: "0.1.0"
+  description: "Metagit configuration with provider plugins"
+  editor: "code"
+  
+  # LLM Configuration
+  llm:
+    enabled: false
+    provider: "openrouter"
+    provider_model: "gpt-4o-mini"
+    embedder: "ollama"
+    embedder_model: "nomic-embed-text"
+    api_key: ""
+  
+  # Workspace Configuration
+  workspace:
+    path: "./.metagit"
+    default_project: "default"
+  
+  # Profiles Configuration
+  profiles:
+    profile_config_path: "~/.config/metagit/profiles"
+    default_profile: "default"
+    boundaries: []
+  
+  # Git Provider Plugin Configuration
+  providers:
+    github:
+      enabled: true  # Set to true to enable GitHub provider
+      api_token: "ghp_your_github_token_here"  # Your GitHub Personal Access Token
+      base_url: "https://api.github.com"  # Default GitHub API URL
+    
+    gitlab:
+      enabled: false  # Set to true to enable GitLab provider
+      api_token: "glpat_your_gitlab_token_here"  # Your GitLab Personal Access Token
+      base_url: "https://gitlab.com/api/v4"  # Default GitLab API URL 

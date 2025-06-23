@@ -297,14 +297,14 @@
 
 
 
-<h1 id="metagit-terminology">Metagit Terminology</h1>
+<h1 id="metagit-terminology">Metagit Terminology<a class="headerlink" href="#metagit-terminology" title="Permanent link">#</a></h1>
 <p>IT has a way with words doesn't it? This is a short list of metagit terms and their concise meaning to reduce confusion.</p>
 <p><strong>Path (aka. Target)</strong> - A folder within a git repository.
 <strong>Repo</strong> - A git repository. If it happens to be a monorepo there maybe several targets within the repository with unique associated metadata.
 <strong>Project</strong> - A collection of git repositories. In VSCode this is a workspace. We define a project at this higher level than the repository because we want a more holistic view of what your code entails as a whole. While a repo maybe produces a single app it may have several internal/external dependencies that make up the whole of what it requires to deploy it.
 <strong>Workspace</strong> - A collection of projects. Fundamentally different than a VSCode workspace.</p>
 <p>This creates a hierarchy like the following:</p>
-<pre><code>Workspace
+<div class="codehilite"><pre><span></span><code>Workspace
   -- ProjectA
     -- RepoA1
       -- Path1
@@ -317,9 +317,10 @@
       -- Path2
     -- RepoB2
       -- Path1
-</code></pre>
+</code></pre></div>
+
 <p>It is entirely possible to have the same repo referenced in multiple projects.</p>
-<pre><code>Workspace
+<div class="codehilite"><pre><span></span><code>Workspace
   -- ProjectA
     -- RepoA1
       -- Path1
@@ -332,7 +333,7 @@
       -- Path2
     -- RepoA2
       -- Path1
-</code></pre>
+</code></pre></div>
 
 
 
