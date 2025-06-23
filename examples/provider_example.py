@@ -3,14 +3,14 @@ import os
 import sys
 from pathlib import Path
 
-# Add the project root to the Python path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
 from metagit.core.detect.repository import RepositoryAnalysis
 from metagit.core.providers import registry
 from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers.gitlab import GitLabProvider
+
+# Add the project root to the Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 """
 Example script demonstrating git provider plugins for repository analysis.

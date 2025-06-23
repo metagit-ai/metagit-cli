@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-"""
-Test script to verify timezone fix for provider plugins.
-"""
 
-import os
 import sys
 from pathlib import Path
 
+from metagit.core.detect.repository import RepositoryAnalysis
+
+"""
+Test script to verify timezone fix for provider plugins.
+"""
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-
-from metagit.core.detect.repository import RepositoryAnalysis
-from metagit.core.providers import registry
 
 
 def test_timezone_fix():

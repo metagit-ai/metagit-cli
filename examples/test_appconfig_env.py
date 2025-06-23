@@ -6,7 +6,6 @@ Test script to verify AppConfig environment variable loading.
 
 import os
 import tempfile
-from pathlib import Path
 
 from metagit.core.appconfig.models import AppConfig
 

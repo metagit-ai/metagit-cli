@@ -6,7 +6,8 @@ from typing import Union
 
 from pydantic import BaseModel, Field
 
-from metagit import __version__
+from metagit import DATA_PATH, __version__
+from metagit.core.utils.yaml_class import yaml
 
 success_blurb: str = "Success! ✅"
 failure_blurb: str = "Failed! ❌"
@@ -137,35 +138,6 @@ class AppConfig(BaseModel):
             AppConfig instance or Exception
         """
         try:
-            # Load environment variables from .env file if it exists
-            try:
-                from dotenv import load_dotenv
-
-                # Try to load .env from current directory and parent directories
-                env_loaded = False
-                current_dir = Path.cwd()
-
-                # Look for .env in current directory and up to 3 parent directories
-                for i in range(4):
-                    env_path = current_dir / ".env"
-                    if env_path.exists():
-                        load_dotenv(env_path)
-                        env_loaded = True
-                        break
-                    current_dir = current_dir.parent
-                    if current_dir == current_dir.parent:  # Reached root
-                        break
-
-                # Also try to load from home directory
-                home_env = Path.home() / ".env"
-                if home_env.exists():
-                    load_dotenv(home_env)
-                    env_loaded = True
-
-            except ImportError:
-                # dotenv not available, continue without it
-                pass
-
             # Try to load from specified path or default locations
             if config_path:
                 config_file = Path(config_path)
@@ -178,6 +150,7 @@ class AppConfig(BaseModel):
                     Path.joinpath(Path.home(), ".config", "metagit", "config.yaml"),
                     Path.joinpath(Path.home(), ".metagit", "config.yml"),
                     Path.joinpath(Path.home(), ".metagit", "config.yaml"),
+                    Path.joinpath(DATA_PATH, "metagit.config.yml"),
                 ]
 
                 config_file = None
@@ -192,8 +165,6 @@ class AppConfig(BaseModel):
                 else:
                     # Load from file
                     if config_file.exists():
-                        import yaml
-
                         with config_file.open("r") as f:
                             data = yaml.safe_load(f)
 
@@ -256,6 +227,14 @@ class AppConfig(BaseModel):
         if os.getenv("METAGIT_API_VERSION"):
             config.api_version = os.getenv("METAGIT_API_VERSION")
 
+        if os.getenv("GITHUB_TOKEN"):
+            config.providers.github.api_token = os.getenv("GITHUB_TOKEN")
+            config.providers.github.enabled = True
+
+        if os.getenv("GITLAB_TOKEN"):
+            config.providers.gitlab.api_token = os.getenv("GITLAB_TOKEN")
+            config.providers.gitlab.enabled = True
+
         return config
 
     def save(self, config_path: str = None) -> Union[bool, Exception]:
@@ -276,8 +255,6 @@ class AppConfig(BaseModel):
 
             config_file = Path(config_path)
             config_file.parent.mkdir(parents=True, exist_ok=True)
-
-            import yaml
 
             with config_file.open("w") as f:
                 yaml.dump(
