@@ -15,6 +15,7 @@ config:
   default_project: default
 
   llm:
+    enabled: false
     provider: "openrouter"
     provider_model: "gpt-4o-mini"
     embedder: "ollama"
@@ -26,6 +27,13 @@ config:
     path: ./.metagit
     default_project: default
 
+  providers:
+    github:
+      enabled: true
+      base_url: https://api.github.com
+    gitlab:
+      enabled: false
+      base_url: https://gitlab.com/api/v4
 
   profiles:
     # Profiles are used to define multiple configurations for different organizations

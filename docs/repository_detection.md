@@ -1,51 +1,36 @@
-# Repository Detection Module
+# Repository Detection
 
-The `metagit.core.detect.repository` module provides comprehensive repository analysis capabilities for both local paths and remote git repositories. It automatically detects various aspects of a codebase and generates a complete `MetagitConfig` object.
+The repository detection module provides comprehensive analysis of git repositories, including language detection, project classification, branch analysis, CI/CD detection, and metrics collection.
 
 ## Features
 
-### Language and Technology Detection
-- **Programming Languages**: Detects primary and secondary programming languages
-- **Frameworks**: Identifies frameworks like React, Vue, Angular, Terraform, Kubernetes
-- **Package Managers**: Recognizes package manager files (requirements.txt, package.json, go.mod, etc.)
-- **Build Tools**: Detects build systems and tools
-
-### Project Type Classification
-- **Application Types**: CLI, Library, Microservice, Web Application, Data Science
-- **Domains**: Web, Mobile, DevOps, ML, Security, etc.
-- **Confidence Scoring**: Provides confidence levels for type detection
-
-### Repository Analysis
-- **Git Integration**: Analyzes git repositories for branches, strategies, and metadata
-- **CI/CD Detection**: Identifies CI/CD tools and configurations
-- **File Structure**: Categorizes files by type (testing, documentation, infrastructure, etc.)
-- **Metadata Extraction**: Extracts project name, description, license, and maintainers
-
-### MetagitConfig Generation
-- **Complete Configuration**: Generates fully populated `MetagitConfig` objects
-- **Workspace Setup**: Creates workspace configurations with project paths
-- **Branch Strategy**: Maps detected git strategies to Metagit branch strategies
-- **CI/CD Integration**: Converts detected CI/CD tools to Metagit CI/CD configurations
+- **Language Detection**: Identifies primary and secondary programming languages, frameworks, and build tools
+- **Project Classification**: Determines project type (application, library, CLI, etc.) and domain
+- **Branch Analysis**: Detects branching strategies and analyzes branch patterns
+- **CI/CD Detection**: Identifies CI/CD configurations and platforms
+- **Metrics Collection**: Gathers repository metrics including stars, forks, issues, and contributor information
+- **Git Provider Integration**: Supports real-time metrics from GitHub and GitLab APIs
+- **AppConfig Integration**: Dynamic provider configuration through application settings
 
 ## Usage
 
-### Basic Usage
+### Basic Repository Analysis
 
 ```python
 from metagit.core.detect.repository import RepositoryAnalysis
 
 # Analyze a local repository
-analysis = RepositoryAnalysis.from_path("./my-project")
+analysis = RepositoryAnalysis.from_path("/path/to/repo")
 
-# Analyze a remote repository
-analysis = RepositoryAnalysis.from_url("https://github.com/user/repo.git")
+# Analyze a remote repository (clones it temporarily)
+analysis = RepositoryAnalysis.from_url("https://github.com/username/repo")
 
-# Generate MetagitConfig
-config = analysis.to_metagit_config()
-
-# Get analysis summary
+# Generate summary
 summary = analysis.summary()
 print(summary)
+
+# Convert to MetagitConfig
+config = analysis.to_metagit_config()
 ```
 
 ### CLI Usage
@@ -54,152 +39,362 @@ print(summary)
 # Analyze current directory
 metagit detect repository
 
-# Analyze specific local path
+# Analyze specific path
 metagit detect repository --path /path/to/repo
 
 # Analyze remote repository
-metagit detect repository --url https://github.com/user/repo.git
+metagit detect repository --url https://github.com/username/repo
 
-# Output as YAML
-metagit detect repository --path /path/to/repo --output yaml
+# Save configuration to .metagit.yml
+metagit detect repository --save
 
-# Generate and save .metagit.yml
-metagit detect repository --path /path/to/repo --output config
+# Output in different formats
+metagit detect repository --output yaml
+metagit detect repository --output json
 ```
 
-## API Reference
+## Git Provider Plugins
 
-### RepositoryAnalysis Class
+The repository detection system supports git provider plugins that enable fetching real-time metrics from hosting platforms like GitHub and GitLab.
 
-#### Class Methods
+### Supported Providers
 
-##### `from_path(path: str, logger: Optional[Any] = None) -> Union[RepositoryAnalysis, Exception]`
-Analyze a local repository path.
+- **GitHub**: Fetches stars, forks, issues, pull requests, and contributor data
+- **GitLab**: Fetches project statistics, merge requests, and member information
 
-**Parameters:**
-- `path`: Local path to analyze
-- `logger`: Logger instance (optional)
+### Configuration Methods
 
-**Returns:**
-- `RepositoryAnalysis` object or `Exception` if analysis fails
+#### 1. AppConfig (Recommended)
 
-##### `from_url(url: str, logger: Optional[Any] = None, temp_dir: Optional[str] = None) -> Union[RepositoryAnalysis, Exception]`
-Clone and analyze a repository from URL.
+Configure providers through the application configuration file:
 
-**Parameters:**
-- `url`: Git repository URL
-- `logger`: Logger instance (optional)
-- `temp_dir`: Temporary directory for cloning (optional)
+```yaml
+# ~/.config/metagit/config.yml or metagit.config.yml
+config:
+  providers:
+    github:
+      enabled: true
+      api_token: "ghp_your_github_token_here"
+      base_url: "https://api.github.com"  # For GitHub Enterprise
+    
+    gitlab:
+      enabled: false
+      api_token: "glpat_your_gitlab_token_here"
+      base_url: "https://gitlab.com/api/v4"  # For self-hosted GitLab
+```
 
-**Returns:**
-- `RepositoryAnalysis` object or `Exception` if analysis fails
+**Benefits:**
+- Persistent configuration across sessions
+- No need to set environment variables
+- Easy to manage multiple environments
+- Supports enterprise instances
 
-#### Instance Methods
+#### 2. Environment Variables
 
-##### `to_metagit_config() -> Union[MetagitConfig, Exception]`
-Convert analysis results to a complete `MetagitConfig` object.
+Set API tokens as environment variables:
 
-**Returns:**
-- `MetagitConfig` object or `Exception` if conversion fails
+```bash
+export GITHUB_TOKEN="your_github_personal_access_token"
+export GITLAB_TOKEN="your_gitlab_personal_access_token"
+```
 
-##### `summary() -> Union[str, Exception]`
-Generate a human-readable summary of the analysis.
+#### 3. CLI Options
 
-**Returns:**
-- Summary string or `Exception` if generation fails
+Override configuration for specific commands:
 
-##### `cleanup() -> None`
-Clean up temporary resources (for cloned repositories).
+```bash
+# Use GitHub token
+metagit detect repository --github-token "your_token"
 
-## Detection Capabilities
+# Use GitLab token
+metagit detect repository --gitlab-token "your_token"
+
+# Custom API URLs (for self-hosted instances)
+metagit detect repository --github-url "https://github.company.com/api/v3"
+metagit detect repository --gitlab-url "https://gitlab.company.com/api/v4"
+
+# Disable AppConfig and use environment variables only
+metagit detect repository --use-app-config=false
+```
+
+### Configuration Priority
+
+The system uses the following priority order for provider configuration:
+
+1. **CLI Options** (highest priority) - Override all other settings
+2. **AppConfig** - Persistent configuration from config files
+3. **Environment Variables** - Fallback for legacy support
+
+### Provider Features
+
+#### GitHub Provider
+
+- **Authentication**: Personal Access Token
+- **Metrics**: Stars, forks, open issues, pull requests, contributors
+- **Metadata**: Repository description, topics, creation date, license
+- **URL Support**: github.com, GitHub Enterprise
+- **Configuration**: `providers.github.enabled`, `providers.github.api_token`, `providers.github.base_url`
+
+#### GitLab Provider
+
+- **Authentication**: Personal Access Token
+- **Metrics**: Star count, forks, open issues, merge requests, members
+- **Metadata**: Project description, topics, visibility, namespace
+- **URL Support**: gitlab.com, self-hosted GitLab
+- **Configuration**: `providers.gitlab.enabled`, `providers.gitlab.api_token`, `providers.gitlab.base_url`
+
+### Fallback Behavior
+
+When no provider is available or API calls fail, the system falls back to git-based metrics:
+
+- **Contributors**: Counted from git commit history
+- **Commit Frequency**: Calculated from recent commit patterns
+- **Stars/Forks/Issues**: Set to 0 (requires API access)
+
+## Detection Components
 
 ### Language Detection
-The module detects programming languages through:
-- File extensions (.py, .js, .go, .rs, .java, etc.)
-- Package manager files (requirements.txt, package.json, go.mod, etc.)
-- Build configuration files
 
-### Framework Detection
-Frameworks are detected by:
-- File content analysis
-- Directory structure patterns
-- Configuration file presence
-- Import statements and dependencies
+Analyzes file extensions and content to identify:
+
+- **Primary Language**: Most dominant programming language
+- **Secondary Languages**: Other languages present
+- **Frameworks**: React, Vue, Angular, Terraform, Kubernetes, etc.
+- **Package Managers**: npm, pip, cargo, go.mod, etc.
+- **Build Tools**: Make, Gradle, Maven, etc.
 
 ### Project Type Detection
-Project types are determined by:
-- Language and framework combinations
-- File structure patterns
-- Configuration files
-- Directory naming conventions
 
-### Git Analysis
-For git repositories, the module analyzes:
-- Branch structure and naming
-- Git flow strategies
-- Remote repository information
-- Commit history and contributors
+Classifies projects based on file patterns:
+
+- **Application**: Web apps, mobile apps, desktop apps
+- **Library**: Reusable code libraries
+- **CLI**: Command-line tools
+- **Microservice**: Containerized services
+- **Data Science**: ML/AI projects with notebooks
+- **Infrastructure as Code**: Terraform, CloudFormation, etc.
+
+### Branch Analysis
+
+Detects branching strategies:
+
+- **Git Flow**: Feature, develop, release, hotfix branches
+- **GitHub Flow**: Simple main branch with feature branches
+- **GitLab Flow**: Environment-based branching
+- **Trunk-Based Development**: Single main branch
+- **Custom**: Other branching patterns
 
 ### CI/CD Detection
-CI/CD tools are identified by:
-- Configuration file presence (.github/workflows, .gitlab-ci.yml, etc.)
-- Build tool configurations
-- Deployment scripts
 
-## Example Output
+Identifies CI/CD configurations:
 
-### Analysis Summary
+- **GitHub Actions**: `.github/workflows/`
+- **GitLab CI**: `.gitlab-ci.yml`
+- **CircleCI**: `.circleci/config.yml`
+- **Jenkins**: `Jenkinsfile`
+- **Travis CI**: `.travis.yml`
+
+### Metrics Collection
+
+Gathers repository statistics:
+
+- **Stars**: Repository stars/watches
+- **Forks**: Repository forks
+- **Open Issues**: Number of open issues
+- **Pull Requests**: Open and recently merged PRs
+- **Contributors**: Number of contributors
+- **Commit Frequency**: Daily, weekly, or monthly activity
+
+## Output Formats
+
+### Summary Output
+
+Human-readable summary of all detected information:
+
 ```
 Repository Analysis Summary
 Path: /path/to/repo
+URL: https://github.com/username/repo
 Git Repository: True
 Primary Language: Python
 Secondary Languages: JavaScript, Shell
 Frameworks: React, Terraform
-Package Managers: requirements.txt, package.json
+Package Managers: pip, npm
 Project Type: application
 Domain: web
 Confidence: 0.85
 Branch Strategy: GitHub Flow
 Number of Branches: 3
 CI/CD Tool: GitHub Actions
+Contributors: 5
+Commit Frequency: weekly
+Stars: 42
+Forks: 12
+Open Issues: 3
+Open PRs: 1
+PRs Merged (30d): 8
+Metrics Source: GitHub API
 Has Docker: True
 Has Tests: True
 Has Documentation: True
 Has Infrastructure as Code: True
 ```
 
-### Generated MetagitConfig
-The module generates a complete `MetagitConfig` object with:
-- Project metadata (name, description, URL)
-- Language and framework information
-- Branch strategy and branch information
-- CI/CD configuration
-- Repository metadata (has tests, has docs, etc.)
-- Workspace configuration with project paths
+### YAML Output
+
+Structured YAML configuration:
+
+```yaml
+name: "My Project"
+description: "A sample project"
+url: "https://github.com/username/repo"
+kind: "application"
+license:
+  kind: "mit"
+  file: "LICENSE"
+maintainers:
+  - name: "John Doe"
+    email: "john@example.com"
+    role: "Maintainer"
+branch_strategy: "github_flow"
+taskers:
+  - kind: "taskfile"
+branches:
+  - name: "main"
+  - name: "develop"
+  - name: "feature/new-feature"
+cicd:
+  platform: "github"
+  pipelines:
+    - name: "CI"
+      ref: ".github/workflows/ci.yml"
+metrics:
+  stars: 42
+  forks: 12
+  open_issues: 3
+  pull_requests:
+    open: 1
+    merged_last_30d: 8
+  contributors: 5
+  commit_frequency: "weekly"
+metadata:
+  default_branch: "main"
+  has_ci: true
+  has_tests: true
+  has_docs: true
+  has_docker: true
+  has_iac: true
+  created_at: "2024-01-01T00:00:00"
+  last_commit_at: "2024-01-15T12:00:00"
+workspace:
+  projects:
+    - name: "default"
+      repos:
+        - name: "My Project"
+          path: "/path/to/repo"
+          url: "https://github.com/username/repo"
+```
+
+## Examples
+
+### Basic Analysis
+
+```python
+from metagit.core.detect.repository import RepositoryAnalysis
+
+# Analyze current directory
+analysis = RepositoryAnalysis.from_path(".")
+
+# Print summary
+print(analysis.summary())
+
+# Get configuration
+config = analysis.to_metagit_config()
+```
+
+### With AppConfig Integration
+
+```python
+from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.appconfig import AppConfig
+from metagit.core.providers import registry
+
+# Load AppConfig and configure providers
+app_config = AppConfig.load()
+registry.configure_from_app_config(app_config)
+
+# Analyze repository (will use configured providers for metrics)
+analysis = RepositoryAnalysis.from_path(".")
+print(analysis.summary())
+```
+
+### With Manual Provider Configuration
+
+```python
+from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.providers.github import GitHubProvider
+from metagit.core.providers import registry
+
+# Setup GitHub provider manually
+provider = GitHubProvider(api_token="ghp_...")
+registry.register(provider)
+
+# Analyze repository
+analysis = RepositoryAnalysis.from_path(".")
+print(analysis.summary())
+```
+
+### CLI with AppConfig
+
+```bash
+# Create AppConfig file
+mkdir -p ~/.config/metagit
+cat > ~/.config/metagit/config.yml << EOF
+config:
+  providers:
+    github:
+      enabled: true
+      api_token: "ghp_..."
+    gitlab:
+      enabled: false
+      api_token: ""
+EOF
+
+# Analyze with AppConfig providers
+metagit detect repository --path /path/to/repo --output summary
+
+# Save configuration with real metrics
+metagit detect repository --path /path/to/repo --save
+```
+
+### CLI with Environment Variables
+
+```bash
+# Set environment variables
+export GITHUB_TOKEN="ghp_..."
+export GITLAB_TOKEN="glpat-..."
+
+# Analyze with environment providers
+metagit detect repository --path /path/to/repo --output summary
+
+# Disable AppConfig and use environment only
+metagit detect repository --use-app-config=false --path /path/to/repo
+```
 
 ## Error Handling
 
-The module uses a consistent error handling pattern:
-- All methods return `Union[Result, Exception]`
-- Exceptions are logged with appropriate context
-- Temporary resources are cleaned up automatically
-- Analysis continues even if some components fail
+The detection system gracefully handles errors:
 
-## Integration
+- **Missing Files**: Skips analysis of missing files/directories
+- **API Failures**: Falls back to git-based metrics
+- **Invalid Repositories**: Returns appropriate error messages
+- **Network Issues**: Continues with local analysis
+- **Configuration Errors**: Falls back to environment variables or defaults
 
-The repository detection module integrates with:
-- Existing `ProjectAnalysis` class
-- CLI command structure
-- Metagit configuration system
-- Logging and error handling infrastructure
+## Performance Considerations
 
-## Future Enhancements
-
-Potential improvements include:
-- More sophisticated language detection algorithms
-- Machine learning-based project type classification
-- Enhanced framework detection
-- Support for more CI/CD platforms
-- Repository metrics and analytics
-- Dependency analysis and visualization 
+- **Local Analysis**: Fast, no network required
+- **Provider API Calls**: May add 1-3 seconds for metrics
+- **Large Repositories**: Analysis time scales with repository size
+- **Caching**: No built-in caching (consider implementing for repeated analysis)
+- **Configuration Loading**: AppConfig is loaded once per command execution 

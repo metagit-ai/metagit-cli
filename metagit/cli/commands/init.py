@@ -8,7 +8,6 @@ import os
 import click
 import yaml
 
-from metagit.core.appconfig import load_config
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.config.manager import create_metagit_config
 from metagit.core.appconfig import AppConfig

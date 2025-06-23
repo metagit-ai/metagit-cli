@@ -2,41 +2,7 @@
 
 Metagit is situational awareness for developers made easy. Metagit can make multi-repo projects feel more like a monorepo and provide information on the software stacks within.
 
-<details>
-<summary>Table of Contents</summary>
-<!---toc start-->
 
-* [Metagit](#metagit)
-* [About](#about)
-  * [Audience](#audience)
-  * [Metagit is NOT...](#metagit-is-not)
-    * [...an SBOM Tool](#an-sbom-tool)
-    * [...a git Client](#a-git-client)
-  * [How It Works](#how-it-works)
-* [Modes](#modes)
-  * [Workspace Mode](#workspace-mode)
-  * [Metadata Mode](#metadata-mode)
-  * [Metadata+ Mode](#metadata-mode-1)
-  * [Enterprise (TBD)](#enterprise-tbd)
-  * [Installation](#installation)
-* [Usage](#usage)
-    * [Initialize a Repository](#initialize-a-repository)
-    * [Project Commands](#project-commands)
-      * [Detect Project Settings](#detect-project-settings)
-    * [Workspace Commands](#workspace-commands)
-      * [Synchronize Workspace](#synchronize-workspace)
-* [Configuration](#configuration)
-  * [Contributing](#contributing)
-  * [License](#license)
-* [Configuration](#configuration-1)
-* [Use](#use)
-* [Development](#development)
-  * [MCP Servers](#mcp-servers)
-
-<!---toc end-->
-</details>
-
--------
 # About
 
 This tool is well suited for a number of scenarios including;

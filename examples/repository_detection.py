@@ -46,7 +46,7 @@ def analyze_local_repository(path: str) -> None:
     if isinstance(config, Exception):
         print(f"❌ Config conversion failed: {config}")
     else:
-        print(f"\n✅ Successfully created MetagitConfig:")
+        print("\n✅ Successfully created MetagitConfig:")
         print(f"   Name: {config.name}")
         print(f"   Type: {config.kind}")
         print(f"   Description: {config.description}")
@@ -88,7 +88,7 @@ def analyze_remote_repository(url: str) -> None:
         if isinstance(config, Exception):
             print(f"❌ Config conversion failed: {config}")
         else:
-            print(f"\n✅ Successfully created MetagitConfig:")
+            print("\n✅ Successfully created MetagitConfig:")
             print(f"   Name: {config.name}")
             print(f"   Type: {config.kind}")
             print(f"   Description: {config.description}")

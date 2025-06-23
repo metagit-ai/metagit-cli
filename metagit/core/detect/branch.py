@@ -73,7 +73,9 @@ class GitBranchAnalysis(BaseModel):
                     )
                     # Exclude HEAD branch from remote branches
                     if branch_name != "HEAD":
-                        remote_branches.append(BranchInfo(name=branch_name, is_remote=True))
+                        remote_branches.append(
+                            BranchInfo(name=branch_name, is_remote=True)
+                        )
             logger.debug(f"Found {len(remote_branches)} remote branches")
 
             # Combine and deduplicate branches (prefer local if name overlaps)
