@@ -17,8 +17,8 @@ jobs:
   #     contents: read
   #   with:
   #     ref: ${{ github.event.pull_request.head.sha }}
-  call-lint:
-    uses: ./.github/workflows/lint.yaml
+  call-lint-and-test:
+    uses: ./.github/workflows/lint-and-test.yaml
     permissions:
       contents: read
     with:
