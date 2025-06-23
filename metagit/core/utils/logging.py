@@ -511,17 +511,32 @@ class UnifiedLogger:
     def echo(
         self, text: str, color: str = "", dim: bool = False, console: bool = True
     ) -> Union[None, Exception]:
-        """Prints a text"""
+        """
+        Echo text to console with optional color and dimming.
+        Args:
+            text: Text to echo
+            color: Color to use
+            dim: Whether to dim the text
+            console: Whether to output to console
+        """
         try:
-            if console:
-                if color:
-                    self.console.print(f"[{color}]{text}[/{color}]")
-                elif dim:
-                    self.console.print(f"[dim]{text}[/dim]")
-                else:
-                    self.console.print(text)
-            else:
-                print(text)
+            if console and self.console:
+                style = f"{color} dim" if dim else color
+                self.console.print(text, style=style)
             return None
         except Exception as e:
             return e
+
+
+def get_logger(name: str = "metagit") -> Any:
+    """
+    Get a logger instance with default configuration.
+
+    Args:
+        name: Logger name
+
+    Returns:
+        UnifiedLogger instance
+    """
+    config = LoggerConfig()
+    return UnifiedLogger(config)

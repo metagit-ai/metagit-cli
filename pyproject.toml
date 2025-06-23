@@ -29,11 +29,12 @@ dependencies = [
     "rapidfuzz>=3.13.0",
     "prompt-toolkit>=3.0.51",
     "tqdm>=4.66.4",
+    "types-tqdm>=4.67.0.20250516",
 ]
 
 [project.optional-dependencies]
 standard = ["crewai[tools]"]
-test = ["pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov", "mypy", "ruff"]
 dev = ["ruff", "black", "isort", "mypy"]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc"]
 lint = ["ruff", "black", "isort", "mypy"]

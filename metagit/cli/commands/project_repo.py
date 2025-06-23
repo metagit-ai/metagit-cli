@@ -12,9 +12,10 @@ import click
 from metagit.core.appconfig import AppConfig
 from metagit.core.project.manager import ProjectManager
 from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.utils.common import open_editor
 from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
 from metagit.core.utils.logging import UnifiedLogger
-from metagit.core.utils.common import open_editor
+
 
 @click.group(name="repo")
 @click.pass_context
@@ -64,14 +65,14 @@ def repo_select(ctx: click.Context) -> None:
         selected = finder.run()
         if isinstance(selected, Exception):
             raise selected
-        
+
         # Do nothing if no selection was made (result is None)
         if selected is None:
             logger.info("No repository selected")
             return
-        
+
         logger.echo(f"Selected: {selected}")
-        
+
         # Open the selected repository in the configured editor
         selected_path = os.path.join(project_path, selected)
         editor_result = open_editor(app_config.editor, selected_path)
@@ -79,7 +80,7 @@ def repo_select(ctx: click.Context) -> None:
             logger.warning(f"Failed to open editor: {editor_result}")
         else:
             logger.info(f"Opened {selected} in {app_config.editor}")
-            
+
     except Exception as e:
         logger.error(f"Failed to select project repo: {e}")
         ctx.abort()
@@ -88,17 +89,31 @@ def repo_select(ctx: click.Context) -> None:
 @repo.command("add")
 @click.option("--name", help="Repository name")
 @click.option("--description", help="Repository description")
-@click.option("--kind", type=click.Choice([k.value for k in ProjectKind]), help="Project kind")
+@click.option(
+    "--kind", type=click.Choice([k.value for k in ProjectKind]), help="Project kind"
+)
 @click.option("--ref", help="Reference in the current project for the target project")
 @click.option("--path", help="Local project path")
-@click.option("--branches", multiple=True, help="Project branches (can be specified multiple times)")
+@click.option(
+    "--branches",
+    multiple=True,
+    help="Project branches (can be specified multiple times)",
+)
 @click.option("--url", help="Repository URL")
 @click.option("--sync/--no-sync", default=None, help="Sync setting")
 @click.option("--language", help="Programming language")
 @click.option("--language-version", help="Language version")
 @click.option("--package-manager", help="Package manager")
-@click.option("--frameworks", multiple=True, help="Frameworks used (can be specified multiple times)")
-@click.option("--prompt", is_flag=True, help="Use interactive prompts instead of command line parameters")
+@click.option(
+    "--frameworks",
+    multiple=True,
+    help="Frameworks used (can be specified multiple times)",
+)
+@click.option(
+    "--prompt",
+    is_flag=True,
+    help="Use interactive prompts instead of command line parameters",
+)
 @click.pass_context
 def repo_add(
     ctx: click.Context,
@@ -122,21 +137,25 @@ def repo_add(
     app_config: AppConfig = ctx.obj["config"]
     local_config = ctx.obj["local_config"]
     config_path = ctx.obj["config_path"]
-    
+
     try:
-        # Initialize ProjectManager and ConfigManager
+        # Initialize ProjectManager and MetagitConfigManager
         project_manager = ProjectManager(app_config.workspace.path, logger)
-        
+
         if prompt:
             # Use native ProjectManager prompting functionality
-            logger.debug("Using interactive prompts to collect repository information...")
-            result = project_manager.add(config_path,project, None, local_config)
+            logger.debug(
+                "Using interactive prompts to collect repository information..."
+            )
+            result = project_manager.add(config_path, project, None, local_config)
         else:
             # Validate that name is provided when not using prompts
             if not name:
-                logger.error("Repository name is required when not using --prompt option")
+                logger.error(
+                    "Repository name is required when not using --prompt option"
+                )
                 ctx.abort()
-            
+
             # Create ProjectPath object from parameters
             repo_data = {
                 "name": name,
@@ -152,25 +171,32 @@ def repo_add(
                 "package_manager": package_manager,
                 "frameworks": list(frameworks) if frameworks else None,
             }
-            
+
             # Remove None values
             repo_data = {k: v for k, v in repo_data.items() if v is not None}
-            
+
             # Create ProjectPath object
             project_path = ProjectPath(**repo_data)
-            
+
             # Add repository to project
-            result = project_manager.add(config_path, project, project_path, local_config)
-        
+            result = project_manager.add(
+                config_path, project, project_path, local_config
+            )
+
         if isinstance(result, Exception):
             raise Exception(f"Failed to add repository to project '{project}'")
-            
 
         else:
             repo_name = result.name if result.name else "repository"
-            logger.info(f"Successfully added repository '{repo_name}' to project '{project}'")
-            logger.info(f"You can now use `metagit repo sync --project {project}` to sync the repository")
-            
+            logger.info(
+                f"Successfully added repository '{repo_name}' to project '{project}'"
+            )
+            logger.info(
+                f"You can now use `metagit repo sync --project {project}` to sync the repository"
+            )
+
     except Exception as e:
         logger.warning(f"Failed to add repository: {e}")
-#        ctx.abort() 
+
+
+#        ctx.abort()

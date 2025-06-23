@@ -376,3 +376,28 @@ def suppress_stdout() -> Generator[Any, None, None]:
         if devnull:
             devnull.close()
         sys.stdout = original_stdout
+
+
+def fuzzyfinder(query: str, collection: List[str]) -> List[str]:
+    """
+    Simple fuzzy finder function that returns matching items from a collection.
+
+    Args:
+        query: Search query string
+        collection: List of strings to search in
+
+    Returns:
+        List of matching strings
+    """
+    if not query:
+        return collection
+
+    from rapidfuzz import fuzz, process
+
+    # Use rapidfuzz to find matches
+    results = process.extract(
+        query, collection, scorer=fuzz.partial_ratio, limit=len(collection)
+    )
+
+    # Return items with score >= 70
+    return [item for item, score, _ in results if score >= 70]

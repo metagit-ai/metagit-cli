@@ -7,21 +7,23 @@ import sys
 import click
 import yaml
 
+from metagit.cli.commands.project_repo import repo, repo_select
 from metagit.core.appconfig import AppConfig
-from metagit.core.config.manager import ConfigManager
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager
+from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.models import WorkspaceProject
-from metagit.cli.commands.project_repo import repo, repo_select
-from metagit.core.utils.click import call_click_command_with_ctx
+
 
 @click.group(name="project", invoke_without_command=True)
 @click.option(
     "--config", "-c", default=".metagit.yml", help="Path to the metagit definition file"
 )
 @click.option(
-    "--project", "-p",
+    "--project",
+    "-p",
     default=None,
     help="Project within workspace to operate on",
 )
@@ -39,7 +41,7 @@ def project(ctx: click.Context, config: str, project: str = None) -> None:
     ctx.obj["project"] = project
     ctx.obj["config_path"] = config
     try:
-        config_manager: ConfigManager = ConfigManager(config)
+        config_manager: MetagitConfigManager = MetagitConfigManager(config)
         local_config: MetagitConfig = config_manager.load_config()
         ctx.obj["local_config"] = local_config
         if isinstance(local_config, Exception):
@@ -60,14 +62,15 @@ def project_list(ctx: click.Context) -> None:
     logger: UnifiedLogger = ctx.obj["logger"]
     project: str = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
-    
+
     try:
         # Handle special "local" project case
         if project == "local":
             # Check if there's an existing project named "local" in workspace
             if local_config.workspace:
                 workspace_project: WorkspaceProject = next(
-                    (p for p in local_config.workspace.projects if p.name == project), None
+                    (p for p in local_config.workspace.projects if p.name == project),
+                    None,
                 )
                 if workspace_project:
                     # Use existing "local" project
@@ -85,21 +88,23 @@ def project_list(ctx: click.Context) -> None:
             if not local_config.workspace:
                 logger.error("No workspace configuration found")
                 ctx.abort()
-            
+
             workspace_project: WorkspaceProject = next(
                 (p for p in local_config.workspace.projects if p.name == project), None
             )
-            
+
             if not workspace_project:
-                logger.error(f"Project '{project}' not found in workspace configuration")
+                logger.error(
+                    f"Project '{project}' not found in workspace configuration"
+                )
                 ctx.abort()
-            
+
             project_dict = workspace_project.model_dump(exclude_none=True)
-        
+
         # Convert the entire WorkspaceProject to YAML and display
         yaml_output = yaml.dump(project_dict, default_flow_style=False, sort_keys=False)
         logger.echo(yaml_output)
-        
+
     except Exception as e:
         logger.error(f"Failed to list project: {e}")
         ctx.abort()
@@ -122,14 +127,15 @@ def project_sync(ctx: click.Context) -> None:
     project: str = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
     project_manager: ProjectManager = ProjectManager(app_config.workspace.path, logger)
-    
+
     try:
         # Handle special "local" project case
         if project == "local":
             # Check if there's an existing project named "local" in workspace
             if local_config.workspace:
                 workspace_project: WorkspaceProject = next(
-                    (p for p in local_config.workspace.projects if p.name == project), None
+                    (p for p in local_config.workspace.projects if p.name == project),
+                    None,
                 )
                 if workspace_project:
                     # Use existing "local" project
@@ -145,22 +151,24 @@ def project_sync(ctx: click.Context) -> None:
             if not local_config.workspace:
                 logger.error("No workspace configuration found")
                 ctx.abort()
-            
+
             workspace_project: WorkspaceProject = next(
                 (p for p in local_config.workspace.projects if p.name == project), None
             )
-            
+
             if not workspace_project:
-                logger.error(f"Project '{project}' not found in workspace configuration")
+                logger.error(
+                    f"Project '{project}' not found in workspace configuration"
+                )
                 ctx.abort()
-        
+
         sync_result: bool = project_manager.sync(workspace_project)
         if sync_result:
             logger.info(f"Project {project} synced successfully")
         else:
             logger.error(f"Failed to sync project {project}")
             ctx.abort()
-            
+
     except Exception as e:
         logger.error(f"Failed to sync project: {e}")
         ctx.abort()

@@ -2,6 +2,7 @@
 """
 Class for managing projects.
 """
+
 import concurrent.futures
 import os
 from pathlib import Path
@@ -10,12 +11,12 @@ from typing import Union
 import git
 from tqdm import tqdm
 
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
-from metagit.core.config.manager import ConfigManager
 from metagit.core.project.models import ProjectPath
+from metagit.core.utils.common import create_vscode_workspace
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.utils.userprompt import UserPrompt
-from metagit.core.utils.common import create_vscode_workspace
 from metagit.core.workspace.models import WorkspaceProject
 
 
@@ -35,12 +36,15 @@ class ProjectManager:
         self.workspace_path = Path(workspace_path)
         self.logger = logger
         self.logger.set_level("INFO")
+        self.config_manager = MetagitConfigManager(metagit_config=metagit_config)
 
-    def add(self,
-            config_path: Path,
-            project_name: str,
-            repo: Union[ProjectPath, None], 
-            metagit_config: MetagitConfig) -> Union[ProjectPath, Exception]:
+    def add(
+        self,
+        config_path: Path,
+        project_name: str,
+        repo: Union[ProjectPath, None],
+        metagit_config: MetagitConfig,
+    ) -> Union[ProjectPath, Exception]:
         """
         Add a repository to a specific project in the configuration.
 
@@ -52,12 +56,12 @@ class ProjectManager:
         Returns:
             Union[ProjectPath, Exception]: ProjectPath if successful, Exception if failed.
         """
-        config_manager = ConfigManager(metagit_config)
+        config_manager = MetagitConfigManager(metagit_config=metagit_config)
         try:
             # Validate inputs
             if not project_name or not isinstance(project_name, str):
                 raise ValueError("Project name must be a non-empty string")
-            
+
             # Check if workspace configuration exists
             if not metagit_config.workspace:
                 raise ValueError("No workspace configuration found in the config file")
@@ -69,15 +73,19 @@ class ProjectManager:
                     break
 
             if not target_project:
-                raise ValueError(f"Project '{project_name}' not found in workspace configuration")
-            
+                raise ValueError(
+                    f"Project '{project_name}' not found in workspace configuration"
+                )
+
             # If repo is None, prompt for ProjectPath data
             if repo is None:
-                self.logger.debug("No repository data provided. Prompting for ProjectPath information...")
+                self.logger.debug(
+                    "No repository data provided. Prompting for ProjectPath information..."
+                )
                 repo_result = UserPrompt.prompt_for_model(
                     ProjectPath,
                     title="Add git repository or local path to project group",
-                    fields_to_prompt=["name", "path", "url"]
+                    fields_to_prompt=["name", "path", "url"],
                 )
                 if isinstance(repo_result, Exception):
                     return repo_result
@@ -86,21 +94,27 @@ class ProjectManager:
             # Check if name already exists in the project
             for existing_repo in target_project.repos:
                 if existing_repo.name == repo.name:
-                    raise ValueError(f"Repository '{repo.name}' already exists in project '{project_name}'")
-            
+                    raise ValueError(
+                        f"Repository '{repo.name}' already exists in project '{project_name}'"
+                    )
+
             # Add the repository to the project
             target_project.repos.append(repo)
-            
+
             # Save the updated configuration
-            save_result = config_manager.save_config(metagit_config, config_path)
+            save_result = metagit_config.save_config(metagit_config, config_path)
             if isinstance(save_result, Exception):
                 return save_result
-            
-            self.logger.debug(f"Successfully added repository '{repo.name}' to project '{project_name}' in configuration")
+
+            self.logger.debug(
+                f"Successfully added repository '{repo.name}' to project '{project_name}' in configuration"
+            )
             return repo
-            
+
         except Exception as e:
-            self.logger.error(f"Failed to add repository '{repo.name if repo else 'unknown'}' to project '{project_name}': {str(e)}")
+            self.logger.error(
+                f"Failed to add repository '{repo.name if repo else 'unknown'}' to project '{project_name}': {str(e)}"
+            )
             return e
 
     def sync(self, project: WorkspaceProject) -> bool:
@@ -116,9 +130,7 @@ class ProjectManager:
         """
         project_dir = os.path.join(self.workspace_path, project.name)
         os.makedirs(project_dir, exist_ok=True)
-        tqdm.write(
-            f"Syncing {project.name} project to {project_dir}..."
-        )
+        tqdm.write(f"Syncing {project.name} project to {project_dir}...")
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_to_repo = {
@@ -132,7 +144,7 @@ class ProjectManager:
                 except Exception as exc:
                     tqdm.write(f"{repo.name} generated an exception: {exc}")
                     return False
-        
+
         # Create VS Code workspace file after successful sync
         workspace_result = self._create_vscode_workspace(project, project_dir)
         if isinstance(workspace_result, Exception):
@@ -140,17 +152,19 @@ class ProjectManager:
             # Don't fail the entire sync for workspace file creation issues
         else:
             tqdm.write(f"Created VS Code workspace file: {workspace_result}")
-        
+
         return True
 
-    def _create_vscode_workspace(self, project: WorkspaceProject, project_dir: str) -> Union[str, Exception]:
+    def _create_vscode_workspace(
+        self, project: WorkspaceProject, project_dir: str
+    ) -> Union[str, Exception]:
         """
         Create a VS Code workspace file for the project.
-        
+
         Args:
             project: The workspace project containing repository information
             project_dir: The directory where the project is located
-            
+
         Returns:
             Path to the created workspace file on success, Exception on failure
         """
@@ -161,22 +175,22 @@ class ProjectManager:
                 repo_path = os.path.join(project_dir, repo.name)
                 if os.path.exists(repo_path):
                     repo_names.append(repo.name)
-            
+
             if not repo_names:
                 return Exception("No repositories found to include in workspace")
-            
+
             # Create workspace file content
             workspace_content = create_vscode_workspace(project.name, repo_names)
             if isinstance(workspace_content, Exception):
                 return workspace_content
-            
+
             # Write workspace file
             workspace_file_path = os.path.join(project_dir, "workspace.code-workspace")
-            with open(workspace_file_path, 'w') as f:
+            with open(workspace_file_path, "w") as f:
                 f.write(workspace_content)
-            
+
             return workspace_file_path
-            
+
         except Exception as e:
             return e
 

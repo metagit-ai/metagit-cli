@@ -138,9 +138,26 @@ class AppConfig(BaseModel):
             AppConfig instance or Exception
         """
         try:
+            config = None  # Always define config
             # Try to load from specified path or default locations
             if config_path:
                 config_file = Path(config_path)
+                if not config_file.exists():
+                    return FileNotFoundError(
+                        f"Configuration file {config_path} not found"
+                    )
+                # Load from specified file
+                with config_file.open("r") as f:
+                    data = yaml.safe_load(f)
+                if not data:
+                    return Exception(
+                        f"Configuration file {config_file} is empty or invalid."
+                    )
+                # Handle both direct config and nested config structures
+                if "config" in data:
+                    config = cls(**data["config"])
+                else:
+                    config = cls(**data)
             else:
                 # Try default locations
                 default_paths = [
@@ -167,7 +184,10 @@ class AppConfig(BaseModel):
                     if config_file.exists():
                         with config_file.open("r") as f:
                             data = yaml.safe_load(f)
-
+                        if not data:
+                            return Exception(
+                                f"Configuration file {config_file} is empty or invalid."
+                            )
                         # Handle both direct config and nested config structures
                         if "config" in data:
                             config = cls(**data["config"])
@@ -177,6 +197,9 @@ class AppConfig(BaseModel):
                         return FileNotFoundError(
                             f"Configuration file {config_file} not found"
                         )
+
+            if config is None:
+                return Exception("Failed to load configuration: config is not set.")
 
             # Override token values with environment variables if they exist
             config = cls._override_with_env_vars(config)

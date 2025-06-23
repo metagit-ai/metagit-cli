@@ -16,32 +16,11 @@ maintainers:
 branch_strategy: none
 taskers:
 - kind: Taskfile
-branches:
-- name: main
-- name: zloeber/exception_refactor
-- name: zloeber/providers
 cicd:
   platform: GitHub
   pipelines:
   - name: default
     ref: .github/workflows
-metrics:
-  stars: 0
-  forks: 0
-  open_issues: 0
-  pull_requests:
-    open: 0
-    merged_last_30d: 1
-  contributors: 2
-  commit_frequency: weekly
-metadata:
-  created_at: 2025-06-23 15:55:06.231995+00:00
-  last_commit_at: 2025-06-23 15:55:06.231995+00:00
-  default_branch: main
-  has_ci: true
-  has_tests: true
-  has_docs: true
-  has_docker: true
 workspace:
   projects:
   - name: default

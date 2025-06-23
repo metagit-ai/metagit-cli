@@ -4,7 +4,6 @@
 yaml class that can load yaml files with includes and envvars and check for duplicate keys.
 """
 
-
 import functools
 import json
 import os

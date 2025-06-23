@@ -2,6 +2,7 @@
 """
 Pydantic models for .metagit.yml workspace configuration.
 """
+
 from typing import Any, List
 
 from pydantic import BaseModel, Field, field_validator

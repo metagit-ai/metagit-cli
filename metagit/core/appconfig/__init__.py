@@ -7,7 +7,7 @@ from typing import Union
 import yaml as base_yaml
 
 from metagit.core.appconfig.models import AppConfig
-from metagit.core.utils.logging import LOG_LEVELS, LoggerConfig, UnifiedLogger
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.utils.yaml_class import yaml
 
 
@@ -34,10 +34,14 @@ def get_config(
 ) -> Union[dict, None, Exception]:
     """Retrieve appconfig values"""
     if logger is None:
+        # Map LOG_LEVELS[3] (which is logging.INFO) to the string 'INFO'
         logger = UnifiedLogger(
-            name="metagit_detect",
-            level=LOG_LEVELS.INFO,
-            config=LoggerConfig(console=True),
+            LoggerConfig(
+                log_level="INFO",
+                use_rich_console=True,
+                minimal_console=False,
+                terse=False,
+            )
         )
     try:
         appconfig_dict = appconfig.model_dump()
