@@ -451,15 +451,6 @@ wheels = [
 ]
 
 [[package]]
-name = "gh"
-version = "0.0.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "gitpython" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/46/80/c1e50b9b09a944b9b5f160d689fbf637b543bb8391019df1019986b8d397/gh-0.0.4.tar.gz", hash = "sha256:db58819885a95807f963f8eb798e1d0df22ded41d9a80d5c3dc1fc8d695f1e1b", size = 2192, upload-time = "2018-11-06T11:10:50.685Z" }
-
-[[package]]
 name = "ghp-import"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -942,7 +933,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "click" },
     { name = "dotenv" },
-    { name = "gh" },
     { name = "gitpython" },
     { name = "jsonschema" },
     { name = "logging" },
@@ -1007,7 +997,6 @@ requires-dist = [
     { name = "click", specifier = ">=8.1.7" },
     { name = "crewai", extras = ["tools"], marker = "extra == 'standard'" },
     { name = "dotenv", specifier = ">=0.9.9" },
-    { name = "gh", specifier = ">=0.0.4" },
     { name = "gitpython", specifier = ">=3.1.44" },
     { name = "isort", marker = "extra == 'dev'" },
     { name = "isort", marker = "extra == 'format'" },
