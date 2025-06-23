@@ -50,6 +50,7 @@ class ProjectKind(str, Enum):
     OTHER = "other"
     DOCKER_IMAGE = "docker_image"
     REPOSITORY = "repository"
+    CLI = "cli"
 
 
 class ProjectPath(BaseModel):

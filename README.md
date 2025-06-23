@@ -36,6 +36,7 @@ Metagit is situational awareness for developers made easy. Metagit can make mult
 <!---toc end-->
 </details>
 
+-------
 # About
 
 This tool is well suited for a number of scenarios including;

@@ -295,170 +295,205 @@
 
 
 
-<h1 id="cli-reference">CLI Reference</h1>
+<h1 id="cli-reference">CLI Reference<a class="headerlink" href="#cli-reference" title="Permanent link">#</a></h1>
 <p>This page contains the auto-generated documentation for the <code>metagit</code> command-line interface.</p>
-<h1 id="metagit">metagit</h1>
+<h1 id="metagit">metagit<a class="headerlink" href="#metagit" title="Permanent link">#</a></h1>
 <p>Metagit CLI: A multi-purpose CLI tool with YAML configuration.</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit [OPTIONS] COMMAND [ARGS]...
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --version                 Show the version and exit.
+<div class="codehilite"><pre><span></span><code>  --version                 Show the version and exit.
   --config TEXT             Path to the configuration file
   --debug / --no-debug      Enable or disable debug mode
   --verbose / --no-verbose  Enable or disable verbose output
   -h, --help                Show this message and exit.
-</code></pre>
-<h2 id="appconfig">appconfig</h2>
+</code></pre></div>
+
+<h2 id="appconfig">appconfig<a class="headerlink" href="#appconfig" title="Permanent link">#</a></h2>
 <p>Application configuration subcommands</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit appconfig [OPTIONS] COMMAND [ARGS]...
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit appconfig [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h3 id="create">create</h3>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="create">create<a class="headerlink" href="#create" title="Permanent link">#</a></h3>
 <p>Create default application config</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit appconfig create [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit appconfig create [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h3 id="get">get</h3>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="get">get<a class="headerlink" href="#get" title="Permanent link">#</a></h3>
 <p>Display appconfig value</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit appconfig get [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit appconfig get [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --name TEXT    Appconfig element to target
+<div class="codehilite"><pre><span></span><code>  --name TEXT    Appconfig element to target
   --show-keys    If the element is a dictionary, show all key names. If it is a list, show all name attributes
   --output TEXT  Output format (json/yaml)
   -h, --help     Show this message and exit.
-</code></pre>
-<h3 id="show">show</h3>
+</code></pre></div>
+
+<h3 id="show">show<a class="headerlink" href="#show" title="Permanent link">#</a></h3>
 <p>Show current configuration</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit appconfig show [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit appconfig show [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h3 id="validate">validate</h3>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="validate">validate<a class="headerlink" href="#validate" title="Permanent link">#</a></h3>
 <p>Validate a configuration file</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit appconfig validate [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit appconfig validate [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --config-path TEXT  Path to the configuration file
+<div class="codehilite"><pre><span></span><code>  --config-path TEXT  Path to the configuration file
   -h, --help          Show this message and exit.
-</code></pre>
-<h2 id="config">config</h2>
+</code></pre></div>
+
+<h2 id="config">config<a class="headerlink" href="#config" title="Permanent link">#</a></h2>
 <p>Configuration subcommands</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit config [OPTIONS] COMMAND [ARGS]...
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit config [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --config-path TEXT  Path to the metagit configuration file
+<div class="codehilite"><pre><span></span><code>  --config-path TEXT  Path to the metagit configuration file
   -h, --help          Show this message and exit.
-</code></pre>
-<h3 id="create_1">create</h3>
+</code></pre></div>
+
+<h3 id="create_1">create<a class="headerlink" href="#create_1" title="Permanent link">#</a></h3>
 <p>Create metagit config files</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit config create [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit config create [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --output-path TEXT  Path to the metagit configuration file
+<div class="codehilite"><pre><span></span><code>  --output-path TEXT  Path to the metagit configuration file
   --name TEXT         Project name
   --description TEXT  Project description
   --url TEXT          Project URL
   --kind TEXT         Project kind
   -h, --help          Show this message and exit.
-</code></pre>
-<h3 id="show_1">show</h3>
+</code></pre></div>
+
+<h3 id="show_1">show<a class="headerlink" href="#show_1" title="Permanent link">#</a></h3>
 <p>Show metagit configuration</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit config show [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit config show [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h3 id="validate_1">validate</h3>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="validate_1">validate<a class="headerlink" href="#validate_1" title="Permanent link">#</a></h3>
 <p>Validate metagit configuration</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit config validate [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit config validate [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h2 id="detect">detect</h2>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h2 id="detect">detect<a class="headerlink" href="#detect" title="Permanent link">#</a></h2>
 <p>Detection subcommands</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit detect [OPTIONS] COMMAND [ARGS]...
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit detect [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h3 id="repo">repo</h3>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="repo">repo<a class="headerlink" href="#repo" title="Permanent link">#</a></h3>
 <p>Detect the codebase.</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit detect repo [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit detect repo [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --repo-path TEXT  Path to the git repository to analyze.  [default: ./]
+<div class="codehilite"><pre><span></span><code>  --repo-path TEXT  Path to the git repository to analyze.  [default: ./]
   --output TEXT     Output format.  [default: yaml]
   -h, --help        Show this message and exit.
-</code></pre>
-<h2 id="info">info</h2>
+</code></pre></div>
+
+<h2 id="info">info<a class="headerlink" href="#info" title="Permanent link">#</a></h2>
 <p>Display the current configuration.</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit info [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit info [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h2 id="init">init</h2>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h2 id="init">init<a class="headerlink" href="#init" title="Permanent link">#</a></h2>
 <p>Initialize local metagit environment by creating .metagit.yml and updating .gitignore</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit init [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit init [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -f, --force  Force overwrite of existing .metagit.yml file
+<div class="codehilite"><pre><span></span><code>  -f, --force  Force overwrite of existing .metagit.yml file
   -h, --help   Show this message and exit.
-</code></pre>
-<h2 id="project">project</h2>
+</code></pre></div>
+
+<h2 id="project">project<a class="headerlink" href="#project" title="Permanent link">#</a></h2>
 <p>Project subcommands</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit project [OPTIONS] COMMAND [ARGS]...
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit project [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -c, --config TEXT   Path to the metagit definition file
+<div class="codehilite"><pre><span></span><code>  -c, --config TEXT   Path to the metagit definition file
   -p, --project TEXT  Project within workspace to operate on
   -h, --help          Show this message and exit.
-</code></pre>
-<h3 id="list">list</h3>
+</code></pre></div>
+
+<h3 id="list">list<a class="headerlink" href="#list" title="Permanent link">#</a></h3>
 <p>List the current project configuration in YAML format</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit project list [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit project list [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h3 id="repo_1">repo</h3>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="repo_1">repo<a class="headerlink" href="#repo_1" title="Permanent link">#</a></h3>
 <p>Repository subcommands</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit project repo [OPTIONS] COMMAND [ARGS]...
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit project repo [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h4 id="add">add</h4>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h4 id="add">add<a class="headerlink" href="#add" title="Permanent link">#</a></h4>
 <p>Add a repository to the current project</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit project repo add [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit project repo add [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --name TEXT                     Repository name
+<div class="codehilite"><pre><span></span><code>  --name TEXT                     Repository name
   --description TEXT              Repository description
   --kind [monorepo|umbrella|application|gitops|infrastructure|service|library|website|other|docker_image|repository]
                                   Project kind
@@ -473,57 +508,69 @@
   --frameworks TEXT               Frameworks used (can be specified multiple times)
   --prompt                        Use interactive prompts instead of command line parameters
   -h, --help                      Show this message and exit.
-</code></pre>
-<h4 id="select">select</h4>
+</code></pre></div>
+
+<h4 id="select">select<a class="headerlink" href="#select" title="Permanent link">#</a></h4>
 <p>Select workspace project repo to work on</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit project repo select [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit project repo select [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h3 id="select_1">select</h3>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="select_1">select<a class="headerlink" href="#select_1" title="Permanent link">#</a></h3>
 <p>Shortcut: Uses 'project repo select' to select workspace project repo to work on</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit project select [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit project select [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h3 id="sync">sync</h3>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="sync">sync<a class="headerlink" href="#sync" title="Permanent link">#</a></h3>
 <p>Sync project within workspace</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit project sync [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit project sync [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h2 id="version">version</h2>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h2 id="version">version<a class="headerlink" href="#version" title="Permanent link">#</a></h2>
 <p>Get the application version.</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit version [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit version [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  -h, --help  Show this message and exit.
-</code></pre>
-<h2 id="workspace">workspace</h2>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h2 id="workspace">workspace<a class="headerlink" href="#workspace" title="Permanent link">#</a></h2>
 <p>Workspace subcommands</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit workspace [OPTIONS] COMMAND [ARGS]...
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit workspace [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --config TEXT  Path to the metagit definition file
+<div class="codehilite"><pre><span></span><code>  --config TEXT  Path to the metagit definition file
   -h, --help     Show this message and exit.
-</code></pre>
-<h3 id="select_2">select</h3>
+</code></pre></div>
+
+<h3 id="select_2">select<a class="headerlink" href="#select_2" title="Permanent link">#</a></h3>
 <p>Select workspace project repo to work on</p>
 <p><strong>Usage:</strong></p>
-<pre><code class="language-text">metagit workspace select [OPTIONS]
-</code></pre>
+<div class="codehilite"><pre><span></span><code>metagit workspace select [OPTIONS]
+</code></pre></div>
+
 <p><strong>Options:</strong></p>
-<pre><code class="language-text">  --project TEXT  Project within workspace to select target paths from
+<div class="codehilite"><pre><span></span><code>  --project TEXT  Project within workspace to select target paths from
   -h, --help      Show this message and exit.
-</code></pre>
+</code></pre></div>
 
 
 

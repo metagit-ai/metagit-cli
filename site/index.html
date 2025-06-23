@@ -295,7 +295,7 @@
 
 
 
-<h1 id="metagit">Metagit</h1>
+<h1 id="metagit">Metagit<a class="headerlink" href="#metagit" title="Permanent link">#</a></h1>
 <p>Metagit is situational awareness for developers made easy. Metagit can make multi-repo projects feel more like a monorepo and provide information on the software stacks within.</p>
 <details>
 <summary>Table of Contents</summary>
@@ -331,7 +331,7 @@
 <!---toc end-->
 </details>
 
-<h1 id="about">About</h1>
+<h1 id="about">About<a class="headerlink" href="#about" title="Permanent link">#</a></h1>
 <p>This tool is well suited for a number of scenarios including;</p>
 <ol>
 <li>At-a-glance view of a project's technical stacks, languages, external dependencies, and generated artifacts.</li>
@@ -341,7 +341,7 @@
 <li>As a new contributor to a project or team, get from zero to first code commit in as little time as possible.</li>
 </ol>
 <p>Metagit aims to provide situational awareness for developers, SREs, AI agents, and engineers on the git projects they work in every day. It is meant to shed light on the numerous interconnected dependencies that comprise the whole of the entire solution being worked on in a single easily read and updated file.</p>
-<h2 id="audience">Audience</h2>
+<h2 id="audience">Audience<a class="headerlink" href="#audience" title="Permanent link">#</a></h2>
 <p>This tool targets;</p>
 <ul>
 <li>DevOps Engineers</li>
@@ -352,18 +352,18 @@
 <li>Solution Engineers</li>
 <li>AI Agents (more to come!)</li>
 </ul>
-<h2 id="metagit-is-not">Metagit is NOT...</h2>
-<h3 id="an-sbom-tool">...an SBOM Tool</h3>
+<h2 id="metagit-is-not">Metagit is NOT...<a class="headerlink" href="#metagit-is-not" title="Permanent link">#</a></h2>
+<h3 id="an-sbom-tool">...an SBOM Tool<a class="headerlink" href="#an-sbom-tool" title="Permanent link">#</a></h3>
 <p>SBOM output can be thousands of lines long and encompass all the software dependencies, their transitive dependencies, and  more. This is too much for the simple need of situational awareness and AI integration. As such, a comprehensive software bill of materials is overkill for the goals outlined above. The development roadmap may include the ability to read in sbom manifests as a data source though!</p>
 <p>Metagit makes extensive use of CI library definitions (like go.mod, packages.json, requirements.txt, et cetera) for detection and boundary validations. Such files will be used to help determine technology stacks in use but not extensive versioning or other deep information.</p>
-<h3 id="a-git-client">...a git Client</h3>
+<h3 id="a-git-client">...a git Client<a class="headerlink" href="#a-git-client" title="Permanent link">#</a></h3>
 <p>Despite the name this tool still requires git and all the trappings of a git hosting solution.</p>
-<h2 id="how-it-works">How It Works</h2>
+<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">#</a></h2>
 <p>This app accesses and saves project configuration metadata within the repository as a .metagit.yml file (or in a hosted tenant). The data within a project follows a schema that can be read via the cli.</p>
 <p>If using this tool to simply manage several dozen git repos (aka. an umbrella repo) then everything within the configuration file can be manually updated. You can also attempt to automatically update the file using a mix of standard heuristics and AI driven workflows.</p>
-<h1 id="modes">Modes</h1>
+<h1 id="modes">Modes<a class="headerlink" href="#modes" title="Permanent link">#</a></h1>
 <p>This application will have multiple modes of operation as described below.</p>
-<h2 id="workspace-mode">Workspace Mode</h2>
+<h2 id="workspace-mode">Workspace Mode<a class="headerlink" href="#workspace-mode" title="Permanent link">#</a></h2>
 <p>This mode is the first planned release feature as an open source cli tool.</p>
 <p>In this mode users stitch together various repositories that comprise the components of a project into one workspace that can be loaded via vscode or accessed individually via fast context switching at the console.</p>
 <blockquote>
@@ -378,7 +378,7 @@
 <li>Individual power users that need to quickly pivot between several git project repositories that comprise a larger team effort</li>
 <li>Keeping loosely coupled git projects grouped together to work on without having to deal with git submodules (yuk)</li>
 </ul>
-<h2 id="metadata-mode">Metadata Mode</h2>
+<h2 id="metadata-mode">Metadata Mode<a class="headerlink" href="#metadata-mode" title="Permanent link">#</a></h2>
 <p>This mode uses the same config file that workspace mode employs but with additional information about the project's primary language, frameworks, and other situational awareness information you always wish you had at hand when diving into a new project. This mode can be used in tandem with workspace mode.</p>
 <p>To configure this metadata for a single project by hand would be easy. To do so for several dozen or even thousands of repos is a no small task. Towards that end, metagit will include detection heuristics to automate a good deal of this task. What cannot be done easily through code initially will be done with AI.</p>
 <blockquote>
@@ -396,9 +396,9 @@
 <blockquote>
 <p><strong>External Dependencies</strong> are the devil! If you ever experienced a pipeline that suddenly fails due to a missing outside/external dependency you know exactly why they stink.</p>
 </blockquote>
-<h2 id="metadata-mode_1">Metadata+ Mode</h2>
+<h2 id="metadata-mode_1">Metadata+ Mode<a class="headerlink" href="#metadata-mode_1" title="Permanent link">#</a></h2>
 <p>All the prior metadata is incredibly useful already. But if we add context around this then we are cooking with gas! If we setup basic organization boundaries like owned registries or github/gitlab groups we can then start looking for fragile pipelines or  This can be done easily through a central configuration file or SaaS offering. This </p>
-<h2 id="enterprise-tbd">Enterprise (TBD)</h2>
+<h2 id="enterprise-tbd">Enterprise (TBD)<a class="headerlink" href="#enterprise-tbd" title="Permanent link">#</a></h2>
 <p>Enterprise mode is using metagit at scale.</p>
 <p>In this mode metagit connects to our enterprise SaaS offering to help mine the whole of your organization's code assets continuously.</p>
 <ul>
@@ -407,58 +407,65 @@
 <li>How much time is wasted looking for a project using your language and framework to use as a starting point for your own efforts?</li>
 <li>How frustrated do you get when, after putting in days or weeks of effort to create something you find another internal project that does it twice as elegantly that was done 6 months ago by another team? Enterprise mode of metagit aims to target this issue head on.</li>
 </ul>
-<h2 id="installation">Installation</h2>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">#</a></h2>
 <p>To install metagit, clone the repository and build the project:</p>
-<pre><code class="language-bash">git clone https://github.com/zloeber/metagit.git
-cd metagit
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/zloeber/metagit.git
+<span class="nb">cd</span><span class="w"> </span>metagit
 
 ./configure.sh
-task build
-</code></pre>
-<h1 id="usage">Usage</h1>
-<h3 id="initialize-a-repository">Initialize a Repository</h3>
+task<span class="w"> </span>build
+</code></pre></div>
+
+<h1 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">#</a></h1>
+<h3 id="initialize-a-repository">Initialize a Repository<a class="headerlink" href="#initialize-a-repository" title="Permanent link">#</a></h3>
 <p>To initialize a new metagit configuration in your current Git repository, run:</p>
-<pre><code class="language-bash">./metagit init
-</code></pre>
+<div class="codehilite"><pre><span></span><code>./metagit<span class="w"> </span>init
+</code></pre></div>
+
 <p>This command will check if the current directory is a Git repository and create a <code>metagit.yaml</code> configuration file if it does not exist. It will also ensure that <code>.metagit</code> is added to your <code>.gitignore</code>.</p>
-<h3 id="project-commands">Project Commands</h3>
+<h3 id="project-commands">Project Commands<a class="headerlink" href="#project-commands" title="Permanent link">#</a></h3>
 <p>To work with project settings, use the project command:</p>
-<pre><code class="language-bash">./metagit project
-</code></pre>
-<h4 id="detect-project-settings">Detect Project Settings</h4>
+<div class="codehilite"><pre><span></span><code>./metagit<span class="w"> </span>project
+</code></pre></div>
+
+<h4 id="detect-project-settings">Detect Project Settings<a class="headerlink" href="#detect-project-settings" title="Permanent link">#</a></h4>
 <p>To detect project configurations, run:</p>
-<pre><code class="language-bash">./metagit project detect
-</code></pre>
-<h3 id="workspace-commands">Workspace Commands</h3>
+<div class="codehilite"><pre><span></span><code>./metagit<span class="w"> </span>project<span class="w"> </span>detect
+</code></pre></div>
+
+<h3 id="workspace-commands">Workspace Commands<a class="headerlink" href="#workspace-commands" title="Permanent link">#</a></h3>
 <p>To manage workspace settings, use the workspace command:</p>
-<pre><code class="language-bash">./metagit workspace
-</code></pre>
-<h4 id="synchronize-workspace">Synchronize Workspace</h4>
+<div class="codehilite"><pre><span></span><code>./metagit<span class="w"> </span>workspace
+</code></pre></div>
+
+<h4 id="synchronize-workspace">Synchronize Workspace<a class="headerlink" href="#synchronize-workspace" title="Permanent link">#</a></h4>
 <p>To sync workspace settings, run:</p>
-<pre><code class="language-bash">./metagit workspace sync
-</code></pre>
-<h1 id="configuration">Configuration</h1>
+<div class="codehilite"><pre><span></span><code>./metagit<span class="w"> </span>workspace<span class="w"> </span>sync
+</code></pre></div>
+
+<h1 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h1>
 <p>The default configuration file is <code>metagit.config.yaml</code>, which can be customized to suit your project's needs.</p>
-<h2 id="contributing">Contributing</h2>
+<h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">#</a></h2>
 <p>Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.</p>
-<h2 id="license">License</h2>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">#</a></h2>
 <p>This project is licensed under the MIT License. See the LICENSE file for details.</p>
-<h1 id="configuration_1">Configuration</h1>
+<h1 id="configuration_1">Configuration<a class="headerlink" href="#configuration_1" title="Permanent link">#</a></h1>
 <p><code>./.configure.sh</code></p>
-<h1 id="use">Use</h1>
-<pre><code class="language-bash">uv run -m metagit.cli.main
+<h1 id="use">Use<a class="headerlink" href="#use" title="Permanent link">#</a></h1>
+<div class="codehilite"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>metagit.cli.main
 
-# Show current config
-uv run -m metagit.cli.main appconfig show
+<span class="c1"># Show current config</span>
+uv<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>metagit.cli.main<span class="w"> </span>appconfig<span class="w"> </span>show
 
-# Dump new/default config
-uv run -m metagit.cli.main appconfig create
+<span class="c1"># Dump new/default config</span>
+uv<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>metagit.cli.main<span class="w"> </span>appconfig<span class="w"> </span>create
 
-# Run generic detection for current path
-uv run -m metagit.cli.main detect repo
-</code></pre>
-<h1 id="development">Development</h1>
-<h2 id="mcp-servers">MCP Servers</h2>
+<span class="c1"># Run generic detection for current path</span>
+uv<span class="w"> </span>run<span class="w"> </span>-m<span class="w"> </span>metagit.cli.main<span class="w"> </span>detect<span class="w"> </span>repo
+</code></pre></div>
+
+<h1 id="development">Development<a class="headerlink" href="#development" title="Permanent link">#</a></h1>
+<h2 id="mcp-servers">MCP Servers<a class="headerlink" href="#mcp-servers" title="Permanent link">#</a></h2>
 <p><a href="https://github.com/modelcontextprotocol/servers/tree/HEAD/src/sequentialthinking">Sequential Thinking</a></p>
 
 

@@ -59,6 +59,7 @@ class GitBranchAnalysis(BaseModel):
             local_branches = [
                 BranchInfo(name=branch.name, is_remote=False)
                 for branch in repo.branches
+                if branch.name != "HEAD"  # Exclude HEAD branch
             ]
             logger.debug(f"Found {len(local_branches)} local branches")
 
@@ -70,7 +71,9 @@ class GitBranchAnalysis(BaseModel):
                     branch_name = (
                         ref.name.split("/", 1)[1] if "/" in ref.name else ref.name
                     )
-                    remote_branches.append(BranchInfo(name=branch_name, is_remote=True))
+                    # Exclude HEAD branch from remote branches
+                    if branch_name != "HEAD":
+                        remote_branches.append(BranchInfo(name=branch_name, is_remote=True))
             logger.debug(f"Found {len(remote_branches)} remote branches")
 
             # Combine and deduplicate branches (prefer local if name overlaps)
