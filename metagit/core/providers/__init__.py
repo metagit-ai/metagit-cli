@@ -5,7 +5,7 @@ Provider registry for Git hosting platforms.
 
 import logging
 import os
-from typing import Dict, Optional, Type
+from typing import Optional
 
 from metagit.core.providers.base import GitProvider
 from metagit.core.providers.github import GitHubProvider

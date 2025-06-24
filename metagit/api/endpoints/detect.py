@@ -6,8 +6,7 @@ Detection endpoints for the metagit API.
 import logging
 from typing import List
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from pydantic import ValidationError
+from fastapi import APIRouter, Depends, HTTPException
 
 from metagit.api.detection import DetectionService
 from metagit.api.models import (

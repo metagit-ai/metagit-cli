@@ -7,7 +7,6 @@ import logging
 import urllib.parse
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import ValidationError
 
 from metagit.api.opensearch import OpenSearchService
 from metagit.core.config.models import MetagitConfig, MetagitRecord

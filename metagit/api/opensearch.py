@@ -3,13 +3,11 @@
 OpenSearch service for storing and retrieving MetagitRecord entries.
 """
 
-import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 from opensearchpy import OpenSearch, helpers
-from pydantic import ValidationError
 
 from metagit.core.config.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url

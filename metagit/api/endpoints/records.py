@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from metagit.api.models import SearchRequest, SearchResponse
 from metagit.api.opensearch import OpenSearchService
-from metagit.core.config.models import MetagitConfig, MetagitRecord
+from metagit.core.config.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
 
 logger = logging.getLogger(__name__)

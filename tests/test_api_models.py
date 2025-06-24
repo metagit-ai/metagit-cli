@@ -2,7 +2,6 @@
 """Tests for API models."""
 
 from datetime import datetime
-from typing import Any, Dict
 
 import pytest
 from pydantic import HttpUrl, ValidationError
