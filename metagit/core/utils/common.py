@@ -5,12 +5,10 @@ common functions
 import os
 import re
 import subprocess
-
-# from collections.abc import MutableMapping
-from typing import Any, Dict, Generator, List, MutableMapping, Union
+from pathlib import Path
+from typing import Any, Dict, Generator, List, MutableMapping, Optional, Union
 
 import yaml  # Use standard PyYAML for dumping
-
 
 __all__ = [
     "env_override",
@@ -20,6 +18,17 @@ __all__ = [
     "merge_dicts",
     "open_editor",
     "create_vscode_workspace",
+    "normalize_git_url",
+    "get_project_root",
+    "ensure_directory",
+    "safe_get",
+    "flatten_list",
+    "is_git_repository",
+    "get_relative_path",
+    "sanitize_filename",
+    "format_bytes",
+    "parse_env_list",
+    "filter_none_values",
 ]
 
 
@@ -268,3 +277,106 @@ def compare_checksums(
         return differences
     except Exception as e:
         return e
+
+
+def normalize_git_url(url: Optional[str]) -> Optional[str]:
+    """
+    Normalize a git URL by removing trailing forward slashes.
+
+    Args:
+        url: Git URL to normalize
+
+    Returns:
+        Normalized URL without trailing forward slash, or None if input is None
+    """
+    if url is None:
+        return None
+
+    # Convert to string if it's an HttpUrl or other object
+    url_str = str(url).strip()
+
+    # Remove trailing forward slash
+    if url_str.endswith("/"):
+        url_str = url_str.rstrip("/")
+
+    return url_str
+
+
+def get_project_root() -> Path:
+    """Get the project root directory."""
+    return Path(__file__).parent.parent.parent
+
+
+def ensure_directory(path: Union[str, Path]) -> Path:
+    """Ensure a directory exists, creating it if necessary."""
+    path_obj = Path(path)
+    path_obj.mkdir(parents=True, exist_ok=True)
+    return path_obj
+
+
+def safe_get(dictionary: Dict[str, Any], key: str, default: Any = None) -> Any:
+    """Safely get a value from a dictionary."""
+    return dictionary.get(key, default)
+
+
+def flatten_list(nested_list: List[Any]) -> List[Any]:
+    """Flatten a nested list."""
+    flattened = []
+    for item in nested_list:
+        if isinstance(item, list):
+            flattened.extend(flatten_list(item))
+        else:
+            flattened.append(item)
+    return flattened
+
+
+def is_git_repository(path: Union[str, Path]) -> bool:
+    """Check if a path is a git repository."""
+    path_obj = Path(path)
+    return (path_obj / ".git").exists() and (path_obj / ".git").is_dir()
+
+
+def get_relative_path(
+    base_path: Union[str, Path], target_path: Union[str, Path]
+) -> str:
+    """Get the relative path from base_path to target_path."""
+    base = Path(base_path).resolve()
+    target = Path(target_path).resolve()
+
+    try:
+        return str(target.relative_to(base))
+    except ValueError:
+        return str(target)
+
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitize a filename by removing or replacing invalid characters."""
+    # Remove or replace invalid characters
+    sanitized = re.sub(r'[<>:"/\\|?*]', "_", filename)
+    # Remove leading/trailing spaces and dots
+    sanitized = sanitized.strip(" .")
+    # Ensure it's not empty
+    if not sanitized:
+        sanitized = "unnamed"
+    return sanitized
+
+
+def format_bytes(bytes_value: int) -> str:
+    """Format bytes into a human-readable string."""
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if bytes_value < 1024.0:
+            return f"{bytes_value:.1f} {unit}"
+        bytes_value /= 1024.0
+    return f"{bytes_value:.1f} PB"
+
+
+def parse_env_list(env_value: Optional[str], separator: str = ",") -> List[str]:
+    """Parse a comma-separated environment variable into a list."""
+    if not env_value:
+        return []
+    return [item.strip() for item in env_value.split(separator) if item.strip()]
+
+
+def filter_none_values(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove None values from a dictionary."""
+    return {k: v for k, v in data.items() if v is not None}

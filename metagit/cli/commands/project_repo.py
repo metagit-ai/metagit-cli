@@ -94,11 +94,6 @@ def repo_select(ctx: click.Context) -> None:
 )
 @click.option("--ref", help="Reference in the current project for the target project")
 @click.option("--path", help="Local project path")
-@click.option(
-    "--branches",
-    multiple=True,
-    help="Project branches (can be specified multiple times)",
-)
 @click.option("--url", help="Repository URL")
 @click.option("--sync/--no-sync", default=None, help="Sync setting")
 @click.option("--language", help="Programming language")
@@ -122,7 +117,6 @@ def repo_add(
     kind: Optional[str],
     ref: Optional[str],
     path: Optional[str],
-    branches: tuple[str, ...],
     url: Optional[str],
     sync: Optional[bool],
     language: Optional[str],
@@ -141,13 +135,19 @@ def repo_add(
     try:
         # Initialize ProjectManager and MetagitConfigManager
         project_manager = ProjectManager(app_config.workspace.path, logger)
+    except Exception as e:
+        logger.warning(f"Failed to initialize ProjectManager: {e}")
+        ctx.abort()
 
+    try:
         if prompt:
             # Use native ProjectManager prompting functionality
             logger.debug(
                 "Using interactive prompts to collect repository information..."
             )
-            result = project_manager.add(config_path, project, None, local_config)
+            result = project_manager.add(
+                config_path, project, None, metagit_config=local_config
+            )
         else:
             # Validate that name is provided when not using prompts
             if not name:
@@ -163,7 +163,6 @@ def repo_add(
                 "kind": ProjectKind(kind) if kind else None,
                 "ref": ref,
                 "path": path,
-                "branches": list(branches) if branches else None,
                 "url": url,
                 "sync": sync,
                 "language": language,

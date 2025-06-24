@@ -38,15 +38,20 @@ from metagit.core.config.models import (
 from metagit.core.detect.branch import GitBranchAnalysis
 from metagit.core.detect.cicd import CIConfigAnalysis
 from metagit.core.providers import registry
+from metagit.core.utils.common import normalize_git_url
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 load_dotenv()
 
-default_logger = logging.getLogger("RepositoryAnalysis")
-default_logger.setLevel(logging.INFO)
-if not default_logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-    default_logger.addHandler(handler)
+
+default_logger = UnifiedLogger(
+    LoggerConfig(
+        name="RepositoryAnalysis",
+        level=logging.INFO,
+        console=True,
+        terse=False,
+    )
+)
 
 
 class LanguageDetection(BaseModel):
@@ -167,7 +172,8 @@ class RepositoryAnalysis(BaseModel):
         """
         try:
             logger = logger or default_logger
-            logger.debug(f"Cloning and analyzing repository from: {url}")
+            normalized_url = normalize_git_url(url)
+            logger.debug(f"Cloning and analyzing repository from: {normalized_url}")
 
             # Create temporary directory if not provided
             if temp_dir is None:
@@ -175,14 +181,14 @@ class RepositoryAnalysis(BaseModel):
 
             # Clone the repository
             try:
-                _ = Repo.clone_from(url, temp_dir)
+                _ = Repo.clone_from(normalized_url, temp_dir)
                 logger.debug(f"Successfully cloned repository to: {temp_dir}")
             except Exception as e:
                 return Exception(f"Failed to clone repository: {e}")
 
             analysis = cls(
                 path=temp_dir,
-                url=url,
+                url=normalized_url,
                 is_git_repo=True,
                 is_cloned=True,
                 temp_dir=temp_dir,

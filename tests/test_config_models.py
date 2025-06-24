@@ -228,7 +228,6 @@ class TestMetagitRecord:
         metadata = models.RepoMetadata(
             tags=["python", "api"],
             created_at=timestamp,
-            license=models.LicenseType.MIT,
             has_ci=True,
             has_tests=True,
         )
@@ -370,7 +369,6 @@ class TestMetagitRecordDetectionAttributes:
         metadata = models.RepoMetadata(
             tags=["python", "api"],
             created_at=timestamp,
-            license=models.LicenseType.MIT,
             has_ci=True,
             has_tests=True,
             has_docs=True,
@@ -383,7 +381,6 @@ class TestMetagitRecordDetectionAttributes:
 
         assert record.metadata == metadata
         assert record.metadata.tags == ["python", "api"]
-        assert record.metadata.license == models.LicenseType.MIT
         assert record.metadata.has_ci is True
         assert record.metadata.has_tests is True
         assert record.metadata.has_docs is True

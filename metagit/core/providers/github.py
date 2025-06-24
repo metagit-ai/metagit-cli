@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-GitHub provider plugin for repository analysis.
+GitHub provider for repository metadata and metrics.
 """
 
+import logging
 import re
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlparse
@@ -10,7 +11,10 @@ from urllib.parse import urlparse
 import requests
 
 from metagit.core.config.models import CommitFrequency, Metrics, PullRequests
-from metagit.core.providers import GitProvider
+from metagit.core.providers.base import GitProvider
+from metagit.core.utils.common import normalize_git_url
+
+logger = logging.getLogger(__name__)
 
 
 class GitHubProvider(GitProvider):
@@ -50,24 +54,21 @@ class GitHubProvider(GitProvider):
         )
 
     def extract_repo_info(self, url: str) -> Dict[str, str]:
-        """Extract repository information from GitHub URL."""
-        # Handle various GitHub URL formats
+        """Extract owner and repo from GitHub URL."""
+        normalized_url = normalize_git_url(url)
+
+        # GitHub URL patterns
         patterns = [
             r"github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?/?$",
-            r"github\.com[:/]([^/]+)/([^/]+?)/?$",
+            r"git@github\.com:([^/]+)/([^/]+?)(?:\.git)?/?$",
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, url)
+            match = re.match(pattern, normalized_url)
             if match:
-                owner, repo = match.groups()
-                return {
-                    "owner": owner,
-                    "repo": repo,
-                    "api_url": f"{self.api_base}/repos/{owner}/{repo}",
-                }
+                return {"owner": match.group(1), "repo": match.group(2)}
 
-        raise ValueError(f"Could not extract repo info from URL: {url}")
+        return {}
 
     def get_repository_metrics(
         self, owner: str, repo: str

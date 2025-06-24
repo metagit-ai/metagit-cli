@@ -595,7 +595,6 @@ class RepoMetadata(BaseModel):
     created_at: Optional[datetime] = Field(None, description="Repository creation date")
     last_commit_at: Optional[datetime] = Field(None, description="Last commit date")
     default_branch: Optional[str] = Field(None, description="Default branch name")
-    license: Optional[LicenseType] = Field(None, description="License type")
     topics: Optional[List[str]] = Field(None, description="Repository topics")
     forked_from: Optional[Union[HttpUrl, str]] = Field(
         None, description="Forked from repository URL"

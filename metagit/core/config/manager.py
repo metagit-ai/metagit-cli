@@ -24,15 +24,19 @@ class MetagitConfigManager:
     .metagit.yml configuration files with proper error handling and validation.
     """
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(
+        self,
+        config_path: Optional[Path] = None,
+        metagit_config: Optional[MetagitConfig] = None,
+    ):
         """
         Initialize the MetagitConfigManager.
 
         Args:
             config_path: Path to the .metagit.yml file. If None, defaults to .metagit.yml in current directory.
         """
-        self.config_path = config_path or Path(".metagit.yml")
-        self._config: Optional[MetagitConfig] = None
+        self.config_path: str = config_path or Path(".metagit.yml")
+        self._config: Optional[MetagitConfig] = metagit_config
 
     @property
     def config(self) -> Union[MetagitConfig, None, Exception]:

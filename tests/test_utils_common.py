@@ -6,8 +6,53 @@ Unit tests for metagit.core.utils.common
 import json
 import os
 
-
 from metagit.core.utils import common
+
+
+def test_normalize_git_url():
+    """Test URL normalization function."""
+    # Test removing trailing slashes
+    assert (
+        common.normalize_git_url("https://github.com/user/repo/")
+        == "https://github.com/user/repo"
+    )
+    assert (
+        common.normalize_git_url("https://gitlab.com/user/repo/")
+        == "https://gitlab.com/user/repo"
+    )
+    assert (
+        common.normalize_git_url("https://github.com/user/repo.git/")
+        == "https://github.com/user/repo.git"
+    )
+
+    # Test URLs without trailing slashes (should remain unchanged)
+    assert (
+        common.normalize_git_url("https://github.com/user/repo")
+        == "https://github.com/user/repo"
+    )
+    assert (
+        common.normalize_git_url("https://gitlab.com/user/repo")
+        == "https://gitlab.com/user/repo"
+    )
+
+    # Test edge cases
+    assert common.normalize_git_url("") == ""
+    assert common.normalize_git_url(None) is None
+    assert common.normalize_git_url("   ") == ""
+    assert (
+        common.normalize_git_url("https://github.com/user/repo///")
+        == "https://github.com/user/repo"
+    )
+
+
+def test_normalize_git_url_with_httpurl_object():
+    """Test URL normalization with HttpUrl objects."""
+    from pydantic import HttpUrl
+
+    # Test with HttpUrl object
+    http_url = HttpUrl("https://github.com/user/repo/")
+    result = common.normalize_git_url(http_url)
+    assert result == "https://github.com/user/repo"
 
 
 def test_create_vscode_workspace():

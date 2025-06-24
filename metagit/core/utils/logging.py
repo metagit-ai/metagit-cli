@@ -7,7 +7,7 @@ logging class that does general logging via loguru and prints to the console via
 import json
 import logging
 import sys
-from typing import Any, Literal, Union
+from typing import Any, Literal, Optional, Union
 
 from loguru import logger
 from pydantic import BaseModel, Field
@@ -22,6 +22,7 @@ class LoggerConfig(BaseModel):
     """
 
     # Logging configuration
+    name: Optional[str] = Field(default="metagit", description="Logger name.")
     log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"] = (
         Field(default="INFO", description="Logging level.")
     )
@@ -47,6 +48,13 @@ class LoggerConfig(BaseModel):
     )
 
 
+LOG_LEVEL_MAP: dict[str, int] = {
+    "CRITICAL": logging.CRITICAL,
+    "ERROR": logging.ERROR,
+    "WARNING": logging.WARNING,
+    "INFO": logging.INFO,
+    "DEBUG": logging.DEBUG,
+}
 LOG_LEVELS: dict[int, int] = {
     0: logging.NOTSET,
     1: logging.ERROR,
@@ -111,7 +119,6 @@ class UnifiedLogger:
                 "<level>{message}</level>"
             )
             serialize = False
-
         # Console sink
         self._stdout_handler_id = logger.add(
             sys.stdout,
@@ -538,5 +545,5 @@ def get_logger(name: str = "metagit") -> Any:
     Returns:
         UnifiedLogger instance
     """
-    config = LoggerConfig()
+    config = LoggerConfig(name=name)
     return UnifiedLogger(config)

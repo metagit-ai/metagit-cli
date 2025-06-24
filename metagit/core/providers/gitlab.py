@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-GitLab provider plugin for repository analysis.
+GitLab provider for repository metadata and metrics.
 """
 
+import logging
 import re
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlparse
@@ -10,7 +11,10 @@ from urllib.parse import urlparse
 import requests
 
 from metagit.core.config.models import CommitFrequency, Metrics, PullRequests
-from metagit.core.providers import GitProvider
+from metagit.core.providers.base import GitProvider
+from metagit.core.utils.common import normalize_git_url
+
+logger = logging.getLogger(__name__)
 
 
 class GitLabProvider(GitProvider):
@@ -50,27 +54,21 @@ class GitLabProvider(GitProvider):
         )
 
     def extract_repo_info(self, url: str) -> Dict[str, str]:
-        """Extract repository information from GitLab URL."""
-        # Handle various GitLab URL formats
+        """Extract owner and repo from GitLab URL."""
+        normalized_url = normalize_git_url(url)
+
+        # GitLab URL patterns
         patterns = [
             r"gitlab\.com[:/]([^/]+)/([^/]+?)(?:\.git)?/?$",
-            r"gitlab\.com[:/]([^/]+)/([^/]+?)/?$",
+            r"git@gitlab\.com:([^/]+)/([^/]+?)(?:\.git)?/?$",
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, url)
+            match = re.match(pattern, normalized_url)
             if match:
-                owner, repo = match.groups()
-                # GitLab uses project ID or path for API calls
-                project_path = f"{owner}/{repo}"
-                return {
-                    "owner": owner,
-                    "repo": repo,
-                    "project_path": project_path,
-                    "api_url": f"{self.api_base}/projects/{project_path.replace('/', '%2F')}",
-                }
+                return {"owner": match.group(1), "repo": match.group(2)}
 
-        raise ValueError(f"Could not extract repo info from URL: {url}")
+        return {}
 
     def get_repository_metrics(
         self, owner: str, repo: str

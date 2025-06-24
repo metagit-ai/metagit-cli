@@ -30,20 +30,26 @@ dependencies = [
     "prompt-toolkit>=3.0.51",
     "tqdm>=4.66.4",
     "types-tqdm>=4.67.0.20250516",
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0",
+    "opensearch-py>=2.4.0",
+    "aiofiles>=23.2.1",
 ]
 
 [project.optional-dependencies]
 standard = ["crewai[tools]"]
-test = ["pytest", "pytest-cov", "mypy", "ruff"]
+test = ["pytest", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio"]
 dev = ["ruff", "black", "isort", "mypy"]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc"]
 lint = ["ruff", "black", "isort", "mypy"]
 format = ["black", "isort"]
 typecheck = ["mypy"]
+api = ["fastapi", "uvicorn[standard]", "opensearch-py", "aiofiles"]
 
 
 [project.scripts]
 metagit = "metagit.cli.main:main"
+metagit-api = "metagit.api.app:main"
 
 [lint]
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
