@@ -10,15 +10,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, List, Optional, Union
 
-from pydantic import (
-    BaseModel,
-    Field,
-    HttpUrl,
-    field_serializer,
-    field_validator,
-)
+from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
-from metagit.core.project.models import ProjectKind, ProjectPath, GitUrl
+from metagit.core.project.models import GitUrl, ProjectKind, ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -30,7 +24,8 @@ class LicenseKind(str, Enum):
     APACHE_2_0 = "Apache-2.0"
     GPL_3_0 = "GPL-3.0"
     BSD_3_CLAUSE = "BSD-3-Clause"
-    # Add more as needed
+    PROPRIETARY = "proprietary"
+    CUSTOM = "custom"
 
 
 class BranchStrategy(str, Enum):
@@ -53,6 +48,8 @@ class TaskerKind(str, Enum):
     JEST = "Jest"
     NPM = "NPM"
     ATMOS = "Atmos"
+    CUSTOM = "custom"
+    NONE = "none"
 
 
 class ArtifactType(str, Enum):
@@ -60,6 +57,8 @@ class ArtifactType(str, Enum):
 
     DOCKER = "docker"
     GITHUB_RELEASE = "github_release"
+    HELM_CHART = "helm_chart"
+    NPM_PACKAGE = "npm_package"
     STATIC_WEBSITE = "static_website"
     PYTHON_PACKAGE = "python_package"
     NODE_PACKAGE = "node_package"
@@ -74,6 +73,8 @@ class ArtifactType(str, Enum):
     DOTNET_PACKAGE = "dotnet_package"
     ELIXIR_PACKAGE = "elixir_package"
     HASKELL_PACKAGE = "haskell_package"
+    CUSTOM = "custom"
+    NONE = "none"
 
 
 class VersionStrategy(str, Enum):
@@ -92,6 +93,14 @@ class SecretKind(str, Enum):
     GENERATED_STRING = "generated_string"
     CUSTOM = "custom"
     DYNAMIC = "dynamic"
+    PRIVATE_KEY = "private_key"
+    PUBLIC_KEY = "public_key"
+    SECRET_KEY = "secret_key"
+    API_KEY = "api_key"
+    ACCESS_TOKEN = "access_token"
+    REFRESH_TOKEN = "refresh_token"
+    PASSWORD = "password"
+    DATABASE_PASSWORD = "database_password"
 
 
 class VariableKind(str, Enum):
@@ -100,6 +109,7 @@ class VariableKind(str, Enum):
     STRING = "string"
     INTEGER = "integer"
     BOOLEAN = "boolean"
+    CUSTOM = "custom"
 
 
 class CICDPlatform(str, Enum):
@@ -112,6 +122,7 @@ class CICDPlatform(str, Enum):
     JX = "jx"
     TEKTON = "tekton"
     CUSTOM = "custom"
+    NONE = "none"
 
 
 class DeploymentStrategy(str, Enum):
@@ -122,6 +133,8 @@ class DeploymentStrategy(str, Enum):
     MANUAL = "manual"
     GITOPS = "gitops"
     PIPELINE = "pipeline"
+    CUSTOM = "custom"
+    NONE = "none"
 
 
 class ProvisioningTool(str, Enum):
@@ -132,6 +145,8 @@ class ProvisioningTool(str, Enum):
     CDKTF = "CDKTF"
     AWS_CDK = "AWS CDK"
     BICEP = "Bicep"
+    CUSTOM = "custom"
+    NONE = "none"
 
 
 class Hosting(str, Enum):
@@ -162,6 +177,8 @@ class Hosting(str, Enum):
     AZURE_CONTAINER_APPS_ENVIRONMENT_SERVICE_SERVICE = (
         "Azure Container Apps Environment Service Service"
     )
+    CUSTOM = "custom"
+    NONE = "none"
 
 
 class LoggingProvider(str, Enum):
@@ -171,6 +188,8 @@ class LoggingProvider(str, Enum):
     CLOUDWATCH = "cloudwatch"
     ELK = "elk"
     SENTRY = "sentry"
+    CUSTOM = "custom"
+    NONE = "none"
 
 
 class MonitoringProvider(str, Enum):
@@ -181,6 +200,8 @@ class MonitoringProvider(str, Enum):
     GRAFANA = "grafana"
     NEWRELIC = "newrelic"
     SENTRY = "sentry"
+    CUSTOM = "custom"
+    NONE = "none"
 
 
 class AlertingChannelType(str, Enum):
@@ -191,6 +212,7 @@ class AlertingChannelType(str, Enum):
     EMAIL = "email"
     SMS = "sms"
     WEBHOOK = "webhook"
+    CUSTOM = "custom"
 
 
 class ComponentKind(str, Enum):
@@ -535,7 +557,9 @@ class Language(BaseModel):
     """Model for project language information."""
 
     primary: str = Field(..., description="Primary programming language")
-    secondary: Optional[List[str]] = Field(None, description="Secondary programming languages")
+    secondary: Optional[List[str]] = Field(
+        None, description="Secondary programming languages"
+    )
 
     class Config:
         """Pydantic configuration."""
@@ -551,7 +575,9 @@ class Project(BaseModel):
     domain: ProjectDomain = Field(..., description="Project domain")
     language: Language = Field(..., description="Language information")
     framework: Optional[List[str]] = Field(None, description="Frameworks used")
-    package_managers: Optional[List[str]] = Field(None, description="Package managers used")
+    package_managers: Optional[List[str]] = Field(
+        None, description="Package managers used"
+    )
     build_tool: Optional[BuildTool] = Field(None, description="Build tool used")
     deploy_targets: Optional[List[str]] = Field(None, description="Deployment targets")
 
@@ -569,19 +595,32 @@ class RepoMetadata(BaseModel):
     created_at: Optional[datetime] = Field(None, description="Repository creation date")
     last_commit_at: Optional[datetime] = Field(None, description="Last commit date")
     default_branch: Optional[str] = Field(None, description="Default branch name")
-    license: Optional[LicenseType] = Field(None, description="License type")
     topics: Optional[List[str]] = Field(None, description="Repository topics")
-    forked_from: Optional[Union[HttpUrl, str]] = Field(None, description="Forked from repository URL")
-    archived: Optional[bool] = Field(False, description="Whether repository is archived")
-    template: Optional[bool] = Field(False, description="Whether repository is a template")
+    forked_from: Optional[Union[HttpUrl, str]] = Field(
+        None, description="Forked from repository URL"
+    )
+    archived: Optional[bool] = Field(
+        False, description="Whether repository is archived"
+    )
+    template: Optional[bool] = Field(
+        False, description="Whether repository is a template"
+    )
     has_ci: Optional[bool] = Field(False, description="Whether repository has CI/CD")
     has_tests: Optional[bool] = Field(False, description="Whether repository has tests")
-    has_docs: Optional[bool] = Field(False, description="Whether repository has documentation")
-    has_docker: Optional[bool] = Field(False, description="Whether repository has Docker configuration")
-    has_iac: Optional[bool] = Field(False, description="Whether repository has Infrastructure as Code")
+    has_docs: Optional[bool] = Field(
+        False, description="Whether repository has documentation"
+    )
+    has_docker: Optional[bool] = Field(
+        False, description="Whether repository has Docker configuration"
+    )
+    has_iac: Optional[bool] = Field(
+        False, description="Whether repository has Infrastructure as Code"
+    )
 
     @field_serializer("forked_from")
-    def serialize_forked_from(self, forked_from: Optional[Union[HttpUrl, str]], _info: Any) -> Optional[str]:
+    def serialize_forked_from(
+        self, forked_from: Optional[Union[HttpUrl, str]], _info: Any
+    ) -> Optional[str]:
         """Serialize the forked_from URL to a string."""
         return str(forked_from) if forked_from else None
 
@@ -604,7 +643,9 @@ class PullRequests(BaseModel):
     """Model for pull request metrics."""
 
     open: int = Field(..., description="Number of open pull requests")
-    merged_last_30d: int = Field(..., description="Number of pull requests merged in last 30 days")
+    merged_last_30d: int = Field(
+        ..., description="Number of pull requests merged in last 30 days"
+    )
 
     class Config:
         """Pydantic configuration."""
@@ -648,13 +689,9 @@ class MetagitConfig(BaseModel):
         None, description="Branch strategy"
     )
     taskers: Optional[List[Tasker]] = Field(None, description="Task management tools")
-    branches: Optional[List[Branch]] = Field(None, description="Release branches")
     branch_naming: Optional[List[BranchNaming]] = Field(
         None, description="Branch naming patterns"
     )
-    branch: Optional[str] = Field(None, description="Current branch")
-    checksum: Optional[str] = Field(None, description="Branch checksum")
-    last_updated: Optional[datetime] = Field(None, description="Last updated timestamp")
     artifacts: Optional[List[Artifact]] = Field(None, description="Generated artifacts")
     secrets_management: Optional[List[str]] = Field(
         None, description="Secrets management tools"
@@ -670,8 +707,6 @@ class MetagitConfig(BaseModel):
     observability: Optional[Observability] = Field(
         None, description="Observability configuration"
     )
-    metrics: Optional[Metrics] = Field(None, description="Repository metrics")
-    metadata: Optional[RepoMetadata] = Field(None, description="Repository metadata")
     paths: Optional[List[ProjectPath]] = Field(None, description="Project paths")
     dependencies: Optional[List[ProjectPath]] = Field(
         None, description="Project dependencies"
@@ -692,23 +727,54 @@ class MetagitConfig(BaseModel):
     def local_workspace_project(self) -> WorkspaceProject:
         """Create a 'local' workspace project combining paths, dependencies, and components."""
         all_repos: List[ProjectPath] = []
-        
+
         # Add paths if they exist
         if self.paths:
             all_repos.extend(self.paths)
-        
+
         # Add dependencies if they exist
         if self.dependencies:
             all_repos.extend(self.dependencies)
-        
+
         # Add components if they exist
         if self.components:
             all_repos.extend(self.components)
-        
-        return WorkspaceProject(
-            name="local",
-            repos=all_repos
-        )
+
+        return WorkspaceProject(name="local", repos=all_repos)
+
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        validate_assignment = True
+        extra = "forbid"
+
+
+class MetagitRecord(MetagitConfig):
+    """Extended model for metagit records that includes detection-specific data.
+
+    This class inherits from MetagitConfig and adds detection-specific attributes
+    that should be stored in OpenSearch for caching and search functionality.
+    """
+
+    # Detection-specific attributes
+    branch: Optional[str] = Field(None, description="Current branch")
+    checksum: Optional[str] = Field(None, description="Branch checksum")
+    last_updated: Optional[datetime] = Field(None, description="Last updated timestamp")
+    branches: Optional[List[Branch]] = Field(None, description="Release branches")
+    metrics: Optional[Metrics] = Field(None, description="Repository metrics")
+    metadata: Optional[RepoMetadata] = Field(None, description="Repository metadata")
+
+    # Additional detection fields
+    detection_timestamp: Optional[datetime] = Field(
+        None, description="When this record was last detected/updated"
+    )
+    detection_source: Optional[str] = Field(
+        None, description="Source of the detection (e.g., 'github', 'gitlab', 'local')"
+    )
+    detection_version: Optional[str] = Field(
+        None, description="Version of the detection algorithm used"
+    )
 
     class Config:
         """Pydantic configuration."""

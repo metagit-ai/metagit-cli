@@ -6,10 +6,53 @@ This package provides Pydantic models and methods for parsing and validating
 .metagit.yml configuration files.
 """
 
+from .manager import MetagitConfigManager
+from .models import (
+    CICD,
+    AlertingChannel,
+    AlertingChannelType,
+    Artifact,
+    ArtifactType,
+    Branch,
+    BranchNaming,
+    BranchStrategy,
+    CICDPlatform,
+    ComponentKind,
+    Dashboard,
+    DependencyKind,
+    Deployment,
+    DeploymentStrategy,
+    Environment,
+    Hosting,
+    Infrastructure,
+    License,
+    LicenseKind,
+    LoggingProvider,
+    Maintainer,
+    MetagitConfig,
+    MetagitRecord,
+    MonitoringProvider,
+    Observability,
+    Pipeline,
+    ProjectKind,
+    ProjectPath,
+    ProvisioningTool,
+    Secret,
+    SecretKind,
+    Tasker,
+    TaskerKind,
+    Variable,
+    VariableKind,
+    VersionStrategy,
+    Workspace,
+    WorkspaceProject,
+)
+
 __all__ = [
     # Main configuration model
-    "ConfigManager",
+    "MetagitConfigManager",
     "MetagitConfig",
+    "MetagitRecord",
     # Enums
     "ProjectKind",
     "LicenseKind",

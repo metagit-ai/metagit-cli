@@ -56,8 +56,8 @@ class UserPrompt:
             model_class: The Pydantic model class to prompt for
             existing_data: Optional existing data to pre-populate fields
             title: Optional title to display at the top of the prompt
-            fields_to_prompt: Optional list of field names to prompt for. 
-                             If None, prompts for all fields. If specified, 
+            fields_to_prompt: Optional list of field names to prompt for.
+                             If None, prompts for all fields. If specified,
                              only prompts for these fields and uses defaults/None for others.
 
         Returns:
@@ -120,7 +120,9 @@ class UserPrompt:
                     field_data[field_name] = value
                 else:
                     # For optional fields, prompt directly with [Optional] indicator
-                    value = prompt_instance._prompt_for_optional_field(field_name, field_info)
+                    value = prompt_instance._prompt_for_optional_field(
+                        field_name, field_info
+                    )
                     if isinstance(value, Exception):
                         return value
                     # Only assign if a value was provided (not None)
@@ -136,7 +138,9 @@ class UserPrompt:
                 )
                 print_formatted_text(error_text)
                 # Retry with corrected data
-                return UserPrompt.prompt_for_model(model_class, field_data, title, fields_to_prompt)
+                return UserPrompt.prompt_for_model(
+                    model_class, field_data, title, fields_to_prompt
+                )
         except Exception as e:
             return e
 
@@ -554,10 +558,33 @@ class UserPrompt:
 
         Returns:
             An instance of the specified Pydantic model
-
-        Raises:
-            ValueError: If the model_class is not a valid Pydantic model
         """
-        return UserPrompt.prompt_for_model(
-            model_class, existing_data, title, fields_to_prompt
-        )
+        try:
+            return UserPrompt.prompt_for_model(
+                model_class, existing_data, title, fields_to_prompt
+            )
+        except Exception as e:
+            return e
+
+
+def yes_no_prompt(message: str = "Continue?") -> bool:
+    """
+    Simple yes/no prompt function.
+
+    Args:
+        message: The message to display
+
+    Returns:
+        True for 'y' or 'yes', False for 'n' or 'no'
+    """
+    try:
+        while True:
+            response = input(f"{message} (y/n): ").lower().strip()
+            if response in ["y", "yes"]:
+                return True
+            elif response in ["n", "no"]:
+                return False
+            else:
+                print("Please enter 'y' or 'n'")
+    except Exception:
+        return False

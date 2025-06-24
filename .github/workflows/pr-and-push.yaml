@@ -6,6 +6,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, review_requested, review_request_removed]
   push:
     branches: [ main ]  # Also run on direct pushes to main
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -17,8 +18,8 @@ jobs:
   #     contents: read
   #   with:
   #     ref: ${{ github.event.pull_request.head.sha }}
-  call-lint:
-    uses: ./.github/workflows/lint.yaml
+  call-lint-and-test:
+    uses: ./.github/workflows/lint-and-test.yaml
     permissions:
       contents: read
     with:

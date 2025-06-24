@@ -1,5 +1,27 @@
+# Metagit Development Guide
 
+Upon making changes run the following to validate everything before submitting a PR
 
+```bash
+task format lint:fix test
+```
+
+# API
+
+Start then test the api.
+
+```bash
+task docker:compose
+task api:test:detect
+curl -X 'GET' \
+  'http://localhost:8000/detect' \
+  -H 'accept: application/json'
+```
+
+[opensearch](http://localhost:9200)
+[opensearch-dashboards](http://localhost:5601)
+[api](http://localhost:8000)
+[api docs](http://localhost:8000/docs)
 
 ## Provider Plugins
 ```mermaid

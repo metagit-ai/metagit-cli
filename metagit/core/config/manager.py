@@ -8,13 +8,15 @@ This package provides a class for managing .metagit.yml configuration files.
 from pathlib import Path
 from typing import Optional, Union
 
-from metagit.core.config.models import MetagitConfig
-from metagit.core.utils.yaml_class import yaml
-from metagit.core.workspace.models import Workspace, WorkspaceProject
-from metagit.core.utils.logging import UnifiedLogger, LoggerConfig
 from git import Repo
 
-class ConfigManager:
+from metagit.core.config.models import MetagitConfig
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
+from metagit.core.utils.yaml_class import yaml
+from metagit.core.workspace.models import Workspace, WorkspaceProject
+
+
+class MetagitConfigManager:
     """
     Manager class for handling .metagit.yml configuration files.
 
@@ -22,15 +24,19 @@ class ConfigManager:
     .metagit.yml configuration files with proper error handling and validation.
     """
 
-    def __init__(self, config_path: Optional[Path] = None):
+    def __init__(
+        self,
+        config_path: Optional[Path] = None,
+        metagit_config: Optional[MetagitConfig] = None,
+    ):
         """
-        Initialize the ConfigManager.
+        Initialize the MetagitConfigManager.
 
         Args:
             config_path: Path to the .metagit.yml file. If None, defaults to .metagit.yml in current directory.
         """
-        self.config_path = config_path or Path(".metagit.yml")
-        self._config: Optional[MetagitConfig] = None
+        self.config_path: str = config_path or Path(".metagit.yml")
+        self._config: Optional[MetagitConfig] = metagit_config
 
     @property
     def config(self) -> Union[MetagitConfig, None, Exception]:
@@ -150,10 +156,14 @@ class ConfigManager:
 
             save_path = output_path or self.config_path
             with open(save_path, "w", encoding="utf-8") as f:
-                yaml.dump(config_to_save.model_dump(exclude_none=True, exclude_defaults=True), f)
+                yaml.dump(
+                    config_to_save.model_dump(exclude_none=True, exclude_defaults=True),
+                    f,
+                )
             return None
         except Exception as e:
             return e
+
 
 def create_metagit_config(
     name: Optional[str] = None,
@@ -166,7 +176,9 @@ def create_metagit_config(
     """
     Create a top level .metagit.yml configuration file.
     """
-    logger = logger or UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
+    logger = logger or UnifiedLogger(
+        LoggerConfig(log_level="INFO", minimal_console=True)
+    )
     if name is None:
         try:
             git_repo = Repo(Path.cwd())
@@ -175,18 +187,18 @@ def create_metagit_config(
             name = Path.cwd().name
 
     if description is None:
-      description = git_repo.description or "No description"
+        description = git_repo.description or "No description"
     if url is None:
-      url = git_repo.remote().url or None
+        url = git_repo.remote().url or None
     if kind is None:
-      kind = "application"
+        kind = "application"
     try:
-      config_manager = ConfigManager()
-      config_result = config_manager.create_config(
-          name=name, description=description, url=url, kind=kind
-      )
-      if isinstance(config_result, Exception):
-          raise config_result
+        config_manager = MetagitConfigManager()
+        config_result = config_manager.create_config(
+            name=name, description=description, url=url, kind=kind
+        )
+        if isinstance(config_result, Exception):
+            raise config_result
     except Exception as e:
         logger.error(f"Failed to create config: {e}")
         return e
@@ -203,14 +215,14 @@ def create_metagit_config(
     )
 
     if as_yaml:
-      yaml.Dumper.ignore_aliases = lambda *args: True
-      output = yaml.dump(
-          config_result.model_dump(exclude_unset=True, exclude_none=True),
-          default_flow_style=False,
-          sort_keys=False,
-          indent=2,
-          line_break=True,
-      )
-      return output
+        yaml.Dumper.ignore_aliases = lambda *args: True
+        output = yaml.dump(
+            config_result.model_dump(exclude_unset=True, exclude_none=True),
+            default_flow_style=False,
+            sort_keys=False,
+            indent=2,
+            line_break=True,
+        )
+        return output
     else:
-      return config_result
+        return config_result

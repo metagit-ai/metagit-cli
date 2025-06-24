@@ -8,7 +8,7 @@ from pathlib import Path
 
 import click
 
-from metagit.core.config.manager import ConfigManager
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
 
 
@@ -27,7 +27,7 @@ def workspace(ctx: click.Context, config: str) -> None:
         return
 
     try:
-        config_manager = ConfigManager(config)
+        config_manager = MetagitConfigManager(config)
         local_config = config_manager.load_config()
         if isinstance(local_config, Exception):
             raise local_config

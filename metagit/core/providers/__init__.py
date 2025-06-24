@@ -1,94 +1,25 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
-Git provider plugins for repository analysis.
-
-This package provides a plugin architecture for integrating with various
-git hosting platforms like GitHub, GitLab, Bitbucket, etc.
+Provider registry for Git hosting platforms.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
+import logging
+import os
+from typing import Optional
 
-from metagit.core.config.models import Metrics
+from metagit.core.providers.base import GitProvider
+from metagit.core.providers.github import GitHubProvider
+from metagit.core.providers.gitlab import GitLabProvider
+from metagit.core.utils.common import normalize_git_url
 
-
-class GitProvider(ABC):
-    """Base class for git provider plugins."""
-
-    def __init__(self, api_token: Optional[str] = None, base_url: Optional[str] = None):
-        """
-        Initialize the git provider.
-
-        Args:
-            api_token: API token for authentication
-            base_url: Base URL for the API (for self-hosted instances)
-        """
-        self.api_token = api_token
-        self.base_url = base_url
-        self._session = None
-
-    @abstractmethod
-    def get_name(self) -> str:
-        """Get the provider name."""
-        pass
-
-    @abstractmethod
-    def can_handle_url(self, url: str) -> bool:
-        """Check if this provider can handle the given repository URL."""
-        pass
-
-    @abstractmethod
-    def extract_repo_info(self, url: str) -> Dict[str, str]:
-        """
-        Extract repository information from URL.
-
-        Returns:
-            Dict with keys: owner, repo, api_url
-        """
-        pass
-
-    @abstractmethod
-    def get_repository_metrics(
-        self, owner: str, repo: str
-    ) -> Union[Metrics, Exception]:
-        """
-        Get repository metrics from the provider.
-
-        Args:
-            owner: Repository owner/organization
-            repo: Repository name
-
-        Returns:
-            Metrics object or Exception
-        """
-        pass
-
-    @abstractmethod
-    def get_repository_metadata(
-        self, owner: str, repo: str
-    ) -> Union[Dict[str, Any], Exception]:
-        """
-        Get additional repository metadata.
-
-        Args:
-            owner: Repository owner/organization
-            repo: Repository name
-
-        Returns:
-            Dict with metadata or Exception
-        """
-        pass
-
-    def is_available(self) -> bool:
-        """Check if the provider is available (has API token, etc.)."""
-        return self.api_token is not None
+logger = logging.getLogger(__name__)
 
 
 class ProviderRegistry:
     """Registry for git provider plugins."""
 
     def __init__(self):
-        self._providers: List[GitProvider] = []
+        self._providers: list[GitProvider] = []
         self._app_config = None
 
     def register(self, provider: GitProvider) -> None:
@@ -105,12 +36,15 @@ class ProviderRegistry:
 
     def get_provider_for_url(self, url: str) -> Optional[GitProvider]:
         """Get the appropriate provider for a given URL."""
+        normalized_url = normalize_git_url(url)
+
         for provider in self._providers:
-            if provider.can_handle_url(url) and provider.is_available():
+            if provider.can_handle_url(normalized_url) and provider.is_available():
                 return provider
+
         return None
 
-    def get_all_providers(self) -> List[GitProvider]:
+    def get_all_providers(self) -> list[GitProvider]:
         """Get all registered providers."""
         return self._providers.copy()
 
@@ -139,8 +73,6 @@ class ProviderRegistry:
             and app_config.providers.github.api_token
         ):
             try:
-                from metagit.core.providers.github import GitHubProvider
-
                 github_provider = GitHubProvider(
                     api_token=app_config.providers.github.api_token,
                     base_url=app_config.providers.github.base_url,
@@ -155,8 +87,6 @@ class ProviderRegistry:
             and app_config.providers.gitlab.api_token
         ):
             try:
-                from metagit.core.providers.gitlab import GitLabProvider
-
                 gitlab_provider = GitLabProvider(
                     api_token=app_config.providers.gitlab.api_token,
                     base_url=app_config.providers.gitlab.base_url,
@@ -167,14 +97,10 @@ class ProviderRegistry:
 
     def configure_from_environment(self) -> None:
         """Configure providers from environment variables (legacy method)."""
-        import os
-
         # GitHub provider
         github_token = os.getenv("GITHUB_TOKEN")
         if github_token:
             try:
-                from metagit.core.providers.github import GitHubProvider
-
                 github_provider = GitHubProvider(api_token=github_token)
                 self.register(github_provider)
             except ImportError:
@@ -184,8 +110,6 @@ class ProviderRegistry:
         gitlab_token = os.getenv("GITLAB_TOKEN")
         if gitlab_token:
             try:
-                from metagit.core.providers.gitlab import GitLabProvider
-
                 gitlab_provider = GitLabProvider(api_token=gitlab_token)
                 self.register(gitlab_provider)
             except ImportError:
@@ -194,3 +118,6 @@ class ProviderRegistry:
 
 # Global registry instance
 registry = ProviderRegistry()
+
+# Export the registry for backward compatibility
+__all__ = ["GitProvider", "ProviderRegistry", "registry"]

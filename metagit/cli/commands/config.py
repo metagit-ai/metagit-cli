@@ -5,7 +5,7 @@ Config cli command group
 import click
 
 from metagit.core.appconfig import AppConfig
-from metagit.core.config.manager import ConfigManager, create_metagit_config
+from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.utils.yaml_class import yaml
 
 
@@ -40,7 +40,7 @@ def config_show(ctx: click.Context) -> None:
     logger = ctx.obj["logger"]
     try:
         config_path = ctx.obj["config_path"]
-        config_manager = ConfigManager(config_path=config_path)
+        config_manager = MetagitConfigManager(config_path=config_path)
         config_result = config_manager.load_config()
         if isinstance(config_result, Exception):
             raise config_result
@@ -118,7 +118,7 @@ def config_validate(ctx: click.Context) -> None:
     logger = ctx.obj["logger"]
     try:
         config_path = ctx.obj["config_path"]
-        config_manager = ConfigManager(config_path=config_path)
+        config_manager = MetagitConfigManager(config_path=config_path)
         result = config_manager.load_config()
         if isinstance(result, Exception):
             raise result
