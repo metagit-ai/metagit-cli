@@ -19,8 +19,8 @@ class TestDetectionEndpoints:
         """Create a mock detection service."""
         mock_service = MagicMock()
         mock_service.submit_detection = AsyncMock()
-        mock_service.get_job_status = MagicMock()
-        mock_service.get_all_jobs = MagicMock()
+        mock_service.get_detection_status = AsyncMock()
+        mock_service.list_detections = AsyncMock()
         return mock_service
 
     @pytest.fixture
@@ -28,13 +28,15 @@ class TestDetectionEndpoints:
         """Create a test client with mocked dependencies."""
         # Import here to avoid circular imports
         from metagit.api.app import app
-        from metagit.api.endpoints.detect import get_detection_service
+        from metagit.api.dependencies import get_tenant_aware_detection_service
 
         # Override the dependency
-        def override_get_detection_service():
+        def override_get_tenant_aware_detection_service():
             return mock_detection_service
 
-        app.dependency_overrides[get_detection_service] = override_get_detection_service
+        app.dependency_overrides[get_tenant_aware_detection_service] = (
+            override_get_tenant_aware_detection_service
+        )
 
         # Mock the app's lifespan to prevent service startup
         with (
@@ -51,12 +53,15 @@ class TestDetectionEndpoints:
     def test_submit_detection_success(self, client, mock_detection_service):
         """Test successful detection submission."""
         # Create a successful job response
-        job = DetectionJob(
-            detection_id="test-id",
-            repository_url="https://github.com/user/repo",
-            priority=5,
-        )
-        mock_detection_service.submit_detection.return_value = job
+        job = {
+            "detection_id": "test-id",
+            "status": "pending",
+            "repository_url": "https://github.com/user/repo",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        }
+        mock_detection_service.submit_detection.return_value = "test-id"
+        mock_detection_service.get_detection_status.return_value = job
 
         # Make request
         response = client.post(
@@ -79,12 +84,15 @@ class TestDetectionEndpoints:
         self, client, mock_detection_service
     ):
         """Test detection submission with URL normalization."""
-        job = DetectionJob(
-            detection_id="test-id",
-            repository_url="https://github.com/user/repo",
-            priority=0,
-        )
-        mock_detection_service.submit_detection.return_value = job
+        job = {
+            "detection_id": "test-id",
+            "status": "pending",
+            "repository_url": "https://github.com/user/repo",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        }
+        mock_detection_service.submit_detection.return_value = "test-id"
+        mock_detection_service.get_detection_status.return_value = job
 
         # Make request with trailing slash
         response = client.post(
@@ -139,14 +147,15 @@ class TestDetectionEndpoints:
 
     def test_get_detection_status_success(self, client, mock_detection_service):
         """Test successful detection status retrieval."""
-        job = DetectionJob(
-            detection_id="test-id",
-            repository_url="https://github.com/user/repo",
-            priority=0,
-        )
-        job.status = DetectionStatus.COMPLETED
-        job.record_id = "record-123"
-        mock_detection_service.get_job_status.return_value = job
+        job = {
+            "detection_id": "test-id",
+            "status": "completed",
+            "repository_url": "https://github.com/user/repo",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+            "record_id": "record-123",
+        }
+        mock_detection_service.get_detection_status.return_value = job
 
         # Make request
         response = client.get("/detect/test-id/status")
@@ -161,7 +170,9 @@ class TestDetectionEndpoints:
 
     def test_get_detection_status_not_found(self, client, mock_detection_service):
         """Test detection status retrieval for non-existent job."""
-        mock_detection_service.get_job_status.return_value = None
+        mock_detection_service.get_detection_status.return_value = Exception(
+            "Job not found"
+        )
 
         # Make request
         response = client.get("/detect/non-existent-id/status")
@@ -173,17 +184,21 @@ class TestDetectionEndpoints:
 
     def test_list_detections_success(self, client, mock_detection_service):
         """Test successful detection listing."""
-        job1 = DetectionJob(
-            detection_id="test-id-1",
-            repository_url="https://github.com/user/repo1",
-            priority=0,
-        )
-        job2 = DetectionJob(
-            detection_id="test-id-2",
-            repository_url="https://github.com/user/repo2",
-            priority=5,
-        )
-        mock_detection_service.get_all_jobs.return_value = [job1, job2]
+        job1 = {
+            "detection_id": "test-id-1",
+            "status": "pending",
+            "repository_url": "https://github.com/user/repo1",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        }
+        job2 = {
+            "detection_id": "test-id-2",
+            "status": "completed",
+            "repository_url": "https://github.com/user/repo2",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        }
+        mock_detection_service.list_detections.return_value = [job1, job2]
 
         # Make request
         response = client.get("/detect")
@@ -197,7 +212,7 @@ class TestDetectionEndpoints:
 
     def test_list_detections_empty(self, client, mock_detection_service):
         """Test detection listing when no jobs exist."""
-        mock_detection_service.get_all_jobs.return_value = []
+        mock_detection_service.list_detections.return_value = []
 
         # Make request
         response = client.get("/detect")
@@ -224,14 +239,14 @@ class TestRecordsEndpoints:
         """Create a test client with mocked dependencies."""
         # Import here to avoid circular imports
         from metagit.api.app import app
-        from metagit.api.endpoints.records import get_opensearch_service
+        from metagit.api.dependencies import get_tenant_aware_opensearch_service
 
         # Override the dependency
-        def override_get_opensearch_service():
+        def override_get_tenant_aware_opensearch_service():
             return mock_opensearch_service
 
-        app.dependency_overrides[get_opensearch_service] = (
-            override_get_opensearch_service
+        app.dependency_overrides[get_tenant_aware_opensearch_service] = (
+            override_get_tenant_aware_opensearch_service
         )
 
         # Mock the app's lifespan to prevent service startup
@@ -311,14 +326,14 @@ class TestConfigEndpoints:
         """Create a test client with mocked dependencies."""
         # Import here to avoid circular imports
         from metagit.api.app import app
-        from metagit.api.endpoints.config import get_opensearch_service
+        from metagit.api.dependencies import get_tenant_aware_opensearch_service
 
         # Override the dependency
-        def override_get_opensearch_service():
+        def override_get_tenant_aware_opensearch_service():
             return mock_opensearch_service
 
-        app.dependency_overrides[get_opensearch_service] = (
-            override_get_opensearch_service
+        app.dependency_overrides[get_tenant_aware_opensearch_service] = (
+            override_get_tenant_aware_opensearch_service
         )
 
         # Mock the app's lifespan to prevent service startup
@@ -344,6 +359,13 @@ class TestConfigEndpoints:
                     "url": "https://github.com/user/repo",  # This should match the normalized URL
                     "name": "test-repo",
                     "kind": "application",
+                    "description": "Test repository",
+                    "detection_timestamp": "2024-01-01T00:00:00Z",
+                    "detection_source": "test",
+                    "detection_version": "1.0.0",
+                    "branch": "main",
+                    "checksum": "abc123",
+                    "tenant_id": "default",
                 }
             ],
         }
@@ -369,6 +391,13 @@ class TestConfigEndpoints:
                     "_id": "record-123",
                     "url": "https://github.com/user/repo",
                     "name": "test-repo",
+                    "description": "Test repository",
+                    "detection_timestamp": "2024-01-01T00:00:00Z",
+                    "detection_source": "test",
+                    "detection_version": "1.0.0",
+                    "branch": "main",
+                    "checksum": "abc123",
+                    "tenant_id": "default",
                 }
             ],
         }

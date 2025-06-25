@@ -8,6 +8,7 @@ import urllib.parse
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from metagit.api.dependencies import get_tenant_aware_opensearch_service
 from metagit.api.opensearch import OpenSearchService
 from metagit.core.config.models import MetagitConfig, MetagitRecord
 from metagit.core.utils.common import normalize_git_url
@@ -17,19 +18,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/config", tags=["config"])
 
 
-def get_opensearch_service() -> OpenSearchService:
-    """Dependency to get OpenSearch service."""
-    from metagit.api.app import opensearch_service
-
-    if not opensearch_service:
-        raise HTTPException(status_code=503, detail="OpenSearch service not available")
-    return opensearch_service
-
-
 @router.get("/{git_url:path}")
 async def get_config_by_url(
     git_url: str,
-    opensearch: OpenSearchService = Depends(get_opensearch_service),
+    opensearch: OpenSearchService = Depends(get_tenant_aware_opensearch_service),
 ):
     """Get MetagitConfig from a MetagitRecord by git URL."""
     try:
@@ -80,6 +72,7 @@ async def get_config_by_url(
             "detection_timestamp",
             "detection_source",
             "detection_version",
+            "tenant_id",  # Remove tenant_id as it's not part of MetagitConfig
         ]
         for field in detection_fields:
             config_data.pop(field, None)

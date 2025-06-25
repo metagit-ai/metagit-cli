@@ -24,8 +24,8 @@ class OpenSearchService:
         index_name: str = "metagit-records",
         username: Optional[str] = None,
         password: Optional[str] = None,
-        use_ssl: bool = True,
-        verify_certs: bool = True,
+        use_ssl: bool = False,
+        verify_certs: bool = False,
         ssl_show_warn: bool = False,
     ):
         """
@@ -255,6 +255,7 @@ class OpenSearchService:
     async def search_records(
         self,
         query: str,
+        tenant_id: Optional[str] = None,
         filters: Optional[Dict[str, Any]] = None,
         page: int = 1,
         size: int = 20,
@@ -266,6 +267,7 @@ class OpenSearchService:
 
         Args:
             query: Search query
+            tenant_id: Tenant identifier (ignored in base service for compatibility)
             filters: Search filters
             page: Page number
             size: Results per page
@@ -405,12 +407,15 @@ class OpenSearchService:
             logger.error(f"Failed to update MetagitRecord {record_id}: {e}")
             return e
 
-    async def delete_record(self, record_id: str) -> Union[bool, Exception]:
+    async def delete_record(
+        self, record_id: str, tenant_id: Optional[str] = None
+    ) -> Union[bool, Exception]:
         """
         Delete a MetagitRecord.
 
         Args:
             record_id: Document ID
+            tenant_id: Tenant identifier (ignored in base service for compatibility)
 
         Returns:
             Success status or Exception

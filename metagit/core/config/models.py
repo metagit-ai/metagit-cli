@@ -198,7 +198,6 @@ class MonitoringProvider(str, Enum):
     PROMETHEUS = "prometheus"
     DATADOG = "datadog"
     GRAFANA = "grafana"
-    NEWRELIC = "newrelic"
     SENTRY = "sentry"
     CUSTOM = "custom"
     NONE = "none"
@@ -297,7 +296,7 @@ class Artifact(BaseModel):
 
     @field_serializer("location")
     def serialize_location(self, location: Union[HttpUrl, str], _info: Any) -> str:
-        """Serialize the location to a string."""
+        """Serialize location to string."""
         return str(location)
 
     class Config:
@@ -344,11 +343,9 @@ class Pipeline(BaseModel):
 
     @field_validator("variables", mode="before")
     def validate_variables(cls, v: Any) -> Any:
-        """Convert variable dictionaries to strings if needed."""
+        """Validate variables field."""
         if v is None:
-            return v
-        if isinstance(v, list):
-            return [str(var) if isinstance(var, dict) else var for var in v]
+            return []
         return v
 
     class Config:
@@ -379,7 +376,7 @@ class Environment(BaseModel):
 
     @field_serializer("url")
     def serialize_url(self, url: Optional[HttpUrl], _info: Any) -> Optional[str]:
-        """Serialize the URL to a string."""
+        """Serialize URL to string."""
         return str(url) if url else None
 
     class Config:
@@ -429,7 +426,7 @@ class AlertingChannel(BaseModel):
 
     @field_serializer("url")
     def serialize_url(self, url: Union[HttpUrl, str], _info: Any) -> str:
-        """Serialize the URL to a string."""
+        """Serialize URL to string."""
         return str(url)
 
     class Config:
@@ -448,7 +445,7 @@ class Dashboard(BaseModel):
 
     @field_serializer("url")
     def serialize_url(self, url: HttpUrl, _info: Any) -> str:
-        """Serialize the URL to a string."""
+        """Serialize URL to string."""
         return str(url)
 
     class Config:
@@ -621,7 +618,7 @@ class RepoMetadata(BaseModel):
     def serialize_forked_from(
         self, forked_from: Optional[Union[HttpUrl, str]], _info: Any
     ) -> Optional[str]:
-        """Serialize the forked_from URL to a string."""
+        """Serialize forked_from to string."""
         return str(forked_from) if forked_from else None
 
     class Config:
@@ -668,6 +665,135 @@ class Metrics(BaseModel):
         """Pydantic configuration."""
 
         use_enum_values = True
+        extra = "forbid"
+
+
+# New configuration models for AppConfig
+class Boundary(BaseModel):
+    """Model for organization boundaries."""
+
+    name: str = Field(..., description="Boundary name")
+    values: List[str] = Field(default_factory=list, description="Boundary values")
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class WorkspaceConfig(BaseModel):
+    """Model for workspace configuration in AppConfig."""
+
+    path: str = Field(default="./.metagit", description="Workspace path")
+    default_project: str = Field(default="default", description="Default project")
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class LLM(BaseModel):
+    """Model for LLM configuration."""
+
+    enabled: bool = Field(default=False, description="Whether LLM is enabled")
+    provider: str = Field(default="openrouter", description="LLM provider")
+    provider_model: str = Field(default="gpt-4o-mini", description="LLM provider model")
+    embedder: str = Field(default="ollama", description="Embedding provider")
+    embedder_model: str = Field(
+        default="nomic-embed-text", description="Embedding model"
+    )
+    api_key: str = Field(default="", description="API key for LLM provider")
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class Profiles(BaseModel):
+    """Model for profiles configuration."""
+
+    profile_config_path: str = Field(
+        default="~/.config/metagit/profiles", description="Profile configuration path"
+    )
+    default_profile: str = Field(default="default", description="Default profile")
+    boundaries: List[Boundary] = Field(
+        default_factory=list, description="Organization boundaries"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class GitHubProvider(BaseModel):
+    """Model for GitHub provider configuration."""
+
+    enabled: bool = Field(
+        default=False, description="Whether GitHub provider is enabled"
+    )
+    api_token: str = Field(default="", description="GitHub API token")
+    base_url: str = Field(
+        default="https://api.github.com", description="GitHub API base URL"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class GitLabProvider(BaseModel):
+    """Model for GitLab provider configuration."""
+
+    enabled: bool = Field(
+        default=False, description="Whether GitLab provider is enabled"
+    )
+    api_token: str = Field(default="", description="GitLab API token")
+    base_url: str = Field(
+        default="https://gitlab.com/api/v4", description="GitLab API base URL"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class Providers(BaseModel):
+    """Model for Git provider configuration."""
+
+    github: GitHubProvider = Field(
+        default_factory=GitHubProvider, description="GitHub provider configuration"
+    )
+    gitlab: GitLabProvider = Field(
+        default_factory=GitLabProvider, description="GitLab provider configuration"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class TenantConfig(BaseModel):
+    """Model for tenant configuration."""
+
+    enabled: bool = Field(default=False, description="Whether multi-tenancy is enabled")
+    default_tenant: str = Field(default="default", description="Default tenant ID")
+    tenant_header: str = Field(default="X-Tenant-ID", description="Tenant header name")
+    tenant_required: bool = Field(
+        default=False, description="Whether tenant is required"
+    )
+    allowed_tenants: List[str] = Field(
+        default_factory=list, description="List of allowed tenant IDs"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
         extra = "forbid"
 
 
@@ -720,27 +846,21 @@ class MetagitConfig(BaseModel):
     def serialize_url(
         self, url: Optional[Union[HttpUrl, str]], _info: Any
     ) -> Optional[str]:
-        """Serialize the URL to a string."""
+        """Serialize URL to string."""
         return str(url) if url else None
 
     @property
     def local_workspace_project(self) -> WorkspaceProject:
-        """Create a 'local' workspace project combining paths, dependencies, and components."""
-        all_repos: List[ProjectPath] = []
+        """Get the local workspace project configuration."""
+        if not self.workspace:
+            return WorkspaceProject(name="local", repos=[])
 
-        # Add paths if they exist
-        if self.paths:
-            all_repos.extend(self.paths)
-
-        # Add dependencies if they exist
-        if self.dependencies:
-            all_repos.extend(self.dependencies)
-
-        # Add components if they exist
-        if self.components:
-            all_repos.extend(self.components)
-
-        return WorkspaceProject(name="local", repos=all_repos)
+        # For the original Workspace model, we need to handle the projects list
+        # For now, return the first project or create a default one
+        if self.workspace.projects:
+            return self.workspace.projects[0]
+        else:
+            return WorkspaceProject(name="local", repos=[])
 
     class Config:
         """Pydantic configuration."""
@@ -756,6 +876,11 @@ class MetagitRecord(MetagitConfig):
     This class inherits from MetagitConfig and adds detection-specific attributes
     that should be stored in OpenSearch for caching and search functionality.
     """
+
+    # Tenant support
+    tenant_id: Optional[str] = Field(
+        None, description="Tenant identifier for multi-tenancy"
+    )
 
     # Detection-specific attributes
     branch: Optional[str] = Field(None, description="Current branch")
@@ -773,7 +898,7 @@ class MetagitRecord(MetagitConfig):
         None, description="Source of the detection (e.g., 'github', 'gitlab', 'local')"
     )
     detection_version: Optional[str] = Field(
-        None, description="Version of the detection algorithm used"
+        None, description="Version of the detection system used"
     )
 
     class Config:
