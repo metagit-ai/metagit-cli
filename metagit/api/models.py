@@ -28,7 +28,13 @@ class DetectionPriority(str, Enum):
     URGENT = "urgent"
 
 
-class DetectionRequest(BaseModel):
+class TenantAwareRequest(BaseModel):
+    """Base class for tenant-aware requests."""
+
+    tenant_id: Optional[str] = Field(None, description="Tenant identifier")
+
+
+class DetectionRequest(TenantAwareRequest):
     """Request model for submitting a detection job."""
 
     repository_url: Optional[HttpUrl] = Field(
@@ -68,7 +74,7 @@ class DetectionStatusResponse(BaseModel):
     record_id: Optional[str]
 
 
-class SearchRequest(BaseModel):
+class SearchRequest(TenantAwareRequest):
     """Request model for searching records."""
 
     query: str = Field(default="", description="Search query")

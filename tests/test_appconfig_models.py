@@ -4,6 +4,7 @@ Unit tests for metagit.core.appconfig.models
 """
 
 from metagit.core.appconfig import models
+from metagit.core.config.models import GitHubProvider, GitLabProvider
 
 
 def test_boundary_model():
@@ -19,7 +20,7 @@ def test_profiles_model():
 
 
 def test_workspace_model():
-    w = models.Workspace()
+    w = models.WorkspaceConfig()
     assert w.path == "./.metagit"
     assert w.default_project == "default"
 
@@ -31,21 +32,21 @@ def test_llm_model():
 
 
 def test_github_provider_model():
-    gh = models.GitHubProvider()
+    gh = GitHubProvider()
     assert gh.base_url.startswith("https://api.github")
     assert not gh.enabled
 
 
 def test_gitlab_provider_model():
-    gl = models.GitLabProvider()
+    gl = GitLabProvider()
     assert gl.base_url.startswith("https://gitlab")
     assert not gl.enabled
 
 
 def test_providers_model():
     p = models.Providers()
-    assert isinstance(p.github, models.GitHubProvider)
-    assert isinstance(p.gitlab, models.GitLabProvider)
+    assert isinstance(p.github, GitHubProvider)
+    assert isinstance(p.gitlab, GitLabProvider)
 
 
 def test_appconfig_defaults():
@@ -60,15 +61,15 @@ def test_appconfig_env_override(monkeypatch):
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     monkeypatch.delenv("GITLAB_TOKEN", raising=False)
     monkeypatch.setenv("METAGIT_LLM_API_KEY", "llmkey")
-    monkeypatch.setenv("METAGIT_GITHUB_TOKEN", "ghtoken")
-    monkeypatch.setenv("METAGIT_GITHUB_URL", "https://api.github.test.com")
-    monkeypatch.setenv("METAGIT_GITLAB_TOKEN", "gltoken")
-    monkeypatch.setenv("METAGIT_GITLAB_URL", "https://gitlab.test.com/api/v4")
+    monkeypatch.setenv("METAGIT_GITHUB_API_TOKEN", "ghtoken")
+    monkeypatch.setenv("METAGIT_GITHUB_BASE_URL", "https://api.github.test.com")
+    monkeypatch.setenv("METAGIT_GITLAB_API_TOKEN", "gltoken")
+    monkeypatch.setenv("METAGIT_GITLAB_BASE_URL", "https://gitlab.test.com/api/v4")
     monkeypatch.setenv("METAGIT_API_KEY", "apikey")
     monkeypatch.setenv("METAGIT_API_URL", "https://api.test.com")
     monkeypatch.setenv("METAGIT_API_VERSION", "v2")
     cfg = models.AppConfig()
-    cfg = models.AppConfig._override_with_env_vars(cfg)
+    cfg = models.AppConfig._override_from_environment(cfg)
     assert cfg.llm.api_key == "llmkey"
     assert cfg.providers.github.api_token == "ghtoken"
     assert cfg.providers.github.base_url == "https://api.github.test.com"
@@ -110,4 +111,4 @@ def test_appconfig_load_and_save(tmp_path):
 
 def test_appconfig_load_file_not_found(tmp_path):
     result = models.AppConfig.load(str(tmp_path / "nope.yaml"))
-    assert isinstance(result, Exception)
+    assert isinstance(result, models.AppConfig)

@@ -180,6 +180,13 @@ tasks:
         docker compose build
         docker compose up -d
   
+  docker:compose:multitenant:
+    desc: Run docker compose with multitenant support
+    cmds:
+      - |
+        docker compose -f docker-compose.multitenant.yml build
+        docker compose -f docker-compose.multitenant.yml up -d
+  
   api:test:detect:
     desc: Run the api tests
     cmds:
@@ -190,7 +197,7 @@ tasks:
             "repository_url": "https://github.com/zloeber/mag-branch",
             "priority": "normal"
           }'
-  
+
   api:dev:
     desc: Run the api in dev mode
     env:

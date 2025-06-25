@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../terminology/">
+        <link rel="prev" href="../multi_tenancy/">
       
       
       
@@ -233,6 +233,28 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../multi_tenancy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multi-tenancy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -391,6 +413,39 @@
   -h, --help          Show this message and exit.
 </code></pre></div>
 
+<h3 id="init">init<a class="headerlink" href="#init" title="Permanent link">#</a></h3>
+<p>Initialize AppConfig with default settings.</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit config init [OPTIONS]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --config-path TEXT   Path to save configuration file (default: ~/.config/metagit/config.yml).
+  --github-token TEXT  GitHub API token to include in initial configuration.
+  --gitlab-token TEXT  GitLab API token to include in initial configuration.
+  -h, --help           Show this message and exit.
+</code></pre></div>
+
+<h3 id="providers">providers<a class="headerlink" href="#providers" title="Permanent link">#</a></h3>
+<p>Manage git provider plugin configuration.</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit config providers [OPTIONS]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --show               Show current provider configuration.
+  --enable-github      Enable GitHub provider.
+  --disable-github     Disable GitHub provider.
+  --enable-gitlab      Enable GitLab provider.
+  --disable-gitlab     Disable GitLab provider.
+  --github-token TEXT  Set GitHub API token.
+  --gitlab-token TEXT  Set GitLab API token.
+  --github-url TEXT    Set GitHub API base URL (for GitHub Enterprise).
+  --gitlab-url TEXT    Set GitLab API base URL (for self-hosted GitLab).
+  --config-path TEXT   Path to configuration file (default: ~/.config/metagit/config.yml).
+  -h, --help           Show this message and exit.
+</code></pre></div>
+
 <h3 id="show_1">show<a class="headerlink" href="#show_1" title="Permanent link">#</a></h3>
 <p>Show metagit configuration</p>
 <p><strong>Usage:</strong></p>
@@ -433,6 +488,26 @@
   -h, --help        Show this message and exit.
 </code></pre></div>
 
+<h3 id="repository">repository<a class="headerlink" href="#repository" title="Permanent link">#</a></h3>
+<p>Comprehensive repository analysis and MetagitConfig generation.</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit detect repository [OPTIONS]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --path TEXT                   Path to local repository to analyze.
+  --url TEXT                    URL of remote git repository to clone and analyze.
+  --output [summary|yaml|json]  Output format. Defaults to &#39;summary&#39; if --save is not used.
+  --save                        Save the generated configuration to .metagit.yml in the repository path.
+  --temp-dir TEXT               Temporary directory for cloning remote repositories.
+  --github-token TEXT           GitHub API token for fetching repository metrics (overrides AppConfig).
+  --gitlab-token TEXT           GitLab API token for fetching repository metrics (overrides AppConfig).
+  --github-url TEXT             GitHub API base URL (for GitHub Enterprise, overrides AppConfig).
+  --gitlab-url TEXT             GitLab API base URL (for self-hosted GitLab, overrides AppConfig).
+  --use-app-config              Use AppConfig for provider configuration (default: True).
+  -h, --help                    Show this message and exit.
+</code></pre></div>
+
 <h2 id="info">info<a class="headerlink" href="#info" title="Permanent link">#</a></h2>
 <p>Display the current configuration.</p>
 <p><strong>Usage:</strong></p>
@@ -443,7 +518,7 @@
 <div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
 </code></pre></div>
 
-<h2 id="init">init<a class="headerlink" href="#init" title="Permanent link">#</a></h2>
+<h2 id="init_1">init<a class="headerlink" href="#init_1" title="Permanent link">#</a></h2>
 <p>Initialize local metagit environment by creating .metagit.yml and updating .gitignore</p>
 <p><strong>Usage:</strong></p>
 <div class="codehilite"><pre><span></span><code>metagit init [OPTIONS]
@@ -495,11 +570,10 @@
 <p><strong>Options:</strong></p>
 <div class="codehilite"><pre><span></span><code>  --name TEXT                     Repository name
   --description TEXT              Repository description
-  --kind [monorepo|umbrella|application|gitops|infrastructure|service|library|website|other|docker_image|repository]
+  --kind [monorepo|umbrella|application|gitops|infrastructure|service|library|website|other|docker_image|repository|cli]
                                   Project kind
   --ref TEXT                      Reference in the current project for the target project
   --path TEXT                     Local project path
-  --branches TEXT                 Project branches (can be specified multiple times)
   --url TEXT                      Repository URL
   --sync / --no-sync              Sync setting
   --language TEXT                 Programming language
