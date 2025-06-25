@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import shutil
 import tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union
@@ -15,14 +16,19 @@ from pydantic import BaseModel, Field
 from metagit import DATA_PATH
 from metagit.core.config.models import (
     CICD,
+    AlertingChannel,
+    Artifact,
     Branch,
     BranchStrategy,
     CICDPlatform,
     CommitFrequency,
+    Dashboard,
+    Environment,
     License,
     LicenseKind,
     Maintainer,
     MetagitConfig,
+    MetagitRecord,
     Metrics,
     Pipeline,
     ProjectDomain,
@@ -31,6 +37,7 @@ from metagit.core.config.models import (
     ProjectType,
     PullRequests,
     RepoMetadata,
+    Secret,
     Tasker,
     TaskerKind,
     Workspace,
@@ -112,6 +119,14 @@ class RepositoryAnalysis(BaseModel):
 
     # Metrics
     metrics: Optional[Metrics] = None
+    metadata: Optional[RepoMetadata] = None
+    artifacts: Optional[List[Artifact]] = None
+    secrets_management: Optional[List[str]] = None
+    secrets: Optional[List[Secret]] = None
+    documentation: Optional[List[str]] = None
+    alerts: Optional[List[AlertingChannel]] = None
+    dashboards: Optional[List[Dashboard]] = None
+    environments: Optional[List[Environment]] = None
 
     # File analysis
     detected_files: Dict[str, List[str]] = Field(default_factory=dict)
@@ -813,6 +828,127 @@ class RepositoryAnalysis(BaseModel):
                 commit_frequency=CommitFrequency.MONTHLY,
             )
 
+    def to_metagit_record(self) -> Union[MetagitRecord, Exception]:
+        """Convert analysis results to MetagitRecord object."""
+        # Determine branch strategy
+        branch_strategy = BranchStrategy.NONE
+        if self.branch_analysis and self.branch_analysis.strategy_guess:
+            strategy_map = {
+                "Git Flow": BranchStrategy.GITFLOW,
+                "GitHub Flow": BranchStrategy.GITHUBFLOW,
+                "GitLab Flow": BranchStrategy.GITLABFLOW,
+                "Trunk-Based Development": BranchStrategy.TRUNK,
+                "Release Branching": BranchStrategy.CUSTOM,
+            }
+            branch_strategy = strategy_map.get(
+                self.branch_analysis.strategy_guess, BranchStrategy.NONE
+            )
+
+        # Create CI/CD configuration
+        cicd_config = None
+        if self.ci_config_analysis and self.ci_config_analysis.detected_tool:
+            platform_map = {
+                "GitHub Actions": CICDPlatform.GITHUB,
+                "GitLab CI": CICDPlatform.GITLAB,
+                "CircleCI": CICDPlatform.CIRCLECI,
+                "Jenkins": CICDPlatform.JENKINS,
+            }
+            platform = platform_map.get(
+                self.ci_config_analysis.detected_tool, CICDPlatform.CUSTOM
+            )
+            cicd_config = CICD(
+                platform=platform,
+                pipelines=[
+                    Pipeline(
+                        name="default",
+                        ref=self.ci_config_analysis.ci_config_path or "unknown",
+                    )
+                ],
+            )
+
+        # Create taskers
+        taskers = []
+        # Collect all detected files for analysis
+        all_files = []
+        for category_files in self.detected_files.values():
+            all_files.extend(category_files)
+
+        if any("taskfile" in f.lower() for f in all_files):
+            taskers.append(Tasker(kind=TaskerKind.TASKFILE))
+        if any("makefile" in f.lower() for f in all_files):
+            taskers.append(Tasker(kind=TaskerKind.MAKEFILE))
+
+        # Create branches
+        branches = []
+        if self.branch_analysis:
+            for branch_info in self.branch_analysis.branches:
+                branches.append(Branch(name=branch_info.name))
+
+        # Create workspace if none exists
+        workspace = self.existing_workspace
+        if not workspace:
+            workspace = Workspace(
+                projects=[
+                    WorkspaceProject(
+                        name="default",
+                        repos=[
+                            ProjectPath(
+                                name=self.name or "unknown",
+                                path=self.path,
+                                url=self.url,
+                            )
+                        ],
+                    )
+                ]
+            )
+
+        # Create repository metadata
+        metadata = RepoMetadata(
+            default_branch=(
+                self.branch_analysis.branches[0].name
+                if self.branch_analysis and self.branch_analysis.branches
+                else None
+            ),
+            has_ci=self.ci_config_analysis is not None,
+            has_tests=self.has_tests,
+            has_docs=self.has_docs,
+            has_docker=self.has_docker,
+            has_iac=self.has_iac,
+            created_at=datetime.now(
+                timezone.utc
+            ),  # Would need git history for actual creation date
+            last_commit_at=datetime.now(
+                timezone.utc
+            ),  # Would need git history for actual last commit
+        )
+        return MetagitRecord(
+            name=self.name or "Unknown Project",
+            description=self.description,
+            url=self.url,
+            kind=(
+                self.project_type_detection.type
+                if self.project_type_detection
+                else ProjectKind.OTHER
+            ),
+            license=self.license_info,
+            maintainers=self.maintainers,
+            branch_strategy=branch_strategy,
+            taskers=taskers,
+            branches=branches,
+            cicd=cicd_config,
+            metrics=self.metrics,
+            metadata=metadata,
+            workspace=workspace,
+            artifacts=self.artifacts or [],
+            secrets_management=self.secrets_management or [],
+            secrets=self.secrets or [],
+            documentation=self.documentation or [],
+            #            alertingchannel=self.alerts or [],
+            #           alerts=self.alerts or [],
+            #          dashboards=self.dashboards or [],
+            #         environments=self.environments or [],
+        )
+
     def to_metagit_config(self) -> Union[MetagitConfig, Exception]:
         """Convert analysis results to MetagitConfig object."""
         try:
@@ -921,10 +1057,10 @@ class RepositoryAnalysis(BaseModel):
                 maintainers=self.maintainers,
                 branch_strategy=branch_strategy,
                 taskers=taskers,
-                branches=branches,
+                # branches=branches,
                 cicd=cicd_config,
-                metrics=self.metrics,
-                metadata=metadata,
+                # metrics=self.metrics,
+                # metadata=metadata,
                 workspace=workspace,
             )
         except Exception as e:
@@ -934,8 +1070,6 @@ class RepositoryAnalysis(BaseModel):
         """Clean up temporary resources."""
         if self.is_cloned and self.temp_dir and os.path.exists(self.temp_dir):
             try:
-                import shutil
-
                 shutil.rmtree(self.temp_dir)
                 self.logger.info(f"Cleaned up temporary directory: {self.temp_dir}")
             except Exception as e:

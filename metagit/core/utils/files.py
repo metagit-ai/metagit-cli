@@ -200,11 +200,11 @@ class FileTypeWithPercent(NamedTuple):
     percent: float
 
 
-class DirectoryPathInfo(NamedTuple):
+class DirectoryDetails(NamedTuple):
     path: str
     num_files: int
     file_types: Dict[str, List[FileTypeWithPercent]]
-    subpaths: List["DirectoryPathInfo"]
+    subpaths: List["DirectoryDetails"]
 
 
 class FileExtensionLookup:
@@ -329,7 +329,7 @@ def directory_details(
     file_lookup: FileExtensionLookup,
     ignore_patterns: Optional[Set[str]] = None,
     resolve_path: bool = False,
-) -> DirectoryPathInfo:
+) -> DirectoryDetails:
     """
     Recursively walks a directory and builds detailed metadata structure using FileExtensionLookup.
 
@@ -339,7 +339,7 @@ def directory_details(
         ignore_patterns: Set of patterns to ignore (applied to all subdirectories)
 
     Returns:
-        DirectoryPathInfo: NamedTuple containing directory structure and detailed file statistics grouped by category
+        DirectoryDetails: NamedTuple containing directory structure and detailed file statistics grouped by category
     """
     path = Path(target_path)
     ignore_file = os.path.join(path, ".gitignore")
@@ -356,7 +356,7 @@ def directory_details(
         "markup": {},
         "prose": {},
     }
-    subpaths: List[DirectoryPathInfo] = []
+    subpaths: List[DirectoryDetails] = []
     num_files = 0
 
     # Process directory contents
@@ -404,7 +404,7 @@ def directory_details(
         final_path = path.resolve()
     else:
         final_path = path
-    return DirectoryPathInfo(
+    return DirectoryDetails(
         path=str(final_path),
         num_files=num_files,
         file_types=file_types_by_category,
@@ -417,18 +417,18 @@ class FileType(BaseModel):
     count: int
 
 
-class DirectoryMetadata(BaseModel):
+class DirectorySummary(BaseModel):
     path: str
     num_files: int
     file_types: List[FileType]
-    subpaths: List["DirectoryMetadata"]
+    subpaths: List["DirectorySummary"]
 
 
 def directory_summary(
     target_path: str,
     ignore_patterns: Optional[Set[str]] = None,
     resolve_path: bool = False,
-) -> DirectoryMetadata:
+) -> DirectorySummary:
     """
     Recursively walks a directory and builds a metadata structure.
 
@@ -437,7 +437,7 @@ def directory_summary(
         ignore_patterns: Set of patterns to ignore (applied to all subdirectories)
 
     Returns:
-        DirectoryMetadata: Pydantic model containing directory structure and file statistics
+        DirectorySummary: Pydantic model containing directory structure and file statistics
     """
     path = Path(target_path)
     if not path.is_dir():
@@ -448,7 +448,7 @@ def directory_summary(
 
     # Initialize data structures
     file_types: Dict[str, int] = {}
-    subpaths: List[DirectoryMetadata] = []
+    subpaths: List[DirectorySummary] = []
     num_files = 0
 
     # Process directory contents
@@ -477,7 +477,7 @@ def directory_summary(
         final_path = path.resolve()
     else:
         final_path = path
-    return DirectoryMetadata(
+    return DirectorySummary(
         path=str(final_path),
         num_files=num_files,
         file_types=file_types_list,

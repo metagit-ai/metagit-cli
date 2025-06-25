@@ -16,9 +16,9 @@ import click
 import yaml
 
 from metagit.core.utils.files import (
-    directory_summary,
-    directory_details,
     FileExtensionLookup,
+    directory_details,
+    directory_summary,
 )
 
 
@@ -59,7 +59,7 @@ def convert_namedtuple_to_dict(obj):
     "-o",
     type=click.Choice(["summary", "details"]),
     default="summary",
-    help="Type of output: summary (DirectoryMetadata) or details (DirectoryPathInfo)",
+    help="Type of output: summary (DirectorySummary) or details (DirectoryDetails)",
 )
 @click.option(
     "--output-file", "-f", help="Output file path (if not specified, prints to stdout)"

@@ -24,6 +24,7 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Unused import libraries and classes should be removed from your final output.
 - Do not assign variable names that are unused in try/except blocks, instead assign them to _.
 - No bare exception statements.
+- Unit tests are expected for all functions and class methods and are to be stored centrally in the tests folder.
 
 ## Naming Conventions
 

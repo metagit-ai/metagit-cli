@@ -1,0 +1,47 @@
+# DetectionManager Configuration Example
+# This file demonstrates how to configure which analysis methods are enabled
+
+# Default configuration - all current methods enabled
+default:
+  branch_analysis_enabled: true
+  ci_config_analysis_enabled: true
+  directory_summary_enabled: true
+  directory_details_enabled: true
+  commit_analysis_enabled: false  # Future feature
+  tag_analysis_enabled: false     # Future feature
+
+# Minimal configuration - only essential methods
+minimal:
+  branch_analysis_enabled: true
+  ci_config_analysis_enabled: true
+  directory_summary_enabled: false
+  directory_details_enabled: false
+  commit_analysis_enabled: false
+  tag_analysis_enabled: false
+
+# Comprehensive configuration - all methods enabled
+comprehensive:
+  branch_analysis_enabled: true
+  ci_config_analysis_enabled: true
+  directory_summary_enabled: true
+  directory_details_enabled: true
+  commit_analysis_enabled: true
+  tag_analysis_enabled: true
+
+# CI/CD focused configuration - only CI/CD and branch analysis
+cicd_focused:
+  branch_analysis_enabled: true
+  ci_config_analysis_enabled: true
+  directory_summary_enabled: false
+  directory_details_enabled: false
+  commit_analysis_enabled: false
+  tag_analysis_enabled: false
+
+# Directory analysis focused configuration
+directory_focused:
+  branch_analysis_enabled: false
+  ci_config_analysis_enabled: false
+  directory_summary_enabled: true
+  directory_details_enabled: true
+  commit_analysis_enabled: false
+  tag_analysis_enabled: false 

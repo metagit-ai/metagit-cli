@@ -10,6 +10,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, List, Optional, Union
 
+import yaml
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
 from metagit.core.project.models import GitUrl, ProjectKind, ProjectPath
@@ -907,3 +908,27 @@ class MetagitRecord(MetagitConfig):
         use_enum_values = True
         validate_assignment = True
         extra = "forbid"
+
+    @classmethod
+    def from_yaml(cls, yaml_str: str) -> "MetagitRecord":
+        """Create a MetagitRecord from a YAML string."""
+        return cls.model_validate_json(yaml_str)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "MetagitRecord":
+        """Create a MetagitRecord from a JSON string."""
+        return cls.model_validate_json(json_str)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "MetagitRecord":
+        """Create a MetagitRecord from a dictionary."""
+        return cls.model_validate(data)
+
+    def to_yaml(self) -> str:
+        """Convert a MetagitRecord to a YAML string."""
+        return yaml.safe_dump(self.model_dump(exclude_none=True, exclude_defaults=True))
+
+    @classmethod
+    def to_json(self) -> str:
+        """Convert a MetagitRecord to a JSON string."""
+        return self.model_dump_json(exclude_defaults=True, exclude_none=True)
