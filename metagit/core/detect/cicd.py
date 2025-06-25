@@ -7,16 +7,18 @@ from typing import Any, Union
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel
 
-# from src.metagit.core.utils.logging import LoggerConfig, UnifiedLogger
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 # Top-level logger instance for fallback
 # default_logger = UnifiedLogger(LoggerConfig()).get_logger()
-default_logger = logging.getLogger("CIConfigAnalysis")
-default_logger.setLevel(logging.INFO)
-if not default_logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-    default_logger.addHandler(handler)
+default_logger = UnifiedLogger(
+    LoggerConfig(
+        name="RepositoryAnalysis",
+        level=logging.INFO,
+        console=True,
+        terse=False,
+    )
+)
 
 
 class CIConfigAnalysis(BaseModel):

@@ -10,18 +10,21 @@ from pydantic import BaseModel
 
 from metagit.core.detect.branch import GitBranchAnalysis
 from metagit.core.detect.cicd import CIConfigAnalysis
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 load_dotenv()
 
-default_logger = logging.getLogger("ProjectAnalysis")
-default_logger.setLevel(logging.INFO)
-if not default_logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-    default_logger.addHandler(handler)
+default_logger = UnifiedLogger(
+    LoggerConfig(
+        name="RepositoryAnalysis",
+        level=logging.INFO,
+        console=True,
+        terse=False,
+    )
+)
 
 
-class ProjectAnalysis(BaseModel):
+class DetectionManager(BaseModel):
     path: str
     url: Optional[str] = None
     branch: Optional[str] = None
@@ -85,7 +88,7 @@ class ProjectAnalysis(BaseModel):
 
     def to_yaml(self) -> Union[str, Exception]:
         """
-        Convert the ProjectAnalysis model (including all nested models) to a YAML string.
+        Convert the DetectionManager model (including all nested models) to a YAML string.
         """
         try:
             # Use pydantic's .model_dump() for dict conversion (v2+), else .dict()
@@ -103,7 +106,7 @@ class ProjectAnalysis(BaseModel):
 
     def to_json(self) -> Union[str, Exception]:
         """
-        Convert the ProjectAnalysis model (including all nested models) to a JSON string.
+        Convert the DetectionManager model (including all nested models) to a JSON string.
         """
         try:
             data = (

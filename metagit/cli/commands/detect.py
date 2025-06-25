@@ -6,7 +6,7 @@ import os
 
 import click
 
-from metagit.core.detect.project import ProjectAnalysis
+from metagit.core.detect.manager import DetectionManager
 from metagit.core.detect.repository import RepositoryAnalysis
 from metagit.core.providers import registry
 
@@ -40,7 +40,7 @@ def repo(ctx: click.Context, repo_path: str, output: str) -> None:
     logger = ctx.obj["logger"]
     try:
         logger.debug("Detecting the codebase...")
-        project = ProjectAnalysis(path=repo_path, logger=logger)
+        project = DetectionManager(path=repo_path, logger=logger)
         logger.debug(f"Analyzing project at: {repo_path}")
 
         run_result = project.run_all()

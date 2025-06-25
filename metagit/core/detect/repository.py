@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field
 
+from metagit import DATA_PATH
 from metagit.core.config.models import (
     CICD,
     Branch,
@@ -673,9 +674,7 @@ class RepositoryAnalysis(BaseModel):
     def _load_package_manager_data(self) -> Union[Dict[str, str], Exception]:
         """Load package manager detection data."""
         try:
-            data_path = os.path.join(
-                os.path.dirname(__file__), "..", "..", "data", "package-managers.json"
-            )
+            data_path = os.path.join(DATA_PATH, "package-managers.json")
             with open(data_path, "r") as f:
                 return json.load(f)
         except Exception as e:
@@ -684,9 +683,7 @@ class RepositoryAnalysis(BaseModel):
     def _load_build_files_data(self) -> Union[Dict[str, Any], Exception]:
         """Load build files detection data."""
         try:
-            data_path = os.path.join(
-                os.path.dirname(__file__), "..", "..", "data", "build-files.yaml"
-            )
+            data_path = os.path.join(DATA_PATH, "build-files.yaml")
             with open(data_path, "r") as f:
                 return yaml.safe_load(f)
         except Exception as e:
