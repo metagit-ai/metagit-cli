@@ -891,6 +891,15 @@ class MetagitRecord(MetagitConfig):
     metrics: Optional[Metrics] = Field(None, description="Repository metrics")
     metadata: Optional[RepoMetadata] = Field(None, description="Repository metadata")
 
+    # Language and project type detection
+    language: Optional[Language] = Field(
+        None, description="Detected language information"
+    )
+    language_version: Optional[str] = Field(
+        None, description="Primary language version"
+    )
+    domain: Optional[ProjectDomain] = Field(None, description="Project domain")
+
     # Additional detection fields
     detection_timestamp: Optional[datetime] = Field(
         None, description="When this record was last detected/updated"
@@ -912,7 +921,7 @@ class MetagitRecord(MetagitConfig):
     @classmethod
     def from_yaml(cls, yaml_str: str) -> "MetagitRecord":
         """Create a MetagitRecord from a YAML string."""
-        return cls.model_validate_json(yaml_str)
+        return cls.model_validate_yaml(yaml_str)
 
     @classmethod
     def from_json(cls, json_str: str) -> "MetagitRecord":

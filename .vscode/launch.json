@@ -26,6 +26,22 @@
       "request": "launch",
       "justMyCode": true,
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Detect local project",
+      "type": "debugpy",
+      "module": "metagit.cli.main",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "args": [
+        "detect",
+        "repository",
+        "--path",
+        "./",
+        "--output",
+        "all"
+      ]
     }
   ]
 }

@@ -2,21 +2,12 @@
 
 import logging
 import re
-from typing import Any, Literal, Union
+from typing import Any, Literal, Optional, Union
 
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field
 
-from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
-
-default_logger = UnifiedLogger(
-    LoggerConfig(
-        name="RepositoryAnalysis",
-        level=logging.INFO,
-        console=True,
-        terse=False,
-    )
-)
+from metagit.core.utils.logging import LoggingModel, UnifiedLogger
 
 
 class BranchInfo(BaseModel):
@@ -24,7 +15,7 @@ class BranchInfo(BaseModel):
     is_remote: bool = Field(default=False)
 
 
-class GitBranchAnalysis(BaseModel):
+class GitBranchAnalysis(LoggingModel):
     branches: list[BranchInfo]
     strategy_guess: (
         Literal[
@@ -37,64 +28,56 @@ class GitBranchAnalysis(BaseModel):
         ]
         | None
     ) = "Unknown"
-    model_config = {
-        "extra": "allow",
-        "exclude": {"logger"},
-    }
+    model_config = {"extra": "allow"}
 
     @classmethod
     def from_repo(
-        cls, repo_path: str = ".", logger: Any | None = None
+        cls, repo_path: str = ".", logger: Optional[UnifiedLogger] = None
     ) -> Union["GitBranchAnalysis", Exception]:
         """
         Analyze the git repository at the given path and return branch information and a strategy guess.
         Uses GitPython for all git operations.
         """
+        logger = logger or UnifiedLogger().get_logger()
+
         try:
-            logger = logger or default_logger
+            repo = Repo(repo_path)
+        except (InvalidGitRepositoryError, NoSuchPathError) as e:
+            logging.exception(f"Invalid git repository at '{repo_path}': {e}")
+            return ValueError(f"Invalid git repository at '{repo_path}': {e}")
 
-            try:
-                repo = Repo(repo_path)
-            except (InvalidGitRepositoryError, NoSuchPathError) as e:
-                logging.exception(f"Invalid git repository at '{repo_path}': {e}")
-                return ValueError(f"Invalid git repository at '{repo_path}': {e}")
+        # Get local branches
+        local_branches = [
+            BranchInfo(name=branch.name, is_remote=False)
+            for branch in repo.branches
+            if branch.name != "HEAD"  # Exclude HEAD branch
+        ]
+        logger.debug(f"Found {len(local_branches)} local branches")
 
-            # Get local branches
-            local_branches = [
-                BranchInfo(name=branch.name, is_remote=False)
-                for branch in repo.branches
-                if branch.name != "HEAD"  # Exclude HEAD branch
-            ]
-            logger.debug(f"Found {len(local_branches)} local branches")
+        # Get remote branches
+        remote_branches = []
+        for remote in repo.remotes:
+            for ref in remote.refs:
+                # Remove remote name prefix (e.g., 'origin/')
+                branch_name = ref.name.split("/", 1)[1] if "/" in ref.name else ref.name
+                # Exclude HEAD branch from remote branches
+                if branch_name != "HEAD":
+                    remote_branches.append(BranchInfo(name=branch_name, is_remote=True))
+        logger.debug(f"Found {len(remote_branches)} remote branches")
 
-            # Get remote branches
-            remote_branches = []
-            for remote in repo.remotes:
-                for ref in remote.refs:
-                    # Remove remote name prefix (e.g., 'origin/')
-                    branch_name = (
-                        ref.name.split("/", 1)[1] if "/" in ref.name else ref.name
-                    )
-                    # Exclude HEAD branch from remote branches
-                    if branch_name != "HEAD":
-                        remote_branches.append(
-                            BranchInfo(name=branch_name, is_remote=True)
-                        )
-            logger.debug(f"Found {len(remote_branches)} remote branches")
+        # Combine and deduplicate branches (prefer local if name overlaps)
+        all_branches_dict = {b.name: b for b in remote_branches}
+        for b in local_branches:
+            all_branches_dict[b.name] = b  # local takes precedence
 
-            # Combine and deduplicate branches (prefer local if name overlaps)
-            all_branches_dict = {b.name: b for b in remote_branches}
-            for b in local_branches:
-                all_branches_dict[b.name] = b  # local takes precedence
+        branches = list(all_branches_dict.values())
 
-            branches = list(all_branches_dict.values())
-
-            strategy = cls.infer_strategy(branches)
-            if isinstance(strategy, Exception):
-                return strategy
-            return cls(branches=branches, strategy_guess=strategy)
-        except Exception as e:
-            return e
+        strategy = cls.infer_strategy(branches)
+        if isinstance(strategy, Exception):
+            return strategy
+        instance = cls(branches=branches, strategy_guess=strategy)
+        instance.set_logger(logger)
+        return instance
 
     @staticmethod
     def infer_strategy(branches: list[BranchInfo]) -> Union[str, Exception]:

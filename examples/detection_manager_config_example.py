@@ -18,7 +18,10 @@ def example_basic_usage():
     print("=== Basic Usage (Default Configuration) ===")
 
     # Create a DetectionManager with default config (all enabled)
-    manager = DetectionManager(path="./")
+    manager = DetectionManager.from_path("./")
+    if isinstance(manager, Exception):
+        print(f"Error creating DetectionManager: {manager}")
+        return
 
     # Run all enabled analyses
     result = manager.run_all()
@@ -49,23 +52,21 @@ def example_custom_config():
         tag_analysis_enabled=False,
     )
 
-    # Create manager with custom config
-    manager = DetectionManager(path="./", config=config)
+    print(f"Custom config enabled methods: {', '.join(config.get_enabled_methods())}")
 
-    print(f"Enabled methods: {', '.join(config.get_enabled_methods())}")
+    # Create DetectionManager with custom config
+    manager = DetectionManager.from_path("./", config=config)
+    if isinstance(manager, Exception):
+        print(f"Error creating DetectionManager: {manager}")
+        return
 
-    # Run all enabled analyses
+    # Run analyses
     result = manager.run_all()
     if result is not None:
         print(f"Error running analysis: {result}")
         return
 
-    # Print summary
-    summary = manager.summary()
-    if isinstance(summary, Exception):
-        print(f"Error getting summary: {summary}")
-    else:
-        print(summary)
+    print("Analysis completed with custom configuration")
     print()
 
 
@@ -101,7 +102,10 @@ def example_specific_method():
         tag_analysis_enabled=False,
     )
 
-    manager = DetectionManager(path="./", config=config)
+    manager = DetectionManager.from_path("./", config=config)
+    if isinstance(manager, Exception):
+        print(f"Error creating DetectionManager: {manager}")
+        return
 
     # Run only branch analysis
     result = manager.run_specific("branch_analysis")
@@ -116,30 +120,65 @@ def example_specific_method():
 
 
 def example_config_serialization():
-    """Demonstrate serializing and deserializing configurations."""
+    """Demonstrate configuration serialization."""
     print("=== Configuration Serialization ===")
 
-    # Create a custom configuration
+    # Create a configuration
     config = DetectionManagerConfig(
         branch_analysis_enabled=True,
-        ci_config_analysis_enabled=False,
-        directory_summary_enabled=True,
-        directory_details_enabled=False,
+        ci_config_analysis_enabled=True,
+        directory_summary_enabled=False,
+        directory_details_enabled=True,
     )
 
     # Convert to dict
     config_dict = config.model_dump()
-    print(f"Config as dict: {config_dict}")
+    print(f"Configuration as dict: {config_dict}")
 
-    # Convert to JSON
-    config_json = config.model_dump_json()
-    print(f"Config as JSON: {config_json}")
-
-    # Recreate from dict
-    recreated_config = DetectionManagerConfig(**config_dict)
+    # Create from dict
+    new_config = DetectionManagerConfig(**config_dict)
     print(
-        f"Recreated config enabled methods: {', '.join(recreated_config.get_enabled_methods())}"
+        f"Recreated config enabled methods: {', '.join(new_config.get_enabled_methods())}"
     )
+    print()
+
+
+def example_metagit_record_integration():
+    """Demonstrate MetagitRecord integration."""
+    print("=== MetagitRecord Integration ===")
+
+    # Create DetectionManager (inherits from MetagitRecord)
+    manager = DetectionManager.from_path("./")
+    if isinstance(manager, Exception):
+        print(f"Error creating DetectionManager: {manager}")
+        return
+
+    # Run analysis
+    result = manager.run_all()
+    if result is not None:
+        print(f"Error running analysis: {result}")
+        return
+
+    # Access MetagitRecord fields
+    print(f"Project name: {manager.name}")
+    print(f"Project path: {manager.path}")
+    print(f"Detection timestamp: {manager.detection_timestamp}")
+    print(f"Detection source: {manager.detection_source}")
+    print(f"Detection version: {manager.detection_version}")
+
+    # Access detection-specific fields
+    print(
+        f"Branch analysis enabled: {manager.detection_config.branch_analysis_enabled}"
+    )
+    print(f"Has branch analysis: {manager.branch_analysis is not None}")
+    print(f"Has CI/CD analysis: {manager.ci_config_analysis is not None}")
+
+    # Convert to YAML (includes both MetagitRecord and detection data)
+    yaml_output = manager.to_yaml()
+    if isinstance(yaml_output, Exception):
+        print(f"Error converting to YAML: {yaml_output}")
+    else:
+        print("Successfully converted to YAML (includes all detection data)")
     print()
 
 
@@ -152,6 +191,7 @@ if __name__ == "__main__":
         example_preset_configs()
         example_specific_method()
         example_config_serialization()
+        example_metagit_record_integration()
 
         print("All examples completed successfully!")
 

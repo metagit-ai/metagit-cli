@@ -9,7 +9,7 @@ import click
 import yaml
 
 from metagit.core.appconfig import AppConfig
-from metagit.core.detect.manager import DetectionManager
+from metagit.core.detect.manager import DetectionManager, DetectionManagerConfig
 from metagit.core.detect.repository import RepositoryAnalysis
 from metagit.core.providers import registry
 from metagit.core.providers.github import GitHubProvider
@@ -44,8 +44,11 @@ def repo(ctx: click.Context, repo_path: str, output: str) -> None:
     """Detect the codebase."""
     logger = ctx.obj["logger"]
     try:
-        project = DetectionManager(path=repo_path, logger=logger)
-        project.config.all_enabled()
+        # Create DetectionManager with all analyses enabled
+        config = DetectionManagerConfig.all_enabled()
+        project = DetectionManager.from_path(repo_path, logger, config)
+        if isinstance(project, Exception):
+            raise project
 
         run_result = project.run_all()
         if isinstance(run_result, Exception):
@@ -85,7 +88,7 @@ def repo(ctx: click.Context, repo_path: str, output: str) -> None:
     default=None,
     show_default=True,
     type=click.Choice(
-        ["summary", "yaml", "json", "record", "metagit", "metagitconfig"]
+        ["summary", "yaml", "json", "record", "metagit", "metagitconfig", "all"]
     ),
     help="Output format. Defaults to 'summary'",
 )
@@ -145,15 +148,15 @@ def repository(
     use_app_config: bool,
     config_path: str,
 ) -> None:
-    """Comprehensive repository analysis and MetagitConfig generation."""
+    """Comprehensive repository analysis and MetagitConfig generation using DetectionManager."""
     logger = ctx.obj["logger"]
-
+    app_config = ctx.obj["config"]
     try:
         # Configure providers
         if use_app_config:
             # Try to load AppConfig and configure providers
             try:
-                app_config = AppConfig.load()
+                # app_config = AppConfig.load()
                 registry.configure_from_app_config(app_config)
                 logger.debug("Configured providers from AppConfig")
             except Exception as e:
@@ -207,45 +210,83 @@ def repository(
         if not output and not save:
             output = "summary"
 
-        analysis = None
+        # Create DetectionManager with all analyses enabled
+        config = DetectionManagerConfig.all_enabled()
 
         if path:
             logger.debug(f"Analyzing local repository at: {path}")
-            analysis = RepositoryAnalysis.from_path(path, logger)
+            detection_manager = DetectionManager.from_path(path, logger, config)
         elif url:
             logger.debug(f"Cloning and analyzing remote repository: {url}")
-            analysis = RepositoryAnalysis.from_url(url, logger, temp_dir)
+            detection_manager = DetectionManager.from_url(url, temp_dir, logger, config)
 
-        if isinstance(analysis, Exception):
-            raise analysis
+        if isinstance(detection_manager, Exception):
+            raise detection_manager
 
-        config = None
-        if output in ["record"]:
-            result = analysis.to_metagit_record().to_yaml()
+        # Run all analyses
+        run_result = detection_manager.run_all()
+        if isinstance(run_result, Exception):
+            raise run_result
+
+        result = None
+
+        if output == "all":
+            # Output all detection data including MetagitRecord fields
+            try:
+                result = detection_manager.model_dump(
+                    exclude_none=True, exclude_defaults=True, mode="json"
+                )
+                if isinstance(result, Exception):
+                    raise result
+                result = yaml.safe_dump(
+                    result, default_flow_style=False, sort_keys=False, indent=2
+                )
+                if isinstance(result, Exception):
+                    raise result
+            except Exception as e:
+                logger.error(f"Error dumping detection data: {e}")
+                ctx.abort()
+        elif output in ["record"]:
+            # Output as MetagitRecord (inherited from DetectionManager)
+            result = detection_manager.to_yaml()
             if isinstance(result, Exception):
                 raise result
-
-        if output in ["metagit", "metagitconfig"]:
-            result = analysis.to_metagit_config().to_yaml()
+        elif output in ["metagit", "metagitconfig"]:
+            # Convert to MetagitConfig (remove detection-specific fields)
+            config_data = detection_manager.model_dump(
+                exclude={
+                    "detection_config",
+                    "branch_analysis",
+                    "ci_config_analysis",
+                    "directory_summary",
+                    "directory_details",
+                    "repository_analysis",
+                    "logger",
+                    "_analysis_completed",
+                    "detection_timestamp",
+                    "detection_source",
+                    "detection_version",
+                    "tenant_id",
+                }
+            )
+            result = yaml.safe_dump(
+                config_data, default_flow_style=False, sort_keys=False, indent=2
+            )
+        elif output == "summary":
+            result = detection_manager.summary()
             if isinstance(result, Exception):
                 raise result
-
-        if output == "summary":
-            result = analysis.summary()
-            if isinstance(result, Exception):
-                raise result
-
         elif output == "yaml":
             result = yaml.dump(
-                analysis.model_dump(exclude_none=True, exclude_defaults=True),
+                detection_manager.model_dump(exclude_none=True, exclude_defaults=True),
                 default_flow_style=False,
                 sort_keys=False,
                 indent=2,
             )
-
         elif output == "json":
             result = json.dumps(
-                config.model_dump(exclude_none=True, exclude_defaults=True), indent=2
+                detection_manager.model_dump(exclude_none=True, exclude_defaults=True),
+                indent=2,
             )
 
         if not save:
@@ -256,13 +297,31 @@ def repository(
                     f"Configuration file at '{config_path}' already exists. Do you want to overwrite it?"
                 ):
                     click.echo("Save operation aborted.")
-                    if analysis.is_cloned:
-                        analysis.cleanup()
+                    if hasattr(detection_manager, "cleanup"):
+                        detection_manager.cleanup()
                     return
+
+            # Save as MetagitConfig (not DetectionManager)
+            config_data = detection_manager.model_dump(
+                exclude={
+                    "detection_config",
+                    "branch_analysis",
+                    "ci_config_analysis",
+                    "directory_summary",
+                    "directory_details",
+                    "repository_analysis",
+                    "logger",
+                    "_analysis_completed",
+                    "detection_timestamp",
+                    "detection_source",
+                    "detection_version",
+                    "tenant_id",
+                }
+            )
 
             with open(config_path, "w") as f:
                 yaml.dump(
-                    config.model_dump(exclude_none=True, exclude_defaults=True),
+                    config_data,
                     f,
                     default_flow_style=False,
                     sort_keys=False,
@@ -271,8 +330,8 @@ def repository(
             logger.info(f"✅ MetagitConfig saved to: {config_path}")
 
         # Clean up if this was a cloned repository
-        if analysis.is_cloned:
-            analysis.cleanup()
+        if hasattr(detection_manager, "cleanup"):
+            detection_manager.cleanup()
 
     except Exception as e:
         logger.error(f"Error during repository analysis: {e}")

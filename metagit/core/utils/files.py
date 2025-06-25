@@ -190,17 +190,17 @@ def remove_dir(dir_path: str) -> bool:
         return False
 
 
-class FileTypeInfo(NamedTuple):
+class FileTypeInfo(BaseModel):
     kind: str
     type: str
 
 
-class FileTypeWithPercent(NamedTuple):
+class FileTypeWithPercent(BaseModel):
     kind: str
     percent: float
 
 
-class DirectoryDetails(NamedTuple):
+class DirectoryDetails(BaseModel):
     path: str
     num_files: int
     file_types: Dict[str, List[FileTypeWithPercent]]
@@ -430,7 +430,9 @@ def directory_summary(
     resolve_path: bool = False,
 ) -> DirectorySummary:
     """
-    Recursively walks a directory and builds a metadata structure.
+    Recursively walks a directory and builds a metadata structure for a directory summary.
+    This is a simplified version of directory_details that only returns the file types and counts.
+    This will adhere to .gitignore files.
 
     Args:
         target_path: Path to the target directory to analyze
@@ -443,8 +445,9 @@ def directory_summary(
     if not path.is_dir():
         raise ValueError(f"Path {target_path} is not a directory")
 
-    # Use provided ignore_patterns or empty set
+    ignore_file = os.path.join(path, ".gitignore")
     ignore_patterns = ignore_patterns or set()
+    ignore_patterns = ignore_patterns.union(parse_gitignore(ignore_file))
 
     # Initialize data structures
     file_types: Dict[str, int] = {}

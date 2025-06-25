@@ -1,45 +1,29 @@
 #!/usr/bin/env python
 
-import logging
 import os
-from typing import Any, Union
+from typing import Optional, Union
 
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
-from pydantic import BaseModel
 
-from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
-
-# Top-level logger instance for fallback
-# default_logger = UnifiedLogger(LoggerConfig()).get_logger()
-default_logger = UnifiedLogger(
-    LoggerConfig(
-        name="RepositoryAnalysis",
-        level=logging.INFO,
-        console=True,
-        terse=False,
-    )
-)
+from metagit.core.utils.logging import LoggingModel, UnifiedLogger
 
 
-class CIConfigAnalysis(BaseModel):
+class CIConfigAnalysis(LoggingModel):
     devops_platform: str | None = None
     repo_provider: str | None = None
     origin_url: str | None = None
     ci_config_path: str | None = None
     detected_tool: str | None = None
-    logger: Any | None = None
     model_config = {
         "extra": "allow",
-        "exclude": {"logger"},
     }
 
     @classmethod
     def from_repo(
-        cls, repo_path: str = ".", logger: Any | None = None
+        cls, repo_path: str = ".", logger: Optional[UnifiedLogger] = None
     ) -> Union["CIConfigAnalysis", Exception]:
+        logger = logger or UnifiedLogger().get_logger()
         try:
-            logger = logger or default_logger
-
             ci_tools = {
                 ".github/workflows": "GitHub Actions",
                 ".gitlab-ci.yml": "GitLab CI",
@@ -88,13 +72,14 @@ class CIConfigAnalysis(BaseModel):
             else:
                 logger.debug("No origin URL found for repo provider detection.")
 
-            return cls(
+            instance = cls(
                 devops_platform=devops_platform,
                 repo_provider=repo_provider,
                 origin_url=origin_url,
                 ci_config_path=ci_config_path,
                 detected_tool=devops_platform,
-                logger=logger,
             )
+            instance.set_logger(logger)
+            return instance
         except Exception as e:
             return e

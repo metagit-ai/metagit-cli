@@ -47,19 +47,7 @@ from metagit.core.detect.branch import GitBranchAnalysis
 from metagit.core.detect.cicd import CIConfigAnalysis
 from metagit.core.providers import registry
 from metagit.core.utils.common import normalize_git_url
-from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
-
-load_dotenv()
-
-
-default_logger = UnifiedLogger(
-    LoggerConfig(
-        name="RepositoryAnalysis",
-        level=logging.INFO,
-        console=True,
-        terse=False,
-    )
-)
+from metagit.core.utils.logging import LoggingModel, UnifiedLogger
 
 
 class LanguageDetection(BaseModel):
@@ -90,7 +78,7 @@ class ProjectTypeDetection(BaseModel):
     confidence: float = Field(default=0.0, description="Detection confidence (0-1)")
 
 
-class RepositoryAnalysis(BaseModel):
+class RepositoryAnalysis(LoggingModel):
     """Model for comprehensive repository analysis."""
 
     path: str = Field(..., description="Repository path")
@@ -135,19 +123,13 @@ class RepositoryAnalysis(BaseModel):
     has_docs: bool = Field(default=False)
     has_iac: bool = Field(default=False)
 
-    logger: Optional[Any] = None
     model_config = {
         "extra": "allow",
-        "exclude": {"logger", "existing_workspace"},
     }
-
-    def model_post_init(self, __context: Any) -> None:
-        """Initialize logger after model creation."""
-        self.logger = self.logger or default_logger
 
     @classmethod
     def from_path(
-        cls, path: str, logger: Optional[Any] = None
+        cls, path: str, logger: Optional[UnifiedLogger] = None
     ) -> Union["RepositoryAnalysis", Exception]:
         """
         Analyze a local repository path.
@@ -159,21 +141,25 @@ class RepositoryAnalysis(BaseModel):
         Returns:
             RepositoryAnalysis object or Exception
         """
+        logger = logger or UnifiedLogger().get_logger()
         try:
-            logger = logger or default_logger
             logger.debug(f"Analyzing local repository at: {path}")
 
             if not os.path.exists(path):
                 return FileNotFoundError(f"Path does not exist: {path}")
 
-            analysis = cls(path=path, logger=logger)
+            analysis = cls(path=path)
+            analysis.set_logger(logger)
             return analysis._run_analysis()
         except Exception as e:
             return e
 
     @classmethod
     def from_url(
-        cls, url: str, logger: Optional[Any] = None, temp_dir: Optional[str] = None
+        cls,
+        url: str,
+        logger: Optional[UnifiedLogger] = None,
+        temp_dir: Optional[str] = None,
     ) -> Union["RepositoryAnalysis", Exception]:
         """
         Clone and analyze a repository from URL.
@@ -186,8 +172,8 @@ class RepositoryAnalysis(BaseModel):
         Returns:
             RepositoryAnalysis object or Exception
         """
+        logger = logger or UnifiedLogger().get_logger()
         try:
-            logger = logger or default_logger
             normalized_url = normalize_git_url(url)
             logger.debug(f"Cloning and analyzing repository from: {normalized_url}")
 
@@ -208,8 +194,8 @@ class RepositoryAnalysis(BaseModel):
                 is_git_repo=True,
                 is_cloned=True,
                 temp_dir=temp_dir,
-                logger=logger,
             )
+            analysis.set_logger(logger)
             return analysis._run_analysis()
         except Exception as e:
             return e

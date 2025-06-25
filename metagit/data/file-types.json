@@ -456,7 +456,7 @@
     {
       "kind": "Docker",
       "type": "programming",
-      "extensions": ["Dockerfile"]
+      "extensions": ["Dockerfile", "docker-compose.yml", "docker-compose.yaml", "docker-compose.*.yml", "docker-compose.*.yaml"]
     },
     {
       "kind": "Dogescript",

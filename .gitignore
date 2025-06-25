@@ -17,3 +17,4 @@ __pycache__/*
 .ruff*
 .DS_Store
 unit_test_results.txt
+.pytest_cache
