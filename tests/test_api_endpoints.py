@@ -6,8 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from metagit.api.detection import DetectionJob
-from metagit.api.models import DetectionStatus
 from metagit.core.utils.common import normalize_git_url
 
 

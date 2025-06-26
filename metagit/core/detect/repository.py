@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import json
-import logging
 import os
 import shutil
 import tempfile
@@ -9,7 +8,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Union
 
 import yaml
-from dotenv import load_dotenv
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field
 
@@ -929,10 +927,6 @@ class RepositoryAnalysis(LoggingModel):
             secrets_management=self.secrets_management or [],
             secrets=self.secrets or [],
             documentation=self.documentation or [],
-            #            alertingchannel=self.alerts or [],
-            #           alerts=self.alerts or [],
-            #          dashboards=self.dashboards or [],
-            #         environments=self.environments or [],
         )
 
     def to_metagit_config(self) -> Union[MetagitConfig, Exception]:
@@ -1011,7 +1005,7 @@ class RepositoryAnalysis(LoggingModel):
                 )
 
             # Create repository metadata
-            metadata = RepoMetadata(
+            _ = RepoMetadata(
                 default_branch=(
                     self.branch_analysis.branches[0].name
                     if self.branch_analysis and self.branch_analysis.branches

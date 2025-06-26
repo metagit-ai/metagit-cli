@@ -18,7 +18,6 @@ from metagit.api.models import (
     DetectionStatus,
     DetectionStatusResponse,
 )
-from metagit.core.utils.common import normalize_git_url
 
 logger = logging.getLogger(__name__)
 

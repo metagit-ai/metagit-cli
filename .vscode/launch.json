@@ -42,6 +42,22 @@
         "--output",
         "all"
       ]
+    },
+    {
+      "name": "workspace select",
+      "type": "debugpy",
+      "module": "metagit.cli.main",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "args": [
+        "workspace",
+        "--config",
+        "./examples/metagit.umbrella.yml",
+        "select",
+        "--project",
+        "default"
+      ]
     }
   ]
 }

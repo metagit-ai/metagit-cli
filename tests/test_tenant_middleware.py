@@ -3,13 +3,13 @@
 Unit tests for tenant middleware functionality.
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
 
 from metagit.api.middleware import TenantMiddleware
-from metagit.core.appconfig.models import AppConfig, TenantConfig
+from metagit.core.appconfig.models import AppConfig
 
 
 class TestTenantMiddleware:

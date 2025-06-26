@@ -7,10 +7,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-from opensearchpy import OpenSearch, helpers
+from opensearchpy import OpenSearch
 
 from metagit.core.config.models import MetagitRecord
-from metagit.core.utils.common import normalize_git_url
 
 logger = logging.getLogger(__name__)
 

@@ -1,16 +1,22 @@
 #!/usr/bin/env python
 """
-Init subcommand for setting up local metagit environment.
+Init subcommand for setting up local metagit environment in a project folder.
+
+This command will create a .metagit.yml file in the current directory
+and update the .gitignore file to include the workspace path.
+
+It will also create a default workspace path in the .metagit.yml file.
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 import click
 import yaml
 
-from metagit.core.utils.logging import UnifiedLogger
-from metagit.core.config.manager import create_metagit_config
 from metagit.core.appconfig import AppConfig
+from metagit.core.config.manager import create_metagit_config
+from metagit.core.utils.logging import UnifiedLogger
 
 
 @click.command("init")
@@ -25,7 +31,7 @@ def init(ctx: click.Context, force: bool) -> None:
     current_dir = Path.cwd()
     metagit_yml_path = os.path.join(current_dir, ".metagit.yml")
     gitignore_path = os.path.join(current_dir, ".gitignore")
-    workspace_path = os.path.join(current_dir, app_config.workspace.path)
+    workspace_path = app_config.workspace.path
 
     # Check if .metagit.yml already exists
     if Path(metagit_yml_path).exists() and not force:
@@ -54,6 +60,7 @@ def init(ctx: click.Context, force: bool) -> None:
     _update_gitignore(gitignore_path, workspace_path, logger)
 
     logger.info("✅ Metagit initialization completed successfully!")
+    logger.info("--------------------------------")
     logger.info("You can now run 'metagit detect' to analyze your project")
     logger.info("Next steps:")
     logger.info("  1. Edit .metagit.yml to configure your project")
@@ -81,20 +88,22 @@ def _update_gitignore(
             # Check if workspace pattern already exists
             if workspace_path in content:
                 logger.info(
-                    f"⚠️ Workspace path '{workspace_path}' already in .gitignore, skipping..."
+                    f"✅ Workspace path '{workspace_path}' already in .gitignore!"
                 )
                 return
 
             # Add workspace pattern to .gitignore
             with open(gitignore_path, "a", encoding="utf-8") as f:
                 f.write(f"\n# Metagit workspace\n{workspace_path}\n")
-            logger.info(f"✅ Added workspace path '{workspace_path}' to .gitignore")
+            logger.info(f"✅ Added entry to existing .gitignore file: {workspace_path}")
 
         else:
             # Create new .gitignore file
             with open(gitignore_path, "w") as f:
                 f.write(f"# Metagit workspace\n{workspace_path}\n")
-            logger.info(f"Created .gitignore with workspace path '{workspace_path}'")
+            logger.info(
+                f"✅ Created .gitignore with workspace path as an entry: {workspace_path}"
+            )
 
     except Exception as e:
         logger.warning(f"❌ Failed to update .gitignore: {e}")

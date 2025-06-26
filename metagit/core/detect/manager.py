@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 import yaml
-from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 from metagit.core.config.models import Branch, Language, MetagitRecord
@@ -570,7 +569,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
                 )
                 print(f"DEBUG: directory_details value: {data['directory_details']}")
                 if hasattr(data["directory_details"], "_asdict"):
-                    print(f"DEBUG: directory_details has _asdict method")
+                    print("DEBUG: directory_details has _asdict method")
                     data["directory_details"] = convert_objects(
                         data["directory_details"]
                     )

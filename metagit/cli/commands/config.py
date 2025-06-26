@@ -2,6 +2,9 @@
 Config cli command group
 """
 
+import os
+from typing import Union
+
 import click
 
 from metagit.core.appconfig import AppConfig
@@ -109,20 +112,22 @@ def config_create(
     else:
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(config_file)
+        logger.success(f"Configuration file {output_path} created")
 
 
 @config.command("validate")
+@click.option("--config-path", help="Path to the configuration file", default=None)
 @click.pass_context
-def config_validate(ctx: click.Context) -> None:
+def config_validate(ctx: click.Context, config_path: Union[str, None] = None) -> None:
     """Validate metagit configuration"""
     logger = ctx.obj["logger"]
+    target_path = config_path or ctx.obj["config_path"]
     try:
-        config_path = ctx.obj["config_path"]
-        config_manager = MetagitConfigManager(config_path=config_path)
+        config_manager = MetagitConfigManager(config_path=target_path)
         result = config_manager.load_config()
         if isinstance(result, Exception):
             raise result
-        logger.echo("Configuration is valid")
+        logger.success(f"Configuration file {target_path} is valid")
     except Exception as e:
         logger.error(f"Failed to load metagit configuration file: {e}")
         logger.debug(f"Error: {e}")
@@ -290,57 +295,15 @@ def providers(
         ctx.abort()
 
 
-@config.command("init")
-@click.option(
-    "--config-path",
-    help="Path to save configuration file (default: ~/.config/metagit/config.yml).",
-)
-@click.option(
-    "--github-token",
-    help="GitHub API token to include in initial configuration.",
-)
-@click.option(
-    "--gitlab-token",
-    help="GitLab API token to include in initial configuration.",
-)
+@config.command("info")
 @click.pass_context
-def init(
-    ctx: click.Context,
-    config_path: str,
-    github_token: str,
-    gitlab_token: str,
-) -> None:
-    """Initialize AppConfig with default settings."""
+def config_info(ctx: click.Context) -> None:
+    """
+    Display information about the local project configuration.
+    """
     logger = ctx.obj["logger"]
-
-    try:
-        # Create default configuration
-        app_config = AppConfig()
-
-        # Set tokens if provided
-        if github_token:
-            app_config.providers.github.api_token = github_token
-            app_config.providers.github.enabled = True
-            click.echo("✅ GitHub token configured")
-
-        if gitlab_token:
-            app_config.providers.gitlab.api_token = gitlab_token
-            app_config.providers.gitlab.enabled = True
-            click.echo("✅ GitLab token configured")
-
-        # Save configuration
-        result = app_config.save(config_path)
-        if isinstance(result, Exception):
-            logger.error(f"Failed to save configuration: {result}")
-            ctx.abort()
-
-        click.echo(
-            f"✅ Configuration initialized at: {config_path or '~/.config/metagit/config.yml'}"
-        )
-        click.echo(
-            "You can now use 'metagit config providers --show' to view your configuration."
-        )
-
-    except Exception as e:
-        logger.error(f"Error initializing configuration: {e}")
-        ctx.abort()
+    if os.path.exists(ctx.obj["config_path"]):
+        logger.echo(f"Config File: {ctx.obj['config_path']}")
+    else:
+        logger.echo("No project config file found!")
+        logger.echo("Create a new config file with 'metagit config create'")

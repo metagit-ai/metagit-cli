@@ -4,7 +4,6 @@ Tenant configuration service for managing per-tenant AppConfigs.
 """
 
 import logging
-import os
 from typing import Dict, Optional, Union
 
 from metagit.core.appconfig.models import (
@@ -167,7 +166,6 @@ class TenantConfigService:
             True if successful, Exception if failed
         """
         try:
-            import os
             from pathlib import Path
 
             # Remove from cache

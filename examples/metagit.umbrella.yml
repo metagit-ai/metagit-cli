@@ -7,12 +7,17 @@ workspace:
   - name: default
     repos:
     - name: taskfiles
+      description: "Shared taskfiles"
       url: git@github.com:zloeber/taskfiles.git
     - name: dotfiles
+      description: "Personal dotfiles"
       url: git@github.com:zloeber/dotfiles.git
     - name: k8s-lab-terraform-libvirt
+      description: "Kubernetes lab with Terraform and Libvirt"
       url: git@github.com:zloeber/k8s-lab-terraform-libvirt.git
     - name: metagit
+      description: "Metagit project"
       path: ./metagit
     - name: metagit_cli
+      description: "Metagit CLI project"
       path: ./metagit/cli

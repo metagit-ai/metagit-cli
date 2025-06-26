@@ -201,7 +201,8 @@ class DetectionService:
 
             # Check if record already exists with same checksum
             existing_record_id = await self._check_existing_record(
-                repository_url, None  # We'll get checksum after cloning
+                repository_url,
+                None,  # We'll get checksum after cloning
             )
             if isinstance(existing_record_id, Exception):
                 raise existing_record_id

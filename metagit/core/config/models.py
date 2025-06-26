@@ -6,13 +6,16 @@ This module defines the data models used to parse and validate
 the .metagit.yml configuration file structure.
 """
 
+import os
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any, List, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
+from metagit.core.appconfig.models import AppConfig
 from metagit.core.project.models import GitUrl, ProjectKind, ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
@@ -670,134 +673,6 @@ class Metrics(BaseModel):
 
 
 # New configuration models for AppConfig
-class Boundary(BaseModel):
-    """Model for organization boundaries."""
-
-    name: str = Field(..., description="Boundary name")
-    values: List[str] = Field(default_factory=list, description="Boundary values")
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class WorkspaceConfig(BaseModel):
-    """Model for workspace configuration in AppConfig."""
-
-    path: str = Field(default="./.metagit", description="Workspace path")
-    default_project: str = Field(default="default", description="Default project")
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class LLM(BaseModel):
-    """Model for LLM configuration."""
-
-    enabled: bool = Field(default=False, description="Whether LLM is enabled")
-    provider: str = Field(default="openrouter", description="LLM provider")
-    provider_model: str = Field(default="gpt-4o-mini", description="LLM provider model")
-    embedder: str = Field(default="ollama", description="Embedding provider")
-    embedder_model: str = Field(
-        default="nomic-embed-text", description="Embedding model"
-    )
-    api_key: str = Field(default="", description="API key for LLM provider")
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class Profiles(BaseModel):
-    """Model for profiles configuration."""
-
-    profile_config_path: str = Field(
-        default="~/.config/metagit/profiles", description="Profile configuration path"
-    )
-    default_profile: str = Field(default="default", description="Default profile")
-    boundaries: List[Boundary] = Field(
-        default_factory=list, description="Organization boundaries"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class GitHubProvider(BaseModel):
-    """Model for GitHub provider configuration."""
-
-    enabled: bool = Field(
-        default=False, description="Whether GitHub provider is enabled"
-    )
-    api_token: str = Field(default="", description="GitHub API token")
-    base_url: str = Field(
-        default="https://api.github.com", description="GitHub API base URL"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class GitLabProvider(BaseModel):
-    """Model for GitLab provider configuration."""
-
-    enabled: bool = Field(
-        default=False, description="Whether GitLab provider is enabled"
-    )
-    api_token: str = Field(default="", description="GitLab API token")
-    base_url: str = Field(
-        default="https://gitlab.com/api/v4", description="GitLab API base URL"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class Providers(BaseModel):
-    """Model for Git provider configuration."""
-
-    github: GitHubProvider = Field(
-        default_factory=GitHubProvider, description="GitHub provider configuration"
-    )
-    gitlab: GitLabProvider = Field(
-        default_factory=GitLabProvider, description="GitLab provider configuration"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class TenantConfig(BaseModel):
-    """Model for tenant configuration."""
-
-    enabled: bool = Field(default=False, description="Whether multi-tenancy is enabled")
-    default_tenant: str = Field(default="default", description="Default tenant ID")
-    tenant_header: str = Field(default="X-Tenant-ID", description="Tenant header name")
-    tenant_required: bool = Field(
-        default=False, description="Whether tenant is required"
-    )
-    allowed_tenants: List[str] = Field(
-        default_factory=list, description="List of allowed tenant IDs"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
 class MetagitConfig(BaseModel):
     """Main model for .metagit.yml configuration file."""
 
@@ -941,3 +816,90 @@ class MetagitRecord(MetagitConfig):
     def to_json(self) -> str:
         """Convert a MetagitRecord to a JSON string."""
         return self.model_dump_json(exclude_defaults=True, exclude_none=True)
+
+
+class TenantConfig(AppConfig):
+    """Model for tenant configuration that inherits from AppConfig to include all Boundary settings."""
+
+    # Tenant-specific fields (in addition to all AppConfig fields)
+    enabled: bool = Field(default=False, description="Whether multi-tenancy is enabled")
+    default_tenant: str = Field(default="default", description="Default tenant ID")
+    tenant_header: str = Field(default="X-Tenant-ID", description="Tenant header name")
+    tenant_required: bool = Field(
+        default=False, description="Whether tenant is required"
+    )
+    allowed_tenants: List[str] = Field(
+        default_factory=list, description="List of allowed tenant IDs"
+    )
+
+    @classmethod
+    def _override_from_environment(cls, config: "TenantConfig") -> "TenantConfig":
+        """
+        Override configuration with environment variables, including tenant-specific ones.
+
+        Args:
+            config: TenantConfig to override
+
+        Returns:
+            Updated TenantConfig
+        """
+        # Call parent method first
+        config = super()._override_from_environment(config)
+
+        # Tenant-specific environment variables
+        if os.getenv("METAGIT_TENANT_ENABLED"):
+            config.enabled = os.getenv("METAGIT_TENANT_ENABLED").lower() == "true"
+        if os.getenv("METAGIT_TENANT_DEFAULT"):
+            config.default_tenant = os.getenv("METAGIT_TENANT_DEFAULT")
+        if os.getenv("METAGIT_TENANT_HEADER"):
+            config.tenant_header = os.getenv("METAGIT_TENANT_HEADER")
+        if os.getenv("METAGIT_TENANT_REQUIRED"):
+            config.tenant_required = (
+                os.getenv("METAGIT_TENANT_REQUIRED").lower() == "true"
+            )
+        if os.getenv("METAGIT_TENANT_ALLOWED"):
+            config.allowed_tenants = os.getenv("METAGIT_TENANT_ALLOWED").split(",")
+
+        return config
+
+    @classmethod
+    def load(cls, config_path: str = None) -> Union["TenantConfig", Exception]:
+        """
+        Load TenantConfig from file.
+
+        Args:
+            config_path: Path to configuration file (optional)
+
+        Returns:
+            TenantConfig object or Exception
+        """
+        try:
+            if not config_path:
+                config_path = Path.joinpath(
+                    Path.home(), ".config", "metagit", "config.yml"
+                )
+
+            config_file = Path(config_path)
+            if not config_file.exists():
+                return cls()
+
+            with config_file.open("r") as f:
+                config_data = yaml.safe_load(f)
+
+            if "config" in config_data:
+                config = cls(**config_data["config"])
+            else:
+                config = cls(**config_data)
+
+            # Override with environment variables
+            config = cls._override_from_environment(config)
+
+            return config
+
+        except Exception as e:
+            return e
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"

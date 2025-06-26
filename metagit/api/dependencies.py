@@ -3,8 +3,6 @@
 Dependency injection utilities for the metagit API.
 """
 
-from typing import Optional
-
 from fastapi import Depends, Request
 
 from metagit.api.detection import DetectionService

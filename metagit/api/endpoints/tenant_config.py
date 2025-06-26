@@ -4,13 +4,12 @@ API endpoints for managing tenant configurations.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from metagit.api.tenant_config import TenantConfigService
-from metagit.core.appconfig.models import TenantAppConfig
 
 logger = logging.getLogger(__name__)
 

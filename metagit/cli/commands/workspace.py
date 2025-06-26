@@ -5,11 +5,16 @@ Workspace subcommand
 import os
 import sys
 from pathlib import Path
+from typing import List
 
 import click
 
 from metagit.core.config.manager import MetagitConfigManager
-from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
+from metagit.core.utils.fuzzyfinder import (
+    FuzzyFinder,
+    FuzzyFinderConfig,
+    FuzzyFinderTarget,
+)
 
 
 @click.group(name="workspace", invoke_without_command=True)
@@ -47,6 +52,12 @@ def workspace(ctx: click.Context, config: str) -> None:
 def workspace_select(ctx: click.Context, project: str = None) -> None:
     """Select workspace project repo to work on"""
     logger = ctx.obj["logger"]
+    local_config = ctx.obj["local_config"]
+    workspace_project = [
+        target_project
+        for target_project in local_config.workspace.projects
+        if target_project.name == project
+    ][0]
     try:
         config = ctx.obj["config"]
         if project is None:
@@ -62,10 +73,27 @@ def workspace_select(ctx: click.Context, project: str = None) -> None:
             return
         else:
             logger.info(f"Project path: {project_path}")
-
-        projects: list[str] = [
-            f.name for f in Path(project_path).iterdir() if f.is_dir()
-        ]
+        project_dict = {}
+        for f in Path(project_path).iterdir():
+            if f.is_dir():
+                project_dict[f.name] = "Directory - non-workspace managed"
+            if f.is_symlink():
+                target_path = f.readlink()
+                project_dict[f.name] = f"Symlink({target_path}) - non-workspace managed"
+        for repo in workspace_project.repos:
+            if repo.name in project_dict.keys():
+                target_kind = "Directory"
+                if repo.path is not None:
+                    target_kind = f"Symlink ({repo.path})"
+                if repo.description is None:
+                    project_dict[repo.name] = f"{target_kind} - no description"
+                else:
+                    project_dict[repo.name] = f"{target_kind} - {repo.description}"
+        projects: List[FuzzyFinderTarget] = []
+        for target in project_dict.keys():
+            projects.append(
+                FuzzyFinderTarget(name=target, description=project_dict[target])
+            )
         if len(projects) == 0:
             logger.warning(f"No projects found in workspace: {project_path}")
             return
@@ -74,11 +102,15 @@ def workspace_select(ctx: click.Context, project: str = None) -> None:
             items=projects,
             prompt_text="🔍 Search projects: ",
             max_results=20,
-            score_threshold=70.0,
+            score_threshold=60.0,
             highlight_color="bold white bg:#0066cc",
             normal_color="cyan",
             prompt_color="bold green",
             separator_color="gray",
+            enable_preview=True,
+            display_field="name",
+            preview_field="description",
+            preview_header="About",
         )
         finder = FuzzyFinder(finder_config)
         selected = finder.run()
@@ -88,85 +120,3 @@ def workspace_select(ctx: click.Context, project: str = None) -> None:
     except Exception as e:
         logger.error(f"Failed to select workspace project: {e}")
         ctx.abort()
-
-
-# @workspace.command("info")
-# @click.pass_context
-# def workspace_show(ctx):
-#     """Show current workspace"""
-#     config = ctx.obj["config"].model_dump()
-
-#     config_as_dict = {
-#         "config": config,
-#     }
-#     logger = ctx.obj["logger"]
-
-#     base_yaml.Dumper.ignore_aliases = lambda *args: True
-#     output = base_yaml.dump(
-#         config_as_dict,
-#         default_flow_style=False,
-#         sort_keys=False,
-#         indent=2,
-#         line_break=True,
-#     )
-#     logger.echo(output)
-
-
-# @workspace.command("validate")
-# @click.option("--config-path", help="Path to the configuration file", default=None)
-# @click.pass_context
-# def workspace_validate(ctx, config_path: str = None):
-#     """Validate a configuration file"""
-#     logger = ctx.obj["logger"]
-#     if not config_path:
-#         config_path = os.path.join(DATA_PATH, "metagit.config.yaml")
-#     logger.echo(f"Validating configuration file: {config_path}")
-#     try:
-#         # Step 1: Load YAML
-#         with open(config_path) as f:
-#             config_data = yaml.safe_load(f)
-#         # Step 2: Validate structure with Pydantic model
-#         try:
-#             _ = Config(**config_data["config"])
-#         except ValidationError as ve:
-#             logger.error(f"Model validation failed: {ve}")
-#             sys.exit(1)
-#         logger.echo("Configuration is valid!")
-#     except Exception as e:
-#         logger.error(f"Failed to load or validate config: {e}")
-#         sys.exit(1)
-
-
-# @workspace.command("get")
-# @click.option("--name", default="", help="Appconfig element to target")
-# @click.option(
-#     "--show-keys",
-#     is_flag=True,
-#     default=False,
-#     help="If the element is a dictionary, show all key names. If it is a list, show all name attributes",
-# )
-# @click.option("--output", default="json", help="Output format (json/yaml)")
-# @click.pass_context
-# def workspace_get(ctx, name, show_keys, output):
-#     """Display workspace value"""
-#     # logger = ctx.obj["logger"]
-#     config = ctx.obj["config"]
-#     get_config(workspace=config, name=name, show_keys=show_keys, output=output)
-
-
-# @workspace.command("create")
-# @click.pass_context
-# def workspace_create(ctx):
-#     """Create default application config"""
-#     config: Config = load_config(
-#         config_path=os.path.join(DATA_PATH, "metagit.config.yaml")
-#     )
-#     base_yaml.Dumper.ignore_aliases = lambda *args: True
-#     output = base_yaml.dump(
-#         config.model_dump(),
-#         default_flow_style=False,
-#         sort_keys=False,
-#         indent=2,
-#         line_break=True,
-#     )
-#     print(output)

@@ -518,6 +518,15 @@ class UnifiedLogger:
         except Exception as e:
             return e
 
+    def success(self, text: str, console: bool = True) -> Union[None, Exception]:
+        """Prints a success message"""
+        try:
+            if console:
+                self.console.print(f"[bold green]{text}[/bold green]")
+            return None
+        except Exception as e:
+            return e
+
     def echo(
         self, text: str, color: str = "", dim: bool = False, console: bool = True
     ) -> Union[None, Exception]:
@@ -550,18 +559,6 @@ def get_logger(name: str = "metagit") -> Any:
     """
     config = LoggerConfig(name=name)
     return UnifiedLogger(config)
-
-
-# Use this as a base model for all models that need logging
-# class LoggingModel(BaseModel):
-#     _logger: Optional[UnifiedLogger] = PrivateAttr(default=None)
-
-#     @property
-#     def logger(self) -> UnifiedLogger:
-#         return self._logger or UnifiedLogger().get_logger()
-
-#     def set_logger(self, logger: UnifiedLogger):
-#         self._logger = logger
 
 
 class LoggingModel(BaseModel):

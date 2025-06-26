@@ -7,7 +7,7 @@ import fnmatch
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from pydantic import BaseModel
 

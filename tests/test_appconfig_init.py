@@ -5,16 +5,17 @@ Unit tests for metagit.core.appconfig.__init__
 
 import yaml
 
-from metagit.core.appconfig import get_config, load_config, models
+from metagit.core.appconfig import get_config, load_config
+from metagit.core.appconfig.models import AppConfig
 
 
 def test_load_config_success(tmp_path):
     config_path = tmp_path / "testconfig.yaml"
-    data = {"config": models.AppConfig().model_dump()}
+    data = {"config": AppConfig().model_dump()}
     with open(config_path, "w") as f:
         yaml.dump(data, f)
     cfg = load_config(str(config_path))
-    assert isinstance(cfg, models.AppConfig)
+    assert isinstance(cfg, AppConfig)
 
 
 def test_load_config_file_not_found(tmp_path):
@@ -23,20 +24,20 @@ def test_load_config_file_not_found(tmp_path):
 
 
 def test_get_config_dict(capsys):
-    cfg = models.AppConfig()
+    cfg = AppConfig()
     result = get_config(cfg, output="dict")
     assert isinstance(result, dict)
 
 
 def test_get_config_json(capsys):
-    cfg = models.AppConfig()
+    cfg = AppConfig()
     get_config(cfg, output="json")
     captured = capsys.readouterr()
     assert "config" in captured.out or "config" in captured.err
 
 
 def test_get_config_yaml(capsys):
-    cfg = models.AppConfig()
+    cfg = AppConfig()
     get_config(cfg, output="yaml")
     captured = capsys.readouterr()
     assert "config" in captured.out or "config" in captured.err

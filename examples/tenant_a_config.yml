@@ -1,7 +1,7 @@
 tenant_config:
   tenant_id: "tenant-a"
-  name: "Acme Corporation"
-  description: "Acme Corporation's development team configuration"
+  tenant_name: "Acme Corporation"
+  tenant_description: "Acme Corporation's development team configuration"
   
   # Provider configuration for this tenant
   providers:
@@ -22,28 +22,19 @@ tenant_config:
     embedder: "ollama"
     embedder_model: "nomic-embed-text"
     api_key: "${OPENROUTER_API_KEY_ACME}"
-  
-  # Workspace configuration for this tenant
-  workspace:
-    path: "./.metagit-acme"
-    default_project: "acme-main"
-  
+
   # Detection settings for this tenant
-  max_concurrent_jobs: 10
-  detection_timeout: 600
-  
+  tenant_max_concurrent_jobs: 10
+  tenant_detection_timeout: 600
+
   # Custom settings for this tenant
-  settings:
+  tenant_settings:
     organization_name: "Acme Corporation"
     team_id: "dev-team-1"
-    allowed_repositories:
-      - "acme/*"
-      - "acme-dev/*"
     notification_email: "dev-team@acme.com"
     auto_scan_enabled: true
     scan_frequency: "daily"
-  
   # Metadata
-  created_at: "2024-01-15T10:00:00Z"
-  updated_at: "2024-01-15T10:00:00Z"
-  is_active: true 
+  tenant_created_at: "2024-01-15T10:00:00Z"
+  tenant_updated_at: "2024-01-15T10:00:00Z"
+  tenant_is_active: true 

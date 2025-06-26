@@ -2,7 +2,7 @@
 
 import logging
 import re
-from typing import Any, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field

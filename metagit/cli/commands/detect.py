@@ -8,9 +8,7 @@ import os
 import click
 import yaml
 
-from metagit.core.appconfig import AppConfig
 from metagit.core.detect.manager import DetectionManager, DetectionManagerConfig
-from metagit.core.detect.repository import RepositoryAnalysis
 from metagit.core.providers import registry
 from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers.gitlab import GitLabProvider
