@@ -17,5 +17,5 @@ unit_test_results.txt
 
 
 # Metagit workspace
-./.metagit/
+./.metagit
 records
