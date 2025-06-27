@@ -3,9 +3,7 @@
 Project repository subcommand
 """
 
-import os
-from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import click
 
@@ -39,6 +37,9 @@ def repo_select(ctx: click.Context) -> None:
     if isinstance(selected_repo, Exception):
         logger.error(f"Failed to select project repo: {selected_repo}")
         ctx.abort()
+    if selected_repo is None:
+        logger.info("No repo selected")
+        ctx.abort()
     logger.info(f"Selected repo: {selected_repo}")
     editor_result = open_editor(app_config.editor, selected_repo)
     if isinstance(editor_result, Exception):
@@ -48,8 +49,8 @@ def repo_select(ctx: click.Context) -> None:
 
 
 @repo.command("add")
-@click.option("--name", help="Repository name")
-@click.option("--description", help="Repository description")
+@click.option("--name", "-n", help="Repository name")
+@click.option("--description", "-d", help="Repository description")
 @click.option(
     "--kind", type=click.Choice([k.value for k in ProjectKind]), help="Project kind"
 )
@@ -92,6 +93,9 @@ def repo_add(
     app_config: AppConfig = ctx.obj["config"]
     local_config = ctx.obj["local_config"]
     config_path = ctx.obj["config_path"]
+
+    if project == "local":
+        raise click.UsageError("The local project is not supported for this command")
 
     try:
         # Initialize ProjectManager and MetagitConfigManager

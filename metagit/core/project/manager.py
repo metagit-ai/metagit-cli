@@ -376,4 +376,7 @@ class ProjectManager:
         selected = finder.run()
         if isinstance(selected, Exception):
             raise selected
-        return os.path.join(project_path, selected.name)
+        if selected is None:
+            return None
+        else:
+            return os.path.join(project_path, selected.name)
