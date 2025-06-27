@@ -75,36 +75,48 @@ def init(ctx: click.Context, force: bool) -> None:
     logger.info("  2. Run 'metagit config project sync' to sync the default project")
 
 
+def _sanitize_workspace_path(workspace_path: str) -> str:
+    """Sanitize workspace path to ensure it is a valid path without leading ./ and with a trailing /."""
+    if workspace_path.startswith("./"):
+        sanitized = workspace_path[2:]
+    else:
+        sanitized = workspace_path
+
+    return f"{sanitized}/" if not sanitized.endswith("/") else sanitized
+
+
 def _update_gitignore(
     gitignore_path: Path, workspace_path: str, logger: UnifiedLogger
 ) -> None:
     """Update .gitignore file to include workspace path."""
+    target_path = _sanitize_workspace_path(workspace_path)
     try:
         if Path(gitignore_path).exists():
             # Read existing .gitignore
             with open(gitignore_path, "r", encoding="utf-8") as f:
-                content = f.read()
+                lines = f.readlines()
 
-            # Check if workspace pattern already exists
-            if workspace_path in content:
-                logger.info(
-                    f"✅ Workspace path '{workspace_path}' already in .gitignore!"
-                )
-                return
+            # Check if workspace pattern already exists by comparing each line exactly
+            for line in lines:
+                if line.strip() == target_path.strip():
+                    logger.info(
+                        f"✅ Workspace path found already in .gitignore: '{target_path}'"
+                    )
+                    return
 
             # Add workspace pattern to .gitignore
             with open(gitignore_path, "a", encoding="utf-8") as f:
-                f.write(f"\n# Metagit workspace\n{workspace_path}\n")
-            logger.info(f"✅ Added entry to existing .gitignore file: {workspace_path}")
+                f.write(f"\n# Metagit workspace\n{target_path}\n")
+            logger.info(f"✅ Added entry to existing .gitignore file: {target_path}")
 
         else:
             # Create new .gitignore file
             with open(gitignore_path, "w") as f:
-                f.write(f"# Metagit workspace\n{workspace_path}\n")
+                f.write(f"# Metagit workspace\n{target_path}\n")
             logger.info(
-                f"✅ Created .gitignore with workspace path as an entry: {workspace_path}"
+                f"✅ Created .gitignore with workspace path as an entry: {target_path}"
             )
 
     except Exception as e:
         logger.warning(f"❌ Failed to update .gitignore: {e}")
-        logger.info(f"Please manually add '{workspace_path}' to your .gitignore file")
+        logger.info(f"Please manually add '{target_path}' to your .gitignore file")
