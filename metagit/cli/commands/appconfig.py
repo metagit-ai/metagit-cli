@@ -11,7 +11,7 @@ import yaml as base_yaml
 from pydantic import ValidationError
 
 from metagit import DATA_PATH
-from metagit.core.appconfig import AppConfig, get_config
+from metagit.core.appconfig import get_config
 from metagit.core.appconfig.models import AppConfig
 
 
@@ -47,7 +47,7 @@ def appconfig_show(ctx: click.Context) -> None:
         }
         logger = ctx.obj["logger"]
 
-        base_yaml.Dumper.ignore_aliases = lambda *args: True
+        base_yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005
         output = base_yaml.dump(
             config_as_dict,
             default_flow_style=False,

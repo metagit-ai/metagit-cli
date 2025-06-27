@@ -25,6 +25,8 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Do not assign variable names that are unused in try/except blocks, instead assign them to _.
 - No bare exception statements.
 - Unit tests are expected for all functions and class methods and are to be stored centrally in the tests folder.
+- Combine if statements with and instead of nesting them where possible.
+- Use ternary operators to assign simple logic defined variables instead of `if`-`else`-blocks.
 
 ## Naming Conventions
 

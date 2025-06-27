@@ -79,11 +79,12 @@ class FuzzyFinderConfig(BaseModel):
         """Ensure items are valid and consistent with display_field."""
         if not v:
             raise ValueError("Items list cannot be empty.")
-        if info.data.get("display_field") and not isinstance(v[0], str):
-            if not hasattr(v[0], info.data["display_field"]):
-                raise ValueError(
-                    f"Objects must have field '{info.data['display_field']}'."
-                )
+        if (
+            info.data.get("display_field")
+            and not isinstance(v[0], str)
+            and not hasattr(v[0], info.data["display_field"])
+        ):
+            raise ValueError(f"Objects must have field '{info.data['display_field']}'.")
         return v
 
     @field_validator("scorer")
@@ -103,9 +104,13 @@ class FuzzyFinderConfig(BaseModel):
             raise ValueError(
                 "preview_field must be specified when enable_preview is True."
             )
-        if v and info.data.get("items") and not isinstance(info.data["items"][0], str):
-            if not hasattr(info.data["items"][0], v):
-                raise ValueError(f"Objects must have field '{v}' for preview.")
+        if (
+            v
+            and info.data.get("items")
+            and not isinstance(info.data["items"][0], str)
+            and not hasattr(info.data["items"][0], v)
+        ):
+            raise ValueError(f"Objects must have field '{v}' for preview.")
         return v
 
     def get_scorer_function(self) -> Union[Callable[..., float], Exception]:
@@ -252,13 +257,13 @@ class FuzzyFinder:
                     event.app.exit(result=selected if selected else None)
 
             @self.bindings.add("up")
-            def _(event: Any) -> None:
+            def _(_: Any) -> None:
                 if self.highlighted_index > 0:
                     self.highlighted_index -= 1
                     self._update_output_buffer()
 
             @self.bindings.add("down")
-            def _(event: Any) -> None:
+            def _(_: Any) -> None:
                 if self.highlighted_index < len(self.current_results) - 1:
                     self.highlighted_index += 1
                     self._update_output_buffer()
@@ -283,9 +288,9 @@ class FuzzyFinder:
                         items_to_search,
                         key=lambda item: str(self.config.get_display_value(item) or ""),
                     )
-                except Exception:
+                except Exception as exc:
                     # If sorting fails (e.g., unorderable types), proceed without sorting
-                    pass
+                    raise exc
 
             choices_with_originals = [
                 (self.config.get_display_value(item), item) for item in items_to_search

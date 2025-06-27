@@ -30,7 +30,6 @@ from .models import (
     LoggingProvider,
     Maintainer,
     MetagitConfig,
-    MetagitRecord,
     MonitoringProvider,
     Observability,
     Pipeline,
@@ -52,7 +51,6 @@ __all__ = [
     # Main configuration model
     "MetagitConfigManager",
     "MetagitConfig",
-    "MetagitRecord",
     # Enums
     "ProjectKind",
     "LicenseKind",

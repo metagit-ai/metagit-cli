@@ -1,11 +1,8 @@
 # Python-generated files
-__pycache__/
 build/
 dist/
 wheels/
 *.egg-info
-.metagit
-
 
 # Virtual environments
 .venv
@@ -13,7 +10,6 @@ venv
 
 .env
 __pycache__
-__pycache__/*
 .ruff*
 .DS_Store
 unit_test_results.txt
@@ -21,4 +17,5 @@ unit_test_results.txt
 
 
 # Metagit workspace
-./.metagit
+./.metagit/
+records

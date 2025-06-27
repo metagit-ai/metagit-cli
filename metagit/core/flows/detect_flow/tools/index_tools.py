@@ -5,10 +5,11 @@ Index tools for the detect flow
 
 import os
 from pathlib import Path
-from crewai import tool, ToolResponse
+
+from crewai import ToolResponse, tool
 from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import FAISS
 
 
 @tool

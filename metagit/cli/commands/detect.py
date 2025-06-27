@@ -1,5 +1,5 @@
 """
-Detect cli command group
+Detect subcommand
 """
 
 import json
@@ -245,7 +245,6 @@ def repository(
                 logger.error(f"Error dumping detection data: {e}")
                 ctx.abort()
         elif output in ["record"]:
-            # Output as MetagitRecord (inherited from DetectionManager)
             result = detection_manager.to_yaml()
             if isinstance(result, Exception):
                 raise result
@@ -290,14 +289,13 @@ def repository(
         if not save:
             click.echo(result)
         else:
-            if os.path.exists(config_path):
-                if not click.confirm(
-                    f"Configuration file at '{config_path}' already exists. Do you want to overwrite it?"
-                ):
-                    click.echo("Save operation aborted.")
-                    if hasattr(detection_manager, "cleanup"):
-                        detection_manager.cleanup()
-                    return
+            if os.path.exists(config_path) and not click.confirm(
+                f"Configuration file at '{config_path}' already exists. Do you want to overwrite it?"
+            ):
+                click.echo("Save operation aborted.")
+                if hasattr(detection_manager, "cleanup"):
+                    detection_manager.cleanup()
+                return
 
             # Save as MetagitConfig (not DetectionManager)
             config_data = detection_manager.model_dump(

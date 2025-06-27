@@ -4,6 +4,7 @@ Detection service for asynchronously processing repository detection requests.
 """
 
 import asyncio
+import contextlib
 import logging
 import uuid
 from datetime import datetime, timedelta
@@ -83,10 +84,8 @@ class DetectionService:
             self.is_running = False
             if self.worker_task:
                 self.worker_task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await self.worker_task
-                except asyncio.CancelledError:
-                    pass
             logger.info("Detection service stopped")
 
     async def __aenter__(self):

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """
-Init subcommand for setting up local metagit environment in a project folder.
+Init subcommand
+
+Used for setting up metagit for a project folder.
 
 This command will create a .metagit.yml file in the current directory
 and update the .gitignore file to include the workspace path.
-
-It will also create a default workspace path in the .metagit.yml file.
 """
 
 import os

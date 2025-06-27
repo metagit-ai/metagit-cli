@@ -2,10 +2,7 @@
 Workspace subcommand
 """
 
-import os
 import sys
-from pathlib import Path
-from typing import List
 
 import click
 
@@ -13,11 +10,6 @@ from metagit.cli.commands.project_repo import repo_select
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.utils.click import call_click_command_with_ctx
-from metagit.core.utils.fuzzyfinder import (
-    FuzzyFinder,
-    FuzzyFinderConfig,
-    FuzzyFinderTarget,
-)
 
 
 @click.group(name="workspace", invoke_without_command=True)

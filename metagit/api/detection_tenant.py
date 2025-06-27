@@ -4,14 +4,15 @@ Tenant-aware detection service for processing repository detection jobs.
 """
 
 import asyncio
+import contextlib
 import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 
 from metagit.api.models import DetectionStatus
-from metagit.core.config.models import MetagitRecord
 from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
 
 logger = logging.getLogger(__name__)
@@ -56,10 +57,12 @@ class TenantAwareDetectionService:
         self.running = False
         if self.worker_task:
             self.worker_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.worker_task
-            except asyncio.CancelledError:
-                pass
+            # try:
+            #     await self.worker_task
+            # except asyncio.CancelledError:
+            #     pass
         logger.info("Tenant-aware detection service stopped")
 
     async def submit_detection(

@@ -28,11 +28,15 @@ from metagit.cli.commands.config import config
 from metagit.cli.commands.detect import detect
 from metagit.cli.commands.init import init
 from metagit.cli.commands.project import project
+from metagit.cli.commands.record import record
 from metagit.cli.commands.workspace import workspace
 from metagit.core.appconfig import load_config
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
-CONTEXT_SETTINGS: dict = dict(help_option_names=["-h", "--help"], max_content_width=120)
+CONTEXT_SETTINGS: dict = {
+    "help_option_names": ["-h", "--help"],
+    "max_content_width": 120,
+}
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, invoke_without_command=True)
@@ -128,6 +132,7 @@ cli.add_command(appconfig)
 cli.add_command(project)
 cli.add_command(workspace)
 cli.add_command(config)
+cli.add_command(record)
 cli.add_command(init)
 
 

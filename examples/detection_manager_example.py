@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Example demonstrating the new DetectionManager as the single entrypoint for detection analysis.
+Example demonstrating the updated DetectionManager that uses RepositoryAnalysis for all detection details.
 
-This example shows how DetectionManager inherits from MetagitRecord and serves as the
-unified interface for analyzing git repositories and projects.
+This example shows how DetectionManager now uses RepositoryAnalysis as the single source for all
+detection analysis results while maintaining the MetagitRecord interface.
 """
 
 import sys
@@ -72,35 +72,48 @@ def example_remote_repository_analysis():
     print()
 
 
-def example_custom_configuration():
-    """Demonstrate using custom detection configuration."""
-    print("=== Custom Configuration ===")
+def example_configuration_options():
+    """Demonstrate different configuration options."""
+    print("=== Configuration Options ===")
 
-    # Create custom configuration
-    config = DetectionManagerConfig(
-        branch_analysis_enabled=True,
-        ci_config_analysis_enabled=True,
-        directory_summary_enabled=False,  # Disable for faster analysis
-        directory_details_enabled=False,  # Disable for faster analysis
-        commit_analysis_enabled=False,
-        tag_analysis_enabled=False,
-    )
-
-    print(f"Custom config enabled methods: {', '.join(config.get_enabled_methods())}")
-
-    # Create DetectionManager with custom config
+    # Minimal configuration
+    print("Minimal configuration:")
+    config = DetectionManagerConfig.minimal()
     manager = DetectionManager.from_path("./", config=config)
     if isinstance(manager, Exception):
         print(f"Error creating DetectionManager: {manager}")
         return
 
-    # Run analyses
-    result = manager.run_all()
-    if result is not None:
-        print(f"Error running analysis: {result}")
+    print(f"Enabled methods: {', '.join(config.get_enabled_methods())}")
+    print()
+
+    # All enabled configuration
+    print("All enabled configuration:")
+    config = DetectionManagerConfig.all_enabled()
+    manager = DetectionManager.from_path("./", config=config)
+    if isinstance(manager, Exception):
+        print(f"Error creating DetectionManager: {manager}")
         return
 
-    print("Analysis completed with custom configuration")
+    print(f"Enabled methods: {', '.join(config.get_enabled_methods())}")
+    print()
+
+    # Custom configuration
+    print("Custom configuration:")
+    config = DetectionManagerConfig(
+        branch_analysis_enabled=True,
+        ci_config_analysis_enabled=True,
+        directory_summary_enabled=False,
+        directory_details_enabled=False,
+        commit_analysis_enabled=False,
+        tag_analysis_enabled=False,
+    )
+    manager = DetectionManager.from_path("./", config=config)
+    if isinstance(manager, Exception):
+        print(f"Error creating DetectionManager: {manager}")
+        return
+
+    print(f"Enabled methods: {', '.join(config.get_enabled_methods())}")
     print()
 
 
@@ -137,23 +150,45 @@ def example_metagit_record_integration():
     print(f"  Detection Timestamp: {manager.detection_timestamp}")
     print(f"  Detection Source: {manager.detection_source}")
     print(f"  Detection Version: {manager.detection_version}")
-    print(f"  Has Branch Analysis: {manager.branch_analysis is not None}")
-    print(f"  Has CI/CD Analysis: {manager.ci_config_analysis is not None}")
-    print(f"  Has Directory Summary: {manager.directory_summary is not None}")
-    print(f"  Has Directory Details: {manager.directory_details is not None}")
-    print(f"  Has Repository Analysis: {manager.repository_analysis is not None}")
+    print(f"  Analysis Completed: {manager.analysis_completed}")
 
-    # Access detection results
-    if manager.branch_analysis:
-        print(f"  Branch Strategy Guess: {manager.branch_analysis.strategy_guess}")
-        print(f"  Number of Branches: {len(manager.branch_analysis.branches)}")
+    # Access RepositoryAnalysis results
+    if manager.repository_analysis:
+        print("\nRepositoryAnalysis results:")
+        print(
+            f"  Has Branch Analysis: {manager.repository_analysis.branch_analysis is not None}"
+        )
+        print(
+            f"  Has CI/CD Analysis: {manager.repository_analysis.ci_config_analysis is not None}"
+        )
+        print(
+            f"  Has Directory Summary: {manager.repository_analysis.directory_summary is not None}"
+        )
+        print(
+            f"  Has Directory Details: {manager.repository_analysis.directory_details is not None}"
+        )
 
-    if manager.ci_config_analysis:
-        print(f"  CI/CD Tool: {manager.ci_config_analysis.detected_tool}")
+        # Access specific analysis results
+        if manager.repository_analysis.branch_analysis:
+            print(
+                f"  Branch Strategy Guess: {manager.repository_analysis.branch_analysis.strategy_guess}"
+            )
+            print(
+                f"  Number of Branches: {len(manager.repository_analysis.branch_analysis.branches)}"
+            )
 
-    if manager.directory_summary:
-        print(f"  Total Files: {manager.directory_summary.num_files}")
-        print(f"  File Types: {len(manager.directory_summary.file_types)}")
+        if manager.repository_analysis.ci_config_analysis:
+            print(
+                f"  CI/CD Tool: {manager.repository_analysis.ci_config_analysis.detected_tool}"
+            )
+
+        if manager.repository_analysis.directory_summary:
+            print(
+                f"  Total Files: {manager.repository_analysis.directory_summary.num_files}"
+            )
+            print(
+                f"  File Types: {len(manager.repository_analysis.directory_summary.file_types)}"
+            )
 
     print()
 
@@ -202,29 +237,6 @@ def example_output_formats():
         print()
 
 
-def example_existing_config_loading():
-    """Demonstrate loading existing metagitconfig data."""
-    print("=== Existing Config Loading ===")
-
-    # Create DetectionManager (will automatically load .metagit.yml if it exists)
-    manager = DetectionManager.from_path("./")
-    if isinstance(manager, Exception):
-        print(f"Error creating DetectionManager: {manager}")
-        return
-
-    print(f"Project name: {manager.name}")
-    print(f"Project description: {manager.description}")
-    print(f"Project kind: {manager.kind}")
-
-    # Check if existing config was loaded
-    if manager.description and manager.description != "No description":
-        print("✅ Existing metagitconfig data was loaded and merged")
-    else:
-        print("ℹ️  No existing metagitconfig found, using defaults")
-
-    print()
-
-
 def example_specific_analysis_methods():
     """Demonstrate running specific analysis methods."""
     print("=== Specific Analysis Methods ===")
@@ -247,26 +259,91 @@ def example_specific_analysis_methods():
         else:
             print(f"✅ {method} completed successfully")
 
+    # Test disabled method
+    print("Testing disabled method...")
+    result = manager.run_specific("directory_summary")
+    if isinstance(result, Exception):
+        print(f"✅ Correctly rejected disabled method: {result}")
+    else:
+        print("❌ Should have rejected disabled method")
+
     print()
 
 
-if __name__ == "__main__":
+def example_repository_analysis_access():
+    """Demonstrate direct access to RepositoryAnalysis."""
+    print("=== RepositoryAnalysis Access ===")
+
+    # Create DetectionManager
+    manager = DetectionManager.from_path("./")
+    if isinstance(manager, Exception):
+        print(f"Error creating DetectionManager: {manager}")
+        return
+
+    # Run analysis
+    result = manager.run_all()
+    if result is not None:
+        print(f"Error running analysis: {result}")
+        return
+
+    # Access RepositoryAnalysis directly
+    if manager.repository_analysis:
+        repo_analysis = manager.repository_analysis
+
+        print("Direct RepositoryAnalysis access:")
+        print(f"  Path: {repo_analysis.path}")
+        print(f"  Name: {repo_analysis.name}")
+        print(f"  Is Git Repo: {repo_analysis.is_git_repo}")
+        print(f"  Is Cloned: {repo_analysis.is_cloned}")
+
+        # Access language detection
+        if repo_analysis.language_detection:
+            print(f"  Primary Language: {repo_analysis.language_detection.primary}")
+            if repo_analysis.language_detection.secondary:
+                print(
+                    f"  Secondary Languages: {', '.join(repo_analysis.language_detection.secondary)}"
+                )
+
+        # Access project type detection
+        if repo_analysis.project_type_detection:
+            print(f"  Project Type: {repo_analysis.project_type_detection.type}")
+            print(f"  Domain: {repo_analysis.project_type_detection.domain}")
+            print(f"  Confidence: {repo_analysis.project_type_detection.confidence}")
+
+        # Access file analysis
+        print(f"  Has Docker: {repo_analysis.has_docker}")
+        print(f"  Has Tests: {repo_analysis.has_tests}")
+        print(f"  Has Docs: {repo_analysis.has_docs}")
+        print(f"  Has IaC: {repo_analysis.has_iac}")
+
+        # Access metrics
+        if repo_analysis.metrics:
+            print(f"  Contributors: {repo_analysis.metrics.contributors}")
+            print(f"  Commit Frequency: {repo_analysis.metrics.commit_frequency}")
+
+    print()
+
+
+def main():
+    """Run all examples."""
     print("DetectionManager Examples")
     print("=" * 60)
+    print()
 
-    try:
-        example_local_repository_analysis()
-        example_custom_configuration()
-        example_metagit_record_integration()
-        example_output_formats()
-        example_existing_config_loading()
-        example_specific_analysis_methods()
+    # Run examples
+    example_local_repository_analysis()
+    example_configuration_options()
+    example_metagit_record_integration()
+    example_output_formats()
+    example_specific_analysis_methods()
+    example_repository_analysis_access()
 
-        # Uncomment to test remote repository analysis
-        # example_remote_repository_analysis()
+    # Note: Remote analysis is commented out to avoid cloning during examples
+    # Uncomment the line below to test remote repository analysis
+    # example_remote_repository_analysis()
 
-        print("All examples completed successfully!")
+    print("All examples completed!")
 
-    except Exception as e:
-        print(f"Error running examples: {e}")
-        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

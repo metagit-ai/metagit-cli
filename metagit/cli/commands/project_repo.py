@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Project repository subcommand
+Project repo subcommand
 """
 
 from typing import Optional

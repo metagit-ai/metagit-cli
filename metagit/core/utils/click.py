@@ -15,7 +15,7 @@ def call_click_command(cmd, *args, **kwargs):
     """
 
     # Get positional arguments from args
-    arg_values = {c.name: a for a, c in zip(args, cmd.params)}
+    arg_values = {c.name: a for a, c in zip(args, cmd.params, strict=False)}
     args_needed = {c.name: c for c in cmd.params if c.name not in arg_values}
 
     # build and check opts list from kwargs
@@ -56,7 +56,7 @@ def call_click_command_with_ctx(cmd, ctx, *args, **kwargs):
     """
 
     # monkey patch make_context
-    def make_context(*some_args, **some_kwargs):
+    def make_context(*some_args, **some_kwargs):  # noqa: ARG001 ARG002
         child_ctx = click.Context(cmd, parent=ctx)
         with child_ctx.scope(cleanup=False):
             cmd.parse_args(child_ctx, list(args))

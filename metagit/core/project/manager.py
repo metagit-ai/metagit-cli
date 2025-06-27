@@ -11,7 +11,6 @@ from typing import List, Union
 import git
 from tqdm import tqdm
 
-from metagit.core.appconfig.models import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
@@ -259,7 +258,7 @@ class ProjectManager:
 
             def update(
                 self,
-                op_code: int,
+                op_code: int,  # noqa: ARG002
                 cur_count: Union[str, float],
                 max_count: Union[str, float, None] = None,
                 message: str = "",
@@ -341,7 +340,7 @@ class ProjectManager:
                 project_dict[f.name] = f"Symlink({target_path}) - non-workspace managed"
         # Iterate through the workspace project and add the repo descriptions to the project_dict
         for repo in workspace_project.repos:
-            if repo.name in project_dict.keys():
+            if repo.name in project_dict:
                 target_kind = "Directory"
                 if repo.path is not None:
                     target_kind = f"Symlink ({repo.path})"
@@ -350,7 +349,7 @@ class ProjectManager:
                 else:
                     project_dict[repo.name] = f"{target_kind} - {repo.description}"
         projects: List[FuzzyFinderTarget] = []
-        for target in project_dict.keys():
+        for target in project_dict:
             projects.append(
                 FuzzyFinderTarget(name=target, description=project_dict[target])
             )

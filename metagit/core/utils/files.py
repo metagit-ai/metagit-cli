@@ -72,7 +72,7 @@ def list_files(directory_path: str) -> List[str]:
     """
     try:
         files = []
-        for root, dirs, filenames in os.walk(directory_path):
+        for root, _, filenames in os.walk(directory_path):
             for filename in filenames:
                 files.append(os.path.join(root, filename))
         return files
@@ -215,8 +215,8 @@ class FileExtensionLookup:
         try:
             with open(extension_data, "r", encoding="utf-8") as f:
                 data = json.loads(f.read())
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON data: {e}")
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Invalid JSON data: {exc}") from exc
 
         # Create extension to info mapping for O(1) lookup
         self._lookup: Dict[str, FileTypeInfo] = {}
@@ -313,12 +313,11 @@ def should_ignore_path(path: Path, ignore_patterns: Set[str], base_path: Path) -
     # Check each pattern
     for pattern in ignore_patterns:
         # Handle file patterns
-        if fnmatch.fnmatch(relative_str, pattern) or fnmatch.fnmatch(
-            path.name, pattern
+        if (
+            fnmatch.fnmatch(relative_str, pattern)
+            or fnmatch.fnmatch(path.name, pattern)
+            or fnmatch.fnmatch(relative_str, pattern)
         ):
-            return True
-        # Handle glob patterns
-        elif fnmatch.fnmatch(relative_str, pattern):
             return True
 
     return False
@@ -400,10 +399,7 @@ def directory_details(
                         kinds.items(), key=lambda x: x[1], reverse=True
                     )
                 ]
-    if resolve_path:
-        final_path = path.resolve()
-    else:
-        final_path = path
+    final_path = path.resolve() if resolve_path else path
     return DirectoryDetails(
         path=str(final_path),
         num_files=num_files,
@@ -476,10 +472,7 @@ def directory_summary(
     file_types_list = [
         FileType(type=ext, count=count) for ext, count in sorted(file_types.items())
     ]
-    if resolve_path:
-        final_path = path.resolve()
-    else:
-        final_path = path
+    final_path = path.resolve() if resolve_path else path
     return DirectorySummary(
         path=str(final_path),
         num_files=num_files,

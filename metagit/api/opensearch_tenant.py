@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from opensearchpy import OpenSearch
 
-from metagit.core.config.models import MetagitRecord
+from metagit.core.record.models import MetagitRecord
 
 logger = logging.getLogger(__name__)
 

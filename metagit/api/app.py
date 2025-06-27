@@ -194,7 +194,7 @@ app = create_app(app_config)
 
 
 @app.exception_handler(Exception)
-async def global_exception_handler(request, exc):
+async def global_exception_handler(_, exc):
     """Global exception handler."""
     logger.error(f"Unhandled exception: {exc}")
     return JSONResponse(

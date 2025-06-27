@@ -3,6 +3,8 @@
 Dependency injection utilities for the metagit API.
 """
 
+import os
+
 from fastapi import Depends, Request
 
 from metagit.api.detection import DetectionService
@@ -25,7 +27,7 @@ def get_current_tenant(request: Request) -> str:
 
 
 def get_tenant_aware_opensearch_service(
-    app_config: AppConfig = Depends(get_app_config),
+    app_config: AppConfig = Depends(get_app_config),  # noqa: B008
 ) -> OpenSearchService:
     """Get appropriate OpenSearch service based on tenant configuration."""
     # Import here to avoid circular imports
@@ -60,13 +62,12 @@ def get_tenant_aware_opensearch_service(
 
 
 def get_tenant_aware_detection_service(
-    opensearch_service: OpenSearchService = Depends(
+    opensearch_service: OpenSearchService = Depends(  # noqa: B008
         get_tenant_aware_opensearch_service
     ),
-    app_config: AppConfig = Depends(get_app_config),
+    app_config: AppConfig = Depends(get_app_config),  # noqa: B008
 ) -> DetectionService:
     """Get appropriate detection service based on tenant configuration."""
-    import os
 
     max_concurrent_jobs = int(os.getenv("MAX_CONCURRENT_JOBS", "5"))
 

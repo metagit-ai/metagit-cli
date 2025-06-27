@@ -1,5 +1,5 @@
 """
-Config cli command group
+Config subcommand
 """
 
 import os
@@ -48,7 +48,7 @@ def config_show(ctx: click.Context) -> None:
         if isinstance(config_result, Exception):
             raise config_result
 
-        yaml.Dumper.ignore_aliases = lambda *args: True
+        yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005
         output = yaml.dump(
             config_result.model_dump(exclude_unset=True, exclude_none=True),
             default_flow_style=False,

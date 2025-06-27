@@ -62,13 +62,13 @@ def get_config(
         if show_keys and isinstance(output_value, dict):
             output_value = list(output_value.keys())
         elif show_keys and isinstance(output_value, list):
-            output_result = list()
+            output_result = []
             for output_name in output_value:
                 output_result.append(output_name)
             output_value = output_result
 
         if output == "yml" or output == "yaml":
-            base_yaml.Dumper.ignore_aliases = lambda *args: True
+            base_yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005
             logger.echo(
                 base_yaml.dump(
                     output_value,

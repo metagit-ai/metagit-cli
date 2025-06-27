@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from opensearchpy import OpenSearch, helpers
 
-from metagit.core.config.models import MetagitRecord
+from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
 
 logger = logging.getLogger(__name__)
@@ -255,7 +255,7 @@ class OpenSearchService:
     async def search_records(
         self,
         query: str,
-        tenant_id: Optional[str] = None,
+        _: Optional[str] = None,
         filters: Optional[Dict[str, Any]] = None,
         page: int = 1,
         size: int = 20,
@@ -408,7 +408,7 @@ class OpenSearchService:
             return e
 
     async def delete_record(
-        self, record_id: str, tenant_id: Optional[str] = None
+        self, record_id: str, _: Optional[str] = None
     ) -> Union[bool, Exception]:
         """
         Delete a MetagitRecord.

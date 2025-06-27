@@ -15,7 +15,7 @@ from metagit.api.dependencies import (
     get_tenant_aware_opensearch_service,
 )
 from metagit.api.models import SearchRequest, SearchResponse
-from metagit.core.config.models import MetagitRecord
+from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
 
 logger = logging.getLogger(__name__)

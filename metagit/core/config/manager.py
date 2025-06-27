@@ -83,9 +83,7 @@ class MetagitConfigManager:
         """
         try:
             load_result = self.load_config()
-            if isinstance(load_result, Exception):
-                return False
-            return True
+            not isinstance(load_result, Exception)
         except Exception as e:
             return e
 
@@ -215,7 +213,7 @@ def create_metagit_config(
     )
 
     if as_yaml:
-        yaml.Dumper.ignore_aliases = lambda *args: True
+        yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005
         output = yaml.dump(
             config_result.model_dump(exclude_unset=True, exclude_none=True),
             default_flow_style=False,

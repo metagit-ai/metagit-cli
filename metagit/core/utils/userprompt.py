@@ -196,7 +196,7 @@ class UserPrompt:
             prompt_text = FormattedText(prompt_parts)
 
             # Create validator for the field type
-            validator = self._create_field_validator(field_type, field_info, field_name)
+            validator = self._create_field_validator(field_type, field_info)
             if isinstance(validator, Exception):
                 return validator
 
@@ -307,7 +307,7 @@ class UserPrompt:
             prompt_text = FormattedText(prompt_parts)
 
             # Create validator for the field type
-            validator = self._create_field_validator(field_type, field_info, field_name)
+            validator = self._create_field_validator(field_type, field_info)
             if isinstance(validator, Exception):
                 return validator
 
@@ -349,7 +349,7 @@ class UserPrompt:
             return e
 
     def _create_field_validator(
-        self, field_type: Any, field_info: Any = None, field_name: str = None
+        self, field_type: Any, field_info: Any = None
     ) -> Union[Optional[Validator], Exception]:
         """
         Create a validator for the given field type.
@@ -395,8 +395,8 @@ class UserPrompt:
                 try:
                     self._convert_input(text, field_type)
                     return True
-                except (ValueError, TypeError) as e:
-                    raise PTValidationError(message=f"Invalid value: {e}")
+                except (ValueError, TypeError) as exc:
+                    raise PTValidationError(message=f"Invalid value: {exc}") from exc
 
             return Validator.from_callable(validate_type)
         except Exception as e:
@@ -450,8 +450,8 @@ class UserPrompt:
             if user_input.startswith("{") and user_input.endswith("}"):
                 try:
                     return json.loads(user_input)
-                except json.JSONDecodeError:
-                    raise ValueError("Invalid JSON format")
+                except json.JSONDecodeError as exc:
+                    raise ValueError("Invalid JSON format") from exc
 
             # Handle boolean conversion
             if target_type is bool:
@@ -465,10 +465,10 @@ class UserPrompt:
             # Default conversion
             try:
                 return target_type(user_input)
-            except (ValueError, TypeError):
+            except (ValueError, TypeError) as exc:
                 raise ValueError(
                     f"Cannot convert '{user_input}' to type {target_type.__name__}"
-                )
+                ) from exc
         except Exception as e:
             return e
 

@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from metagit.core.detect.repository import RepositoryAnalysis
-from metagit.core.utils.logging import UnifiedLogger, LoggerConfig
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 
 def analyze_local_repository(path: str) -> None:

@@ -17,7 +17,6 @@ from metagit.core.detect.repository import (
     ProjectTypeDetection,
     RepositoryAnalysis,
 )
-from metagit.core.utils.files import DirectoryDetails, DirectorySummary
 
 
 @pytest.fixture
@@ -114,61 +113,34 @@ def test_detection_manager_run_all_and_summary(default_path):
         manager = DetectionManager.from_path(default_path, config=config)
         assert not isinstance(manager, Exception)
 
-        # Patch analysis methods to avoid real filesystem/git
-        with (
-            patch(
-                "metagit.core.detect.manager.RepositoryAnalysis.from_path",
-                return_value=RepositoryAnalysis(
-                    path=default_path,
-                    name="test-project",
-                    description="A test project",
-                    url="https://github.com/test/project",
-                    language_detection=LanguageDetection(primary="Python"),
-                    project_type_detection=ProjectTypeDetection(
-                        type=ProjectType.APPLICATION, domain=ProjectDomain.WEB
-                    ),
-                    branch_analysis=GitBranchAnalysis(
-                        strategy_guess="Unknown",
-                        branches=[BranchInfo(name="main", is_remote=False)],
-                    ),
-                    metadata=None,
-                    metrics=None,
-                ),
+        # Create a mock RepositoryAnalysis with all analysis results
+        mock_repo_analysis = RepositoryAnalysis(
+            path=default_path,
+            name="test-project",
+            description="A test project",
+            url="https://github.com/test/project",
+            language_detection=LanguageDetection(primary="Python"),
+            project_type_detection=ProjectTypeDetection(
+                type=ProjectType.APPLICATION, domain=ProjectDomain.WEB
             ),
-            patch(
-                "metagit.core.detect.manager.GitBranchAnalysis.from_repo",
-                return_value=GitBranchAnalysis(strategy_guess="Unknown", branches=[]),
+            branch_analysis=GitBranchAnalysis(
+                strategy_guess="Unknown",
+                branches=[BranchInfo(name="main", is_remote=False)],
             ),
-            patch(
-                "metagit.core.detect.manager.CIConfigAnalysis.from_repo",
-                return_value=CIConfigAnalysis(detected_tool="TestCI"),
-            ),
-            patch(
-                "metagit.core.detect.manager.directory_summary",
-                return_value=DirectorySummary(
-                    path=default_path,
-                    num_files=5,
-                    file_types=[],
-                    subpaths=[],
-                ),
-            ),
-            patch(
-                "metagit.core.detect.manager.FileExtensionLookup",
-                return_value=MagicMock(),
-            ),
-            patch(
-                "metagit.core.detect.manager.directory_details",
-                return_value=DirectoryDetails(
-                    path=default_path,
-                    num_files=3,
-                    file_types={"programming": []},
-                    subpaths=[],
-                ),
-            ),
+            ci_config_analysis=CIConfigAnalysis(detected_tool="TestCI"),
+            metadata=None,
+            metrics=None,
+        )
+
+        # Patch RepositoryAnalysis.from_path to return our mock
+        with patch(
+            "metagit.core.detect.manager.RepositoryAnalysis.from_path",
+            return_value=mock_repo_analysis,
         ):
             result = manager.run_all()
             assert result is None
             assert manager.analysis_completed is True
+            assert manager.repository_analysis is not None
 
             # Patch missing fields for summary
             object.__setattr__(manager, "domain", ProjectDomain.WEB)
@@ -180,8 +152,6 @@ def test_detection_manager_run_all_and_summary(default_path):
             assert isinstance(summary, str)
             assert "Unknown" in summary
             assert "TestCI" in summary
-            assert "5 files" in summary
-            assert "3 files" in summary
 
 
 def test_detection_manager_run_specific(default_path):
@@ -199,31 +169,32 @@ def test_detection_manager_run_specific(default_path):
         manager = DetectionManager.from_path(default_path, config=config)
         assert not isinstance(manager, Exception)
 
-        with patch(
-            "metagit.core.detect.manager.GitBranchAnalysis.from_repo",
-            return_value=GitBranchAnalysis(strategy_guess="Unknown", branches=[]),
-        ):
-            # Set the branch_analysis attribute directly to avoid validation
-            manager.branch_analysis = GitBranchAnalysis(
-                strategy_guess="Unknown", branches=[]
-            )
-
-            result = manager.run_specific("branch_analysis")
-            assert result is None
-            assert manager.branch_analysis is not None
-
-        # Disabled method should return Exception
+        # Test that disabled methods return Exception
         result = manager.run_specific("ci_config_analysis")
         assert isinstance(result, Exception)
 
+        # Test that enabled methods delegate to run_all
+        with patch.object(manager, "run_all", return_value=None) as mock_run_all:
+            result = manager.run_specific("branch_analysis")
+            assert result is None
+            mock_run_all.assert_called_once()
+
+
+def test_detection_manager_run_specific_unknown_method(default_path):
+    with patch(
+        "metagit.core.detect.manager.DetectionManager._load_existing_config",
+        return_value=None,
+    ):
+        manager = DetectionManager.from_path(default_path)
+        assert not isinstance(manager, Exception)
+
+        result = manager.run_specific("unknown_method")
+        assert isinstance(result, Exception)
+        assert "Unknown analysis method" in str(result)
+
 
 def test_detection_manager_summary_handles_missing(default_path):
-    config = DetectionManagerConfig(
-        branch_analysis_enabled=True,
-        ci_config_analysis_enabled=True,
-        directory_summary_enabled=True,
-        directory_details_enabled=True,
-    )
+    config = DetectionManagerConfig.minimal()
 
     with patch(
         "metagit.core.detect.manager.DetectionManager._load_existing_config",
@@ -232,12 +203,7 @@ def test_detection_manager_summary_handles_missing(default_path):
         manager = DetectionManager.from_path(default_path, config=config)
         assert not isinstance(manager, Exception)
 
-        # No analysis run yet
-        # Patch missing fields for summary
-        object.__setattr__(manager, "domain", ProjectDomain.WEB)
-        object.__setattr__(manager, "kind", ProjectType.APPLICATION)
-        object.__setattr__(manager, "language", Language(primary="Python"))
-        object.__setattr__(manager, "language_version", "3.9")
+        # Test summary without running analysis
         summary = manager.summary()
         assert isinstance(summary, str)
         assert "not available" in summary
@@ -284,8 +250,68 @@ def test_detection_manager_inherits_from_metagit_record(default_path):
 
         # Should also have DetectionManager-specific attributes
         assert hasattr(manager, "detection_config")
-        assert hasattr(manager, "branch_analysis")
-        assert hasattr(manager, "ci_config_analysis")
-        assert hasattr(manager, "directory_summary")
-        assert hasattr(manager, "directory_details")
         assert hasattr(manager, "repository_analysis")
+        assert hasattr(manager, "analysis_completed")
+        assert hasattr(manager, "project_path")
+
+
+def test_detection_manager_cleanup(default_path):
+    """Test that DetectionManager cleanup delegates to RepositoryAnalysis."""
+    with patch(
+        "metagit.core.detect.manager.DetectionManager._load_existing_config",
+        return_value=None,
+    ):
+        manager = DetectionManager.from_path(default_path)
+        assert not isinstance(manager, Exception)
+
+        # Create a mock RepositoryAnalysis
+        mock_repo_analysis = MagicMock()
+        manager.repository_analysis = mock_repo_analysis
+
+        # Test cleanup
+        manager.cleanup()
+        mock_repo_analysis.cleanup.assert_called_once()
+
+
+def test_detection_manager_update_metagit_record(default_path):
+    """Test that DetectionManager properly updates MetagitRecord fields from RepositoryAnalysis."""
+    with patch(
+        "metagit.core.detect.manager.DetectionManager._load_existing_config",
+        return_value=None,
+    ):
+        manager = DetectionManager.from_path(default_path)
+        assert not isinstance(manager, Exception)
+
+        # Create a mock RepositoryAnalysis with data
+        mock_repo_analysis = RepositoryAnalysis(
+            path=default_path,
+            name="test-project",
+            description="A test project",
+            url="https://github.com/test/project",
+            language_detection=LanguageDetection(primary="Python"),
+            project_type_detection=ProjectTypeDetection(
+                type=ProjectType.APPLICATION, domain=ProjectDomain.WEB
+            ),
+            branch_analysis=GitBranchAnalysis(
+                strategy_guess="GitHub Flow",
+                branches=[BranchInfo(name="main", is_remote=False)],
+            ),
+            ci_config_analysis=CIConfigAnalysis(detected_tool="GitHub Actions"),
+        )
+
+        manager.repository_analysis = mock_repo_analysis
+
+        # Test _update_metagit_record
+        manager._update_metagit_record()
+
+        # Check that MetagitRecord fields were updated
+        assert manager.name == "test-project"
+        assert manager.description == "A test project"
+        assert manager.url == "https://github.com/test/project"
+        assert manager.language.primary == "Python"
+        assert manager.kind == ProjectType.APPLICATION
+        assert manager.domain == ProjectDomain.WEB
+        assert manager.branch_strategy == "GitHub Flow"
+        assert len(manager.branches) == 1
+        assert manager.branches[0].name == "main"
+        assert manager.cicd.platform == "GitHub Actions"
