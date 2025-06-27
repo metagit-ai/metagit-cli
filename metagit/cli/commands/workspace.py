@@ -50,14 +50,19 @@ def workspace(ctx: click.Context, config: str) -> None:
 )
 @click.pass_context
 def workspace_select(ctx: click.Context, project: str = None) -> None:
-    """Select workspace project repo to work on"""
+    """Select project repo to work on"""
     logger = ctx.obj["logger"]
     local_config = ctx.obj["local_config"]
-    workspace_project = [
-        target_project
-        for target_project in local_config.workspace.projects
-        if target_project.name == project
-    ][0]
+    if project is None:
+        project = local_config.workspace.default_project
+    if project == "local":
+        workspace_project = local_config.local_workspace_project
+    else:
+        workspace_project = [
+            target_project
+            for target_project in local_config.workspace.projects
+            if target_project.name == project
+        ][0]
     try:
         config = ctx.obj["config"]
         if project is None:

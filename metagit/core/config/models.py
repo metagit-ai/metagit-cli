@@ -679,24 +679,31 @@ class MetagitConfig(BaseModel):
     name: str = Field(..., description="Project name")
     description: Optional[str] = Field(None, description="Project description")
     url: Optional[Union[HttpUrl, GitUrl]] = Field(None, description="Project URL")
-    kind: Optional[ProjectKind] = Field(None, description="Project kind")
+    kind: Optional[ProjectKind] = Field(
+        None,
+        description="Project kind. This is used to determine the type of project and the best way to manage it.",
+    )
     documentation: Optional[List[str]] = Field(
-        None, description="Documentation URLs or paths"
+        None, description="Documentation URLs or paths used by the project."
     )
     license: Optional[License] = Field(None, description="License information")
     maintainers: Optional[List[Maintainer]] = Field(
         None, description="Project maintainers"
     )
     branch_strategy: Optional[BranchStrategy] = Field(
-        None, description="Branch strategy"
+        None, description="Branch strategy used by the project."
     )
-    taskers: Optional[List[Tasker]] = Field(None, description="Task management tools")
+    taskers: Optional[List[Tasker]] = Field(
+        None, description="Task management tools employed by the project."
+    )
     branch_naming: Optional[List[BranchNaming]] = Field(
-        None, description="Branch naming patterns"
+        None, description="Branch naming patterns used by the project."
     )
-    artifacts: Optional[List[Artifact]] = Field(None, description="Generated artifacts")
+    artifacts: Optional[List[Artifact]] = Field(
+        None, description="Generated artifacts from the project."
+    )
     secrets_management: Optional[List[str]] = Field(
-        None, description="Secrets management tools"
+        None, description="Secrets management tools employed by the project."
     )
     secrets: Optional[List[Secret]] = Field(None, description="Secret definitions")
     variables: Optional[List[Variable]] = Field(
@@ -709,14 +716,22 @@ class MetagitConfig(BaseModel):
     observability: Optional[Observability] = Field(
         None, description="Observability configuration"
     )
-    paths: Optional[List[ProjectPath]] = Field(None, description="Project paths")
+    paths: Optional[List[ProjectPath]] = Field(
+        None,
+        description="Important local project paths. In a monorepo, this would include any sub-projects typically found being built in the CICD pipelines.",
+    )
     dependencies: Optional[List[ProjectPath]] = Field(
-        None, description="Project dependencies"
+        None,
+        description="Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.",
     )
     components: Optional[List[ProjectPath]] = Field(
-        None, description="Project components"
+        None,
+        description="Additional project component paths that may be useful in other projects.",
     )
-    workspace: Optional[Workspace] = Field(None, description="Workspace configuration")
+    workspace: Optional[Workspace] = Field(
+        None,
+        description="Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. The internal workspace name is reservice",
+    )
 
     @field_serializer("url")
     def serialize_url(
@@ -728,15 +743,13 @@ class MetagitConfig(BaseModel):
     @property
     def local_workspace_project(self) -> WorkspaceProject:
         """Get the local workspace project configuration."""
-        if not self.workspace:
-            return WorkspaceProject(name="local", repos=[])
-
-        # For the original Workspace model, we need to handle the projects list
-        # For now, return the first project or create a default one
-        if self.workspace.projects:
-            return self.workspace.projects[0]
-        else:
-            return WorkspaceProject(name="local", repos=[])
+        # Combine paths and dependencies into a single list of repos
+        repos = []
+        if self.paths:
+            repos.extend(self.paths)
+        if self.dependencies:
+            repos.extend(self.dependencies)
+        return WorkspaceProject(name="local", repos=repos)
 
     class Config:
         """Pydantic configuration."""

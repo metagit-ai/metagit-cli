@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Metagit-ai multi-repo management tool"
 readme = "README.md"
 license = {file = "LICENSE"}
+url = "https://metagit.ai"
 authors = [
     {name = "Zachary Loeber", email = "zloeber@gmail.com"}
 ]
@@ -30,9 +31,6 @@ dependencies = [
     "prompt-toolkit>=3.0.51",
     "tqdm>=4.66.4",
     "types-tqdm>=4.67.0.20250516",
-    "fastapi>=0.104.1",
-    "uvicorn[standard]>=0.24.0",
-    "opensearch-py>=2.4.0",
     "aiofiles>=23.2.1",
 ]
 
@@ -44,14 +42,13 @@ docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc"]
 lint = ["ruff", "black", "isort", "mypy"]
 format = ["black", "isort"]
 typecheck = ["mypy"]
-api = ["fastapi", "uvicorn[standard]", "opensearch-py", "aiofiles"]
-
+api = ["opensearch-py>=2.4.0", "aiofiles>=23.2.1", "fastapi>=0.104.1", "uvicorn[standard]>=0.24.0" ]
 
 [project.scripts]
 metagit = "metagit.cli.main:main"
 metagit-api = "metagit.api.app:main"
 
-[lint]
+[tool.ruff]
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
 ignore = ['W291', 'W292', 'W293', 'E501']
 exclude = [".venv"]

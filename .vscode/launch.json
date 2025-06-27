@@ -58,6 +58,33 @@
         "--project",
         "default"
       ]
+    },
+    {
+      "name": "project sync (local)",
+      "type": "debugpy",
+      "module": "metagit.cli.main",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "args": [
+        "project",
+        "-p",
+        "local",
+        "sync"
+      ]
+    },
+    {
+      "name": "project repo add",
+      "type": "debugpy",
+      "module": "metagit.cli.main",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "args": [
+        "project",
+        "repo",
+        "add"
+      ]
     }
   ]
 }

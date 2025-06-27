@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from metagit import DATA_PATH
 from metagit.core.appconfig import AppConfig, get_config
+from metagit.core.appconfig.models import AppConfig
 
 
 @click.group(name="appconfig", invoke_without_command=True)
@@ -155,6 +156,30 @@ def appconfig_create(ctx: click.Context, config_path: str = None) -> None:
             ctx.abort()
     else:
         logger.warning(f"Configuration file {config_path} already exists!")
+
+
+@appconfig.command("schema")
+@click.option(
+    "--output-path",
+    help="Path to output the JSON schema file",
+    default="metagit_appconfig.schema.json",
+)
+@click.pass_context
+def appconfig_schema(ctx: click.Context, output_path: str) -> None:
+    """
+    Generate a JSON schema for the AppConfig class and write it to a file.
+    """
+    import json
+
+    logger = ctx.obj["logger"]
+    try:
+        schema = AppConfig.model_json_schema()
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(schema, f, indent=2)
+        logger.success(f"JSON schema written to {output_path}")
+    except Exception as e:
+        logger.error(f"Failed to generate JSON schema: {e}")
+        ctx.abort()
 
 
 # @appconfig.command("init")

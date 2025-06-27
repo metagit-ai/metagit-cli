@@ -307,3 +307,29 @@ def config_info(ctx: click.Context) -> None:
     else:
         logger.echo("No project config file found!")
         logger.echo("Create a new config file with 'metagit config create'")
+
+
+@config.command("schema")
+@click.option(
+    "--output-path",
+    help="Path to output the JSON schema file",
+    default="metagit_config.schema.json",
+)
+@click.pass_context
+def config_schema(ctx: click.Context, output_path: str) -> None:
+    """
+    Generate a JSON schema for the MetagitConfig class and write it to a file.
+    """
+    import json
+
+    from metagit.core.config.models import MetagitConfig
+
+    logger = ctx.obj["logger"]
+    try:
+        schema = MetagitConfig.model_json_schema()
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(schema, f, indent=2)
+        logger.success(f"JSON schema written to {output_path}")
+    except Exception as e:
+        logger.error(f"Failed to generate JSON schema: {e}")
+        ctx.abort()
