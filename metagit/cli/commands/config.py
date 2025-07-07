@@ -3,6 +3,8 @@ Config subcommand
 """
 
 import os
+import json
+
 from typing import Union
 
 import click
@@ -302,11 +304,13 @@ def config_info(ctx: click.Context) -> None:
     Display information about the local project configuration.
     """
     logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+
     if os.path.exists(ctx.obj["config_path"]):
-        logger.echo(f"Config File: {ctx.obj['config_path']}")
+        logger.config_element(name="config_path", value=config_path, console=True)
     else:
         logger.echo("No project config file found!")
-        logger.echo("Create a new config file with 'metagit config create'")
+        logger.echo("Create a new config file with 'metagit config create' or 'metagit init'")
 
 
 @config.command("schema")
@@ -320,8 +324,6 @@ def config_schema(ctx: click.Context, output_path: str) -> None:
     """
     Generate a JSON schema for the MetagitConfig class and write it to a file.
     """
-    import json
-
     from metagit.core.config.models import MetagitConfig
 
     logger = ctx.obj["logger"]
