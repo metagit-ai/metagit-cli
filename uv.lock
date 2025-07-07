@@ -107,6 +107,12 @@ wheels = [
 ]
 
 [[package]]
+name = "async"
+version = "0.6.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/de/9d8e0907842c56d4cbd64d7543e65f78373d1fe8e9dc33a4324aaea734e9/async-0.6.2.tar.gz", hash = "sha256:ac6894d876e45878faae493b0cf61d0e28ec417334448ac0a6ea2229d8343051", size = 30177, upload-time = "2014-11-12T17:03:40.353Z" }
+
+[[package]]
 name = "attrs"
 version = "25.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -985,6 +991,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
+    { name = "async" },
     { name = "click" },
     { name = "dotenv" },
     { name = "gitpython" },
@@ -1058,6 +1065,7 @@ dev = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=23.2.1" },
     { name = "aiofiles", marker = "extra == 'api'", specifier = ">=23.2.1" },
+    { name = "async", specifier = ">=0.6.2" },
     { name = "black", marker = "extra == 'dev'" },
     { name = "black", marker = "extra == 'format'" },
     { name = "black", marker = "extra == 'lint'" },

@@ -53,21 +53,20 @@ def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
     """
     Metagit CLI: A multi-purpose CLI tool with YAML configuration.
     """
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
+    log_level: str = "INFO"
+    minimal_console: bool = True
+    if verbose:
+        log_level = "INFO"
+        minimal_console = False
+    if debug:
+        log_level = "DEBUG"
+        minimal_console = False
+
     try:
-        # If no subcommand is provided, show help
-        if ctx.invoked_subcommand is None:
-            click.echo(ctx.get_help())
-            return
-
-        log_level: str = "INFO"
-        minimal_console: bool = True
-        if verbose:
-            log_level = "INFO"
-            minimal_console = False
-        if debug:
-            log_level = "DEBUG"
-            minimal_console = False
-
         logger: UnifiedLogger = UnifiedLogger(
             LoggerConfig(log_level=log_level, minimal_console=minimal_console)
         )
@@ -102,29 +101,20 @@ def info(ctx: click.Context) -> None:
     """
     Display the current configuration.
     """
-    try:
-        click.echo("Metagit CLI:")
-        click.echo(f"Version: {__version__}")
-        click.echo(f"Config Path: {ctx.obj['config_path']}")
-        click.echo(f"Debug: {ctx.obj['debug']}")
-        click.echo(f"Verbose: {ctx.obj['verbose']}")
-    except Exception as e:
-        logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
-        logger.error(f"Failed to display info: {e}")
-        ctx.abort()
+    logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
+
+    logger.config_element(name="version", value=__version__, console=True)
+    logger.config_element(name="config_path", value=ctx.obj["config_path"], console=True)
+    logger.config_element(name="debug", value=ctx.obj["debug"], console=True)
+    logger.config_element(name="verbose", value=ctx.obj["verbose"], console=True)
 
 
 @cli.command()
 @click.pass_context
 def version(ctx: click.Context) -> None:
     """Get the application version."""
-    try:
-        logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
-        logger.config_element(name="version", value=__version__, console=True)
-    except Exception as e:
-        logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
-        logger.error(f"Failed to display version: {e}")
-        ctx.abort()
+    logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
+    logger.config_element(name="version", value=__version__, console=True)
 
 
 cli.add_command(detect)

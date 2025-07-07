@@ -3,6 +3,7 @@ Appconfig subcommand
 """
 
 import os
+import json
 import sys
 from typing import Union
 
@@ -10,28 +11,31 @@ import click
 import yaml as base_yaml
 from pydantic import ValidationError
 
-from metagit import DATA_PATH
-from metagit.core.appconfig import get_config
+from metagit import DATA_PATH, DEFAULT_CONFIG
+from metagit.core.appconfig import get_config, load_config
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.utils.logging import UnifiedLogger, LoggerConfig
+from metagit import __version__
 
 
 @click.group(name="appconfig", invoke_without_command=True)
 @click.pass_context
 def appconfig(ctx: click.Context) -> None:
     """Application configuration subcommands"""
-    try:
-        # If no subcommand is provided, show help
-        if ctx.invoked_subcommand is None:
-            click.echo(ctx.get_help())
-            return
-    except Exception as e:
-        logger = ctx.obj.get("logger")
-        if logger:
-            logger.error(f"An error occurred in the appconfig command: {e}")
-        else:
-            click.echo(f"An error occurred: {e}", err=True)
-        ctx.abort()
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
 
+@appconfig.command("info")
+@click.pass_context
+def appconfig_info(ctx: click.Context) -> None:
+    """
+    Information about the application configuration.
+    """
+    logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
+    logger.config_element(name="version", value=__version__, console=True)
+    logger.config_element(name="config_path", value=ctx.obj["config_path"], console=True)
 
 @appconfig.command("show")
 @click.pass_context
@@ -97,7 +101,15 @@ def appconfig_validate(
         sys.exit(1)
 
 
-@appconfig.command("get")
+@appconfig.command("get",
+help='''
+Get a value from the application configuration.\n
+
+Example - show all keys in the providers section:\n
+  metagit appconfig get --name config.providers --show-keys\n
+Example - show all values in the providers section:\n
+  metagit appconfig get --name config.providers
+''')
 @click.option("--name", default="", help="Appconfig element to target")
 @click.option(
     "--show-keys",
@@ -135,13 +147,12 @@ def appconfig_get(ctx: click.Context, name: str, show_keys: bool, output: str) -
 def appconfig_create(ctx: click.Context, config_path: str = None) -> None:
     """Create default application config"""
     logger = ctx.obj.get("logger")
-    app_config = ctx.obj.get("config")
-    config_path = config_path or os.path.join(DATA_PATH, "metagit.config.yaml")
+    default_config = load_config(DEFAULT_CONFIG)
     if not os.path.exists(config_path):
         try:
             output = base_yaml.dump(
-                app_config.model_dump(
-                    exclude_none=True, exclude_defaults=True, mode="json"
+                default_config.model_dump(
+                    exclude_none=True, exclude_defaults=False, mode="json"
                 ),
                 default_flow_style=False,
                 sort_keys=False,
@@ -169,8 +180,6 @@ def appconfig_schema(ctx: click.Context, output_path: str) -> None:
     """
     Generate a JSON schema for the AppConfig class and write it to a file.
     """
-    import json
-
     logger = ctx.obj["logger"]
     try:
         schema = AppConfig.model_json_schema()
