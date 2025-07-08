@@ -33,6 +33,7 @@ class TestGitCacheEntry(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_git_cache_entry_creation(self):
@@ -41,7 +42,7 @@ class TestGitCacheEntry(unittest.TestCase):
             name="test-repo",
             source_url="https://github.com/test/repo.git",
             cache_type=CacheType.GIT,
-            cache_path=self.cache_path
+            cache_path=self.cache_path,
         )
 
         self.assertEqual(entry.name, "test-repo")
@@ -57,7 +58,7 @@ class TestGitCacheEntry(unittest.TestCase):
             name="test-repo",
             source_url="https://github.com/test/repo.git",
             cache_type=CacheType.GIT,
-            cache_path=str(self.cache_path)
+            cache_path=str(self.cache_path),
         )
 
         self.assertEqual(entry.cache_path, self.cache_path)
@@ -70,7 +71,7 @@ class TestGitCacheEntry(unittest.TestCase):
             source_url="https://github.com/test/repo.git",
             cache_type=CacheType.GIT,
             cache_path=self.cache_path,
-            metadata=metadata
+            metadata=metadata,
         )
 
         self.assertEqual(entry.metadata, metadata)
@@ -86,6 +87,7 @@ class TestGitCacheConfig(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_git_cache_config_defaults(self):
@@ -105,7 +107,7 @@ class TestGitCacheConfig(unittest.TestCase):
             cache_root=cache_root,
             default_timeout_minutes=120,
             max_cache_size_gb=5.0,
-            enable_async=False
+            enable_async=False,
         )
 
         self.assertEqual(config.cache_root, cache_root)
@@ -143,7 +145,7 @@ class TestGitCacheConfig(unittest.TestCase):
             name="test-repo",
             source_url="https://github.com/test/repo.git",
             cache_type=CacheType.GIT,
-            cache_path=Path("/tmp/test")
+            cache_path=Path("/tmp/test"),
         )
 
         # Test adding entry
@@ -173,14 +175,14 @@ class TestGitCacheConfig(unittest.TestCase):
     def test_git_cache_config_stale_detection(self):
         """Test stale entry detection."""
         config = GitCacheConfig(default_timeout_minutes=60)
-        
+
         # Fresh entry
         fresh_entry = GitCacheEntry(
             name="fresh",
             source_url="https://github.com/test/repo.git",
             cache_type=CacheType.GIT,
             cache_path=Path("/tmp/fresh"),
-            last_updated=datetime.now()
+            last_updated=datetime.now(),
         )
         self.assertFalse(config.is_entry_stale(fresh_entry))
 
@@ -190,7 +192,7 @@ class TestGitCacheConfig(unittest.TestCase):
             source_url="https://github.com/test/repo.git",
             cache_type=CacheType.GIT,
             cache_path=Path("/tmp/stale"),
-            last_updated=datetime.now() - timedelta(hours=2)
+            last_updated=datetime.now() - timedelta(hours=2),
         )
         self.assertTrue(config.is_entry_stale(stale_entry))
 
@@ -208,6 +210,7 @@ class TestGitCacheManager(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_git_cache_manager_initialization(self):
@@ -263,26 +266,30 @@ class TestGitCacheManager(unittest.TestCase):
         self.assertTrue(self.manager._is_local_path(str(temp_dir)))
         self.assertFalse(self.manager._is_local_path("/non/existent/path"))
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_git_cache_manager_clone_repository(self, mock_run):
         """Test repository cloning."""
         mock_run.return_value.returncode = 0
         mock_run.return_value.stderr = ""
 
         cache_path = Path(self.temp_dir) / "test_repo"
-        result = self.manager._clone_repository("https://github.com/test/repo.git", cache_path)
+        result = self.manager._clone_repository(
+            "https://github.com/test/repo.git", cache_path
+        )
 
         self.assertTrue(result)
         mock_run.assert_called_once()
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_git_cache_manager_clone_repository_failure(self, mock_run):
         """Test repository cloning failure."""
         mock_run.return_value.returncode = 1
         mock_run.return_value.stderr = "Authentication failed"
 
         cache_path = Path(self.temp_dir) / "test_repo"
-        result = self.manager._clone_repository("https://github.com/test/repo.git", cache_path)
+        result = self.manager._clone_repository(
+            "https://github.com/test/repo.git", cache_path
+        )
 
         self.assertIsInstance(result, Exception)
         self.assertIn("Authentication failed", str(result))
@@ -328,13 +335,13 @@ class TestGitCacheManager(unittest.TestCase):
             name="repo1",
             source_url="https://github.com/test/repo1.git",
             cache_type=CacheType.GIT,
-            cache_path=Path("/tmp/repo1")
+            cache_path=Path("/tmp/repo1"),
         )
         entry2 = GitCacheEntry(
             name="repo2",
             source_url="/path/to/local/repo",
             cache_type=CacheType.LOCAL,
-            cache_path=Path("/tmp/repo2")
+            cache_path=Path("/tmp/repo2"),
         )
 
         self.config.add_entry(entry1)
@@ -358,7 +365,7 @@ class TestGitCacheManager(unittest.TestCase):
             name="test-repo",
             source_url="https://github.com/test/repo.git",
             cache_type=CacheType.GIT,
-            cache_path=cache_path
+            cache_path=cache_path,
         )
         self.config.add_entry(entry)
 
@@ -375,6 +382,33 @@ class TestGitCacheManager(unittest.TestCase):
         self.assertIsInstance(result, Exception)
         self.assertIn("not found", str(result))
 
+    def test_git_cache_manager_rejects_non_git_directory(self):
+        """Test that non-git directories cannot be cached as local repositories."""
+        # Create a plain directory (not a git repo)
+        non_git_dir = Path(self.temp_dir) / "plain_dir"
+        non_git_dir.mkdir()
+        (non_git_dir / "file.txt").write_text("not a repo")
+
+        result = self.manager.cache_repository(str(non_git_dir))
+        self.assertIsInstance(result, Exception)
+        self.assertIn("must be a git URL or local git repository", str(result))
+
+    def test_git_cache_manager_accepts_local_git_repository(self):
+        """Test that a valid local git repository can be cached."""
+        # Create a git repo
+        git_dir = Path(self.temp_dir) / "git_repo"
+        git_dir.mkdir()
+        (git_dir / "file.txt").write_text("repo file")
+        # Initialize git
+        import subprocess
+
+        subprocess.run(["git", "init"], cwd=git_dir, check=True)
+
+        result = self.manager.cache_repository(str(git_dir))
+        self.assertIsInstance(result, GitCacheEntry)
+        self.assertEqual(result.cache_type, CacheType.LOCAL)
+        self.assertEqual(result.source_url, str(git_dir))
+
 
 class TestGitCacheManagerAsync(unittest.IsolatedAsyncioTestCase):
     """Test cases for GitCacheManager async operations."""
@@ -389,10 +423,13 @@ class TestGitCacheManagerAsync(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    @patch('asyncio.create_subprocess_exec')
-    async def test_git_cache_manager_clone_repository_async(self, mock_create_subprocess):
+    @patch("asyncio.create_subprocess_exec")
+    async def test_git_cache_manager_clone_repository_async(
+        self, mock_create_subprocess
+    ):
         """Test async repository cloning."""
         # Mock subprocess
         mock_process = AsyncMock()
@@ -401,13 +438,17 @@ class TestGitCacheManagerAsync(unittest.IsolatedAsyncioTestCase):
         mock_create_subprocess.return_value = mock_process
 
         cache_path = Path(self.temp_dir) / "test_repo"
-        result = await self.manager._clone_repository_async("https://github.com/test/repo.git", cache_path)
+        result = await self.manager._clone_repository_async(
+            "https://github.com/test/repo.git", cache_path
+        )
 
         self.assertTrue(result)
         mock_create_subprocess.assert_called_once()
 
-    @patch('asyncio.create_subprocess_exec')
-    async def test_git_cache_manager_clone_repository_async_failure(self, mock_create_subprocess):
+    @patch("asyncio.create_subprocess_exec")
+    async def test_git_cache_manager_clone_repository_async_failure(
+        self, mock_create_subprocess
+    ):
         """Test async repository cloning failure."""
         # Mock subprocess
         mock_process = AsyncMock()
@@ -416,7 +457,9 @@ class TestGitCacheManagerAsync(unittest.IsolatedAsyncioTestCase):
         mock_create_subprocess.return_value = mock_process
 
         cache_path = Path(self.temp_dir) / "test_repo"
-        result = await self.manager._clone_repository_async("https://github.com/test/repo.git", cache_path)
+        result = await self.manager._clone_repository_async(
+            "https://github.com/test/repo.git", cache_path
+        )
 
         self.assertIsInstance(result, Exception)
         self.assertIn("Authentication failed", str(result))
@@ -439,23 +482,27 @@ class TestGitCacheManagerAsync(unittest.IsolatedAsyncioTestCase):
         """Test async local directory copying failure."""
         non_existent_path = Path("/non/existent/path")
         cache_path = Path(self.temp_dir) / "cache_copy"
-        result = await self.manager._copy_local_directory_async(non_existent_path, cache_path)
+        result = await self.manager._copy_local_directory_async(
+            non_existent_path, cache_path
+        )
 
         self.assertIsInstance(result, Exception)
 
-    @patch('metagit.core.gitcache.manager.GitCacheManager._clone_repository_async')
+    @patch("metagit.core.gitcache.manager.GitCacheManager._clone_repository_async")
     async def test_git_cache_manager_cache_repository_async(self, mock_clone):
         """Test async repository caching."""
         mock_clone.return_value = True
 
-        result = await self.manager.cache_repository_async("https://github.com/test/repo.git")
+        result = await self.manager.cache_repository_async(
+            "https://github.com/test/repo.git"
+        )
 
         self.assertIsInstance(result, GitCacheEntry)
         self.assertEqual(result.name, "repo")
         self.assertEqual(result.source_url, "https://github.com/test/repo.git")
         self.assertEqual(result.cache_type, CacheType.GIT)
 
-    @patch('metagit.core.gitcache.manager.GitCacheManager._copy_local_directory_async')
+    @patch("metagit.core.gitcache.manager.GitCacheManager._copy_local_directory_async")
     async def test_git_cache_manager_cache_local_directory_async(self, mock_copy):
         """Test async local directory caching."""
         mock_copy.return_value = True
@@ -469,7 +516,7 @@ class TestGitCacheManagerAsync(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(result, GitCacheEntry)
         self.assertEqual(result.cache_type, CacheType.LOCAL)
 
-    @patch('metagit.core.gitcache.manager.GitCacheManager.cache_repository_async')
+    @patch("metagit.core.gitcache.manager.GitCacheManager.cache_repository_async")
     async def test_git_cache_manager_refresh_cache_entry_async(self, mock_cache):
         """Test async cache entry refresh."""
         # Create test entry
@@ -477,7 +524,7 @@ class TestGitCacheManagerAsync(unittest.IsolatedAsyncioTestCase):
             name="test-repo",
             source_url="https://github.com/test/repo.git",
             cache_type=CacheType.GIT,
-            cache_path=Path("/tmp/test")
+            cache_path=Path("/tmp/test"),
         )
         self.config.add_entry(entry)
 
@@ -486,8 +533,10 @@ class TestGitCacheManagerAsync(unittest.IsolatedAsyncioTestCase):
         result = await self.manager.refresh_cache_entry_async("test-repo")
 
         self.assertEqual(result, entry)
-        mock_cache.assert_called_once_with("https://github.com/test/repo.git", "test-repo")
+        mock_cache.assert_called_once_with(
+            "https://github.com/test/repo.git", "test-repo"
+        )
 
 
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()
