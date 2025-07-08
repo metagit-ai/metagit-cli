@@ -334,12 +334,37 @@ class GitCacheManager:
             # Handle existing cache
             if existing_entry and cache_path.exists():
                 if cache_type == CacheType.GIT:
-                    # Pull updates for git repositories
-                    result = self._pull_updates(cache_path)
-                    if isinstance(result, Exception):
-                        existing_entry.status = CacheStatus.ERROR
-                        existing_entry.error_message = str(result)
-                        return result
+                    # Check for differences before pulling updates
+                    diff_info = self._check_repository_differences(cache_path)
+
+                    # Update entry with difference information
+                    existing_entry.local_commit_hash = diff_info["local_info"][
+                        "commit_hash"
+                    ]
+                    existing_entry.local_branch = diff_info["local_info"]["branch"]
+                    existing_entry.remote_commit_hash = diff_info["remote_info"][
+                        "commit_hash"
+                    ]
+                    existing_entry.remote_branch = diff_info["remote_info"]["branch"]
+                    existing_entry.has_upstream_changes = diff_info["has_changes"]
+                    existing_entry.upstream_changes_summary = diff_info[
+                        "changes_summary"
+                    ]
+                    existing_entry.last_diff_check = datetime.now()
+
+                    # Only pull if there are upstream changes
+                    if diff_info["has_changes"]:
+                        logger.info(
+                            f"Upstream changes detected for {name}: {diff_info['changes_summary']}"
+                        )
+                        result = self._pull_updates(cache_path)
+                        if isinstance(result, Exception):
+                            existing_entry.status = CacheStatus.ERROR
+                            existing_entry.error_message = str(result)
+                            return result
+                    else:
+                        logger.info(f"No upstream changes for {name}")
+
                 else:
                     # For local directories, recopy
                     result = self._copy_local_directory(Path(source), cache_path)
@@ -383,6 +408,18 @@ class GitCacheManager:
 
             # Calculate size and add entry
             entry.size_bytes = self._calculate_directory_size(cache_path)
+
+            # For git repositories, populate git information
+            if cache_type == CacheType.GIT:
+                diff_info = self._check_repository_differences(cache_path)
+                entry.local_commit_hash = diff_info["local_info"]["commit_hash"]
+                entry.local_branch = diff_info["local_info"]["branch"]
+                entry.remote_commit_hash = diff_info["remote_info"]["commit_hash"]
+                entry.remote_branch = diff_info["remote_info"]["branch"]
+                entry.has_upstream_changes = diff_info["has_changes"]
+                entry.upstream_changes_summary = diff_info["changes_summary"]
+                entry.last_diff_check = datetime.now()
+
             self.config.add_entry(entry)
 
             logger.info(f"Successfully cached: {source} -> {cache_path}")
@@ -426,12 +463,37 @@ class GitCacheManager:
             # Handle existing cache
             if existing_entry and cache_path.exists():
                 if cache_type == CacheType.GIT:
-                    # Pull updates for git repositories
-                    result = await self._pull_updates_async(cache_path)
-                    if isinstance(result, Exception):
-                        existing_entry.status = CacheStatus.ERROR
-                        existing_entry.error_message = str(result)
-                        return result
+                    # Check for differences before pulling updates
+                    diff_info = self._check_repository_differences(cache_path)
+
+                    # Update entry with difference information
+                    existing_entry.local_commit_hash = diff_info["local_info"][
+                        "commit_hash"
+                    ]
+                    existing_entry.local_branch = diff_info["local_info"]["branch"]
+                    existing_entry.remote_commit_hash = diff_info["remote_info"][
+                        "commit_hash"
+                    ]
+                    existing_entry.remote_branch = diff_info["remote_info"]["branch"]
+                    existing_entry.has_upstream_changes = diff_info["has_changes"]
+                    existing_entry.upstream_changes_summary = diff_info[
+                        "changes_summary"
+                    ]
+                    existing_entry.last_diff_check = datetime.now()
+
+                    # Only pull if there are upstream changes
+                    if diff_info["has_changes"]:
+                        logger.info(
+                            f"Upstream changes detected for {name}: {diff_info['changes_summary']}"
+                        )
+                        result = await self._pull_updates_async(cache_path)
+                        if isinstance(result, Exception):
+                            existing_entry.status = CacheStatus.ERROR
+                            existing_entry.error_message = str(result)
+                            return result
+                    else:
+                        logger.info(f"No upstream changes for {name}")
+
                 else:
                     # For local directories, recopy
                     result = await self._copy_local_directory_async(
@@ -479,6 +541,18 @@ class GitCacheManager:
 
             # Calculate size and add entry
             entry.size_bytes = self._calculate_directory_size(cache_path)
+
+            # For git repositories, populate git information
+            if cache_type == CacheType.GIT:
+                diff_info = self._check_repository_differences(cache_path)
+                entry.local_commit_hash = diff_info["local_info"]["commit_hash"]
+                entry.local_branch = diff_info["local_info"]["branch"]
+                entry.remote_commit_hash = diff_info["remote_info"]["commit_hash"]
+                entry.remote_branch = diff_info["remote_info"]["branch"]
+                entry.has_upstream_changes = diff_info["has_changes"]
+                entry.upstream_changes_summary = diff_info["changes_summary"]
+                entry.last_diff_check = datetime.now()
+
             self.config.add_entry(entry)
 
             logger.info(f"Successfully cached: {source} -> {cache_path}")
@@ -654,3 +728,252 @@ class GitCacheManager:
             "max_size_gb": self.config.max_cache_size_gb,
             "cache_full": self.config.is_cache_full(),
         }
+
+    def _get_repository_info(self, repo_path: Path) -> Dict[str, Any]:
+        """
+        Get repository information including commit hash and branch.
+
+        Args:
+            repo_path: Path to the git repository
+
+        Returns:
+            Dictionary with repository information
+        """
+        try:
+            repo = git.Repo(repo_path)
+            head = repo.head
+
+            info = {
+                "commit_hash": head.commit.hexsha,
+                "branch": head.name if head.name != "HEAD" else None,
+                "is_detached": head.is_detached,
+            }
+
+            # Try to get branch name if detached
+            if info["is_detached"]:
+                try:
+                    # Get the branch that HEAD was pointing to
+                    info["branch"] = repo.git.rev_parse("--abbrev-ref", "HEAD")
+                except:
+                    info["branch"] = None
+
+            return info
+        except Exception as e:
+            logger.warning(f"Failed to get repository info for {repo_path}: {e}")
+            return {"commit_hash": None, "branch": None, "is_detached": False}
+
+    def _get_remote_info(
+        self, repo_path: Path, remote_name: str = "origin"
+    ) -> Dict[str, Any]:
+        """
+        Get remote repository information.
+
+        Args:
+            repo_path: Path to the git repository
+            remote_name: Name of the remote (default: origin)
+
+        Returns:
+            Dictionary with remote information
+        """
+        try:
+            repo = git.Repo(repo_path)
+            remote = repo.remotes[remote_name]
+
+            # Fetch latest info from remote
+            remote.fetch()
+
+            # Get default branch
+            default_branch = None
+            try:
+                # Try to get default branch from remote
+                default_branch = (
+                    repo.git.remote("show", remote_name)
+                    .split("\n")[2]
+                    .split(":")[1]
+                    .strip()
+                )
+            except:
+                # Fallback to common default branches
+                for branch in ["main", "master"]:
+                    try:
+                        remote.refs[branch]
+                        default_branch = branch
+                        break
+                    except:
+                        continue
+
+            if default_branch:
+                remote_ref = remote.refs[default_branch]
+                return {
+                    "commit_hash": remote_ref.commit.hexsha,
+                    "branch": default_branch,
+                    "remote_name": remote_name,
+                }
+
+            return {"commit_hash": None, "branch": None, "remote_name": remote_name}
+
+        except Exception as e:
+            logger.warning(f"Failed to get remote info for {repo_path}: {e}")
+            return {"commit_hash": None, "branch": None, "remote_name": remote_name}
+
+    def _check_repository_differences(self, repo_path: Path) -> Dict[str, Any]:
+        """
+        Check for differences between local and remote repositories.
+
+        Args:
+            repo_path: Path to the git repository
+
+        Returns:
+            Dictionary with difference information
+        """
+        try:
+            repo = git.Repo(repo_path)
+
+            # Get local info
+            local_info = self._get_repository_info(repo_path)
+
+            # Get remote info
+            remote_info = self._get_remote_info(repo_path)
+
+            # Check if there are differences
+            has_changes = False
+            changes_summary = ""
+
+            if local_info["commit_hash"] and remote_info["commit_hash"]:
+                if local_info["commit_hash"] != remote_info["commit_hash"]:
+                    has_changes = True
+
+                    # Get commit difference summary
+                    try:
+                        # Get commits that are in remote but not in local
+                        local_commit = repo.commit(local_info["commit_hash"])
+                        remote_commit = repo.commit(remote_info["commit_hash"])
+
+                        # Get commits ahead and behind
+                        ahead_commits = list(
+                            repo.iter_commits(
+                                f"{local_commit.hexsha}..{remote_commit.hexsha}"
+                            )
+                        )
+                        behind_commits = list(
+                            repo.iter_commits(
+                                f"{remote_commit.hexsha}..{local_commit.hexsha}"
+                            )
+                        )
+
+                        changes_summary = f"Remote is {len(ahead_commits)} commits ahead, local is {len(behind_commits)} commits ahead"
+
+                        if ahead_commits:
+                            changes_summary += f". Latest remote commit: {ahead_commits[0].message.split(chr(10))[0]}"
+
+                    except Exception as e:
+                        changes_summary = f"Commit hashes differ: local={local_info['commit_hash'][:8]}, remote={remote_info['commit_hash'][:8]}"
+
+            return {
+                "local_info": local_info,
+                "remote_info": remote_info,
+                "has_changes": has_changes,
+                "changes_summary": changes_summary,
+            }
+
+        except Exception as e:
+            logger.warning(
+                f"Failed to check repository differences for {repo_path}: {e}"
+            )
+            return {
+                "local_info": {
+                    "commit_hash": None,
+                    "branch": None,
+                    "is_detached": False,
+                },
+                "remote_info": {
+                    "commit_hash": None,
+                    "branch": None,
+                    "remote_name": "origin",
+                },
+                "has_changes": False,
+                "changes_summary": f"Error checking differences: {str(e)}",
+            }
+
+    def get_cache_entry_details(self, name: str) -> Union[Dict[str, Any], Exception]:
+        """
+        Get detailed information about a cache entry including git differences.
+
+        Args:
+            name: Cache entry name
+
+        Returns:
+            Dictionary with detailed entry information or Exception if not found
+        """
+        entry = self.config.get_entry(name)
+        if entry is None:
+            return Exception(f"Cache entry not found: {name}")
+
+        details = {
+            "name": entry.name,
+            "source_url": entry.source_url,
+            "cache_type": entry.cache_type,
+            "cache_path": str(entry.cache_path),
+            "created_at": entry.created_at.isoformat(),
+            "last_updated": entry.last_updated.isoformat(),
+            "last_accessed": entry.last_accessed.isoformat(),
+            "size_bytes": entry.size_bytes,
+            "size_mb": (
+                round(entry.size_bytes / (1024 * 1024), 2) if entry.size_bytes else None
+            ),
+            "status": entry.status,
+            "error_message": entry.error_message,
+            "exists": entry.cache_path.exists(),
+            "is_stale": (
+                self.config.is_entry_stale(entry)
+                if entry.cache_path.exists()
+                else False
+            ),
+        }
+
+        # Add git-specific information for git repositories
+        if entry.cache_type == CacheType.GIT and entry.cache_path.exists():
+            details.update(
+                {
+                    "local_commit_hash": entry.local_commit_hash,
+                    "local_branch": entry.local_branch,
+                    "remote_commit_hash": entry.remote_commit_hash,
+                    "remote_branch": entry.remote_branch,
+                    "has_upstream_changes": entry.has_upstream_changes,
+                    "upstream_changes_summary": entry.upstream_changes_summary,
+                    "last_diff_check": (
+                        entry.last_diff_check.isoformat()
+                        if entry.last_diff_check
+                        else None
+                    ),
+                }
+            )
+
+            # Check for fresh differences if last check was more than 5 minutes ago
+            if (
+                entry.last_diff_check is None
+                or (datetime.now() - entry.last_diff_check).total_seconds() > 300
+            ):
+                try:
+                    diff_info = self._check_repository_differences(entry.cache_path)
+                    details.update(
+                        {
+                            "current_local_commit_hash": diff_info["local_info"][
+                                "commit_hash"
+                            ],
+                            "current_local_branch": diff_info["local_info"]["branch"],
+                            "current_remote_commit_hash": diff_info["remote_info"][
+                                "commit_hash"
+                            ],
+                            "current_remote_branch": diff_info["remote_info"]["branch"],
+                            "current_has_upstream_changes": diff_info["has_changes"],
+                            "current_upstream_changes_summary": diff_info[
+                                "changes_summary"
+                            ],
+                            "diff_check_timestamp": datetime.now().isoformat(),
+                        }
+                    )
+                except Exception as e:
+                    details["diff_check_error"] = str(e)
+
+        return details
