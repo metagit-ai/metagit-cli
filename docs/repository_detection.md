@@ -17,13 +17,13 @@ The repository detection module provides comprehensive analysis of git repositor
 ### Basic Repository Analysis
 
 ```python
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 
 # Analyze a local repository
-analysis = RepositoryAnalysis.from_path("/path/to/repo")
+analysis = DetectionManager.from_path("/path/to/repo")
 
 # Analyze a remote repository (clones it temporarily)
-analysis = RepositoryAnalysis.from_url("https://github.com/username/repo")
+analysis = DetectionManager.from_url("https://github.com/username/repo")
 
 # Generate summary
 summary = analysis.summary()
@@ -300,10 +300,10 @@ workspace:
 ### Basic Analysis
 
 ```python
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 
 # Analyze current directory
-analysis = RepositoryAnalysis.from_path(".")
+analysis = DetectionManager.from_path(".")
 
 # Print summary
 print(analysis.summary())
@@ -315,7 +315,7 @@ config = analysis.to_metagit_config()
 ### With AppConfig Integration
 
 ```python
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 from metagit.core.appconfig import AppConfig
 from metagit.core.providers import registry
 
@@ -324,14 +324,14 @@ app_config = AppConfig.load()
 registry.configure_from_app_config(app_config)
 
 # Analyze repository (will use configured providers for metrics)
-analysis = RepositoryAnalysis.from_path(".")
+analysis = DetectionManager.from_path(".")
 print(analysis.summary())
 ```
 
 ### With Manual Provider Configuration
 
 ```python
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers import registry
 
@@ -340,7 +340,7 @@ provider = GitHubProvider(api_token="ghp_...")
 registry.register(provider)
 
 # Analyze repository
-analysis = RepositoryAnalysis.from_path(".")
+analysis = DetectionManager.from_path(".")
 print(analysis.summary())
 ```
 

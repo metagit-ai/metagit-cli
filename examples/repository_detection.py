@@ -14,7 +14,7 @@ from pathlib import Path
 # Add the metagit package to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 
@@ -28,7 +28,7 @@ def analyze_local_repository(path: str) -> None:
     logger = UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
 
     # Analyze the repository
-    analysis = RepositoryAnalysis.from_path(path, logger)
+    analysis = DetectionManager.from_path(path, logger)
 
     if isinstance(analysis, Exception):
         print(f"❌ Analysis failed: {analysis}")
@@ -74,7 +74,7 @@ def analyze_remote_repository(url: str) -> None:
 
     try:
         # Analyze the repository
-        analysis = RepositoryAnalysis.from_url(url, logger, temp_dir)
+        analysis = DetectionManager.from_url(url, logger, temp_dir)
 
         if isinstance(analysis, Exception):
             print(f"❌ Analysis failed: {analysis}")

@@ -2,91 +2,42 @@
 
 import enum
 import json
+import os
+import shutil
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
+from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field
 
-from metagit.core.config.models import Language
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.config.models import Language, MetagitConfig, Metrics, PullRequests
+from metagit.core.detect.models import (
+    CIConfigAnalysis,
+    DetectionManagerConfig,
+    GitBranchAnalysis,
+    LanguageDetection,
+    ProjectTypeDetection,
+)
 from metagit.core.record.models import MetagitRecord
+from metagit.core.utils.common import normalize_git_url
+from metagit.core.utils.files import (
+    DirectoryDetails,
+    DirectorySummary,
+    FileExtensionLookup,
+    directory_details,
+    directory_summary,
+)
 from metagit.core.utils.logging import LoggingModel, UnifiedLogger
-
-
-class DetectionManagerConfig(BaseModel):
-    """
-    Configuration for DetectionManager specifying which analysis methods are enabled.
-    """
-
-    branch_analysis_enabled: bool = Field(
-        default=True, description="Enable Git branch analysis"
-    )
-    ci_config_analysis_enabled: bool = Field(
-        default=True, description="Enable CI/CD configuration analysis"
-    )
-    directory_summary_enabled: bool = Field(
-        default=True, description="Enable directory summary analysis"
-    )
-    directory_details_enabled: bool = Field(
-        default=True, description="Enable detailed directory analysis"
-    )
-    # Future analysis methods
-    commit_analysis_enabled: bool = Field(
-        default=False, description="Enable Git commit analysis"
-    )
-    tag_analysis_enabled: bool = Field(
-        default=False, description="Enable Git tag analysis"
-    )
-
-    @classmethod
-    def all_enabled(cls) -> "DetectionManagerConfig":
-        """Create a configuration with all analysis methods enabled."""
-        return cls(
-            branch_analysis_enabled=True,
-            ci_config_analysis_enabled=True,
-            directory_summary_enabled=True,
-            directory_details_enabled=True,
-            commit_analysis_enabled=True,
-            tag_analysis_enabled=True,
-        )
-
-    @classmethod
-    def minimal(cls) -> "DetectionManagerConfig":
-        """Create a configuration with only essential analysis methods enabled."""
-        return cls(
-            branch_analysis_enabled=True,
-            ci_config_analysis_enabled=True,
-            directory_summary_enabled=False,
-            directory_details_enabled=False,
-            commit_analysis_enabled=False,
-            tag_analysis_enabled=False,
-        )
-
-    def get_enabled_methods(self) -> list[str]:
-        """Get a list of enabled analysis method names."""
-        enabled = []
-        if self.branch_analysis_enabled:
-            enabled.append("branch_analysis")
-        if self.ci_config_analysis_enabled:
-            enabled.append("ci_config_analysis")
-        if self.directory_summary_enabled:
-            enabled.append("directory_summary")
-        if self.directory_details_enabled:
-            enabled.append("directory_details")
-        if self.commit_analysis_enabled:
-            enabled.append("commit_analysis")
-        if self.tag_analysis_enabled:
-            enabled.append("tag_analysis")
-        return enabled
 
 
 class DetectionManager(MetagitRecord, LoggingModel):
     """
     Single entrypoint for performing detection analysis of a target git project or git project path.
 
-    This class inherits from MetagitRecord and uses RepositoryAnalysis for all detection details.
+    This class inherits from MetagitRecord and includes all RepositoryAnalysis functionality.
     Existing metagitconfig data is loaded first if a config file exists in the project.
     """
 
@@ -95,24 +46,20 @@ class DetectionManager(MetagitRecord, LoggingModel):
         default_factory=DetectionManagerConfig, description="Analysis configuration"
     )
 
-    # Repository analysis containing all detection results
-    repository_analysis: Optional[RepositoryAnalysis] = None
-
     # Internal tracking
     analysis_completed: bool = Field(
         default=False, description="Whether analysis has been completed"
     )
-    project_path: str = Field(default="", description="Project path for analysis")
 
     @property
-    def path(self) -> str:
+    def project_path(self) -> str:
         """Get the project path."""
-        return self.project_path
+        return self.path or ""
 
-    @path.setter
-    def path(self, value: str) -> None:
+    @project_path.setter
+    def project_path(self, value: str) -> None:
         """Set the project path."""
-        self.project_path = value
+        self.path = value
 
     @classmethod
     def from_path(
@@ -134,12 +81,18 @@ class DetectionManager(MetagitRecord, LoggingModel):
         """
         logger = logger or UnifiedLogger().get_logger()
         try:
+            logger.debug(f"Creating DetectionManager from path: {path}")
+
+            if not os.path.exists(path):
+                return FileNotFoundError(f"Path does not exist: {path}")
+
             # Load existing metagitconfig if it exists
             existing_config = cls._load_existing_config(path)
 
             # Create base MetagitRecord data
             record_data = {
                 "name": Path(path).name,
+                "path": path,
                 "detection_timestamp": datetime.now(timezone.utc),
                 "detection_source": "local",
                 "detection_version": "1.0.0",
@@ -153,7 +106,6 @@ class DetectionManager(MetagitRecord, LoggingModel):
             manager = cls(
                 **record_data,
                 detection_config=config or DetectionManagerConfig(),
-                project_path=path,
             )
             manager.set_logger(logger)
 
@@ -184,34 +136,42 @@ class DetectionManager(MetagitRecord, LoggingModel):
         """
         logger = logger or UnifiedLogger().get_logger()
         try:
-            # Use RepositoryAnalysis to clone and get basic info
-            repo_analysis = RepositoryAnalysis.from_url(url, temp_dir)
-            repo_analysis.set_logger(logger)
-            if isinstance(repo_analysis, Exception):
-                return repo_analysis
+            normalized_url = normalize_git_url(url)
+            logger.debug(f"Creating DetectionManager from URL: {normalized_url}")
+
+            # Create temporary directory if not provided
+            if temp_dir is None:
+                temp_dir = tempfile.mkdtemp(prefix="metagit_")
+
+            # Clone the repository
+            try:
+                _ = Repo.clone_from(normalized_url, temp_dir)
+                logger.debug(f"Successfully cloned repository to: {temp_dir}")
+            except Exception as e:
+                return Exception(f"Failed to clone repository: {e}")
 
             # Create base MetagitRecord data
             record_data = {
-                "name": repo_analysis.name or Path(repo_analysis.path).name,
-                "url": url,
+                "name": Path(temp_dir).name,
+                "path": temp_dir,
+                "url": normalized_url,
+                "is_git_repo": True,
+                "is_cloned": True,
+                "temp_dir": temp_dir,
                 "detection_timestamp": datetime.now(timezone.utc),
                 "detection_source": "remote",
                 "detection_version": "1.0.0",
             }
 
             # Load existing metagitconfig if it exists in the cloned repo
-            existing_config = cls._load_existing_config(repo_analysis.path)
+            existing_config = cls._load_existing_config(temp_dir)
             if existing_config:
-                record_data.update(
-                    existing_config.model_dump(exclude_none=True, exclude_unset=True)
-                )
+                record_data.update(existing_config.model_dump(exclude_none=True))
 
             # Create DetectionManager instance
             manager = cls(
                 **record_data,
                 detection_config=config or DetectionManagerConfig(),
-                repository_analysis=repo_analysis,
-                project_path=repo_analysis.path,
             )
             manager.set_logger(logger)
 
@@ -221,52 +181,116 @@ class DetectionManager(MetagitRecord, LoggingModel):
             return e
 
     @staticmethod
-    def _load_existing_config(path: str) -> Optional[MetagitRecord]:
-        """
-        Load existing metagitconfig data if it exists in the project.
+    def _load_existing_config(path: str) -> Optional[MetagitConfig]:
+        """Load existing metagitconfig if it exists in the project."""
+        config_paths = [
+            Path(path) / "metagit.config.yaml",
+            Path(path) / "metagit.config.yml",
+            Path(path) / ".metagit.yml",
+            Path(path) / ".metagit.yaml",
+        ]
 
-        Args:
-            path: Path to the project directory
-
-        Returns:
-            MetagitRecord if config exists, None otherwise
-        """
-        try:
-            config_path = Path(path) / ".metagit.yml"
+        for config_path in config_paths:
             if config_path.exists():
-                with open(config_path, "r", encoding="utf-8") as f:
-                    data = yaml.safe_load(f)
+                try:
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        config_data = yaml.safe_load(f)
+                    return MetagitConfig(**config_data)
+                except Exception:
+                    continue
 
-                # Convert to MetagitRecord
-                return MetagitRecord(**data)
-        except Exception:
-            # Silently fail if config loading fails
-            pass
         return None
 
     def run_all(self) -> Union[None, Exception]:
         """
-        Run all enabled detection analyses using RepositoryAnalysis.
+        Run all enabled analysis methods.
 
         Returns:
-            None on success, Exception on failure
+            None if successful, Exception if failed
         """
         try:
-            # Use RepositoryAnalysis if available, otherwise create one
-            if not self.repository_analysis:
-                self.repository_analysis = RepositoryAnalysis.from_path(
-                    self.path, self.logger
-                )
-                if isinstance(self.repository_analysis, Exception):
-                    return self.repository_analysis
+            self.logger.debug(f"Running all analysis methods for: {self.path}")
 
-            # RepositoryAnalysis now handles all the analysis internally
-            # The analysis results are already available in repository_analysis
+            # Check if this is a git repository
+            try:
+                _ = Repo(self.path)
+                self.is_git_repo = True
+                self.logger.debug("Repository is a valid git repository")
+            except (InvalidGitRepositoryError, NoSuchPathError):
+                self.is_git_repo = False
+                self.logger.debug("Repository is not a git repository")
 
-            # Update MetagitRecord fields with detection results
+            # Extract basic metadata
+            self._extract_metadata()
+
+            # Run language detection
+            language_result = self._detect_languages()
+            if isinstance(language_result, Exception):
+                self.logger.warning(f"Language detection failed: {language_result}")
+            else:
+                self.language_detection = language_result
+
+            # Run project type detection
+            type_result = self._detect_project_type()
+            if isinstance(type_result, Exception):
+                self.logger.warning(f"Project type detection failed: {type_result}")
+            else:
+                self.project_type_detection = type_result
+
+            # Run branch analysis if enabled
+            if self.detection_config.branch_analysis_enabled and self.is_git_repo:
+                try:
+                    self.branch_analysis = GitBranchAnalysis.from_repo(
+                        self.path, self.logger
+                    )
+                    if isinstance(self.branch_analysis, Exception):
+                        self.logger.warning(
+                            f"Branch analysis failed: {self.branch_analysis}"
+                        )
+                        self.branch_analysis = None
+                except Exception as e:
+                    self.logger.warning(f"Branch analysis failed: {e}")
+
+            # Run CI/CD analysis if enabled
+            if self.detection_config.ci_config_analysis_enabled:
+                try:
+                    self.ci_config_analysis = CIConfigAnalysis.from_repo(
+                        self.path, self.logger
+                    )
+                    if isinstance(self.ci_config_analysis, Exception):
+                        self.logger.warning(
+                            f"CI/CD analysis failed: {self.ci_config_analysis}"
+                        )
+                        self.ci_config_analysis = None
+                except Exception as e:
+                    self.logger.warning(f"CI/CD analysis failed: {e}")
+
+            # Run directory summary analysis if enabled
+            if self.detection_config.directory_summary_enabled:
+                try:
+                    self.directory_summary = directory_summary(self.path)
+                except Exception as e:
+                    self.logger.warning(f"Directory summary analysis failed: {e}")
+
+            # Run directory details analysis if enabled
+            if self.detection_config.directory_details_enabled:
+                try:
+                    file_lookup = FileExtensionLookup()
+                    self.directory_details = directory_details(self.path, file_lookup)
+                except Exception as e:
+                    self.logger.warning(f"Directory details analysis failed: {e}")
+
+            # Analyze files
+            self._analyze_files()
+
+            # Detect metrics
+            self._detect_metrics()
+
+            # Update MetagitRecord fields
             self._update_metagit_record()
 
             self.analysis_completed = True
+            self.logger.debug("All analysis methods completed successfully")
             return None
 
         except Exception as e:
@@ -274,375 +298,442 @@ class DetectionManager(MetagitRecord, LoggingModel):
 
     def run_specific(self, method_name: str) -> Union[None, Exception]:
         """
-        Run a specific analysis method by name.
-
-        Note: This method now delegates to RepositoryAnalysis which runs all analyses together.
-        Individual method control is handled through the detection_config.
+        Run a specific analysis method.
 
         Args:
-            method_name: Name of the analysis method to run
+            method_name: Name of the method to run
 
         Returns:
-            None on success, Exception on failure
+            None if successful, Exception if failed
         """
         try:
-            # Check if the method is enabled in config
-            if (
-                method_name == "branch_analysis"
-                and not self.detection_config.branch_analysis_enabled
-            ) or (
-                method_name == "ci_config_analysis"
-                and not self.detection_config.ci_config_analysis_enabled
-            ) or (
-                method_name == "directory_summary"
-                and not self.detection_config.directory_summary_enabled
-            ) or (
-                method_name == "directory_details"
-                and not self.detection_config.directory_details_enabled
-            ):
-                return Exception(f"Analysis method disabled: {method_name}")
-            elif method_name not in [
-                "branch_analysis",
-                "ci_config_analysis",
-                "directory_summary",
-                "directory_details",
-            ]:
+            self.logger.debug(f"Running specific analysis method: {method_name}")
+
+            if method_name == "language_detection":
+                result = self._detect_languages()
+                if isinstance(result, Exception):
+                    return result
+                self.language_detection = result
+
+            elif method_name == "project_type_detection":
+                result = self._detect_project_type()
+                if isinstance(result, Exception):
+                    return result
+                self.project_type_detection = result
+
+            elif method_name == "branch_analysis":
+                if not self.is_git_repo:
+                    return Exception("Branch analysis requires a git repository")
+                result = GitBranchAnalysis.from_repo(self.path, self.logger)
+                if isinstance(result, Exception):
+                    return result
+                self.branch_analysis = result
+
+            elif method_name == "ci_config_analysis":
+                result = CIConfigAnalysis.from_repo(self.path, self.logger)
+                if isinstance(result, Exception):
+                    return result
+                self.ci_config_analysis = result
+
+            elif method_name == "directory_summary":
+                result = directory_summary(self.path)
+                self.directory_summary = result
+
+            elif method_name == "directory_details":
+                file_lookup = FileExtensionLookup()
+                result = directory_details(self.path, file_lookup)
+                self.directory_details = result
+
+            else:
                 return Exception(f"Unknown analysis method: {method_name}")
 
-            # Run all analysis (RepositoryAnalysis handles all methods together)
-            return self.run_all()
+            # Update MetagitRecord fields
+            self._update_metagit_record()
+
+            self.logger.debug(f"Successfully ran analysis method: {method_name}")
+            return None
 
         except Exception as e:
             return e
 
-    def _update_metagit_record(self) -> None:
-        """Update MetagitRecord fields with detection results from RepositoryAnalysis."""
+    def _extract_metadata(self) -> None:
+        """Extract basic repository metadata."""
         try:
-            if not self.repository_analysis:
+            # Extract name from path if not set
+            if not self.name:
+                self.name = Path(self.path).name
+
+            # Try to extract description from README files
+            readme_files = ["README.md", "README.txt", "README.rst", "README"]
+            for readme_file in readme_files:
+                readme_path = Path(self.path) / readme_file
+                if readme_path.exists():
+                    try:
+                        with open(readme_path, "r", encoding="utf-8") as f:
+                            content = f.read()
+                            # Extract first line as description
+                            lines = content.split("\n")
+                            for line in lines:
+                                line = line.strip()
+                                if line and not line.startswith("#"):
+                                    self.description = line[:200]  # Limit to 200 chars
+                                    break
+                    except Exception:
+                        continue
+                    break
+
+        except Exception as e:
+            self.logger.warning(f"Metadata extraction failed: {e}")
+
+    def _detect_languages(self) -> Union[LanguageDetection, Exception]:
+        """Detect programming languages in the repository."""
+        try:
+            # This is a simplified language detection
+            # In a real implementation, you would use more sophisticated detection
+            detected_languages = []
+            frameworks = []
+            package_managers = []
+            build_tools = []
+
+            # Check for common file extensions
+            for root, dirs, files in os.walk(self.path):
+                for file in files:
+                    if file.endswith(".py"):
+                        detected_languages.append("Python")
+                    elif file.endswith(".js"):
+                        detected_languages.append("JavaScript")
+                    elif file.endswith(".ts"):
+                        detected_languages.append("TypeScript")
+                    elif file.endswith(".java"):
+                        detected_languages.append("Java")
+                    elif file.endswith(".go"):
+                        detected_languages.append("Go")
+                    elif file.endswith(".rs"):
+                        detected_languages.append("Rust")
+                    elif file.endswith(".cpp") or file.endswith(".cc"):
+                        detected_languages.append("C++")
+                    elif file.endswith(".c"):
+                        detected_languages.append("C")
+
+                # Check for framework and tool indicators
+                if "requirements.txt" in files or "pyproject.toml" in files:
+                    package_managers.append("pip")
+                if "package.json" in files:
+                    package_managers.append("npm")
+                if "Cargo.toml" in files:
+                    package_managers.append("cargo")
+                if "go.mod" in files:
+                    package_managers.append("go modules")
+                if "pom.xml" in files:
+                    package_managers.append("maven")
+                if "build.gradle" in files:
+                    package_managers.append("gradle")
+
+            # Determine primary language (most common)
+            if detected_languages:
+                primary = max(set(detected_languages), key=detected_languages.count)
+                secondary = list(set(detected_languages) - {primary})
+            else:
+                primary = "Unknown"
+                secondary = []
+
+            return LanguageDetection(
+                primary=primary,
+                secondary=secondary,
+                frameworks=frameworks,
+                package_managers=package_managers,
+                build_tools=build_tools,
+            )
+
+        except Exception as e:
+            return e
+
+    def _detect_project_type(self) -> Union[ProjectTypeDetection, Exception]:
+        """Detect project type and domain."""
+        try:
+            # This is a simplified project type detection
+            # In a real implementation, you would use more sophisticated detection
+            indicators = []
+            project_type = "other"
+            domain = "other"
+            confidence = 0.5
+
+            # Check for common project indicators
+            if any(Path(self.path).glob("*.py")):
+                indicators.append("Python files")
+                if any(Path(self.path).glob("*.py")):
+                    project_type = "application"
+                    confidence = 0.7
+
+            if any(Path(self.path).glob("package.json")):
+                indicators.append("Node.js project")
+                project_type = "application"
+                confidence = 0.8
+
+            if any(Path(self.path).glob("Dockerfile")):
+                indicators.append("Docker configuration")
+                project_type = "application"
+                confidence = 0.6
+
+            if any(Path(self.path).glob("*.md")):
+                indicators.append("Documentation")
+                domain = "documentation"
+
+            return ProjectTypeDetection(
+                type=project_type,
+                domain=domain,
+                confidence=confidence,
+                indicators=indicators,
+            )
+
+        except Exception as e:
+            return e
+
+    def _analyze_files(self) -> None:
+        """Analyze files in the repository."""
+        try:
+            # Check for various file types
+            self.has_docker = any(Path(self.path).glob("Dockerfile*"))
+            self.has_tests = any(
+                Path(self.path).glob("**/test*") or Path(self.path).glob("**/*test*")
+            )
+            self.has_docs = any(Path(self.path).glob("**/*.md"))
+            self.has_iac = any(
+                Path(self.path).glob("**/*.tf") or Path(self.path).glob("**/*.yaml")
+            )
+
+            # Categorize detected files
+            self.detected_files = {
+                "docker": [str(f) for f in Path(self.path).glob("Dockerfile*")],
+                "tests": [str(f) for f in Path(self.path).glob("**/test*")],
+                "docs": [str(f) for f in Path(self.path).glob("**/*.md")],
+                "config": [str(f) for f in Path(self.path).glob("**/*.yaml")],
+            }
+
+        except Exception as e:
+            self.logger.warning(f"File analysis failed: {e}")
+
+    def _detect_metrics(self) -> None:
+        """Detect repository metrics."""
+        try:
+            if not self.is_git_repo:
                 return
 
-            # Update basic fields from repository analysis
-            if not self.name:
-                self.name = self.repository_analysis.name
-            if not self.description:
-                self.description = self.repository_analysis.description
-            if not self.url:
-                self.url = self.repository_analysis.url
+            repo = Repo(self.path)
 
-            # Update language detection
-            if self.repository_analysis.language_detection:
+            # Create metrics object
+            self.metrics = Metrics(
+                stars=0,  # Would be fetched from provider API
+                forks=0,  # Would be fetched from provider API
+                open_issues=0,  # Would be fetched from provider API
+                pull_requests=PullRequests(open=0, merged_last_30d=0),
+                contributors=len(repo.heads) if repo.heads else 0,
+                commit_frequency="unknown",
+            )
+
+            # Create metadata object
+            self.metadata = RepoMetadata(
+                tags=[],
+                created_at=None,
+                last_commit_at=(
+                    repo.head.commit.committed_datetime
+                    if repo.head.is_valid()
+                    else None
+                ),
+                default_branch=(
+                    repo.active_branch.name if repo.head.is_valid() else None
+                ),
+                topics=[],
+                forked_from=None,
+                archived=False,
+                template=False,
+                has_ci=self.ci_config_analysis is not None,
+                has_tests=self.has_tests,
+                has_docs=self.has_docs,
+                has_docker=self.has_docker,
+                has_iac=self.has_iac,
+            )
+
+        except Exception as e:
+            self.logger.warning(f"Metrics detection failed: {e}")
+
+    def _update_metagit_record(self) -> None:
+        """Update MetagitRecord fields with analysis results."""
+        try:
+            # Update language information
+            if self.language_detection:
                 self.language = Language(
-                    primary=self.repository_analysis.language_detection.primary,
-                    secondary=getattr(
-                        self.repository_analysis.language_detection,
-                        "secondary",
-                        None,
-                    ),
-                )
-                self.language_version = getattr(
-                    self.repository_analysis.language_detection,
-                    "primary_version",
-                    None,
+                    primary=self.language_detection.primary,
+                    secondary=self.language_detection.secondary,
                 )
 
-            # Update project type detection
-            if self.repository_analysis.project_type_detection:
-                self.kind = self.repository_analysis.project_type_detection.type
-                self.domain = self.repository_analysis.project_type_detection.domain
+            # Update project type information
+            if self.project_type_detection:
+                self.domain = self.project_type_detection.domain
 
             # Update branch information
-            if self.repository_analysis.branch_analysis:
-                self.branches = self.repository_analysis.branch_analysis.branches
-                self.branch_strategy = (
-                    self.repository_analysis.branch_analysis.strategy_guess
-                )
+            if self.branch_analysis:
+                # Convert BranchInfo to Branch objects
+                self.branches = [
+                    Branch(
+                        name=branch.name,
+                        environment=(
+                            "production" if branch.name == "main" else "development"
+                        ),
+                    )
+                    for branch in self.branch_analysis.branches
+                ]
 
-            # Update CI/CD information
-            if self.repository_analysis.ci_config_analysis:
-                from metagit.core.config.models import CICD, Pipeline
-
-                pipelines = []
-                for tool in self.repository_analysis.ci_config_analysis.detected_tools:
-                    pipelines.append(Pipeline(name=tool, ref=f".{tool}"))
-
-                self.cicd = CICD(
-                    platform=self.repository_analysis.ci_config_analysis.detected_tool,
-                    pipelines=pipelines,
-                )
-
-            # Update metrics
-            if self.repository_analysis.metrics:
-                self.metrics = self.repository_analysis.metrics
-
-            # Update metadata
-            if self.repository_analysis.metadata:
-                self.metadata = self.repository_analysis.metadata
-
-            # Update license information
-            if self.repository_analysis.license_info:
-                self.license = self.repository_analysis.license_info
-
-            # Update maintainers
-            if self.repository_analysis.maintainers:
-                self.maintainers = self.repository_analysis.maintainers
-
-            # Update artifacts
-            if self.repository_analysis.artifacts:
-                self.artifacts = self.repository_analysis.artifacts
-
-            # Update secrets management
-            if self.repository_analysis.secrets_management:
-                self.secrets_management = self.repository_analysis.secrets_management
-
-            # Update secrets
-            if self.repository_analysis.secrets:
-                self.secrets = self.repository_analysis.secrets
-
-            # Update documentation
-            if self.repository_analysis.documentation:
-                self.documentation = self.repository_analysis.documentation
-
-            # Update observability information
-            observability_data = {}
-            if self.repository_analysis.alerts:
-                observability_data["alerting_channels"] = (
-                    self.repository_analysis.alerts
-                )
-            if self.repository_analysis.dashboards:
-                observability_data["dashboards"] = self.repository_analysis.dashboards
-
-            if observability_data:
-                from metagit.core.config.models import Observability
-
-                self.observability = Observability(**observability_data)
-
-            # Update deployment information
-            deployment_data = {}
-            if self.repository_analysis.environments:
-                deployment_data["environments"] = self.repository_analysis.environments
-
-            if deployment_data:
-                from metagit.core.config.models import Deployment
-
-                self.deployment = Deployment(**deployment_data)
+            # Update detection timestamp
+            self.detection_timestamp = datetime.now(timezone.utc)
 
         except Exception as e:
             self.logger.warning(f"Failed to update MetagitRecord: {e}")
 
     def summary(self) -> Union[str, Exception]:
         """
-        Generate a summary of the detection results.
+        Generate a summary of the repository analysis.
 
         Returns:
             Summary string or Exception
         """
         try:
-            lines = [f"Detection Analysis for: {self.name or self.path}"]
+            lines = [f"Repository Analysis for: {self.name or self.path}"]
             lines.append(f"Path: {self.path}")
             if self.url:
                 lines.append(f"URL: {self.url}")
-            lines.append(f"Detection completed: {self.analysis_completed}")
-            lines.append(
-                f"Enabled methods: {', '.join(self.detection_config.get_enabled_methods())}"
-            )
+            lines.append(f"Git repository: {self.is_git_repo}")
+            lines.append(f"Cloned: {self.is_cloned}")
 
-            # MetagitRecord summary
-            if self.kind:
-                lines.append(f"Project type: {self.kind}")
-            if self.domain:
-                lines.append(f"Domain: {self.domain}")
-            if self.language:
-                lines.append(f"Primary language: {self.language}")
-            if self.branch_strategy:
-                lines.append(f"Branch strategy: {self.branch_strategy}")
-
-            # Detection results summary from RepositoryAnalysis
-            if self.repository_analysis:
-                # Branch analysis
-                if self.repository_analysis.branch_analysis:
+            # Language detection
+            if self.language_detection:
+                lines.append(f"Primary language: {self.language_detection.primary}")
+                if self.language_detection.secondary:
                     lines.append(
-                        f"Branching strategy: {self.repository_analysis.branch_analysis.strategy_guess}"
+                        f"Secondary languages: {', '.join(self.language_detection.secondary)}"
                     )
-                    lines.append("Branches:")
-                    for b in self.repository_analysis.branch_analysis.branches:
-                        lines.append(
-                            f"  - {'[remote]' if b.is_remote else '[local]'} {b.name}"
-                        )
-                elif self.detection_config.branch_analysis_enabled:
-                    lines.append("Branch analysis not available.")
-
-                # CI/CD analysis
-                if self.repository_analysis.ci_config_analysis:
+                if self.language_detection.frameworks:
                     lines.append(
-                        f"CI/CD tool: {self.repository_analysis.ci_config_analysis.detected_tool}"
+                        f"Frameworks: {', '.join(self.language_detection.frameworks)}"
                     )
-                elif self.detection_config.ci_config_analysis_enabled:
-                    lines.append("CI/CD analysis not available.")
 
-                # Directory analysis
-                if self.repository_analysis.directory_summary:
-                    lines.append(
-                        f"Directory summary: {self.repository_analysis.directory_summary.num_files} files, {len(self.repository_analysis.directory_summary.file_types)} file types"
-                    )
-                elif self.detection_config.directory_summary_enabled:
-                    lines.append("Directory summary not available.")
+            # Project type detection
+            if self.project_type_detection:
+                lines.append(f"Project type: {self.project_type_detection.type}")
+                lines.append(f"Domain: {self.project_type_detection.domain}")
+                lines.append(f"Confidence: {self.project_type_detection.confidence}")
 
-                if self.repository_analysis.directory_details:
-                    total_categories = len(
-                        self.repository_analysis.directory_details.file_types
-                    )
-                    lines.append(
-                        f"Directory details: {self.repository_analysis.directory_details.num_files} files, {total_categories} file type categories"
-                    )
-                elif self.detection_config.directory_details_enabled:
-                    lines.append("Directory details not available.")
+            # Branch analysis
+            if self.branch_analysis:
+                lines.append(f"Branch strategy: {self.branch_analysis.strategy_guess}")
+                lines.append(
+                    f"Number of branches: {len(self.branch_analysis.branches)}"
+                )
+
+            # CI/CD analysis
+            if self.ci_config_analysis:
+                lines.append(f"CI/CD tool: {self.ci_config_analysis.detected_tool}")
+
+            # Directory analysis
+            if self.directory_summary:
+                lines.append(f"Total files: {self.directory_summary.num_files}")
+                lines.append(f"File types: {len(self.directory_summary.file_types)}")
+
+            if self.directory_details:
+                lines.append(f"Detailed files: {self.directory_details.num_files}")
+                lines.append(
+                    f"File categories: {len(self.directory_details.file_types)}"
+                )
+
+            # File analysis
+            lines.append(f"Has Docker: {self.has_docker}")
+            lines.append(f"Has tests: {self.has_tests}")
+            lines.append(f"Has docs: {self.has_docs}")
+            lines.append(f"Has IaC: {self.has_iac}")
+
+            # Metrics
+            if self.metrics:
+                lines.append(f"Total commits: {self.metrics.contributors}")
+                lines.append(f"Commit frequency: {self.metrics.commit_frequency}")
 
             return "\n".join(lines)
-        except Exception as e:
-            return e
 
-    def remove_logger(self, obj: Any) -> Union[Any, Exception]:
-        """Recursively remove logger from objects for serialization, including nested Pydantic models."""
-        try:
-            from pydantic import BaseModel
-
-            if isinstance(obj, dict):
-                return {
-                    k: self.remove_logger(v) for k, v in obj.items() if k != "logger"
-                }
-            elif isinstance(obj, list):
-                return [self.remove_logger(item) for item in obj]
-            elif hasattr(obj, "_asdict"):  # NamedTuple
-                return self.remove_logger(obj._asdict())
-            elif isinstance(obj, BaseModel):
-                # Convert to dict, excluding logger, and recurse
-                return self.remove_logger(obj.model_dump(exclude={"logger"}))
-            else:
-                return obj
         except Exception as e:
             return e
 
     def to_yaml(self) -> Union[str, Exception]:
         """
-        Convert the DetectionManager model to a YAML string.
+        Convert DetectionManager to YAML string.
+
+        Returns:
+            YAML string or Exception
         """
         try:
-            # Use pydantic's .model_dump() for dict conversion (v2+), else .dict()
-            data = (
-                self.model_dump(exclude={"logger", "detection_config"})
-                if hasattr(self, "model_dump")
-                else dict(self, exclude={"logger", "detection_config"})
-            )
-            data = self.remove_logger(data)
-            if isinstance(data, Exception):
-                return data
-            # Extra safety: remove logger at the top level if present
-            data.pop("logger", None)
+            data = self.model_dump(exclude_none=True, exclude_defaults=True)
 
-            # Convert Enums to their values and NamedTuples to dicts
+            # Handle complex objects that can't be serialized directly
             def convert_objects(obj):
-                if isinstance(obj, enum.Enum):
-                    return obj.value
-                elif hasattr(
-                    obj, "_asdict"
-                ):  # NamedTuple (including DirectoryDetails, FileTypeWithPercent)
-                    result = obj._asdict()
-                    # Recursively convert nested objects
-                    for key, value in result.items():
-                        result[key] = convert_objects(value)
-                    return result
-                elif isinstance(obj, dict):
-                    return {k: convert_objects(v) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [convert_objects(item) for item in obj]
-                elif hasattr(obj, "__dict__") and not isinstance(
-                    obj, (str, int, float, bool, type(None))
-                ):
-                    obj_dict = obj.__dict__.copy()
-                    for key, value in obj_dict.items():
-                        obj_dict[key] = convert_objects(value)
-                    return obj_dict
+                if hasattr(obj, "model_dump"):
+                    return obj.model_dump()
+                elif isinstance(obj, datetime):
+                    return obj.isoformat()
+                elif isinstance(obj, Path):
+                    return str(obj)
+                return obj
+
+            # Convert nested objects
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    data[key] = {k: convert_objects(v) for k, v in value.items()}
+                elif isinstance(value, list):
+                    data[key] = [convert_objects(v) for v in value]
                 else:
-                    return obj
+                    data[key] = convert_objects(value)
 
-            data = convert_objects(data)
+            return yaml.safe_dump(data, indent=2, default_flow_style=False)
 
-            # Handle RepositoryAnalysis serialization
-            if "repository_analysis" in data and data["repository_analysis"]:
-                # Convert RepositoryAnalysis to a serializable format
-                repo_data = data["repository_analysis"]
-                if hasattr(repo_data, "model_dump"):
-                    data["repository_analysis"] = convert_objects(
-                        repo_data.model_dump()
-                    )
-
-            return yaml.safe_dump(data, sort_keys=False, default_flow_style=False)
         except Exception as e:
             return e
 
     def to_json(self) -> Union[str, Exception]:
         """
-        Convert the DetectionManager model to a JSON string.
+        Convert DetectionManager to JSON string.
+
+        Returns:
+            JSON string or Exception
         """
         try:
-            data = (
-                self.model_dump(exclude={"logger", "detection_config"})
-                if hasattr(self, "model_dump")
-                else dict(self, exclude={"logger", "detection_config"})
-            )
-            data = self.remove_logger(data)
-            if isinstance(data, Exception):
-                return data
-            # Extra safety: remove logger at the top level if present
-            data.pop("logger", None)
+            data = self.model_dump(exclude_none=True, exclude_defaults=True)
 
-            # Convert datetime objects to ISO format strings and NamedTuples to dicts for JSON serialization
+            # Handle complex objects that can't be serialized directly
             def convert_objects(obj):
-                if isinstance(obj, datetime):
+                if hasattr(obj, "model_dump"):
+                    return obj.model_dump()
+                elif isinstance(obj, datetime):
                     return obj.isoformat()
-                elif hasattr(obj, "_asdict"):  # NamedTuple
-                    result = obj._asdict()
-                    # Recursively convert nested objects
-                    for key, value in result.items():
-                        if isinstance(value, list):
-                            result[key] = [convert_objects(item) for item in value]
-                        elif isinstance(value, dict):
-                            result[key] = {
-                                k: convert_objects(v) for k, v in value.items()
-                            }
-                        elif hasattr(value, "_asdict"):
-                            result[key] = convert_objects(value)
-                    return result
-                elif isinstance(obj, dict):
-                    return {k: convert_objects(v) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [convert_objects(item) for item in obj]
-                elif hasattr(obj, "__dict__") and not isinstance(
-                    obj, (str, int, float, bool, type(None))
-                ):
-                    obj_dict = obj.__dict__.copy()
-                    for key, value in obj_dict.items():
-                        obj_dict[key] = convert_objects(value)
-                    return obj_dict
+                elif isinstance(obj, Path):
+                    return str(obj)
+                return obj
+
+            # Convert nested objects
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    data[key] = {k: convert_objects(v) for k, v in value.items()}
+                elif isinstance(value, list):
+                    data[key] = [convert_objects(v) for v in value]
                 else:
-                    return obj
-
-            data = convert_objects(data)
-
-            # Handle RepositoryAnalysis serialization
-            if "repository_analysis" in data and data["repository_analysis"]:
-                # Convert RepositoryAnalysis to a serializable format
-                repo_data = data["repository_analysis"]
-                if hasattr(repo_data, "model_dump"):
-                    data["repository_analysis"] = convert_objects(
-                        repo_data.model_dump()
-                    )
+                    data[key] = convert_objects(value)
 
             return json.dumps(data, indent=2, default=str)
+
         except Exception as e:
             return e
 
     def cleanup(self) -> None:
         """Clean up temporary files if this was a cloned repository."""
-        if self.repository_analysis:
-            self.repository_analysis.cleanup()
+        if self.is_cloned and self.temp_dir and os.path.exists(self.temp_dir):
+            try:
+                shutil.rmtree(self.temp_dir)
+                self.logger.debug(f"Cleaned up temporary directory: {self.temp_dir}")
+            except Exception as e:
+                self.logger.warning(f"Failed to clean up temporary directory: {e}")

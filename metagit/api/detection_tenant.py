@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 
 from metagit.api.models import DetectionStatus
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
 
@@ -243,8 +243,8 @@ class TenantAwareDetectionService:
 
             logger.info(f"Processing detection {detection_id} for tenant {tenant_id}")
 
-            # Perform detection using RepositoryAnalysis
-            detection_result = RepositoryAnalysis.from_url(repository_url)
+            # Perform detection using DetectionManager
+            detection_result = DetectionManager.from_url(repository_url)
 
             if isinstance(detection_result, Exception):
                 # Detection failed
@@ -254,7 +254,7 @@ class TenantAwareDetectionService:
                 logger.error(f"Detection failed for {detection_id}: {detection_result}")
                 return
 
-            # Convert RepositoryAnalysis to MetagitRecord
+            # Convert DetectionManager to MetagitRecord
             analysis = detection_result
             try:
                 # Create MetagitRecord from analysis

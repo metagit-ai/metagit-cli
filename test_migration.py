@@ -67,10 +67,10 @@ def test_repository_analysis_structure():
     print("\nTesting RepositoryAnalysis structure...")
 
     try:
-        from metagit.core.detect.repository import RepositoryAnalysis
+        from metagit.core.detect import DetectionManager
 
-        # Check that RepositoryAnalysis has the expected fields
-        analysis = RepositoryAnalysis(path="./")
+        # Check that DetectionManager has the expected fields
+        analysis = DetectionManager(path="./")
 
         # Check for analysis result fields
         expected_fields = [
@@ -82,9 +82,9 @@ def test_repository_analysis_structure():
 
         for field in expected_fields:
             if hasattr(analysis, field):
-                print(f"✅ RepositoryAnalysis has {field} field")
+                print(f"✅ DetectionManager has {field} field")
             else:
-                print(f"❌ RepositoryAnalysis missing {field} field")
+                print(f"❌ DetectionManager missing {field} field")
                 return False
 
         return True
@@ -98,7 +98,7 @@ def test_detection_manager_structure():
     print("\nTesting DetectionManager structure...")
 
     try:
-        from metagit.core.detect.manager import DetectionManager
+        from metagit.core.detect import DetectionManager
 
         # Check that DetectionManager has the expected structure
         manager = DetectionManager(project_path="./")

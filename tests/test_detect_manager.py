@@ -9,13 +9,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from metagit.core.config.models import Language, ProjectDomain, ProjectType
-from metagit.core.detect.branch import BranchInfo, GitBranchAnalysis
-from metagit.core.detect.cicd import CIConfigAnalysis
-from metagit.core.detect.manager import DetectionManager, DetectionManagerConfig
-from metagit.core.detect.repository import (
+from metagit.core.detect import (
+    BranchInfo,
+    CIConfigAnalysis,
+    DetectionManager,
+    DetectionManagerConfig,
+    GitBranchAnalysis,
     LanguageDetection,
     ProjectTypeDetection,
-    RepositoryAnalysis,
 )
 
 

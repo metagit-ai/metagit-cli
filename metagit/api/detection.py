@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from metagit.api.models import DetectionStatus
 from metagit.core.config.models import Branch, MetagitRecord
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 from metagit.core.providers import registry
 from metagit.core.utils.common import normalize_git_url
 
@@ -49,7 +49,7 @@ class DetectionJob:
         self.record_id = None
 
         # Detection results
-        self.analysis_result: Optional[RepositoryAnalysis] = None
+        self.analysis_result: Optional[DetectionManager] = None
         self.metagit_record: Optional[MetagitRecord] = None
 
 
@@ -217,7 +217,7 @@ class DetectionService:
 
             # Clone and analyze repository
             logger.info(f"Cloning repository from URL: {repository_url}")
-            analysis = RepositoryAnalysis.from_url(repository_url, logger)
+            analysis = DetectionManager.from_url(repository_url, logger)
             if isinstance(analysis, Exception):
                 raise analysis
 
@@ -248,7 +248,7 @@ class DetectionService:
             job.updated_at = datetime.utcnow()
 
     async def _enrich_with_provider_data(
-        self, analysis: RepositoryAnalysis, url: Union[str, Any], job: DetectionJob
+        self, analysis: DetectionManager, url: Union[str, Any], job: DetectionJob
     ) -> None:
         """
         Enrich analysis with provider-specific data.
@@ -299,7 +299,7 @@ class DetectionService:
             logger.error(f"Error enriching with provider data: {e}")
 
     async def _create_metagit_record(
-        self, job: DetectionJob, analysis: RepositoryAnalysis
+        self, job: DetectionJob, analysis: DetectionManager
     ) -> Union[MetagitRecord, Exception]:
         """
         Create MetagitRecord from analysis.

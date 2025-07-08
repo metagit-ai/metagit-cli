@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 
 """
 Test script to verify timezone fix for provider plugins.
@@ -20,7 +20,7 @@ def test_timezone_fix():
     # Test 1: Basic repository analysis without providers
     print("\n📋 Test 1: Basic repository analysis")
     try:
-        analysis = RepositoryAnalysis.from_path(".")
+        analysis = DetectionManager.from_path(".")
         if isinstance(analysis, Exception):
             print(f"❌ Analysis failed: {analysis}")
             return False
