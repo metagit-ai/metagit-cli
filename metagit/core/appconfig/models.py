@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -59,7 +59,7 @@ class Profile(BaseModel):
     """Model for profile configuration."""
 
     name: str = Field(default="default", description="Profile name")
-    boundaries: List[Boundary] = Field(
+    boundaries: Optional[List[Boundary]] = Field(
         description="Organization boundaries. Items in this list are internal to the profile.",
         default=[
             Boundary(name="github", values=[]),

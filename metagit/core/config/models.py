@@ -42,6 +42,7 @@ class BranchStrategy(str, Enum):
     FORK = "fork"
     NONE = "none"
     CUSTOM = "custom"
+    UNKNOWN = "unknown"
 
 
 class TaskerKind(str, Enum):
@@ -677,10 +678,12 @@ class MetagitConfig(BaseModel):
     """Main model for .metagit.yml configuration file."""
 
     name: str = Field(..., description="Project name")
-    description: Optional[str] = Field(None, description="Project description")
+    description: Optional[str] = Field(
+        default="No description", description="Project description"
+    )
     url: Optional[Union[HttpUrl, GitUrl]] = Field(None, description="Project URL")
     kind: Optional[ProjectKind] = Field(
-        None,
+        default=ProjectKind.APPLICATION,
         description="Project kind. This is used to determine the type of project and the best way to manage it.",
     )
     documentation: Optional[List[str]] = Field(
@@ -691,7 +694,7 @@ class MetagitConfig(BaseModel):
         None, description="Project maintainers"
     )
     branch_strategy: Optional[BranchStrategy] = Field(
-        None, description="Branch strategy used by the project."
+        default="unknown", description="Branch strategy used by the project."
     )
     taskers: Optional[List[Tasker]] = Field(
         None, description="Task management tools employed by the project."
@@ -700,7 +703,7 @@ class MetagitConfig(BaseModel):
         None, description="Branch naming patterns used by the project."
     )
     artifacts: Optional[List[Artifact]] = Field(
-        None, description="Generated artifacts from the project."
+        default_factory=lambda: [], description="Generated artifacts from the project."
     )
     secrets_management: Optional[List[str]] = Field(
         None, description="Secrets management tools employed by the project."
@@ -717,11 +720,11 @@ class MetagitConfig(BaseModel):
         None, description="Observability configuration"
     )
     paths: Optional[List[ProjectPath]] = Field(
-        None,
+        default_factory=lambda: [],
         description="Important local project paths. In a monorepo, this would include any sub-projects typically found being built in the CICD pipelines.",
     )
     dependencies: Optional[List[ProjectPath]] = Field(
-        None,
+        default_factory=lambda: [],
         description="Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.",
     )
     components: Optional[List[ProjectPath]] = Field(
@@ -729,7 +732,14 @@ class MetagitConfig(BaseModel):
         description="Additional project component paths that may be useful in other projects.",
     )
     workspace: Optional[Workspace] = Field(
-        None,
+        default_factory=lambda: Workspace(
+            projects=[
+                WorkspaceProject(
+                    name="default",
+                    repos=[],
+                )
+            ],
+        ),
         description="Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. The internal workspace name is reservice",
     )
 

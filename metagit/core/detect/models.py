@@ -7,35 +7,12 @@ including language detection, project type detection, branch analysis, CI/CD ana
 and detection manager configuration.
 """
 
-import enum
-import json
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import List, Literal, Optional, Union
 
-import yaml
 from pydantic import BaseModel, Field
 
-from metagit.core.config.models import (
-    AlertingChannel,
-    Artifact,
-    Branch,
-    CommitFrequency,
-    Dashboard,
-    Environment,
-    Language,
-    License,
-    LicenseKind,
-    Maintainer,
-    Metrics,
-    ProjectDomain,
-    ProjectKind,
-    ProjectType,
-    PullRequests,
-    RepoMetadata,
-    Secret,
-    Workspace,
-)
+from metagit.core.config.models import ProjectDomain, ProjectType
 from metagit.core.utils.logging import LoggingModel, UnifiedLogger
 
 

@@ -4,7 +4,7 @@ Pydantic models for metagit records.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Type, TypeVar, Union
+from typing import Dict, List, Optional, Type, TypeVar
 
 import yaml
 from pydantic import BaseModel, Field

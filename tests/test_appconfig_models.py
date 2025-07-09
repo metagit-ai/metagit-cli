@@ -3,6 +3,8 @@
 Unit tests for metagit.core.appconfig.models
 """
 
+import yaml
+
 from metagit.core.appconfig.models import (
     LLM,
     AppConfig,
@@ -10,6 +12,7 @@ from metagit.core.appconfig.models import (
     GitHubProvider,
     GitLabProvider,
     Profile,
+    Providers,
     WorkspaceConfig,
 )
 
@@ -22,7 +25,7 @@ def test_boundary_model():
 
 def test_profiles_model():
     p = Profile()
-    assert p[0].name == "default"
+    assert p.name == "default"
     assert isinstance(p.boundaries, list)
 
 
@@ -67,7 +70,6 @@ def test_appconfig_load_and_save(tmp_path):
     # Create a config file
     config_path = tmp_path / "testconfig.yaml"
     data = {"config": AppConfig().model_dump()}
-    import yaml
 
     with open(config_path, "w") as f:
         yaml.dump(data, f)

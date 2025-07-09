@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 
-import enum
 import json
 import os
 import shutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional, Union
 
 import yaml
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from metagit.core.config.models import Language, MetagitConfig, Metrics, PullRequests
 from metagit.core.detect.models import (
@@ -24,8 +23,6 @@ from metagit.core.detect.models import (
 from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
 from metagit.core.utils.files import (
-    DirectoryDetails,
-    DirectorySummary,
     FileExtensionLookup,
     directory_details,
     directory_summary,

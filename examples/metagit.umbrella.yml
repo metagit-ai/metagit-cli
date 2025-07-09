@@ -15,9 +15,9 @@ workspace:
     - name: k8s-lab-terraform-libvirt
       description: "Kubernetes lab with Terraform and Libvirt"
       url: git@github.com:zloeber/k8s-lab-terraform-libvirt.git
-    - name: metagit
-      description: "Metagit project"
-      path: ./metagit
+    - name: crewai-openrouter-lab
+      description: "Openrouter lab for crewai"
+      url: git@github.com:zloeber/crewai-openrouter-lab.git
     - name: metagit_cli
       description: "Metagit CLI project"
       path: ./metagit/cli

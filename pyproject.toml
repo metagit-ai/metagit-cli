@@ -58,6 +58,7 @@ exclude = [".venv", "records", ".metagit", "examples", "docs", "tests", "metagit
 
 [dependency-groups]
 dev = [
+    "diagrams>=0.24.4",
     "mypy>=1.16.1",
     "ruff>=0.11.11",
 ]

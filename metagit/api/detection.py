@@ -11,9 +11,10 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 
 from metagit.api.models import DetectionStatus
-from metagit.core.config.models import Branch, MetagitRecord
+from metagit.core.config.models import Branch
 from metagit.core.detect import DetectionManager
 from metagit.core.providers import registry
+from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
 
 logger = logging.getLogger(__name__)

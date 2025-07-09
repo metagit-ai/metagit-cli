@@ -6,11 +6,10 @@ This module defines the Pydantic models used for configuring
 the git cache management system.
 """
 
-import os
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 

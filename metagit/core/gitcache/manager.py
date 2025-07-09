@@ -8,9 +8,7 @@ for caching git repositories and local directories.
 
 import asyncio
 import logging
-import os
 import shutil
-import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -866,7 +864,7 @@ class GitCacheManager:
                         if ahead_commits:
                             changes_summary += f". Latest remote commit: {ahead_commits[0].message.split(chr(10))[0]}"
 
-                    except Exception as e:
+                    except Exception:
                         changes_summary = f"Commit hashes differ: local={local_info['commit_hash'][:8]}, remote={remote_info['commit_hash'][:8]}"
 
             return {

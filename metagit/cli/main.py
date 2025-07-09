@@ -42,7 +42,10 @@ CONTEXT_SETTINGS: dict = {
 @click.group(context_settings=CONTEXT_SETTINGS, invoke_without_command=True)
 @click.version_option(__version__)
 @click.option(
-    "--config", default="metagit.config.yaml", help="Path to the configuration file"
+    "--config",
+    "-c",
+    default="metagit.config.yaml",
+    help="Path to the configuration file",
 )
 @click.option("--debug/--no-debug", default=False, help="Enable or disable debug mode")
 @click.option(
@@ -104,7 +107,9 @@ def info(ctx: click.Context) -> None:
     logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
 
     logger.config_element(name="version", value=__version__, console=True)
-    logger.config_element(name="config_path", value=ctx.obj["config_path"], console=True)
+    logger.config_element(
+        name="config_path", value=ctx.obj["config_path"], console=True
+    )
     logger.config_element(name="debug", value=ctx.obj["debug"], console=True)
     logger.config_element(name="verbose", value=ctx.obj["verbose"], console=True)
 
