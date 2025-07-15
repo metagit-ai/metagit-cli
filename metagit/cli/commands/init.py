@@ -33,8 +33,14 @@ from metagit.core.utils.yaml_class import yaml
 @click.option(
     "--force", "-f", is_flag=True, help="Force overwrite of existing .metagit.yml file"
 )
+@click.option(
+    "--skip-gitignore",
+    "-s",
+    is_flag=True,
+    help="Skip updating .gitignore file",
+)
 @click.pass_context
-def init(ctx: click.Context, kind: str, force: bool) -> None:
+def init(ctx: click.Context, kind: str, force: bool, skip_gitignore: bool) -> None:
     """Initialize local metagit environment by creating .metagit.yml and updating .gitignore"""
     logger: UnifiedLogger = ctx.obj["logger"]
     app_config: AppConfig = ctx.obj["config"]
@@ -84,7 +90,10 @@ def init(ctx: click.Context, kind: str, force: bool) -> None:
             ctx.abort()
 
     # Handle .gitignore file
-    _update_gitignore(gitignore_path, workspace_path, logger)
+    if not skip_gitignore:
+        _update_gitignore(gitignore_path, workspace_path, logger)
+    else:
+        logger.info("Skipping .gitignore file update")
 
     logger.header("Metagit initialization complete!")
     if kind == "application":
