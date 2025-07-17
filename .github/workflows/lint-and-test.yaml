@@ -27,8 +27,8 @@ jobs:
           uv sync --dev
           uv pip install -e ".[test]"
 
-      - name: Run lint
+      - name: Lint
         run: uv run ruff check .
 
-      - name: Run test
+      - name: Test
         run: uv run pytest --maxfail=1 --disable-warnings -v tests

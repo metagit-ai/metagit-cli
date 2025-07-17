@@ -749,7 +749,8 @@ class GitCacheManager:
                 try:
                     # Get the branch that HEAD was pointing to
                     info["branch"] = repo.git.rev_parse("--abbrev-ref", "HEAD")
-                except:
+                except Exception as e:
+                    logger.warning(f"Failed to get branch info for {repo_path}: {e}")
                     info["branch"] = None
 
             return info
@@ -787,14 +788,18 @@ class GitCacheManager:
                     .split(":")[1]
                     .strip()
                 )
-            except:
+            except Exception as e:
+                logger.warning(f"Failed to get default branch for {repo_path}: {e}")
                 # Fallback to common default branches
                 for branch in ["main", "master"]:
                     try:
                         remote.refs[branch]
                         default_branch = branch
                         break
-                    except:
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to get default branch for {repo_path}: {e}"
+                        )
                         continue
 
             if default_branch:

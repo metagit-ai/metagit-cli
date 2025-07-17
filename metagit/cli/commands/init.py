@@ -15,8 +15,7 @@ import click
 from git import Repo
 
 from metagit.core.appconfig import AppConfig
-from metagit.core.config.manager import create_metagit_config
-from metagit.core.config.models import MetagitConfig, Workspace, WorkspaceProject
+from metagit.core.config.models import MetagitConfig
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.utils.yaml_class import yaml
 
@@ -56,7 +55,7 @@ def init(ctx: click.Context, kind: str, force: bool, skip_gitignore: bool) -> No
     # Check if .metagit.yml already exists
     if Path(metagit_yml_path).exists() and not force:
         logger.warning(
-            f"⚠️ .metagit.yml already exists, metagit_yml_path (Use --force to overwrite)"
+            "⚠️ .metagit.yml already exists, metagit_yml_path (Use --force to overwrite)"
         )
     else:
         try:

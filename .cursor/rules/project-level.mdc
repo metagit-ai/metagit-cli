@@ -57,6 +57,7 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Handle configuration errors gracefully:
   - Validate environment variables at startup.
   - Use try-except blocks with meaningful error messages.
+  - Never use bare exceptions.
 - Log errors appropriately using Python's `logging` module.
 - Ensure secure loading of configuration files.
 

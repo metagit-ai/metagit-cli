@@ -1,7 +1,6 @@
 # Metagit
 
-Metagit is situational awareness for developers made easy. Metagit can make multi-repo projects feel more like a monorepo and provide information on the software stacks within.
-
+Metagit is situational awareness for developers made easy. Metagit can make a multi-repo project feel more like a monorepo and provide information on the software stacks within at a glance.
 
 # About
 
@@ -13,7 +12,7 @@ This tool is well suited for a number of scenarios including;
 4. Automated documentation of a code's provenance.
 5. As a new contributor to a project or team, get from zero to first code commit in as little time as possible.
 
-Metagit aims to provide situational awareness for developers, SREs, AI agents, and engineers on the git projects they work in every day. It is meant to shed light on the numerous interconnected dependencies that comprise the whole of the entire solution being worked on in a single easily read and updated file.
+Metagit aims to provide situational awareness for developers, SREs, AI agents, and engineers on the git projects they work in every day. It is meant to shed light on the numerous interconnected dependencies that comprise the whole of the entire solution being worked on in a single easily read, updated, and version controlled file.
 
 ## Audience
 
@@ -41,9 +40,9 @@ Despite the name this tool still requires git and all the trappings of a git hos
 
 ## How It Works
 
-This app accesses and saves project configuration metadata within the repository as a .metagit.yml file (or in a hosted tenant). The data within a project follows a schema that can be read via the cli.
+This app accesses and saves project configuration metadata within the repository as a `.metagit.yml` file. This file follows a schema that can be read via the cli.
 
-If using this tool to simply manage several dozen git repos (aka. an umbrella repo) then everything within the configuration file can be manually updated. You can also attempt to automatically update the file using a mix of standard heuristics and AI driven workflows.
+If using this tool to manage several dozen git repos (aka. an umbrella repo) then everything within the configuration file can be manually updated. You can also attempt to automatically update the file using a mix of standard heuristics and AI driven workflows.
 
 # Modes
 
@@ -89,7 +88,7 @@ In this mode, metagit would be used to answer questions such as;
 
 ## Metadata+ Mode
 
-All the prior metadata is incredibly useful already. But if we add context around this then we are cooking with gas! If we setup basic organization boundaries like owned registries or github/gitlab groups we can then start looking for fragile pipelines or  This can be done easily through a central configuration file or SaaS offering. This 
+All the prior metadata is incredibly useful already. But if we add context around this then we are cooking with gas! If we setup basic organization boundaries like owned registries or github/gitlab groups we can then start looking for dangers such as outside dependencies.
 
 ## Enterprise (TBD)
 
@@ -105,59 +104,214 @@ In this mode metagit connects to our enterprise SaaS offering to help mine the w
 
 ## Installation
 
+**uv:**
+
+`uv tool install metagit-ai`
+
+**From source:**
 To install metagit, clone the repository and build the project:
 
 ```bash
-git clone https://github.com/zloeber/metagit.git
-cd metagit
+git clone https://github.com/metagit-ai/metagit-detect.git
+cd metagit-detect
 
 ./configure.sh
 task build
+uv tool install dist/metagit-*-py3-none-any.whl
 ```
 
+**docker:**
+
+```bash
+# Pull the latest version
+docker pull ghcr.io/metagit-ai/metagit-cli:latest
+
+# Pull a specific version
+docker pull ghcr.io/metagit-ai/metagit-cli:0.1.0
+
+# Run the CLI
+docker run --rm ghcr.io/metagit-ai/metagit-cli:latest --help
+```
 # Usage
 
-### Initialize a Repository
+## Quick Start
 
-To initialize a new metagit configuration in your current Git repository, run:
-
-```bash
-./metagit init
-```
-
-This command will check if the current directory is a Git repository and create a `metagit.yaml` configuration file if it does not exist. It will also ensure that `.metagit` is added to your `.gitignore`.
-
-### Project Commands
-
-To work with project settings, use the project command:
+To get started with metagit, initialize a new configuration in your Git repository:
 
 ```bash
-./metagit project
+metagit init
 ```
 
-#### Detect Project Settings
+This creates a `metagit.yaml` configuration file and updates your `.gitignore` file.
 
-To detect project configurations, run:
+## Subcommands
+
+### `init` - Initialize Repository
+Initialize a new metagit configuration in your current Git repository:
 
 ```bash
-./metagit project detect
+metagit init
 ```
 
-### Workspace Commands
+This command will:
+- Check if the current directory is a Git repository
+- Create a `metagit.yaml` configuration file if it doesn't exist
+- Add `.metagit` to your `.gitignore` file
 
-To manage workspace settings, use the workspace command:
+### `appconfig` - Application Configuration
+
+Manage metagit's application-level configuration:
 
 ```bash
-./metagit workspace
+# Show current application configuration
+metagit appconfig show
+
+# Create default application config
+metagit appconfig create
+
+# Get a specific configuration value
+metagit appconfig get <key>
+
+# Validate configuration file
+metagit appconfig validate
+
+# Generate JSON schema for configuration
+metagit appconfig schema
+
+# Show configuration information
+metagit appconfig info
 ```
 
-#### Synchronize Workspace
+### `config` - Project Configuration
 
-To sync workspace settings, run:
+Manage project-specific (local git project) metagit configuration:
 
 ```bash
-./metagit workspace sync
+# Show current project configuration
+metagit config show
+
+# Create new metagit config files
+metagit config create
+
+# Validate metagit configuration
+metagit config validate
+
+# Generate JSON schema for MetagitConfig
+metagit config schema
+
+# Display project configuration information
+metagit config info
+
+# Manage git provider plugins
+metagit config providers
 ```
+
+### `detect` - Repository Detection
+
+Analyze and detect project characteristics:
+
+```bash
+# Basic repository detection
+metagit detect repo
+
+# Comprehensive repository analysis with MetagitConfig generation
+metagit detect repository
+```
+
+The detection system analyzes your repository to automatically identify:
+- Programming languages and frameworks
+- Build tools and package managers
+- CI/CD configurations
+- Project structure and dependencies
+
+### `project` - Project Management
+Manage projects within workspaces:
+
+```bash
+# List current project configuration
+metagit project list
+
+# Select a project repository to work on
+metagit project select
+
+# Sync project within workspace
+metagit project sync
+
+# Repository-specific operations
+metagit project repo <subcommand>
+```
+
+Options:
+- `-c, --config`: Path to metagit definition file
+- `-p, --project`: Specific project within workspace
+
+### `record` - Record Management
+Manage metagit records with various storage backends:
+
+```bash
+# Create a record from metagit configuration
+metagit record create
+
+# Show record(s)
+metagit record show
+
+# Search records
+metagit record search <query>
+
+# Update an existing record
+metagit record update
+
+# Delete a record
+metagit record delete
+
+# Export record to file
+metagit record export
+
+# Import record from file
+metagit record import
+
+# Show storage statistics
+metagit record stats
+```
+
+Storage options:
+- `--storage-type`: Choose between `local` or `opensearch`
+- `--storage-path`: Path for local storage
+- `--opensearch-*`: OpenSearch connection parameters
+
+### `workspace` - Workspace Management
+Manage multi-repository workspaces:
+
+```bash
+# Select project repository to work on
+metagit workspace select
+```
+
+### `info` - Configuration Information
+Display current configuration:
+
+```bash
+metagit info
+```
+
+### `version` - Version Information
+Get application version:
+
+```bash
+metagit version
+```
+
+## Global Options
+
+Available for all commands:
+
+- `--version`: Show version and exit
+- `-c, --config`: Path to configuration file
+- `--debug / --no-debug`: Enable/disable debug mode
+- `--verbose / --no-verbose`: Enable/disable verbose output
+- `-h, --help`: Show help message
+
+
 
 # Configuration
 
@@ -191,6 +345,8 @@ uv run -m metagit.cli.main detect repo
 ```
 
 # Development
+
+TBD 
 
 ## MCP Servers
 
