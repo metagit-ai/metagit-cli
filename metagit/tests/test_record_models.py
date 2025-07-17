@@ -122,9 +122,10 @@ class TestMetagitRecord:
             branch_strategy=models.BranchStrategy.TRUNK,
         )
 
-        # Create record from config
+        # Create record from config, excluding None values
+        config_data = config.model_dump(exclude_none=True)
         record = record_models.MetagitRecord(
-            **config.model_dump(),
+            **config_data,
             detection_timestamp=datetime.now(),
             detection_source="local",
             detection_version="1.0.0",
