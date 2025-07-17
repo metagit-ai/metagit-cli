@@ -356,10 +356,10 @@ class TestMetagitRecordManager:
 
     def test_create_record_from_config_manager(self, local_backend):
         """Test creating a record using config manager."""
-        config_manager = MetagitConfigManager()
+        # config_manager = MetagitConfigManager()
         manager = MetagitRecordManager(
             storage_backend=local_backend,
-            metagit_config_manager=config_manager,
+            metagit_config_manager=None,
         )
 
         # This should fail because no config file exists

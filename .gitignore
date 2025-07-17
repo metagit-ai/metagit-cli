@@ -19,3 +19,4 @@ unit_test_results.txt
 # Metagit workspace
 .metagit/
 records
+secret_results.json

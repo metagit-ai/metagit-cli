@@ -182,8 +182,6 @@ class GitCacheManager:
         Returns:
             True if successful, Exception if failed
         """
-        import asyncio
-
         try:
             result = await asyncio.to_thread(self._clone_repository, url, cache_path)
             return result
@@ -270,7 +268,6 @@ class GitCacheManager:
         Returns:
             True if successful, Exception if failed
         """
-        import asyncio
 
         try:
             result = await asyncio.to_thread(self._pull_updates, cache_path)

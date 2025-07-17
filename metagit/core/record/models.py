@@ -44,6 +44,14 @@ except ImportError:
     DirectoryDetails = "DirectoryDetails"
     DirectorySummary = "DirectorySummary"
 
+from metagit.core.detect.models import (
+    CIConfigAnalysis,
+    GitBranchAnalysis,
+    LanguageDetection,
+    ProjectTypeDetection,
+)
+from metagit.core.utils.files import DirectoryDetails, DirectorySummary
+
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -159,24 +167,24 @@ class MetagitRecord(MetagitConfig):
     temp_dir: Optional[str] = Field(None, description="Temporary directory if cloned")
 
     # Detection results from RepositoryAnalysis
-    language_detection: Optional["LanguageDetection"] = Field(
+    language_detection: Optional[LanguageDetection] = Field(
         None, description="Language detection results"
     )
-    project_type_detection: Optional["ProjectTypeDetection"] = Field(
+    project_type_detection: Optional[ProjectTypeDetection] = Field(
         None, description="Project type detection results"
     )
 
     # Analysis results from RepositoryAnalysis
-    branch_analysis: Optional["GitBranchAnalysis"] = Field(
+    branch_analysis: Optional[GitBranchAnalysis] = Field(
         None, description="Git branch analysis results"
     )
-    ci_config_analysis: Optional["CIConfigAnalysis"] = Field(
+    ci_config_analysis: Optional[CIConfigAnalysis] = Field(
         None, description="CI/CD configuration analysis results"
     )
-    directory_summary: Optional["DirectorySummary"] = Field(
+    directory_summary: Optional[DirectorySummary] = Field(
         None, description="Directory summary analysis results"
     )
-    directory_details: Optional["DirectoryDetails"] = Field(
+    directory_details: Optional[DirectoryDetails] = Field(
         None, description="Directory details analysis results"
     )
 
@@ -488,3 +496,16 @@ class MetagitRecord(MetagitConfig):
             set: Field names that exist in both models
         """
         return _get_common_fields(cls, MetagitConfig)
+
+
+MetagitRecord.model_rebuild()
+
+# from metagit.core.detect.models import (
+#     CIConfigAnalysis,
+#     GitBranchAnalysis,
+#     LanguageDetection,
+#     ProjectTypeDetection,
+# )
+# from metagit.core.utils.files import DirectoryDetails, DirectorySummary
+
+# MetagitRecord.model_rebuild()

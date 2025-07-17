@@ -168,7 +168,7 @@ class AppConfig(BaseModel):
         default=WorkspaceConfig(), description="The workspace configuration"
     )
     profiles: List[Profile] = Field(
-        default=Profile(), description="The profiles available to this appconfig"
+        default=[Profile()], description="The profiles available to this appconfig"
     )
     providers: Providers = Field(
         default=Providers(), description="Git provider plugin configuration"

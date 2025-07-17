@@ -12,7 +12,14 @@ import yaml
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import Field
 
-from metagit.core.config.models import Language, MetagitConfig, Metrics, PullRequests
+from metagit.core.config.models import (
+    Branch,
+    Language,
+    MetagitConfig,
+    Metrics,
+    PullRequests,
+    RepoMetadata,
+)
 from metagit.core.detect.models import (
     CIConfigAnalysis,
     DetectionManagerConfig,
@@ -27,7 +34,7 @@ from metagit.core.utils.files import (
     directory_details,
     directory_summary,
 )
-from metagit.core.utils.logging import LoggingModel, UnifiedLogger
+from metagit.core.utils.logging import LoggerConfig, LoggingModel, UnifiedLogger
 
 
 class DetectionManager(MetagitRecord, LoggingModel):
@@ -76,7 +83,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
         Returns:
             DetectionManager instance or Exception
         """
-        logger = logger or UnifiedLogger().get_logger()
+        logger = logger or UnifiedLogger(LoggerConfig()).get_logger()
         try:
             logger.debug(f"Creating DetectionManager from path: {path}")
 
@@ -131,7 +138,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
         Returns:
             DetectionManager instance or Exception
         """
-        logger = logger or UnifiedLogger().get_logger()
+        logger = logger or UnifiedLogger(LoggerConfig()).get_logger()
         try:
             normalized_url = normalize_git_url(url)
             logger.debug(f"Creating DetectionManager from URL: {normalized_url}")

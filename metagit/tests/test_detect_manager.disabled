@@ -18,6 +18,7 @@ from metagit.core.detect import (
     LanguageDetection,
     ProjectTypeDetection,
 )
+from metagit.core.record.models import MetagitRecord
 
 
 @pytest.fixture
@@ -80,8 +81,6 @@ def test_detection_manager_from_path(default_path):
 
 def test_detection_manager_from_path_with_existing_config(default_path):
     """Test creating DetectionManager from path with existing config."""
-    from metagit.core.config.models import MetagitRecord
-
     existing_config = MetagitRecord(
         name="test-project", description="A test project", kind="application"
     )
