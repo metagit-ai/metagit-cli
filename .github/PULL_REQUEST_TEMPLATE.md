@@ -16,7 +16,6 @@
 
 [Choose one of the above types of changes]
 
-
 ## Testing
 [How have you tested the change?]
 
