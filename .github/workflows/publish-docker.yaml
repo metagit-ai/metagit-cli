@@ -11,11 +11,13 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/metagit-cli
 
 jobs:
-  build-and-publish:
+  image-deployment:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+      id-token: write
+      attestations: write
       
     steps:
       - name: Checkout repository
