@@ -42,11 +42,13 @@ class TestMetagitRecordConversion(unittest.TestCase):
             branch_strategy=BranchStrategy.TRUNK,
             license=License(kind=LicenseKind.MIT, file="LICENSE"),
             maintainers=[
-                Maintainer(name="John Doe", email="john@example.com", role="Lead Developer")
+                Maintainer(
+                    name="John Doe", email="john@example.com", role="Lead Developer"
+                )
             ],
             cicd=CICD(
                 platform=CICDPlatform.GITHUB,
-                pipelines=[Pipeline(name="CI", ref=".github/workflows/ci.yml")]
+                pipelines=[Pipeline(name="CI", ref=".github/workflows/ci.yml")],
             ),
         )
 
@@ -58,11 +60,13 @@ class TestMetagitRecordConversion(unittest.TestCase):
             branch_strategy=BranchStrategy.TRUNK,
             license=License(kind=LicenseKind.MIT, file="LICENSE"),
             maintainers=[
-                Maintainer(name="John Doe", email="john@example.com", role="Lead Developer")
+                Maintainer(
+                    name="John Doe", email="john@example.com", role="Lead Developer"
+                )
             ],
             cicd=CICD(
                 platform=CICDPlatform.GITHUB,
-                pipelines=[Pipeline(name="CI", ref=".github/workflows/ci.yml")]
+                pipelines=[Pipeline(name="CI", ref=".github/workflows/ci.yml")],
             ),
             # Detection-specific fields
             branch="main",
@@ -128,7 +132,7 @@ class TestMetagitRecordConversion(unittest.TestCase):
     def test_field_differences(self):
         """Test field difference detection."""
         differences = MetagitRecord.get_field_differences()
-        
+
         # Should have field difference information
         self.assertIn("common_fields", differences)
         self.assertIn("record_only_fields", differences)
@@ -136,12 +140,12 @@ class TestMetagitRecordConversion(unittest.TestCase):
         self.assertIn("total_record_fields", differences)
         self.assertIn("total_config_fields", differences)
         self.assertIn("common_field_count", differences)
-        
+
         # Should have some common fields
         self.assertGreater(len(differences["common_fields"]), 0)
         self.assertIn("name", differences["common_fields"])
         self.assertIn("description", differences["common_fields"])
-        
+
         # Should have some record-only fields
         self.assertGreater(len(differences["record_only_fields"]), 0)
         self.assertIn("detection_source", differences["record_only_fields"])
@@ -150,14 +154,14 @@ class TestMetagitRecordConversion(unittest.TestCase):
     def test_compatible_fields(self):
         """Test compatible field detection."""
         compatible_fields = MetagitRecord.get_compatible_fields()
-        
+
         # Should have some compatible fields
         self.assertGreater(len(compatible_fields), 0)
         self.assertIn("name", compatible_fields)
         self.assertIn("description", compatible_fields)
         self.assertIn("url", compatible_fields)
         self.assertIn("kind", compatible_fields)
-        
+
         # Should not include detection-specific fields
         self.assertNotIn("detection_source", compatible_fields)
         self.assertNotIn("detection_version", compatible_fields)
@@ -342,7 +346,7 @@ class TestMetagitRecordConversion(unittest.TestCase):
                 pipelines=[
                     Pipeline(name="CI", ref=".github/workflows/ci.yml"),
                     Pipeline(name="CD", ref=".github/workflows/cd.yml"),
-                ]
+                ],
             ),
         )
 
@@ -410,4 +414,4 @@ class TestMetagitRecordConversion(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main() 
+    unittest.main()

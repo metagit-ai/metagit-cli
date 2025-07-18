@@ -9,4 +9,4 @@ supporting both remote cloning and local file copying with async and sync operat
 from .config import GitCacheConfig
 from .manager import GitCacheManager
 
-__all__ = ["GitCacheConfig", "GitCacheManager"] 
+__all__ = ["GitCacheConfig", "GitCacheManager"]

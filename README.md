@@ -1,16 +1,16 @@
 # Metagit
 
-Metagit is situational awareness for developers made easy. Metagit can make a multi-repo project feel more like a monorepo and provide information on the software stacks within at a glance.
+Metagit is situational awareness for developers and agents. It can make a sprawling multi-repo project feel more like a monorepo and provide concise information on the software stacks, generated artifacts, dependencies, and more.
 
-# About
+## About
 
 This tool is well suited for a number of scenarios including;
 
 1. At-a-glance view of a project's technical stacks, languages, external dependencies, and generated artifacts.
 2. Rapid pivoting between numerous git projects throughout the day while still maintaining a steady clip of productivity.
-3. Isolating outside dependencies that weaken the security and dependability of your cicd pipelines.
+3. Isolating outside dependencies that weaken the security and dependability of your software delivery pipelines.
 4. Automated documentation of a code's provenance.
-5. As a new contributor to a project or team, get from zero to first code commit in as little time as possible.
+5. As a new contributor to a project or team, go from zero to first code commit in as little time as possible.
 
 Metagit aims to provide situational awareness for developers, SREs, AI agents, and engineers on the git projects they work in every day. It is meant to shed light on the numerous interconnected dependencies that comprise the whole of the entire solution being worked on in a single easily read, updated, and version controlled file.
 
@@ -30,7 +30,7 @@ This tool targets;
 
 ### ...an SBOM Tool
 
-SBOM output can be thousands of lines long and encompass all the software dependencies, their transitive dependencies, and  more. This is too much for the simple need of situational awareness and AI integration. As such, a comprehensive software bill of materials is overkill for the goals outlined above. The development roadmap may include the ability to read in sbom manifests as a data source though!
+SBOM output can be thousands of lines long and encompass all the software dependencies, their transitive dependencies, and more. This kind of data is too much for the simple need of situational awareness and AI integration. As such, a comprehensive SBOM report is overkill for the goals outlined above. The development roadmap may include the ability to read in SBOM manifests as a data source though!
 
 Metagit makes extensive use of CI library definitions (like go.mod, packages.json, requirements.txt, et cetera) for detection and boundary validations. Such files will be used to help determine technology stacks in use but not extensive versioning or other deep information.
 
@@ -44,11 +44,11 @@ This app accesses and saves project configuration metadata within the repository
 
 If using this tool to manage several dozen git repos (aka. an umbrella repo) then everything within the configuration file can be manually updated. You can also attempt to automatically update the file using a mix of standard heuristics and AI driven workflows.
 
-# Modes
+## Modes
 
 This application will have multiple modes of operation as described below.
 
-## Workspace Mode
+### Workspace Mode
 
 This mode is the first planned release feature as an open source cli tool.
 
@@ -62,9 +62,8 @@ The metagit configuration file is then be checked into version control as a stan
 
 This mode is ideal for;
 
-- Simply trying out metagit
 - Creating umbrella projects for new team members of a multi-repo project
-- Individual power users that need to quickly pivot between several git project repositories that comprise a larger team effort
+- Individual power users that need to quickly pivot between several project repositories that comprise a larger team effort
 - Keeping loosely coupled git projects grouped together to work on without having to deal with git submodules (yuk)
 
 ## Metadata Mode
@@ -311,8 +310,6 @@ Available for all commands:
 - `--verbose / --no-verbose`: Enable/disable verbose output
 - `-h, --help`: Show help message
 
-
-
 # Configuration
 
 The default configuration file is `metagit.config.yaml`, which can be customized to suit your project's needs.
@@ -325,29 +322,11 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-# Configuration
-
-`./.configure.sh`
-
-# Use
-
-```bash
-uv run -m metagit.cli.main
-
-# Show current config
-uv run -m metagit.cli.main appconfig show
-
-# Dump new/default config
-uv run -m metagit.cli.main appconfig create
-
-# Run generic detection for current path
-uv run -m metagit.cli.main detect repo
-```
-
 # Development
 
-TBD 
+# Links
 
 ## MCP Servers
 
 [Sequential Thinking](https://github.com/modelcontextprotocol/servers/tree/HEAD/src/sequentialthinking)
+

@@ -1103,6 +1103,7 @@ standard = [
     { name = "crewai" },
 ]
 test = [
+    { name = "black" },
     { name = "httpx" },
     { name = "mypy" },
     { name = "pytest" },
@@ -1129,6 +1130,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'" },
     { name = "black", marker = "extra == 'format'" },
     { name = "black", marker = "extra == 'lint'" },
+    { name = "black", marker = "extra == 'test'" },
     { name = "click", specifier = ">=8.1.7" },
     { name = "crewai", extras = ["tools"], marker = "extra == 'standard'" },
     { name = "dotenv", specifier = ">=0.9.9" },

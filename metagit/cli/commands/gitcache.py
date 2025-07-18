@@ -88,7 +88,7 @@ def list(cache_root: str):
             click.echo(f"    Source: {entry.source_url}")
             click.echo(f"    Path: {entry.cache_path}")
             if entry.size_bytes:
-                click.echo(f"    Size: {entry.size_bytes / (1024*1024):.2f} MB")
+                click.echo(f"    Size: {entry.size_bytes / (1024 * 1024):.2f} MB")
 
             # Show git information for git repositories
             if entry.cache_type == "git":

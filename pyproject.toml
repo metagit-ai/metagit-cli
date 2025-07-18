@@ -34,15 +34,20 @@ dependencies = [
     "async>=0.6.2",
 ]
 
+[project.urls]
+Homepage = "https://github.com/metagit-ai/metagit-detect"
+Documentation = "https://metagit-ai.github.io/metagit-detect/"
+Issues = "https://github.com/metagit-ai/metagit-detect/issues"
+CI = "https://github.com/metagit-ai/metagit-detect/actions"
+
 [project.optional-dependencies]
 standard = ["crewai[tools]"]
-test = ["pytest", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio"]
+test = ["pytest", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio", "black"]
 dev = ["ruff", "black", "isort", "mypy"]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc"]
 lint = ["ruff", "black", "isort", "mypy"]
 format = ["black", "isort"]
 typecheck = ["mypy"]
-api = ["opensearch-py>=2.4.0", "aiofiles>=23.2.1", "fastapi>=0.104.1", "uvicorn[standard]>=0.24.0" ]
 
 [project.scripts]
 metagit = "metagit.cli.main:cli"
@@ -52,7 +57,7 @@ select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
 ignore = ['W291', 'W292', 'W293', 'E501', 'SIM115']
 
 [tool.ruff]
-exclude = [".venv", "records", ".metagit", "examples", "docs", "tests", "metagit/api/endpoints"]
+exclude = [".venv", "records", ".metagit", "examples", "docs", "tests"]
 
 [dependency-groups]
 dev = [

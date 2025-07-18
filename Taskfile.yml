@@ -137,6 +137,7 @@ tasks:
     cmds:
       - |
         uv run ruff format .
+        uv run black .
   
   start:mcp:
     desc: Start MCP servers
@@ -178,3 +179,25 @@ tasks:
     cmds:
       - |
         gitleaks detect --source ./ -f json -r secret_results.json
+  
+  build:
+    desc: Build the project
+    cmds:
+      - |
+        uv run build
+
+  clean:
+    desc: Clean the project
+    cmds:
+      - |
+        rm -rf .mypy_cache
+        rm -rf .pytest_cache
+        rm -rf .ruff_cache
+        rm -rf dist
+        rm -rf .coverage
+        rm -rf .coverage.*
+        rm -rf .coverage.xml
+        rm -rf .DS_Store
+        rm -rf .idea
+        rm -rf .pytest_cache
+        rm -rf .venv

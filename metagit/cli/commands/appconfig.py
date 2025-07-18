@@ -27,6 +27,7 @@ def appconfig(ctx: click.Context) -> None:
         click.echo(ctx.get_help())
         return
 
+
 @appconfig.command("info")
 @click.pass_context
 def appconfig_info(ctx: click.Context) -> None:
@@ -35,7 +36,10 @@ def appconfig_info(ctx: click.Context) -> None:
     """
     logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
     logger.config_element(name="version", value=__version__, console=True)
-    logger.config_element(name="config_path", value=ctx.obj["config_path"], console=True)
+    logger.config_element(
+        name="config_path", value=ctx.obj["config_path"], console=True
+    )
+
 
 @appconfig.command("show")
 @click.pass_context
@@ -101,15 +105,17 @@ def appconfig_validate(
         sys.exit(1)
 
 
-@appconfig.command("get",
-help='''
+@appconfig.command(
+    "get",
+    help="""
 Get a value from the application configuration.\n
 
 Example - show all keys in the providers section:\n
   metagit appconfig get --name config.providers --show-keys\n
 Example - show all values in the providers section:\n
   metagit appconfig get --name config.providers
-''')
+""",
+)
 @click.option("--name", default="", help="Appconfig element to target")
 @click.option(
     "--show-keys",

@@ -14,9 +14,8 @@ __pycache__
 .DS_Store
 unit_test_results.txt
 .pytest_cache
+.mypy_cache
 
-
+secret_results.json
 # Metagit workspace
 .metagit/
-records
-secret_results.json

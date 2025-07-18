@@ -164,7 +164,8 @@ def project_sync(ctx: click.Context) -> None:
 
         sync_result: bool = project_manager.sync(workspace_project)
         if sync_result:
-            logger.info(f"Project {project} synced successfully")
+            logger.success(f"Project {project} synced successfully")
+            exit(0)
         else:
             logger.error(f"Failed to sync project {project}")
             ctx.abort()

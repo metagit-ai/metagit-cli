@@ -310,7 +310,9 @@ def config_info(ctx: click.Context) -> None:
         logger.config_element(name="config_path", value=config_path, console=True)
     else:
         logger.echo("No project config file found!")
-        logger.echo("Create a new config file with 'metagit config create' or 'metagit init'")
+        logger.echo(
+            "Create a new config file with 'metagit config create' or 'metagit init'"
+        )
 
 
 @config.command("schema")

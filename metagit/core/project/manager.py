@@ -158,8 +158,8 @@ class ProjectManager:
         if isinstance(workspace_result, Exception):
             tqdm.write(f"Failed to create VS Code workspace file: {workspace_result}")
             # Don't fail the entire sync for workspace file creation issues
-        else:
-            tqdm.write(f"Created VS Code workspace file: {workspace_result}")
+        # else:
+        #     tqdm.write(f"Created VS Code workspace file: {workspace_result}")
 
         return True
 
@@ -224,8 +224,9 @@ class ProjectManager:
             tqdm.write(f"Source path for {repo.name} does not exist: {source_path}")
             return
 
-        desc = f"  🔗 {repo.name}"
+        desc = f"  ✅   🔗 {repo.name}"
         if os.path.exists(target_path) or os.path.islink(target_path):
+            desc = f"  🔗 {repo.name}"
             with tqdm(
                 total=1,
                 desc=desc,

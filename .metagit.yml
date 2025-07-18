@@ -1,11 +1,83 @@
-name: metagit-detect
-description: unknown
-url: git@github.com:metagit-ai/metagit-detect.git
-kind: umbrella
-branch_strategy: unknown
-artifacts: []
-paths: []
-dependencies: []
+name: metagit-cli
+description: |
+  Metagit is situational awareness for developers and agents. It can make a sprawling multi-repo project feel more like a monorepo or be used as a standalone tool to provide concise information on the project's used languages/frameworks, artifacts, upstream dependencies, and more.
+kind: application
+license:
+  file: LICENSE
+  kind: MIT
+maintainers:
+- email: zloeber@gmail.com
+  name: Zachary Loeber
+  role: Contributor
+artifacts:
+- definition: pyproject.toml
+  location: dist/
+  type: python_package
+  version_strategy: semver
+- definition: Dockerfile
+  location: .
+  type: docker
+  version_strategy: semver
+branch_strategy: trunk
+cicd:
+  pipelines:
+  - name: Lint and Test
+    ref: .github/workflows/lint-and-test.yaml
+  - name: Docs
+    ref: .github/workflows/docs.yaml
+  - name: PR and Push
+    ref: .github/workflows/pr-and-push.yaml
+  - name: Publish CLI
+    ref: .github/workflows/publish-cli.yaml
+  platform: GitHub
+
+# secrets:
+#   - id: cicd.PYPI_API_TOKEN
+#     refs:
+#     - .github/workflows/release.yaml
+#     description: API token for publishing the package to PyPI
+#     kind: string
+#     value: ${{ secrets.PYPI_API_TOKEN }}
+#   - id: cicd.DOCKER_TOKEN
+#     refs:
+#     - .github/workflows/publish-docker.yaml
+#     description: API token for publishing the docker image to GHCR
+#     kind: string
+#     value: ${{ secrets.GITHUB_TOKEN }}
+#   - id: env.METAGIT_LLM
+
+
+dependencies:
+- description: Ubuntu is a Linux distribution based on Debian and composed mostly
+    of free and open-source software.
+  kind: docker_image
+  name: ubuntu_latest
+  ref: ./.github/workflows/lint-and-test.yaml
+- name: python:3.12-slim
+  kind: docker_image
+  ref: ./Dockerfile
+  url: https://hub.docker.com/_/python
+observability:
+  dashboards:
+  - name: OpenSearch Dashboards
+    tool: OpenSearch
+    url: http://localhost:5601/
+  logging_provider: elk
+  monitoring_providers:
+  - grafana
+paths:
+- description: The main project path
+  frameworks:
+  - CrewAI
+  - Click
+  kind: application
+  language: python
+  language_version: '3.12'
+  name: metagit
+  package_manager: uv
+  path: ./metagit
+taskers:
+- kind: Taskfile
 workspace:
   projects:
   - name: default
