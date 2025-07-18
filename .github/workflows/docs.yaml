@@ -42,5 +42,4 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        if: ${{ env.IS_PUBLIC == 'true' }}
         uses: actions/deploy-pages@v4 
