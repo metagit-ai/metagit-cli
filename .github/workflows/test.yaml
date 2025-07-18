@@ -34,7 +34,7 @@ jobs:
 
       - name: Unit Tests
         run: |
-          pytest --maxfail=1 --disable-warnings -v metagit/tests
+          uv run pytest --maxfail=1 --disable-warnings -v metagit/tests
 
       - name: Linting
         if: matrix.os != 'windows-latest'
