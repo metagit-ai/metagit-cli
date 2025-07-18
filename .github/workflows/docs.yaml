@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   build-and-deploy-docs:
+    name: Build and Deploy Docs - ${{ github.ref_name }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

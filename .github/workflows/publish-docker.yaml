@@ -12,6 +12,7 @@ env:
 
 jobs:
   image-deployment:
+    name: Publish Docker Image - ${{ github.ref_name }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
