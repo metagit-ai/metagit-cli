@@ -6,12 +6,16 @@ This module defines the data models used to parse and validate
 the .metagit.yml configuration file structure.
 """
 
+import os
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any, List, Optional, Union
 
+import yaml
 from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
 
+from metagit.core.appconfig.models import AppConfig
 from metagit.core.project.models import GitUrl, ProjectKind, ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
@@ -38,6 +42,7 @@ class BranchStrategy(str, Enum):
     FORK = "fork"
     NONE = "none"
     CUSTOM = "custom"
+    UNKNOWN = "unknown"
 
 
 class TaskerKind(str, Enum):
@@ -669,158 +674,39 @@ class Metrics(BaseModel):
 
 
 # New configuration models for AppConfig
-class Boundary(BaseModel):
-    """Model for organization boundaries."""
-
-    name: str = Field(..., description="Boundary name")
-    values: List[str] = Field(default_factory=list, description="Boundary values")
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class WorkspaceConfig(BaseModel):
-    """Model for workspace configuration in AppConfig."""
-
-    path: str = Field(default="./.metagit", description="Workspace path")
-    default_project: str = Field(default="default", description="Default project")
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class LLM(BaseModel):
-    """Model for LLM configuration."""
-
-    enabled: bool = Field(default=False, description="Whether LLM is enabled")
-    provider: str = Field(default="openrouter", description="LLM provider")
-    provider_model: str = Field(default="gpt-4o-mini", description="LLM provider model")
-    embedder: str = Field(default="ollama", description="Embedding provider")
-    embedder_model: str = Field(
-        default="nomic-embed-text", description="Embedding model"
-    )
-    api_key: str = Field(default="", description="API key for LLM provider")
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class Profiles(BaseModel):
-    """Model for profiles configuration."""
-
-    profile_config_path: str = Field(
-        default="~/.config/metagit/profiles", description="Profile configuration path"
-    )
-    default_profile: str = Field(default="default", description="Default profile")
-    boundaries: List[Boundary] = Field(
-        default_factory=list, description="Organization boundaries"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class GitHubProvider(BaseModel):
-    """Model for GitHub provider configuration."""
-
-    enabled: bool = Field(
-        default=False, description="Whether GitHub provider is enabled"
-    )
-    api_token: str = Field(default="", description="GitHub API token")
-    base_url: str = Field(
-        default="https://api.github.com", description="GitHub API base URL"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class GitLabProvider(BaseModel):
-    """Model for GitLab provider configuration."""
-
-    enabled: bool = Field(
-        default=False, description="Whether GitLab provider is enabled"
-    )
-    api_token: str = Field(default="", description="GitLab API token")
-    base_url: str = Field(
-        default="https://gitlab.com/api/v4", description="GitLab API base URL"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class Providers(BaseModel):
-    """Model for Git provider configuration."""
-
-    github: GitHubProvider = Field(
-        default_factory=GitHubProvider, description="GitHub provider configuration"
-    )
-    gitlab: GitLabProvider = Field(
-        default_factory=GitLabProvider, description="GitLab provider configuration"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
-class TenantConfig(BaseModel):
-    """Model for tenant configuration."""
-
-    enabled: bool = Field(default=False, description="Whether multi-tenancy is enabled")
-    default_tenant: str = Field(default="default", description="Default tenant ID")
-    tenant_header: str = Field(default="X-Tenant-ID", description="Tenant header name")
-    tenant_required: bool = Field(
-        default=False, description="Whether tenant is required"
-    )
-    allowed_tenants: List[str] = Field(
-        default_factory=list, description="List of allowed tenant IDs"
-    )
-
-    class Config:
-        """Pydantic configuration."""
-
-        extra = "forbid"
-
-
 class MetagitConfig(BaseModel):
     """Main model for .metagit.yml configuration file."""
 
     name: str = Field(..., description="Project name")
-    description: Optional[str] = Field(None, description="Project description")
+    description: Optional[str] = Field(
+        default="No description", description="Project description"
+    )
     url: Optional[Union[HttpUrl, GitUrl]] = Field(None, description="Project URL")
-    kind: Optional[ProjectKind] = Field(None, description="Project kind")
+    kind: Optional[ProjectKind] = Field(
+        default=ProjectKind.APPLICATION,
+        description="Project kind. This is used to determine the type of project and the best way to manage it.",
+    )
     documentation: Optional[List[str]] = Field(
-        None, description="Documentation URLs or paths"
+        None, description="Documentation URLs or paths used by the project."
     )
     license: Optional[License] = Field(None, description="License information")
     maintainers: Optional[List[Maintainer]] = Field(
         None, description="Project maintainers"
     )
     branch_strategy: Optional[BranchStrategy] = Field(
-        None, description="Branch strategy"
+        default="unknown", description="Branch strategy used by the project."
     )
-    taskers: Optional[List[Tasker]] = Field(None, description="Task management tools")
+    taskers: Optional[List[Tasker]] = Field(
+        None, description="Task management tools employed by the project."
+    )
     branch_naming: Optional[List[BranchNaming]] = Field(
-        None, description="Branch naming patterns"
+        None, description="Branch naming patterns used by the project."
     )
-    artifacts: Optional[List[Artifact]] = Field(None, description="Generated artifacts")
+    artifacts: Optional[List[Artifact]] = Field(
+        default_factory=lambda: [], description="Generated artifacts from the project."
+    )
     secrets_management: Optional[List[str]] = Field(
-        None, description="Secrets management tools"
+        None, description="Secrets management tools employed by the project."
     )
     secrets: Optional[List[Secret]] = Field(None, description="Secret definitions")
     variables: Optional[List[Variable]] = Field(
@@ -833,14 +719,29 @@ class MetagitConfig(BaseModel):
     observability: Optional[Observability] = Field(
         None, description="Observability configuration"
     )
-    paths: Optional[List[ProjectPath]] = Field(None, description="Project paths")
+    paths: Optional[List[ProjectPath]] = Field(
+        default_factory=lambda: [],
+        description="Important local project paths. In a monorepo, this would include any sub-projects typically found being built in the CICD pipelines.",
+    )
     dependencies: Optional[List[ProjectPath]] = Field(
-        None, description="Project dependencies"
+        default_factory=lambda: [],
+        description="Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.",
     )
     components: Optional[List[ProjectPath]] = Field(
-        None, description="Project components"
+        None,
+        description="Additional project component paths that may be useful in other projects.",
     )
-    workspace: Optional[Workspace] = Field(None, description="Workspace configuration")
+    workspace: Optional[Workspace] = Field(
+        default_factory=lambda: Workspace(
+            projects=[
+                WorkspaceProject(
+                    name="default",
+                    repos=[],
+                )
+            ],
+        ),
+        description="Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. The internal workspace name is reservice",
+    )
 
     @field_serializer("url")
     def serialize_url(
@@ -852,15 +753,13 @@ class MetagitConfig(BaseModel):
     @property
     def local_workspace_project(self) -> WorkspaceProject:
         """Get the local workspace project configuration."""
-        if not self.workspace:
-            return WorkspaceProject(name="local", repos=[])
-
-        # For the original Workspace model, we need to handle the projects list
-        # For now, return the first project or create a default one
-        if self.workspace.projects:
-            return self.workspace.projects[0]
-        else:
-            return WorkspaceProject(name="local", repos=[])
+        # Combine paths and dependencies into a single list of repos
+        repos = []
+        if self.paths:
+            repos.extend(self.paths)
+        if self.dependencies:
+            repos.extend(self.dependencies)
+        return WorkspaceProject(name="local", repos=repos)
 
     class Config:
         """Pydantic configuration."""
@@ -870,40 +769,88 @@ class MetagitConfig(BaseModel):
         extra = "forbid"
 
 
-class MetagitRecord(MetagitConfig):
-    """Extended model for metagit records that includes detection-specific data.
+class TenantConfig(AppConfig):
+    """Model for tenant configuration that inherits from AppConfig to include all Boundary settings."""
 
-    This class inherits from MetagitConfig and adds detection-specific attributes
-    that should be stored in OpenSearch for caching and search functionality.
-    """
-
-    # Tenant support
-    tenant_id: Optional[str] = Field(
-        None, description="Tenant identifier for multi-tenancy"
+    # Tenant-specific fields (in addition to all AppConfig fields)
+    enabled: bool = Field(default=False, description="Whether multi-tenancy is enabled")
+    default_tenant: str = Field(default="default", description="Default tenant ID")
+    tenant_header: str = Field(default="X-Tenant-ID", description="Tenant header name")
+    tenant_required: bool = Field(
+        default=False, description="Whether tenant is required"
+    )
+    allowed_tenants: List[str] = Field(
+        default_factory=list, description="List of allowed tenant IDs"
     )
 
-    # Detection-specific attributes
-    branch: Optional[str] = Field(None, description="Current branch")
-    checksum: Optional[str] = Field(None, description="Branch checksum")
-    last_updated: Optional[datetime] = Field(None, description="Last updated timestamp")
-    branches: Optional[List[Branch]] = Field(None, description="Release branches")
-    metrics: Optional[Metrics] = Field(None, description="Repository metrics")
-    metadata: Optional[RepoMetadata] = Field(None, description="Repository metadata")
+    @classmethod
+    def _override_from_environment(cls, config: "TenantConfig") -> "TenantConfig":
+        """
+        Override configuration with environment variables, including tenant-specific ones.
 
-    # Additional detection fields
-    detection_timestamp: Optional[datetime] = Field(
-        None, description="When this record was last detected/updated"
-    )
-    detection_source: Optional[str] = Field(
-        None, description="Source of the detection (e.g., 'github', 'gitlab', 'local')"
-    )
-    detection_version: Optional[str] = Field(
-        None, description="Version of the detection system used"
-    )
+        Args:
+            config: TenantConfig to override
+
+        Returns:
+            Updated TenantConfig
+        """
+        # Call parent method first
+        config = super()._override_from_environment(config)
+
+        # Tenant-specific environment variables
+        if os.getenv("METAGIT_TENANT_ENABLED"):
+            config.enabled = os.getenv("METAGIT_TENANT_ENABLED").lower() == "true"
+        if os.getenv("METAGIT_TENANT_DEFAULT"):
+            config.default_tenant = os.getenv("METAGIT_TENANT_DEFAULT")
+        if os.getenv("METAGIT_TENANT_HEADER"):
+            config.tenant_header = os.getenv("METAGIT_TENANT_HEADER")
+        if os.getenv("METAGIT_TENANT_REQUIRED"):
+            config.tenant_required = (
+                os.getenv("METAGIT_TENANT_REQUIRED").lower() == "true"
+            )
+        if os.getenv("METAGIT_TENANT_ALLOWED"):
+            config.allowed_tenants = os.getenv("METAGIT_TENANT_ALLOWED").split(",")
+
+        return config
+
+    @classmethod
+    def load(cls, config_path: str = None) -> Union["TenantConfig", Exception]:
+        """
+        Load TenantConfig from file.
+
+        Args:
+            config_path: Path to configuration file (optional)
+
+        Returns:
+            TenantConfig object or Exception
+        """
+        try:
+            if not config_path:
+                config_path = Path.joinpath(
+                    Path.home(), ".config", "metagit", "config.yml"
+                )
+
+            config_file = Path(config_path)
+            if not config_file.exists():
+                return cls()
+
+            with config_file.open("r") as f:
+                config_data = yaml.safe_load(f)
+
+            if "config" in config_data:
+                config = cls(**config_data["config"])
+            else:
+                config = cls(**config_data)
+
+            # Override with environment variables
+            config = cls._override_from_environment(config)
+
+            return config
+
+        except Exception as e:
+            return e
 
     class Config:
         """Pydantic configuration."""
 
-        use_enum_values = True
-        validate_assignment = True
         extra = "forbid"

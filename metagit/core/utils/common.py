@@ -32,9 +32,7 @@ __all__ = [
 ]
 
 
-def create_vscode_workspace(
-    project_name: str, repo_paths: List[str]
-) -> Union[str, Exception]:
+def create_vscode_workspace(_: str, repo_paths: List[str]) -> Union[str, Exception]:
     """
     Create VS Code workspace file content.
 

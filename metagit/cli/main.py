@@ -28,17 +28,24 @@ from metagit.cli.commands.config import config
 from metagit.cli.commands.detect import detect
 from metagit.cli.commands.init import init
 from metagit.cli.commands.project import project
+from metagit.cli.commands.record import record
 from metagit.cli.commands.workspace import workspace
 from metagit.core.appconfig import load_config
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
-CONTEXT_SETTINGS: dict = dict(help_option_names=["-h", "--help"], max_content_width=120)
+CONTEXT_SETTINGS: dict = {
+    "help_option_names": ["-h", "--help"],
+    "max_content_width": 120,
+}
 
 
 @click.group(context_settings=CONTEXT_SETTINGS, invoke_without_command=True)
 @click.version_option(__version__)
 @click.option(
-    "--config", default="metagit.config.yaml", help="Path to the configuration file"
+    "--config",
+    "-c",
+    default="metagit.config.yaml",
+    help="Path to the configuration file",
 )
 @click.option("--debug/--no-debug", default=False, help="Enable or disable debug mode")
 @click.option(
@@ -49,21 +56,20 @@ def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
     """
     Metagit CLI: A multi-purpose CLI tool with YAML configuration.
     """
+    # If no subcommand is provided, show help
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        return
+    log_level: str = "INFO"
+    minimal_console: bool = True
+    if verbose:
+        log_level = "INFO"
+        minimal_console = False
+    if debug:
+        log_level = "DEBUG"
+        minimal_console = False
+
     try:
-        # If no subcommand is provided, show help
-        if ctx.invoked_subcommand is None:
-            click.echo(ctx.get_help())
-            return
-
-        log_level: str = "INFO"
-        minimal_console: bool = True
-        if verbose:
-            log_level = "INFO"
-            minimal_console = False
-        if debug:
-            log_level = "DEBUG"
-            minimal_console = False
-
         logger: UnifiedLogger = UnifiedLogger(
             LoggerConfig(log_level=log_level, minimal_console=minimal_console)
         )
@@ -98,29 +104,22 @@ def info(ctx: click.Context) -> None:
     """
     Display the current configuration.
     """
-    try:
-        click.echo("Metagit CLI:")
-        click.echo(f"Version: {__version__}")
-        click.echo(f"Config Path: {ctx.obj['config_path']}")
-        click.echo(f"Debug: {ctx.obj['debug']}")
-        click.echo(f"Verbose: {ctx.obj['verbose']}")
-    except Exception as e:
-        logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
-        logger.error(f"Failed to display info: {e}")
-        ctx.abort()
+    logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
+
+    logger.config_element(name="version", value=__version__, console=True)
+    logger.config_element(
+        name="config_path", value=ctx.obj["config_path"], console=True
+    )
+    logger.config_element(name="debug", value=ctx.obj["debug"], console=True)
+    logger.config_element(name="verbose", value=ctx.obj["verbose"], console=True)
 
 
 @cli.command()
 @click.pass_context
 def version(ctx: click.Context) -> None:
     """Get the application version."""
-    try:
-        logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
-        logger.config_element(name="version", value=__version__, console=True)
-    except Exception as e:
-        logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
-        logger.error(f"Failed to display version: {e}")
-        ctx.abort()
+    logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
+    logger.config_element(name="version", value=__version__, console=True)
 
 
 cli.add_command(detect)
@@ -128,6 +127,7 @@ cli.add_command(appconfig)
 cli.add_command(project)
 cli.add_command(workspace)
 cli.add_command(config)
+cli.add_command(record)
 cli.add_command(init)
 
 

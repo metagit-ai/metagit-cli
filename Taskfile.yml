@@ -137,6 +137,7 @@ tasks:
     cmds:
       - |
         uv run ruff format .
+        uv run black .
   
   start:mcp:
     desc: Start MCP servers
@@ -165,52 +166,38 @@ tasks:
     cmds:
       - |
         uv pip install -e ".[test]"
-        pytest --maxfail=1 --disable-warnings -v tests
+        pytest --maxfail=1 --disable-warnings -v metagit/tests
 
   typecheck:
     desc: Run the type checker
     cmds:
       - |
         uv run mypy metagit/core
-  
-  docker:compose:
-    desc: Run docker compose
-    cmds:
-      - |
-        docker compose build
-        docker compose up -d
-  
-  docker:compose:multitenant:
-    desc: Run docker compose with multitenant support
-    cmds:
-      - |
-        docker compose -f docker-compose.multitenant.yml build
-        docker compose -f docker-compose.multitenant.yml up -d
-  
-  api:test:detect:
-    desc: Run the api tests
-    cmds:
-      - |
-        curl -X POST "http://localhost:8000/detect" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "repository_url": "https://github.com/zloeber/mag-branch",
-            "priority": "normal"
-          }'
 
-  api:dev:
-    desc: Run the api in dev mode
-    env:
-      OPENSEARCH_HOST: localhost
-      OPENSEARCH_PORT: 9200
-      OPENSEARCH_INDEX: metagit-records
-      OPENSEARCH_USE_SSL: false
-      OPENSEARCH_VERIFY_CERTS: false
-      API_HOST: 0.0.0.0
-      API_PORT: 8000
-      API_DEBUG: true
-      MAX_CONCURRENT_JOBS: 5
+  secret:search:
+    desc: Find secrets in the codebase and in git history
     cmds:
       - |
-        docker compose -f docker-compose.dev.yml up -d
-        uv run -m metagit.api.main
+        gitleaks detect --source ./ -f json -r secret_results.json
+  
+  build:
+    desc: Build the project
+    cmds:
+      - |
+        uv run build
+
+  clean:
+    desc: Clean the project
+    cmds:
+      - |
+        rm -rf .mypy_cache
+        rm -rf .pytest_cache
+        rm -rf .ruff_cache
+        rm -rf dist
+        rm -rf .coverage
+        rm -rf .coverage.*
+        rm -rf .coverage.xml
+        rm -rf .DS_Store
+        rm -rf .idea
+        rm -rf .pytest_cache
+        rm -rf .venv

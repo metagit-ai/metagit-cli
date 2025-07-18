@@ -5,7 +5,7 @@
 [Link to related issues using #issue-number format]
 
 ## Documentation PR
-[Link to related associated PR in the agent-docs repo]
+[Link to related associated PR in the repo]
 
 ## Type of Change
 - Bug fix
@@ -20,13 +20,7 @@
 ## Testing
 [How have you tested the change?]
 
-* `hatch fmt --linter`
-* `hatch fmt --formatter`
-* `hatch test --all`
-
-
 ## Checklist
-- [ ] I have read the CONTRIBUTING document
 - [ ] I have added tests that prove my fix is effective or my feature works
 - [ ] I have updated the documentation accordingly
 - [ ] I have added an appropriate example to the documentation to outline the feature

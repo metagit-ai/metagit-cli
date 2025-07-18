@@ -24,6 +24,10 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Unused import libraries and classes should be removed from your final output.
 - Do not assign variable names that are unused in try/except blocks, instead assign them to _.
 - No bare exception statements.
+- Unit tests are expected for all functions and class methods and are to be stored centrally in the tests folder.
+- Combine if statements with and instead of nesting them where possible.
+- Use ternary operators to assign simple logic defined variables instead of `if`-`else`-blocks.
+- Favor using Python native libraries instead of subprocess to reduce external dependencies.
 
 ## Naming Conventions
 
@@ -53,6 +57,7 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Handle configuration errors gracefully:
   - Validate environment variables at startup.
   - Use try-except blocks with meaningful error messages.
+  - Never use bare exceptions.
 - Log errors appropriately using Python's `logging` module.
 - Ensure secure loading of configuration files.
 

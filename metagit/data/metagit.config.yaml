@@ -11,7 +11,7 @@ config:
   cicd_file_data: data/cicd-files.json
   file_type_data: data/file-types.json
   package_manager_data: data/package-managers.json
-  default_project: default
+  default_profile: default
 
   llm:
     provider: "openrouter"
@@ -27,14 +27,12 @@ config:
 
   profiles:
     # Profiles are used to define multiple configurations for different organizations
-    profile_config_path: ~/.config/metagit/profiles
-    default_profile: default
+    - name: default
     # Boundaries are used to define the boundaries of the organization
     # They are used to determine which repositories are part of the organization
     # and which are not. This is important for auto-detection of internal and external repositories.
     # Any artifact, repository, or registry that is not part of the defined boundaries is considered external.
-
-    boundaries:
+      boundaries:
       - name: github
         values: []
       - name: jfrog

@@ -1,15 +1,15 @@
 [project]
-name = "metagit-ai"
+name = "metagit"
 version = "0.1.0"
 description = "Metagit-ai multi-repo management tool"
 readme = "README.md"
-license = {file = "LICENSE"}
+license-files = ["LICENSE"]
+
 authors = [
     {name = "Zachary Loeber", email = "zloeber@gmail.com"}
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 requires-python = ">=3.12"
@@ -30,40 +30,49 @@ dependencies = [
     "prompt-toolkit>=3.0.51",
     "tqdm>=4.66.4",
     "types-tqdm>=4.67.0.20250516",
-    "fastapi>=0.104.1",
-    "uvicorn[standard]>=0.24.0",
-    "opensearch-py>=2.4.0",
     "aiofiles>=23.2.1",
+    "async>=0.6.2",
 ]
+
+[project.urls]
+Homepage = "https://github.com/metagit-ai/metagit-detect"
+Documentation = "https://metagit-ai.github.io/metagit-detect/"
+Issues = "https://github.com/metagit-ai/metagit-detect/issues"
+CI = "https://github.com/metagit-ai/metagit-detect/actions"
 
 [project.optional-dependencies]
 standard = ["crewai[tools]"]
-test = ["pytest", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio"]
+test = ["pytest", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio", "black"]
 dev = ["ruff", "black", "isort", "mypy"]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc"]
 lint = ["ruff", "black", "isort", "mypy"]
 format = ["black", "isort"]
 typecheck = ["mypy"]
-api = ["fastapi", "uvicorn[standard]", "opensearch-py", "aiofiles"]
-
 
 [project.scripts]
-metagit = "metagit.cli.main:main"
-metagit-api = "metagit.api.app:main"
+metagit = "metagit.cli.main:cli"
 
 [lint]
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
-ignore = ['W291', 'W292', 'W293', 'E501']
-exclude = [".venv"]
+ignore = ['W291', 'W292', 'W293', 'E501', 'SIM115']
+
+[tool.ruff]
+exclude = [".venv", "records", ".metagit", "examples", "docs", "tests"]
 
 [dependency-groups]
 dev = [
+    "diagrams>=0.24.4",
     "mypy>=1.16.1",
     "ruff>=0.11.11",
 ]
 
+
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["metagit*"]
-exclude = ["metagit.tests*"]
-namespaces = false
+include = ["metagit", "metagit.*"]
+exclude = ["tests", "tests.*"]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+

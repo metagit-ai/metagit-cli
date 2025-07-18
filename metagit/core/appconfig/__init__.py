@@ -6,36 +6,9 @@ from typing import Union
 
 import yaml as base_yaml
 
-from metagit.core.appconfig.models import (
-    LLM,
-    AppConfig,
-    Boundary,
-    Profiles,
-    Providers,
-    TenantAppConfig,
-    TenantConfig,
-    TenantConfigManager,
-    WorkspaceConfig,
-)
-from metagit.core.config.models import GitHubProvider, GitLabProvider
+from metagit.core.appconfig.models import AppConfig
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.utils.yaml_class import yaml
-
-__all__ = [
-    "AppConfig",
-    "Boundary",
-    "LLM",
-    "Profiles",
-    "Providers",
-    "TenantAppConfig",
-    "TenantConfig",
-    "TenantConfigManager",
-    "WorkspaceConfig",
-    "GitHubProvider",
-    "GitLabProvider",
-    "load_config",
-    "get_config",
-]
 
 
 def load_config(config_path: str) -> Union[AppConfig, Exception]:
@@ -71,7 +44,9 @@ def get_config(
             )
         )
     try:
-        appconfig_dict = appconfig.model_dump()
+        appconfig_dict = appconfig.model_dump(
+            exclude_none=True, exclude_unset=True, mode="json"
+        )
         output_value = {"config": appconfig_dict}
         config_path = name.split(".")
         if name != "":
@@ -87,13 +62,13 @@ def get_config(
         if show_keys and isinstance(output_value, dict):
             output_value = list(output_value.keys())
         elif show_keys and isinstance(output_value, list):
-            output_result = list()
+            output_result = []
             for output_name in output_value:
                 output_result.append(output_name)
             output_value = output_result
 
         if output == "yml" or output == "yaml":
-            base_yaml.Dumper.ignore_aliases = lambda *args: True
+            base_yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005
             logger.echo(
                 base_yaml.dump(
                     output_value,

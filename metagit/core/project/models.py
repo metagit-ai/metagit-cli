@@ -57,8 +57,10 @@ class ProjectKind(str, Enum):
 class ProjectPath(BaseModel):
     """Model for project path, dependency, component, or workspace project information."""
 
-    name: str = Field(..., description="Project path name")
-    description: Optional[str] = Field(None, description="Project description")
+    name: str = Field(..., description="Friendly name for the path or project")
+    description: Optional[str] = Field(
+        None, description="Short description of the path or project"
+    )
     kind: Optional[ProjectKind] = Field(None, description="Project kind")
     ref: Optional[str] = Field(
         None,
@@ -72,8 +74,12 @@ class ProjectPath(BaseModel):
     language_version: Optional[Union[str, float, int]] = Field(
         None, description="Language version"
     )
-    package_manager: Optional[str] = Field(None, description="Package manager")
-    frameworks: Optional[List[str]] = Field(None, description="Frameworks used")
+    package_manager: Optional[str] = Field(
+        None, description="Package manager used by the project"
+    )
+    frameworks: Optional[List[str]] = Field(
+        None, description="Frameworks used by the project"
+    )
 
     @field_validator("language_version", mode="before")
     def validate_language_version(cls, v: Any) -> Optional[str]:

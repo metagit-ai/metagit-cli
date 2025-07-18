@@ -10,7 +10,7 @@ import sys
 from typing import Any, Literal, Optional, Union
 
 from loguru import logger
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 from rich.console import Console
 from rich.panel import Panel
 from rich.theme import Theme
@@ -115,7 +115,8 @@ class UnifiedLogger:
             log_format = (
                 "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
                 "<level>{level: <8}</level> | "
-                "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+                "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+                "<dim>{file}:{module}</dim> - "
                 "<level>{message}</level>"
             )
             serialize = False
@@ -170,7 +171,8 @@ class UnifiedLogger:
                         else (
                             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
                             "<level>{level: <8}</level> | "
-                            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+                            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+                            "<dim>{file}:{module}</dim> - "
                             "<level>{message}</level>"
                         )
                     ),
@@ -192,7 +194,8 @@ class UnifiedLogger:
                         else (
                             "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
                             "<level>{level: <8}</level> | "
-                            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+                            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+                            "<dim>{file}:{module}</dim> - "
                             "<level>{message}</level>"
                         )
                     ),
@@ -360,7 +363,7 @@ class UnifiedLogger:
     def debug(self, message: str) -> Union[None, Exception]:
         """Log a debug message."""
         try:
-            logger.debug(message)
+            logger.opt(depth=2).debug(message)
             return None
         except Exception as e:
             return e
@@ -368,7 +371,7 @@ class UnifiedLogger:
     def info(self, message: str) -> Union[None, Exception]:
         """Log an info message."""
         try:
-            logger.info(message)
+            logger.opt(depth=2).info(message)
             return None
         except Exception as e:
             return e
@@ -376,7 +379,7 @@ class UnifiedLogger:
     def warning(self, message: str) -> Union[None, Exception]:
         """Log a warning message."""
         try:
-            logger.warning(message)
+            logger.opt(depth=2).warning(message)
             return None
         except Exception as e:
             return e
@@ -384,7 +387,7 @@ class UnifiedLogger:
     def error(self, message: str) -> Union[None, Exception]:
         """Log an error message."""
         try:
-            logger.error(message)
+            logger.opt(depth=2).error(message)
             return None
         except Exception as e:
             return e
@@ -392,7 +395,7 @@ class UnifiedLogger:
     def critical(self, message: str) -> Union[None, Exception]:
         """Log a critical message."""
         try:
-            logger.critical(message)
+            logger.opt(depth=2).critical(message)
             return None
         except Exception as e:
             return e
@@ -400,7 +403,7 @@ class UnifiedLogger:
     def exception(self, message: str) -> Union[None, Exception]:
         """Log an exception with traceback."""
         try:
-            logger.exception(message)
+            logger.opt(depth=2).exception(message)
             return None
         except Exception as e:
             return e
@@ -515,6 +518,15 @@ class UnifiedLogger:
         except Exception as e:
             return e
 
+    def success(self, text: str, console: bool = True) -> Union[None, Exception]:
+        """Prints a success message"""
+        try:
+            if console:
+                self.console.print(f"[bold green]{text}[/bold green]")
+            return None
+        except Exception as e:
+            return e
+
     def echo(
         self, text: str, color: str = "", dim: bool = False, console: bool = True
     ) -> Union[None, Exception]:
@@ -547,3 +559,18 @@ def get_logger(name: str = "metagit") -> Any:
     """
     config = LoggerConfig(name=name)
     return UnifiedLogger(config)
+
+
+class LoggingModel(BaseModel):
+    _logger: Any = PrivateAttr()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._logger = getattr(self, "logger", None) or logger
+
+    @property
+    def logger(self):
+        return self._logger
+
+    def set_logger(self, logger):
+        self._logger = logger

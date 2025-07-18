@@ -19,6 +19,13 @@ I'm only doing this because I don't want to have to wrap the fzf binary in a pyt
 """
 
 
+class FuzzyFinderTarget(BaseModel):
+    """A target for a fuzzy finder."""
+
+    name: str
+    description: str
+
+
 class FuzzyFinderConfig(BaseModel):
     """Configuration for a fuzzy finder using prompt_toolkit and rapidfuzz."""
 
@@ -54,6 +61,9 @@ class FuzzyFinderConfig(BaseModel):
     preview_field: Optional[str] = Field(
         None, description="Field name to use for preview if items are objects."
     )
+    preview_header: Optional[str] = Field(
+        "Preview:", description="Header for preview pane."
+    )
     sort_items: bool = Field(True, description="Whether to sort the items.")
     # Styling options
     highlight_color: str = Field(
@@ -69,11 +79,12 @@ class FuzzyFinderConfig(BaseModel):
         """Ensure items are valid and consistent with display_field."""
         if not v:
             raise ValueError("Items list cannot be empty.")
-        if info.data.get("display_field") and not isinstance(v[0], str):
-            if not hasattr(v[0], info.data["display_field"]):
-                raise ValueError(
-                    f"Objects must have field '{info.data['display_field']}'."
-                )
+        if (
+            info.data.get("display_field")
+            and not isinstance(v[0], str)
+            and not hasattr(v[0], info.data["display_field"])
+        ):
+            raise ValueError(f"Objects must have field '{info.data['display_field']}'.")
         return v
 
     @field_validator("scorer")
@@ -93,9 +104,13 @@ class FuzzyFinderConfig(BaseModel):
             raise ValueError(
                 "preview_field must be specified when enable_preview is True."
             )
-        if v and info.data.get("items") and not isinstance(info.data["items"][0], str):
-            if not hasattr(info.data["items"][0], v):
-                raise ValueError(f"Objects must have field '{v}' for preview.")
+        if (
+            v
+            and info.data.get("items")
+            and not isinstance(info.data["items"][0], str)
+            and not hasattr(info.data["items"][0], v)
+        ):
+            raise ValueError(f"Objects must have field '{v}' for preview.")
         return v
 
     def get_scorer_function(self) -> Union[Callable[..., float], Exception]:
@@ -152,46 +167,57 @@ class FuzzyFinder:
                 "normal": self.config.normal_color,
                 "separator": self.config.separator_color,
                 "query": "bold yellow",
+                "input": self.config.normal_color,
             }
         )
 
-        from prompt_toolkit.layout.containers import Float, FloatContainer
+        from prompt_toolkit.layout.containers import VSplit
         from prompt_toolkit.layout.controls import FormattedTextControl
 
-        # Create a styled prompt control
-        prompt_control = FormattedTextControl(
-            lambda: [("class:prompt", self.config.prompt_text)]
+        # Prompt window
+        prompt_window = Window(
+            FormattedTextControl(lambda: [("class:prompt", self.config.prompt_text)]),
+            height=1,
+            width=len(self.config.prompt_text) + 1,
+            dont_extend_width=True,
         )
-
-        # Create input window with floating prompt
+        # Input window
         self.input_window = Window(
             BufferControl(buffer=self.input_buffer),
             height=1,
-            char=" ",
-            style="class:normal",
+            style="class:input",
         )
-
-        # Create a float container to overlay the prompt
-        self.input_container = FloatContainer(
-            content=self.input_window,
-            floats=[
-                Float(
-                    Window(prompt_control, height=1),
-                    left=0,
-                    top=0,
-                )
-            ],
-        )
+        # Combine prompt and input
+        self.input_container = VSplit([prompt_window, self.input_window], padding=0)
 
         # Output window uses FormattedTextControl for styling
         self.output_control = FormattedTextControl(text="")
         self.output_window = Window(self.output_control)
 
+        # Create preview window if enabled
+        self.preview_control = FormattedTextControl(text="")
+        self.preview_window = None
+        if self.config.enable_preview:
+            self.preview_window = Window(
+                self.preview_control,
+                height=10,  # Increased height for better visibility
+                style="class:normal",
+                char=" ",
+                wrap_lines=True,  # Enable text wrapping
+            )
+
         # Setup layout with styled separator
         separator_window = Window(height=1, char="-", style="class:separator")
-        self.layout = Layout(
-            HSplit([self.input_container, separator_window, self.output_window])
-        )
+
+        # Create layout components
+        layout_components = [self.input_container, separator_window, self.output_window]
+
+        # Add preview window if enabled
+        if self.config.enable_preview and self.preview_window:
+            preview_separator = Window(height=1, char="=", style="class:separator")
+            layout_components.extend([preview_separator, self.preview_window])
+
+        self.layout = Layout(HSplit(layout_components))
 
         # Setup key bindings
         self.bindings = KeyBindings()
@@ -206,6 +232,7 @@ class FuzzyFinder:
             key_bindings=self.bindings,
             full_screen=True,
             style=self.style,
+            mouse_support=False,
         )
 
     def _setup_key_bindings(self) -> Union[None, Exception]:
@@ -230,13 +257,13 @@ class FuzzyFinder:
                     event.app.exit(result=selected if selected else None)
 
             @self.bindings.add("up")
-            def _(event: Any) -> None:
+            def _(_: Any) -> None:
                 if self.highlighted_index > 0:
                     self.highlighted_index -= 1
                     self._update_output_buffer()
 
             @self.bindings.add("down")
-            def _(event: Any) -> None:
+            def _(_: Any) -> None:
                 if self.highlighted_index < len(self.current_results) - 1:
                     self.highlighted_index += 1
                     self._update_output_buffer()
@@ -261,9 +288,9 @@ class FuzzyFinder:
                         items_to_search,
                         key=lambda item: str(self.config.get_display_value(item) or ""),
                     )
-                except Exception:
+                except Exception as exc:
                     # If sorting fails (e.g., unorderable types), proceed without sorting
-                    pass
+                    raise exc
 
             choices_with_originals = [
                 (self.config.get_display_value(item), item) for item in items_to_search
@@ -282,26 +309,57 @@ class FuzzyFinder:
                     : self.config.max_results
                 ]
 
-            if not self.config.case_sensitive:
-                query = query.lower()
+            # Prepare query for case-insensitive matching
+            query_lower = query.lower() if not self.config.case_sensitive else query
 
             scorer_func = self.config.get_scorer_function()
             if isinstance(scorer_func, Exception):
                 return scorer_func
 
+            # Get fuzzy search results
             results = process.extract(
                 query,
                 choices,
                 scorer=scorer_func,
-                limit=self.config.max_results,
+                limit=len(choices),  # Get all results for custom sorting
             )
 
-            # Map results back to original items
-            original_results = []
+            # Custom scoring and sorting to prioritize exact matches
+            scored_results = []
             for result_str, score, index in results:
-                if score >= self.config.score_threshold:
-                    original_results.append(choices_with_originals[index][1])
-            return original_results
+                if score < self.config.score_threshold:
+                    continue
+
+                choice_lower = (
+                    result_str.lower() if not self.config.case_sensitive else result_str
+                )
+
+                # Calculate custom score based on match type
+                custom_score = score
+
+                # Bonus for exact matches
+                if choice_lower == query_lower:
+                    custom_score += 1000
+                # Bonus for prefix matches
+                elif choice_lower.startswith(query_lower):
+                    custom_score += 500
+                # Bonus for longer matches (more specific)
+                elif len(choice_lower) > len(query_lower):
+                    # Give bonus for items that are longer than the query
+                    # This helps prioritize "metagit_cli" over "metagit" when typing "metagit_cli"
+                    length_bonus = min(100, (len(choice_lower) - len(query_lower)) * 10)
+                    custom_score += length_bonus
+
+                scored_results.append(
+                    (custom_score, result_str, choices_with_originals[index][1])
+                )
+
+            # Sort by custom score (highest first) and then by original string length (shorter first for same score)
+            scored_results.sort(key=lambda x: (-x[0], len(x[1])))
+
+            # Return the top results
+            return [item[2] for item in scored_results[: self.config.max_results]]
+
         except Exception as e:
             return e
 
@@ -318,6 +376,44 @@ class FuzzyFinder:
                 else:
                     formatted_text.append(("class:normal", f"  {display_value}\n"))
             self.output_control.text = FormattedText(formatted_text)
+
+            # Update preview if enabled (always update, even with no results)
+            if self.config.enable_preview:
+                self._update_preview()
+
+            return None
+        except Exception as e:
+            return e
+
+    def _update_preview(self) -> Union[None, Exception]:
+        """Update the preview pane with information about the highlighted item."""
+        try:
+            if not self.current_results or self.highlighted_index >= len(
+                self.current_results
+            ):
+                self.preview_control.text = FormattedText(
+                    [("class:normal", "No preview available")]
+                )
+                return None
+
+            highlighted_item = self.current_results[self.highlighted_index]
+            preview_value = self.config.get_preview_value(highlighted_item)
+
+            if isinstance(preview_value, Exception):
+                return preview_value
+
+            if preview_value is None:
+                # Fallback to string representation
+                preview_value = str(highlighted_item)
+
+            # Format the preview text with better structure
+            formatted_preview = [
+                ("class:normal", f"{self.config.preview_header}\n"),
+                ("class:normal", "─" * 40 + "\n"),
+                ("class:normal", f"{preview_value}\n"),
+                ("class:normal", "─" * 40 + "\n"),
+            ]
+            self.preview_control.text = FormattedText(formatted_preview)
             return None
         except Exception as e:
             return e

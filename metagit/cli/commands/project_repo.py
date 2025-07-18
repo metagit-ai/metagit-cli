@@ -1,19 +1,17 @@
 #!/usr/bin/env python
 """
-Project repository subcommand
+Project repo subcommand
 """
 
-import os
-from pathlib import Path
 from typing import Optional
 
 import click
 
 from metagit.core.appconfig import AppConfig
+from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager
 from metagit.core.project.models import ProjectKind, ProjectPath
 from metagit.core.utils.common import open_editor
-from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
 from metagit.core.utils.logging import UnifiedLogger
 
 
@@ -29,66 +27,30 @@ def repo(ctx: click.Context) -> None:
 @repo.command("select")
 @click.pass_context
 def repo_select(ctx: click.Context) -> None:
-    """Select workspace project repo to work on"""
-    logger: UnifiedLogger = ctx.obj["logger"]
-    project: str = ctx.obj["project"]
+    """Select project repo to work on"""
+    logger = ctx.obj["logger"]
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    project = ctx.obj["project"]
     app_config: AppConfig = ctx.obj["config"]
-    try:
-        workspace_path = app_config.workspace.path
-        project_path: str = os.path.join(workspace_path, project)
-
-        if not Path(project_path).exists(follow_symlinks=True):
-            logger.warning(f"Path does not exist for this project: {project_path}")
-            logger.warning(
-                f"You can sync the project with `metagit workspace sync --project {project_path}`"
-            )
-            return
-        else:
-            logger.info(f"Project path: {project_path}")
-
-        repos: list[str] = [f.name for f in Path(project_path).iterdir() if f.is_dir()]
-        if len(repos) == 0:
-            logger.warning(f"No repos found in project: {project_path}")
-            return
-
-        finder_config = FuzzyFinderConfig(
-            items=repos,
-            prompt_text="🔍 Search repos: ",
-            max_results=20,
-            score_threshold=70.0,
-            highlight_color="bold white bg:#0066cc",
-            normal_color="cyan",
-            prompt_color="bold green",
-            separator_color="gray",
-        )
-        finder = FuzzyFinder(finder_config)
-        selected = finder.run()
-        if isinstance(selected, Exception):
-            raise selected
-
-        # Do nothing if no selection was made (result is None)
-        if selected is None:
-            logger.info("No repository selected")
-            return
-
-        logger.echo(f"Selected: {selected}")
-
-        # Open the selected repository in the configured editor
-        selected_path = os.path.join(project_path, selected)
-        editor_result = open_editor(app_config.editor, selected_path)
-        if isinstance(editor_result, Exception):
-            logger.warning(f"Failed to open editor: {editor_result}")
-        else:
-            logger.info(f"Opened {selected} in {app_config.editor}")
-
-    except Exception as e:
-        logger.error(f"Failed to select project repo: {e}")
+    project_manager = ProjectManager(app_config.workspace.path, logger)
+    selected_repo = project_manager.select_repo(local_config, project)
+    if isinstance(selected_repo, Exception):
+        logger.error(f"Failed to select project repo: {selected_repo}")
         ctx.abort()
+    if selected_repo is None:
+        logger.info("No repo selected")
+        ctx.abort()
+    logger.info(f"Selected repo: {selected_repo}")
+    editor_result = open_editor(app_config.editor, selected_repo)
+    if isinstance(editor_result, Exception):
+        logger.error(f"Failed to open editor: {editor_result}")
+    else:
+        logger.info(f"Opened {selected_repo} in {app_config.editor}")
 
 
 @repo.command("add")
-@click.option("--name", help="Repository name")
-@click.option("--description", help="Repository description")
+@click.option("--name", "-n", help="Repository name")
+@click.option("--description", "-d", help="Repository description")
 @click.option(
     "--kind", type=click.Choice([k.value for k in ProjectKind]), help="Project kind"
 )
@@ -132,6 +94,9 @@ def repo_add(
     local_config = ctx.obj["local_config"]
     config_path = ctx.obj["config_path"]
 
+    if project == "local":
+        raise click.UsageError("The local project is not supported for this command")
+
     try:
         # Initialize ProjectManager and MetagitConfigManager
         project_manager = ProjectManager(app_config.workspace.path, logger)
@@ -140,23 +105,11 @@ def repo_add(
         ctx.abort()
 
     try:
-        if prompt:
-            # Use native ProjectManager prompting functionality
-            logger.debug(
-                "Using interactive prompts to collect repository information..."
-            )
+        if not name or prompt:
             result = project_manager.add(
                 config_path, project, None, metagit_config=local_config
             )
-        else:
-            # Validate that name is provided when not using prompts
-            if not name:
-                logger.error(
-                    "Repository name is required when not using --prompt option"
-                )
-                ctx.abort()
-
-            # Create ProjectPath object from parameters
+        elif name:
             repo_data = {
                 "name": name,
                 "description": description,
@@ -196,6 +149,3 @@ def repo_add(
 
     except Exception as e:
         logger.warning(f"Failed to add repository: {e}")
-
-
-#        ctx.abort()

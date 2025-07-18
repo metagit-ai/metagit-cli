@@ -67,10 +67,7 @@ class ExtLoader(yaml.Loader, metaclass=ExtLoaderMeta):
     def __init__(self, stream: Any) -> None:
         """Initialise Loader."""
         try:
-            if isinstance(stream, str):
-                streamdata = stream
-            else:
-                streamdata = stream.name
+            streamdata = stream if isinstance(stream, str) else stream.name
             self._root = os.path.split(streamdata)[0]
         except AttributeError:
             self._root = os.path.curdir

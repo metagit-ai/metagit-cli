@@ -12,7 +12,7 @@ config:
   cicd_file_data: data/cicd-files.json
   file_type_data: data/file-types.json
   package_manager_data: data/package-managers.json
-  default_project: default
+  default_profile: default
 
   llm:
     enabled: false
@@ -37,34 +37,32 @@ config:
 
   profiles:
     # Profiles are used to define multiple configurations for different organizations
-    profile_config_path: ~/.config/metagit/profiles
-    default_profile: default
     # Boundaries are used to define the boundaries of the organization
     # They are used to determine which repositories are part of the organization
     # and which are not. This is important for auto-detection of internal and external repositories.
     # Any artifact, repository, or registry that is not part of the defined boundaries is considered external.
-
-    boundaries:
-      - name: github
-        values: []
-      - name: jfrog
-        values: []
-      - name: gitlab
-        values: []
-      - name: bitbucket
-        values: []
-      - name: azure_devops
-        values: []
-      - name: dockerhub
-        values: []
-      - name: domain
-        values:
-          - localhost
-          - "127.0.0.1"
-          - "0.0.0.0"
-          - 192.168.*
-          - 10.0.*
-          - 172.16.*
+    - name: default
+      boundaries:
+        - name: github
+          values: []
+        - name: jfrog
+          values: []
+        - name: gitlab
+          values: []
+        - name: bitbucket
+          values: []
+        - name: azure_devops
+          values: []
+        - name: dockerhub
+          values: []
+        - name: domain
+          values:
+            - localhost
+            - "127.0.0.1"
+            - "0.0.0.0"
+            - 192.168.*
+            - 10.0.*
+            - 172.16.*
 
 # These are the equivalent of a tenant in a multi-tenant application
 # default boundaries are inherited from the global boundaries

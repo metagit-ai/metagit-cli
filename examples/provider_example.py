@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 
-from metagit.core.detect.repository import RepositoryAnalysis
+from metagit.core.detect import DetectionManager
 from metagit.core.providers import registry
 from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers.gitlab import GitLabProvider
@@ -102,7 +102,7 @@ def analyze_local_repo(repo_path: str):
     """Analyze a local repository."""
     print(f"\n🔍 Analyzing local repository: {repo_path}")
 
-    analysis = RepositoryAnalysis.from_path(repo_path)
+    analysis = DetectionManager.from_path(repo_path)
     if isinstance(analysis, Exception):
         print(f"❌ Analysis failed: {analysis}")
         return
@@ -131,7 +131,7 @@ def analyze_remote_repo(repo_url: str):
     """Analyze a remote repository by cloning it."""
     print(f"\n🌐 Analyzing remote repository: {repo_url}")
 
-    analysis = RepositoryAnalysis.from_url(repo_url)
+    analysis = DetectionManager.from_url(repo_url)
     if isinstance(analysis, Exception):
         print(f"❌ Analysis failed: {analysis}")
         return

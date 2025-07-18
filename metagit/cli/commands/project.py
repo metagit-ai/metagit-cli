@@ -37,7 +37,7 @@ def project(ctx: click.Context, config: str, project: str = None) -> None:
         return
     app_config: AppConfig = ctx.obj["config"]
     if not project:
-        project: str = app_config.default_project
+        project: str = app_config.workspace.default_project
     ctx.obj["project"] = project
     ctx.obj["config_path"] = config
     try:
@@ -164,7 +164,8 @@ def project_sync(ctx: click.Context) -> None:
 
         sync_result: bool = project_manager.sync(workspace_project)
         if sync_result:
-            logger.info(f"Project {project} synced successfully")
+            logger.success(f"Project {project} synced successfully")
+            exit(0)
         else:
             logger.error(f"Failed to sync project {project}")
             ctx.abort()

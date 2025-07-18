@@ -26,6 +26,65 @@
       "request": "launch",
       "justMyCode": true,
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Detect local project",
+      "type": "debugpy",
+      "module": "metagit.cli.main",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "args": [
+        "detect",
+        "repository",
+        "--path",
+        "./",
+        "--output",
+        "all"
+      ]
+    },
+    {
+      "name": "workspace select",
+      "type": "debugpy",
+      "module": "metagit.cli.main",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "args": [
+        "workspace",
+        "--config",
+        "./examples/metagit.umbrella.yml",
+        "select",
+        "--project",
+        "default"
+      ]
+    },
+    {
+      "name": "project sync (local)",
+      "type": "debugpy",
+      "module": "metagit.cli.main",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "args": [
+        "project",
+        "-p",
+        "local",
+        "sync"
+      ]
+    },
+    {
+      "name": "project repo add",
+      "type": "debugpy",
+      "module": "metagit.cli.main",
+      "request": "launch",
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "args": [
+        "project",
+        "repo",
+        "add"
+      ]
     }
   ]
 }

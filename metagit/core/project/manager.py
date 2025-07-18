@@ -6,7 +6,7 @@ Class for managing projects.
 import concurrent.futures
 import os
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 import git
 from tqdm import tqdm
@@ -15,6 +15,11 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
 from metagit.core.utils.common import create_vscode_workspace
+from metagit.core.utils.fuzzyfinder import (
+    FuzzyFinder,
+    FuzzyFinderConfig,
+    FuzzyFinderTarget,
+)
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.utils.userprompt import UserPrompt
 from metagit.core.workspace.models import WorkspaceProject
@@ -66,7 +71,7 @@ class ProjectManager:
                 raise ValueError("No workspace configuration found in the config file")
             # Find the target project
             target_project = None
-            for project in config_manager.workspace.projects:
+            for project in metagit_config.workspace.projects:
                 if project.name == project_name:
                     target_project = project
                     break
@@ -79,15 +84,19 @@ class ProjectManager:
             # If repo is None, prompt for ProjectPath data
             if repo is None:
                 self.logger.debug(
-                    "No repository data provided. Prompting for ProjectPath information..."
+                    "No repository data provided. Prompting for information..."
                 )
                 repo_result = UserPrompt.prompt_for_model(
                     ProjectPath,
                     title="Add git repository or local path to project group",
-                    fields_to_prompt=["name", "path", "url"],
+                    fields_to_prompt=["name", "path", "url", "description"],
                 )
                 if isinstance(repo_result, Exception):
                     return repo_result
+                if repo_result.path is None and repo_result.url is None:
+                    raise ValueError(
+                        "No local path or remote URL provided. Please provide one of them."
+                    )
                 repo = repo_result
 
             # Check if name already exists in the project
@@ -101,7 +110,7 @@ class ProjectManager:
             target_project.repos.append(repo)
 
             # Save the updated configuration
-            save_result = metagit_config.save_config(metagit_config, config_path)
+            save_result = config_manager.save_config(metagit_config, config_path)
             if isinstance(save_result, Exception):
                 return save_result
 
@@ -149,8 +158,8 @@ class ProjectManager:
         if isinstance(workspace_result, Exception):
             tqdm.write(f"Failed to create VS Code workspace file: {workspace_result}")
             # Don't fail the entire sync for workspace file creation issues
-        else:
-            tqdm.write(f"Created VS Code workspace file: {workspace_result}")
+        # else:
+        #     tqdm.write(f"Created VS Code workspace file: {workspace_result}")
 
         return True
 
@@ -215,8 +224,9 @@ class ProjectManager:
             tqdm.write(f"Source path for {repo.name} does not exist: {source_path}")
             return
 
-        desc = f"  🔗 {repo.name}"
+        desc = f"  ✅   🔗 {repo.name}"
         if os.path.exists(target_path) or os.path.islink(target_path):
+            desc = f"  🔗 {repo.name}"
             with tqdm(
                 total=1,
                 desc=desc,
@@ -249,7 +259,7 @@ class ProjectManager:
 
             def update(
                 self,
-                op_code: int,
+                op_code: int,  # noqa: ARG002
                 cur_count: Union[str, float],
                 max_count: Union[str, float, None] = None,
                 message: str = "",
@@ -294,3 +304,79 @@ class ProjectManager:
                     f"URL: {repo.url}\n"
                     f"Error: {e.stderr}"
                 )
+
+    def select_repo(
+        self,
+        metagit_config: MetagitConfig,
+        project: str,
+    ) -> ProjectPath:
+        """
+        Select a repository from a synced project.
+        """
+        project_path: str = os.path.join(self.workspace_path, project)
+        if project == "local":
+            workspace_project = metagit_config.local_workspace_project
+        else:
+            workspace_project = [
+                target_project
+                for target_project in metagit_config.workspace.projects
+                if target_project.name == project
+            ][0]
+
+        if not Path(project_path).exists(follow_symlinks=True):
+            self.logger.warning(
+                f"Project path does not exist for project: {project_path}"
+            )
+            self.logger.warning(
+                f"You can sync the project with `metagit workspace sync --project {project_path}`"
+            )
+            return
+        project_dict = {}
+        # Iterate through the project path and add the directories and symlinks to the project_dict
+        for f in Path(project_path).iterdir():
+            if f.is_dir():
+                project_dict[f.name] = "Directory - non-workspace managed"
+            if f.is_symlink():
+                target_path = f.readlink()
+                project_dict[f.name] = f"Symlink({target_path}) - non-workspace managed"
+        # Iterate through the workspace project and add the repo descriptions to the project_dict
+        for repo in workspace_project.repos:
+            if repo.name in project_dict:
+                target_kind = "Directory"
+                if repo.path is not None:
+                    target_kind = f"Symlink ({repo.path})"
+                if repo.description is None:
+                    project_dict[repo.name] = f"{target_kind} - no description"
+                else:
+                    project_dict[repo.name] = f"{target_kind} - {repo.description}"
+        projects: List[FuzzyFinderTarget] = []
+        for target in project_dict:
+            projects.append(
+                FuzzyFinderTarget(name=target, description=project_dict[target])
+            )
+        if len(projects) == 0:
+            self.logger.warning(f"No projects found in workspace: {project_path}")
+            return
+
+        finder_config = FuzzyFinderConfig(
+            items=projects,
+            prompt_text="🔍 Search projects: ",
+            max_results=20,
+            score_threshold=60.0,
+            highlight_color="bold white bg:#0066cc",
+            normal_color="cyan",
+            prompt_color="bold green",
+            separator_color="gray",
+            enable_preview=True,
+            display_field="name",
+            preview_field="description",
+            preview_header="About",
+        )
+        finder = FuzzyFinder(finder_config)
+        selected = finder.run()
+        if isinstance(selected, Exception):
+            raise selected
+        if selected is None:
+            return None
+        else:
+            return os.path.join(project_path, selected.name)
