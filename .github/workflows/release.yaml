@@ -22,6 +22,9 @@ jobs:
   publish-package:
     name: Build and publish Python distributions to PyPI
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://pypi.org/p/metagit-cli/
     strategy:
       matrix:
         python-version: ["3.13"]
@@ -49,9 +52,9 @@ jobs:
       - name: Publish package to PyPI
         if: startsWith(github.ref, 'refs/tags/v')
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+        # with:
+        #   user: __token__
+        #   password: ${{ secrets.PYPI_API_TOKEN }}
 
   create-release:
     name: Create Release
