@@ -37,13 +37,13 @@ jobs:
 
       - name: Unit Tests
         run: |
-          uv run pytest --maxfail=1 --disable-warnings -v metagit/tests
+          uv run pytest --maxfail=1 --disable-warnings -v ${{ env.PROJECT_PATH }}/tests
 
       - name: Linting
         if: matrix.os != 'windows-latest'
         run: |
-          uv run black --check .
-          uv run ruff format --check .
+          uv run black --check ${{ env.PROJECT_PATH }}
+          uv run ruff format --check ${{ env.PROJECT_PATH }}
       # - name: Type Checking
       #   if: matrix.os != 'windows-latest'
       #   run: |
