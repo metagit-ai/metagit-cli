@@ -1,15 +1,18 @@
-name: Release
+name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g. v0.1.0)'
-        required: true
-        default: ''
+  #   tags:
+  #     - 'v*.*.*'
+  # workflow_dispatch:
+  #   inputs:
+  #     version:
+  #       description: 'Version to release (e.g. v0.1.0)'
+  #       required: true
+  #       default: ''
+
+env:
+  PROJECT_NAME: metagit-cli
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -19,26 +22,23 @@ permissions:
   contents: read
 
 jobs:
-  publish-package:
-    name: Publish to PyPI - ${{ github.ref_name }}
+  build:
+    name: Build distribution 📦
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://pypi.org/p/metagit-cli/
     strategy:
       matrix:
         python-version: ["3.13"]
-    permissions:
-      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: setup.py
+#          cache: pip
+#          cache-dependency-path: setup.py
 
       - name: Install dependencies
         run: |
@@ -48,18 +48,62 @@ jobs:
       - name: Build package
         run: |
           uv build
+      
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}-${{ matrix.python-version }}
+          path: dist/
 
-      - name: Publish package to PyPI
-        if: startsWith(github.ref, 'refs/tags/v')
+  publish-to-pypi:
+    name: Publish Python 🐍 distribution 📦 to PyPI
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+    needs: build
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    environment:
+      name: production
+      url: https://pypi.org/p/${{ env.PROJECT_NAME }}
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}-${{ matrix.python-version }}
+          path: dist/
+
+      - name: Publish distribution 📦 to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        # with:
-        #   user: __token__
-        #   password: ${{ secrets.PYPI_API_TOKEN }}
+
+  publish-to-testpypi:
+    name: Publish Python 🐍 distribution 📦 to TestPyPI
+    needs:
+    - build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/${{ env.PROJECT_NAME }}
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: dist-${{ matrix.os }}-${{ matrix.python-version }}
+        path: dist/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
 
   create-release:
     name: Create Release - ${{ github.ref_name }}
     runs-on: ubuntu-latest
-    needs: publish-package
+    needs: publish-to-pypi
+    if: startsWith(github.ref, 'refs/tags/')  # only publish release to GitHub on tag pushes
     steps:
       - name: Create Release
         uses: softprops/action-gh-release@v2
