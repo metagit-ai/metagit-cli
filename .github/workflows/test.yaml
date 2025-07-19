@@ -38,7 +38,7 @@ jobs:
 
       - name: Unit Tests
         run: |
-          uv run pytest --maxfail=1 --disable-warnings -v ${{ env.PROJECT_PATH }}/tests
+          uv run pytest --maxfail=1 --disable-warnings -v tests
 
       - name: Linting
         if: matrix.os != 'windows-latest'

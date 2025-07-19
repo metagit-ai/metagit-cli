@@ -1,5 +1,5 @@
 [project]
-name = "metagit"
+name = "metagit-cli"
 version = "0.1.0"
 description = "Metagit-ai multi-repo management tool"
 readme = "README.md"
@@ -35,10 +35,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/metagit-ai/metagit-detect"
-Documentation = "https://metagit-ai.github.io/metagit-detect/"
-Issues = "https://github.com/metagit-ai/metagit-detect/issues"
-CI = "https://github.com/metagit-ai/metagit-detect/actions"
+Homepage = "https://github.com/metagit-ai/metagit-cli"
+Documentation = "https://metagit-ai.github.io/metagit-cli/"
+Issues = "https://github.com/metagit-ai/metagit-cli/issues"
+CI = "https://github.com/metagit-ai/metagit-cli/actions"
 
 [project.optional-dependencies]
 standard = ["crewai[tools]"]
@@ -66,13 +66,17 @@ dev = [
     "ruff>=0.11.11",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["metagit", "metagit.*"]
-exclude = ["tests", "tests.*"]
+where = ["src"]
+include = ["metagit*"]
+
+[tool.setuptools.package-data]
+metagit = ["data/**/*"]
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 

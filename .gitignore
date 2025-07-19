@@ -15,6 +15,10 @@ __pycache__
 unit_test_results.txt
 .pytest_cache
 .mypy_cache
+build/
+*.egg-info/
+__pycache__/
+*.pyc
 
 secret_results.json
 # Metagit workspace

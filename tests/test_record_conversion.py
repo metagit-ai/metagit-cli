@@ -11,16 +11,16 @@ from datetime import datetime
 from pathlib import Path
 
 from metagit.core.config.models import (
+    CICD,
     Branch,
     BranchStrategy,
-    CICD,
     CICDPlatform,
     Language,
     License,
     LicenseKind,
     Maintainer,
-    Metrics,
     MetagitConfig,
+    Metrics,
     Pipeline,
     PullRequests,
     RepoMetadata,

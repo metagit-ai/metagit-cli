@@ -166,7 +166,7 @@ tasks:
     cmds:
       - |
         uv pip install -e ".[test]"
-        pytest --maxfail=1 --disable-warnings -v metagit/tests
+        pytest --maxfail=1 --disable-warnings -v tests
 
   typecheck:
     desc: Run the type checker
