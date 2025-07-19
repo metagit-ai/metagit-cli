@@ -1,5 +1,5 @@
 # Build stage
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -16,18 +16,20 @@ WORKDIR /app
 # Copy pyproject.toml and lock file (if exists)
 COPY pyproject.toml ./
 COPY uv.lock ./
+COPY README.md ./
+COPY LICENSE ./
+# Copy application code
+COPY src ./src
 
 # Install dependencies using uv
 RUN uv sync --frozen
 
-# Copy application code
-COPY metagit/ ./metagit/
 
 # Build wheel file using uv
 RUN uv build --wheel
 
 # Final stage - only the installed application
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 RUN apt-get update && apt-get install -y git
 
