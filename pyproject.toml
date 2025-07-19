@@ -1,6 +1,6 @@
 [project]
 name = "metagit-cli"
-version = "0.1.2"
+version = "0.1.1"
 description = "Metagit-ai multi-repo management tool"
 readme = "README.md"
 license-files = ["LICENSE"]
