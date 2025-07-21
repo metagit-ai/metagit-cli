@@ -9,12 +9,12 @@
       
       
       
-        <link rel="prev" href="../multi_tenancy/">
+        <link rel="prev" href="../development/">
       
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -236,12 +236,56 @@
   
   
     <li class="md-nav__item">
-      <a href="../multi_tenancy/" class="md-nav__link">
+      <a href="../multi_tenancy.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     Multi-tenancy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../per_tenant_configuration.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
     
   </span>
   
@@ -327,7 +371,7 @@
 
 <p><strong>Options:</strong></p>
 <div class="codehilite"><pre><span></span><code>  --version                 Show the version and exit.
-  --config TEXT             Path to the configuration file
+  -c, --config TEXT         Path to the configuration file
   --debug / --no-debug      Enable or disable debug mode
   --verbose / --no-verbose  Enable or disable verbose output
   -h, --help                Show this message and exit.
@@ -350,11 +394,16 @@
 </code></pre></div>
 
 <p><strong>Options:</strong></p>
-<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+<div class="codehilite"><pre><span></span><code>  --config-path TEXT  Path to save configuration file (default: ~/.config/metagit/config.yml).
+  -h, --help          Show this message and exit.
 </code></pre></div>
 
 <h3 id="get">get<a class="headerlink" href="#get" title="Permanent link">#</a></h3>
-<p>Display appconfig value</p>
+<p>Get a value from the application configuration.</p>
+<p>Example - show all keys in the providers section:</p>
+<p>metagit appconfig get --name config.providers --show-keys</p>
+<p>Example - show all values in the providers section:</p>
+<p>metagit appconfig get --name config.providers</p>
 <p><strong>Usage:</strong></p>
 <div class="codehilite"><pre><span></span><code>metagit appconfig get [OPTIONS]
 </code></pre></div>
@@ -364,6 +413,27 @@
   --show-keys    If the element is a dictionary, show all key names. If it is a list, show all name attributes
   --output TEXT  Output format (json/yaml)
   -h, --help     Show this message and exit.
+</code></pre></div>
+
+<h3 id="info">info<a class="headerlink" href="#info" title="Permanent link">#</a></h3>
+<p>Information about the application configuration.</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit appconfig info [OPTIONS]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="schema">schema<a class="headerlink" href="#schema" title="Permanent link">#</a></h3>
+<p>Generate a JSON schema for the AppConfig class and write it to a file.</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit appconfig schema [OPTIONS]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --output-path TEXT  Path to output the JSON schema file
+  -h, --help          Show this message and exit.
 </code></pre></div>
 
 <h3 id="show">show<a class="headerlink" href="#show" title="Permanent link">#</a></h3>
@@ -413,17 +483,14 @@
   -h, --help          Show this message and exit.
 </code></pre></div>
 
-<h3 id="init">init<a class="headerlink" href="#init" title="Permanent link">#</a></h3>
-<p>Initialize AppConfig with default settings.</p>
+<h3 id="info_1">info<a class="headerlink" href="#info_1" title="Permanent link">#</a></h3>
+<p>Display information about the local project configuration.</p>
 <p><strong>Usage:</strong></p>
-<div class="codehilite"><pre><span></span><code>metagit config init [OPTIONS]
+<div class="codehilite"><pre><span></span><code>metagit config info [OPTIONS]
 </code></pre></div>
 
 <p><strong>Options:</strong></p>
-<div class="codehilite"><pre><span></span><code>  --config-path TEXT   Path to save configuration file (default: ~/.config/metagit/config.yml).
-  --github-token TEXT  GitHub API token to include in initial configuration.
-  --gitlab-token TEXT  GitLab API token to include in initial configuration.
-  -h, --help           Show this message and exit.
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
 </code></pre></div>
 
 <h3 id="providers">providers<a class="headerlink" href="#providers" title="Permanent link">#</a></h3>
@@ -446,6 +513,17 @@
   -h, --help           Show this message and exit.
 </code></pre></div>
 
+<h3 id="schema_1">schema<a class="headerlink" href="#schema_1" title="Permanent link">#</a></h3>
+<p>Generate a JSON schema for the MetagitConfig class and write it to a file.</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit config schema [OPTIONS]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --output-path TEXT  Path to output the JSON schema file
+  -h, --help          Show this message and exit.
+</code></pre></div>
+
 <h3 id="show_1">show<a class="headerlink" href="#show_1" title="Permanent link">#</a></h3>
 <p>Show metagit configuration</p>
 <p><strong>Usage:</strong></p>
@@ -463,7 +541,8 @@
 </code></pre></div>
 
 <p><strong>Options:</strong></p>
-<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+<div class="codehilite"><pre><span></span><code>  --config-path TEXT  Path to the configuration file
+  -h, --help          Show this message and exit.
 </code></pre></div>
 
 <h2 id="detect">detect<a class="headerlink" href="#detect" title="Permanent link">#</a></h2>
@@ -489,26 +568,28 @@
 </code></pre></div>
 
 <h3 id="repository">repository<a class="headerlink" href="#repository" title="Permanent link">#</a></h3>
-<p>Comprehensive repository analysis and MetagitConfig generation.</p>
+<p>Comprehensive repository analysis and MetagitConfig generation using DetectionManager.</p>
 <p><strong>Usage:</strong></p>
 <div class="codehilite"><pre><span></span><code>metagit detect repository [OPTIONS]
 </code></pre></div>
 
 <p><strong>Options:</strong></p>
-<div class="codehilite"><pre><span></span><code>  --path TEXT                   Path to local repository to analyze.
-  --url TEXT                    URL of remote git repository to clone and analyze.
-  --output [summary|yaml|json]  Output format. Defaults to &#39;summary&#39; if --save is not used.
-  --save                        Save the generated configuration to .metagit.yml in the repository path.
-  --temp-dir TEXT               Temporary directory for cloning remote repositories.
-  --github-token TEXT           GitHub API token for fetching repository metrics (overrides AppConfig).
-  --gitlab-token TEXT           GitLab API token for fetching repository metrics (overrides AppConfig).
-  --github-url TEXT             GitHub API base URL (for GitHub Enterprise, overrides AppConfig).
-  --gitlab-url TEXT             GitLab API base URL (for self-hosted GitLab, overrides AppConfig).
-  --use-app-config              Use AppConfig for provider configuration (default: True).
-  -h, --help                    Show this message and exit.
+<div class="codehilite"><pre><span></span><code>  --path TEXT                     Path to local repository to analyze.
+  --url TEXT                      URL of remote git repository to clone and analyze.
+  --output [summary|yaml|json|record|metagit|metagitconfig|all]
+                                  Output format. Defaults to &#39;summary&#39;
+  --save                          Save the generated configuration to .metagit.yml in the repository path.
+  --temp-dir TEXT                 Temporary directory for cloning remote repositories.
+  --github-token TEXT             GitHub API token for fetching repository metrics (overrides AppConfig).
+  --gitlab-token TEXT             GitLab API token for fetching repository metrics (overrides AppConfig).
+  --github-url TEXT               GitHub API base URL (for GitHub Enterprise, overrides AppConfig).
+  --gitlab-url TEXT               GitLab API base URL (for self-hosted GitLab, overrides AppConfig).
+  --use-app-config                Use AppConfig for provider configuration (default: True).
+  --config-path TEXT              Path to the MetagitConfig file to save.
+  -h, --help                      Show this message and exit.
 </code></pre></div>
 
-<h2 id="info">info<a class="headerlink" href="#info" title="Permanent link">#</a></h2>
+<h2 id="info_2">info<a class="headerlink" href="#info_2" title="Permanent link">#</a></h2>
 <p>Display the current configuration.</p>
 <p><strong>Usage:</strong></p>
 <div class="codehilite"><pre><span></span><code>metagit info [OPTIONS]
@@ -518,15 +599,18 @@
 <div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
 </code></pre></div>
 
-<h2 id="init_1">init<a class="headerlink" href="#init_1" title="Permanent link">#</a></h2>
+<h2 id="init">init<a class="headerlink" href="#init" title="Permanent link">#</a></h2>
 <p>Initialize local metagit environment by creating .metagit.yml and updating .gitignore</p>
 <p><strong>Usage:</strong></p>
 <div class="codehilite"><pre><span></span><code>metagit init [OPTIONS]
 </code></pre></div>
 
 <p><strong>Options:</strong></p>
-<div class="codehilite"><pre><span></span><code>  -f, --force  Force overwrite of existing .metagit.yml file
-  -h, --help   Show this message and exit.
+<div class="codehilite"><pre><span></span><code>  -k, --kind [application|umbrella]
+                                  Project kind
+  -f, --force                     Force overwrite of existing .metagit.yml file
+  -s, --skip-gitignore            Skip updating .gitignore file
+  -h, --help                      Show this message and exit.
 </code></pre></div>
 
 <h2 id="project">project<a class="headerlink" href="#project" title="Permanent link">#</a></h2>
@@ -568,8 +652,8 @@
 </code></pre></div>
 
 <p><strong>Options:</strong></p>
-<div class="codehilite"><pre><span></span><code>  --name TEXT                     Repository name
-  --description TEXT              Repository description
+<div class="codehilite"><pre><span></span><code>  -n, --name TEXT                 Repository name
+  -d, --description TEXT          Repository description
   --kind [monorepo|umbrella|application|gitops|infrastructure|service|library|website|other|docker_image|repository|cli]
                                   Project kind
   --ref TEXT                      Reference in the current project for the target project
@@ -585,7 +669,7 @@
 </code></pre></div>
 
 <h4 id="select">select<a class="headerlink" href="#select" title="Permanent link">#</a></h4>
-<p>Select workspace project repo to work on</p>
+<p>Select project repo to work on</p>
 <p><strong>Usage:</strong></p>
 <div class="codehilite"><pre><span></span><code>metagit project repo select [OPTIONS]
 </code></pre></div>
@@ -614,6 +698,119 @@
 <div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
 </code></pre></div>
 
+<h2 id="record">record<a class="headerlink" href="#record" title="Permanent link">#</a></h2>
+<p>Record management subcommands</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --storage-type [local|opensearch]
+                                  Storage backend type for records
+  --storage-path TEXT             Path for local storage (used when storage-type is &#39;local&#39;)
+  --opensearch-hosts TEXT         OpenSearch hosts (comma-separated, used when storage-type is &#39;opensearch&#39;)
+  --opensearch-index TEXT         OpenSearch index name (used when storage-type is &#39;opensearch&#39;)
+  --opensearch-username TEXT      OpenSearch username (used when storage-type is &#39;opensearch&#39;)
+  --opensearch-password TEXT      OpenSearch password (used when storage-type is &#39;opensearch&#39;)
+  --opensearch-use-ssl            Use SSL for OpenSearch connection
+  -h, --help                      Show this message and exit.
+</code></pre></div>
+
+<h3 id="create_2">create<a class="headerlink" href="#create_2" title="Permanent link">#</a></h3>
+<p>Create a record from metagit configuration</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record create [OPTIONS]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --config-path TEXT        Path to the metagit configuration file
+  --detection-source TEXT   Source of the detection
+  --detection-version TEXT  Version of the detection system
+  --output-file TEXT        Save record to file (optional)
+  -h, --help                Show this message and exit.
+</code></pre></div>
+
+<h3 id="delete">delete<a class="headerlink" href="#delete" title="Permanent link">#</a></h3>
+<p>Delete a record</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record delete [OPTIONS] RECORD_ID
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --force     Force deletion without confirmation
+  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="export">export<a class="headerlink" href="#export" title="Permanent link">#</a></h3>
+<p>Export a record to file</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record export [OPTIONS] RECORD_ID OUTPUT_FILE
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --format [yaml|json]  Export format
+  -h, --help            Show this message and exit.
+</code></pre></div>
+
+<h3 id="import">import<a class="headerlink" href="#import" title="Permanent link">#</a></h3>
+<p>Import a record from file</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record import [OPTIONS] INPUT_FILE
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --detection-source TEXT   Override detection source
+  --detection-version TEXT  Override detection version
+  -h, --help                Show this message and exit.
+</code></pre></div>
+
+<h3 id="search">search<a class="headerlink" href="#search" title="Permanent link">#</a></h3>
+<p>Search records</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record search [OPTIONS] QUERY
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --page INTEGER              Page number for pagination
+  --size INTEGER              Number of records per page
+  --format [yaml|json|table]  Output format
+  -h, --help                  Show this message and exit.
+</code></pre></div>
+
+<h3 id="show_2">show<a class="headerlink" href="#show_2" title="Permanent link">#</a></h3>
+<p>Show record(s)</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record show [OPTIONS] [RECORD_ID]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --format [yaml|json]  Output format
+  -h, --help            Show this message and exit.
+</code></pre></div>
+
+<h3 id="stats">stats<a class="headerlink" href="#stats" title="Permanent link">#</a></h3>
+<p>Show record storage statistics</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record stats [OPTIONS]
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  -h, --help  Show this message and exit.
+</code></pre></div>
+
+<h3 id="update">update<a class="headerlink" href="#update" title="Permanent link">#</a></h3>
+<p>Update an existing record</p>
+<p><strong>Usage:</strong></p>
+<div class="codehilite"><pre><span></span><code>metagit record update [OPTIONS] RECORD_ID
+</code></pre></div>
+
+<p><strong>Options:</strong></p>
+<div class="codehilite"><pre><span></span><code>  --config-path TEXT        Path to the updated metagit configuration file
+  --detection-source TEXT   Updated detection source
+  --detection-version TEXT  Updated detection version
+  -h, --help                Show this message and exit.
+</code></pre></div>
+
 <h2 id="version">version<a class="headerlink" href="#version" title="Permanent link">#</a></h2>
 <p>Get the application version.</p>
 <p><strong>Usage:</strong></p>
@@ -636,14 +833,14 @@
 </code></pre></div>
 
 <h3 id="select_2">select<a class="headerlink" href="#select_2" title="Permanent link">#</a></h3>
-<p>Select workspace project repo to work on</p>
+<p>Select project repo to work on</p>
 <p><strong>Usage:</strong></p>
 <div class="codehilite"><pre><span></span><code>metagit workspace select [OPTIONS]
 </code></pre></div>
 
 <p><strong>Options:</strong></p>
-<div class="codehilite"><pre><span></span><code>  --project TEXT  Project within workspace to select target paths from
-  -h, --help      Show this message and exit.
+<div class="codehilite"><pre><span></span><code>  -p, --project TEXT  Project within workspace to select target paths from
+  -h, --help          Show this message and exit.
 </code></pre></div>
 
 
@@ -696,7 +893,7 @@
       <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>

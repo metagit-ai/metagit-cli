@@ -12,11 +12,11 @@
         <link rel="prev" href="..">
       
       
-        <link rel="next" href="../multi_tenancy/">
+        <link rel="next" href="../development/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -248,12 +248,56 @@
   
   
     <li class="md-nav__item">
-      <a href="../multi_tenancy/" class="md-nav__link">
+      <a href="../multi_tenancy.md" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     Multi-tenancy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../per_tenant_configuration.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
     
   </span>
   
@@ -321,41 +365,29 @@
 
 <h1 id="metagit-terminology">Metagit Terminology<a class="headerlink" href="#metagit-terminology" title="Permanent link">#</a></h1>
 <p>IT has a way with words doesn't it? This is a short list of metagit terms and their concise meaning to reduce confusion.</p>
-<p><strong>Path (aka. Target)</strong> - A folder within a git repository.
-<strong>Repo</strong> - A git repository. If it happens to be a monorepo there maybe several targets within the repository with unique associated metadata.
-<strong>Project</strong> - A collection of git repositories. In VSCode this is a workspace. We define a project at this higher level than the repository because we want a more holistic view of what your code entails as a whole. While a repo maybe produces a single app it may have several internal/external dependencies that make up the whole of what it requires to deploy it.
-<strong>Workspace</strong> - A collection of projects. Fundamentally different than a VSCode workspace.</p>
+<p><strong>Path (aka. Target)</strong> - A folder within a git repository.</p>
+<p><strong>Repo</strong> - A git repository. If it happens to be a monorepo there maybe several targets within the repository with unique associated metadata.</p>
+<p><strong>Project</strong> - A collection of git repositories. In VSCode this is a workspace. We define a project at this higher level than the repository because we want a more holistic view of what your code entails as a whole. While a repo maybe produces a single app it may have several internal/external dependencies that make up the whole of what it requires to deploy it.</p>
+<p><strong>Workspace</strong> - A collection of projects. Fundamentally different than a VSCode workspace. For metagit the most important thing to understand is that this is the target folder where all projects and their repos will be cloned/copied into.</p>
 <p>This creates a hierarchy like the following:</p>
-<div class="codehilite"><pre><span></span><code>Workspace
-  -- ProjectA
-    -- RepoA1
-      -- Path1
-      -- Path2
-    -- RepoA2
-      -- Path1
-  -- ProjectB
-    -- RepoB1
-      -- Path1
-      -- Path2
-    -- RepoB2
-      -- Path1
+<div class="codehilite"><pre><span></span><code>Workspace/
+└── ProjectA/
+    └── RepoA1/
+        ├── Path1
+        └── Path2
+    └── RepoA2/
+        └── Path1
+└── ProjectB/
+    └── RepoB1/
+        ├── Path1
+        └── Path2
+    └── RepoB2/
+      └── Path1
 </code></pre></div>
 
-<p>It is entirely possible to have the same repo referenced in multiple projects.</p>
-<div class="codehilite"><pre><span></span><code>Workspace
-  -- ProjectA
-    -- RepoA1
-      -- Path1
-      -- Path2
-    -- RepoA2
-      -- Path1
-  -- ProjectB
-    -- RepoB1
-      -- Path1
-      -- Path2
-    -- RepoA2
-      -- Path1
-</code></pre></div>
+<blockquote>
+<p><strong>NOTE</strong> It is entirely possible to have the same repo referenced in multiple projects. Local paths defined this way will simply be soft links. Multiple project repositories defined this way will be treated independently.</p>
+</blockquote>
 
 
 
@@ -407,7 +439,7 @@
       <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>

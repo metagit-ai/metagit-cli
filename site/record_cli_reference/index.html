@@ -1,0 +1,916 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
+    
+    
+      
+        <title>Record Management CLI Reference - Metagit-AI Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#record-management-cli-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Metagit-AI Documentation" class="md-header__button md-logo" aria-label="Metagit-AI Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Metagit-AI Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Record Management CLI Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Metagit-AI Documentation" class="md-nav__button md-logo" aria-label="Metagit-AI Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Metagit-AI Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metagit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../terminology/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Terminology
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../multi_tenancy.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multi-tenancy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../per_tenant_configuration.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli_reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#storage-backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storage Backends
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Storage Backends">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-file-storage-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Local File Storage (Default)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opensearch-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      OpenSearch Storage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#command-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Command Reference
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Command Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#global-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Global Options
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#metagit-record-create" class="md-nav__link">
+    <span class="md-ellipsis">
+      metagit record create
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metagit-record-show" class="md-nav__link">
+    <span class="md-ellipsis">
+      metagit record show
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metagit-record-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      metagit record search
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metagit-record-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      metagit record update
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metagit-record-delete" class="md-nav__link">
+    <span class="md-ellipsis">
+      metagit record delete
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metagit-record-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      metagit record export
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metagit-record-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      metagit record import
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metagit-record-stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      metagit record stats
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-opensearch-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using OpenSearch Backend
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-local-storage-with-custom-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Local Storage with Custom Path
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Handling
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-with-existing-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration with Existing Workflows
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debug Mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verbose-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verbose Output
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="record-management-cli-reference">Record Management CLI Reference<a class="headerlink" href="#record-management-cli-reference" title="Permanent link">#</a></h1>
+<p>The <code>metagit record</code> command group provides comprehensive record management functionality using the <code>MetagitRecordManager</code> with support for multiple storage backends.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
+<p>The record management system allows you to:
+- Create records from existing metagit configuration files
+- Store records in local files or OpenSearch
+- Search, update, and delete records
+- Export and import records
+- View statistics and analytics</p>
+<h2 id="storage-backends">Storage Backends<a class="headerlink" href="#storage-backends" title="Permanent link">#</a></h2>
+<h3 id="local-file-storage-default">Local File Storage (Default)<a class="headerlink" href="#local-file-storage-default" title="Permanent link">#</a></h3>
+<p>Records are stored as JSON files in a local directory with an index file for quick lookups.</p>
+<h3 id="opensearch-storage">OpenSearch Storage<a class="headerlink" href="#opensearch-storage" title="Permanent link">#</a></h3>
+<p>Records are stored in an OpenSearch index for scalable, searchable storage.</p>
+<h2 id="command-reference">Command Reference<a class="headerlink" href="#command-reference" title="Permanent link">#</a></h2>
+<h3 id="global-options">Global Options<a class="headerlink" href="#global-options" title="Permanent link">#</a></h3>
+<p>All record commands support these global options:</p>
+<ul>
+<li><code>--storage-type</code>: Storage backend type (<code>local</code> or <code>opensearch</code>)</li>
+<li><code>--storage-path</code>: Path for local storage (default: <code>./records</code>)</li>
+<li><code>--opensearch-hosts</code>: OpenSearch hosts (comma-separated, default: <code>localhost:9200</code>)</li>
+<li><code>--opensearch-index</code>: OpenSearch index name (default: <code>metagit-records</code>)</li>
+<li><code>--opensearch-username</code>: OpenSearch username</li>
+<li><code>--opensearch-password</code>: OpenSearch password</li>
+<li><code>--opensearch-use-ssl</code>: Use SSL for OpenSearch connection</li>
+</ul>
+<h3 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">#</a></h3>
+<h4 id="metagit-record-create"><code>metagit record create</code><a class="headerlink" href="#metagit-record-create" title="Permanent link">#</a></h4>
+<p>Create a record from a metagit configuration file.</p>
+<p><strong>Options:</strong>
+- <code>--config-path</code>: Path to the metagit configuration file (default: <code>.metagit.yml</code>)
+- <code>--detection-source</code>: Source of the detection (default: <code>local</code>)
+- <code>--detection-version</code>: Version of the detection system (default: <code>1.0.0</code>)
+- <code>--output-file</code>: Save record to file (optional)</p>
+<p><strong>Examples:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Create a record from the current directory&#39;s .metagit.yml</span>
+metagit<span class="w"> </span>record<span class="w"> </span>create
+
+<span class="c1"># Create a record with custom detection source</span>
+metagit<span class="w"> </span>record<span class="w"> </span>create<span class="w"> </span>--detection-source<span class="w"> </span>github<span class="w"> </span>--detection-version<span class="w"> </span><span class="m">2</span>.0.0
+
+<span class="c1"># Create a record and save to file</span>
+metagit<span class="w"> </span>record<span class="w"> </span>create<span class="w"> </span>--output-file<span class="w"> </span>my-record.yml
+</code></pre></div>
+
+<h4 id="metagit-record-show"><code>metagit record show</code><a class="headerlink" href="#metagit-record-show" title="Permanent link">#</a></h4>
+<p>Show record(s) in various formats.</p>
+<p><strong>Arguments:</strong>
+- <code>record_id</code>: Optional record ID to show specific record</p>
+<p><strong>Options:</strong>
+- <code>--format</code>: Output format (<code>yaml</code> or <code>json</code>, default: <code>yaml</code>)</p>
+<p><strong>Examples:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># List all records</span>
+metagit<span class="w"> </span>record<span class="w"> </span>show
+
+<span class="c1"># Show specific record</span>
+metagit<span class="w"> </span>record<span class="w"> </span>show<span class="w"> </span><span class="m">1</span>
+
+<span class="c1"># Show record in JSON format</span>
+metagit<span class="w"> </span>record<span class="w"> </span>show<span class="w"> </span><span class="m">1</span><span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div>
+
+<h4 id="metagit-record-search"><code>metagit record search</code><a class="headerlink" href="#metagit-record-search" title="Permanent link">#</a></h4>
+<p>Search records with optional filters and pagination.</p>
+<p><strong>Arguments:</strong>
+- <code>query</code>: Search query string</p>
+<p><strong>Options:</strong>
+- <code>--page</code>: Page number for pagination (default: 1)
+- <code>--size</code>: Number of records per page (default: 20)
+- <code>--format</code>: Output format (<code>yaml</code>, <code>json</code>, or <code>table</code>, default: <code>table</code>)</p>
+<p><strong>Examples:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Search for records containing &quot;python&quot;</span>
+metagit<span class="w"> </span>record<span class="w"> </span>search<span class="w"> </span>python
+
+<span class="c1"># Search with pagination</span>
+metagit<span class="w"> </span>record<span class="w"> </span>search<span class="w"> </span>web<span class="w"> </span>--page<span class="w"> </span><span class="m">2</span><span class="w"> </span>--size<span class="w"> </span><span class="m">10</span>
+
+<span class="c1"># Search with YAML output</span>
+metagit<span class="w"> </span>record<span class="w"> </span>search<span class="w"> </span>api<span class="w"> </span>--format<span class="w"> </span>yaml
+</code></pre></div>
+
+<h4 id="metagit-record-update"><code>metagit record update</code><a class="headerlink" href="#metagit-record-update" title="Permanent link">#</a></h4>
+<p>Update an existing record.</p>
+<p><strong>Arguments:</strong>
+- <code>record_id</code>: ID of the record to update</p>
+<p><strong>Options:</strong>
+- <code>--config-path</code>: Path to the updated metagit configuration file (default: <code>.metagit.yml</code>)
+- <code>--detection-source</code>: Updated detection source
+- <code>--detection-version</code>: Updated detection version</p>
+<p><strong>Examples:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Update record with new config file</span>
+metagit<span class="w"> </span>record<span class="w"> </span>update<span class="w"> </span><span class="m">1</span><span class="w"> </span>--config-path<span class="w"> </span>updated-config.yml
+
+<span class="c1"># Update only detection source</span>
+metagit<span class="w"> </span>record<span class="w"> </span>update<span class="w"> </span><span class="m">1</span><span class="w"> </span>--detection-source<span class="w"> </span>github
+</code></pre></div>
+
+<h4 id="metagit-record-delete"><code>metagit record delete</code><a class="headerlink" href="#metagit-record-delete" title="Permanent link">#</a></h4>
+<p>Delete a record.</p>
+<p><strong>Arguments:</strong>
+- <code>record_id</code>: ID of the record to delete</p>
+<p><strong>Options:</strong>
+- <code>--force</code>: Force deletion without confirmation</p>
+<p><strong>Examples:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Delete with confirmation</span>
+metagit<span class="w"> </span>record<span class="w"> </span>delete<span class="w"> </span><span class="m">1</span>
+
+<span class="c1"># Force delete without confirmation</span>
+metagit<span class="w"> </span>record<span class="w"> </span>delete<span class="w"> </span><span class="m">1</span><span class="w"> </span>--force
+</code></pre></div>
+
+<h4 id="metagit-record-export"><code>metagit record export</code><a class="headerlink" href="#metagit-record-export" title="Permanent link">#</a></h4>
+<p>Export a record to file.</p>
+<p><strong>Arguments:</strong>
+- <code>record_id</code>: ID of the record to export
+- <code>output_file</code>: Output file path</p>
+<p><strong>Options:</strong>
+- <code>--format</code>: Export format (<code>yaml</code> or <code>json</code>, default: <code>yaml</code>)</p>
+<p><strong>Examples:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Export record to YAML</span>
+metagit<span class="w"> </span>record<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>my-record.yml
+
+<span class="c1"># Export record to JSON</span>
+metagit<span class="w"> </span>record<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>my-record.json<span class="w"> </span>--format<span class="w"> </span>json
+</code></pre></div>
+
+<h4 id="metagit-record-import"><code>metagit record import</code><a class="headerlink" href="#metagit-record-import" title="Permanent link">#</a></h4>
+<p>Import a record from file.</p>
+<p><strong>Arguments:</strong>
+- <code>input_file</code>: Input file path</p>
+<p><strong>Options:</strong>
+- <code>--detection-source</code>: Override detection source
+- <code>--detection-version</code>: Override detection version</p>
+<p><strong>Examples:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Import record from file</span>
+metagit<span class="w"> </span>record<span class="w"> </span>import<span class="w"> </span>my-record.yml
+
+<span class="c1"># Import with custom detection source</span>
+metagit<span class="w"> </span>record<span class="w"> </span>import<span class="w"> </span>my-record.yml<span class="w"> </span>--detection-source<span class="w"> </span>imported<span class="w"> </span>--detection-version<span class="w"> </span><span class="m">2</span>.0.0
+</code></pre></div>
+
+<h4 id="metagit-record-stats"><code>metagit record stats</code><a class="headerlink" href="#metagit-record-stats" title="Permanent link">#</a></h4>
+<p>Show record storage statistics.</p>
+<p><strong>Examples:</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Show statistics</span>
+metagit<span class="w"> </span>record<span class="w"> </span>stats
+</code></pre></div>
+
+<h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">#</a></h2>
+<h3 id="basic-workflow">Basic Workflow<a class="headerlink" href="#basic-workflow" title="Permanent link">#</a></h3>
+<ol>
+<li>
+<p><strong>Create a record from configuration:</strong>
+   <code>bash
+   metagit record create --config-path .metagit.yml</code></p>
+</li>
+<li>
+<p><strong>List all records:</strong>
+   <code>bash
+   metagit record show</code></p>
+</li>
+<li>
+<p><strong>Search for specific records:</strong>
+   <code>bash
+   metagit record search python --format table</code></p>
+</li>
+<li>
+<p><strong>Update a record:</strong>
+   <code>bash
+   metagit record update 1 --detection-source github</code></p>
+</li>
+<li>
+<p><strong>Export a record:</strong>
+   <code>bash
+   metagit record export 1 exported-record.yml</code></p>
+</li>
+</ol>
+<h3 id="using-opensearch-backend">Using OpenSearch Backend<a class="headerlink" href="#using-opensearch-backend" title="Permanent link">#</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Create record using OpenSearch storage</span>
+metagit<span class="w"> </span>record<span class="w"> </span>--storage-type<span class="w"> </span>opensearch<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--opensearch-hosts<span class="w"> </span><span class="s2">&quot;localhost:9200&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--opensearch-index<span class="w"> </span><span class="s2">&quot;metagit-records&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>create
+
+<span class="c1"># Search records in OpenSearch</span>
+metagit<span class="w"> </span>record<span class="w"> </span>--storage-type<span class="w"> </span>opensearch<span class="w"> </span>search<span class="w"> </span><span class="s2">&quot;api&quot;</span>
+</code></pre></div>
+
+<h3 id="using-local-storage-with-custom-path">Using Local Storage with Custom Path<a class="headerlink" href="#using-local-storage-with-custom-path" title="Permanent link">#</a></h3>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Use custom local storage path</span>
+metagit<span class="w"> </span>record<span class="w"> </span>--storage-path<span class="w"> </span>/path/to/records<span class="w"> </span>create
+
+<span class="c1"># List records from custom path</span>
+metagit<span class="w"> </span>record<span class="w"> </span>--storage-path<span class="w"> </span>/path/to/records<span class="w"> </span>show
+</code></pre></div>
+
+<h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">#</a></h2>
+<p>The record commands provide detailed error messages for common issues:</p>
+<ul>
+<li><strong>Missing configuration file</strong>: Use <code>--config-path</code> to specify the correct path</li>
+<li><strong>OpenSearch connection issues</strong>: Check host, port, and authentication settings</li>
+<li><strong>Permission errors</strong>: Ensure write access to storage directories</li>
+<li><strong>Invalid record ID</strong>: Use <code>metagit record show</code> to list valid record IDs</li>
+</ul>
+<h2 id="integration-with-existing-workflows">Integration with Existing Workflows<a class="headerlink" href="#integration-with-existing-workflows" title="Permanent link">#</a></h2>
+<p>The record management system integrates seamlessly with existing metagit workflows:</p>
+<ol>
+<li><strong>Detection Pipeline</strong>: Records can be created automatically during detection</li>
+<li><strong>Configuration Management</strong>: Records are created from existing <code>.metagit.yml</code> files</li>
+<li><strong>CI/CD Integration</strong>: Records can be exported/imported for deployment tracking</li>
+<li><strong>Analytics</strong>: Statistics provide insights into project patterns and trends</li>
+</ol>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Use descriptive detection sources</strong>: Use meaningful values like <code>github</code>, <code>gitlab</code>, <code>local</code>, <code>ci-pipeline</code></li>
+<li><strong>Version your detection system</strong>: Track detection algorithm versions for reproducibility</li>
+<li><strong>Regular backups</strong>: Export important records to files for backup</li>
+<li><strong>Consistent naming</strong>: Use consistent project names and descriptions</li>
+<li><strong>Monitor storage</strong>: Use <code>metagit record stats</code> to monitor record growth</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">#</a></h2>
+<h3 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">#</a></h3>
+<ol>
+<li><strong>"No storage backend configured"</strong>: Ensure you're using a valid storage type</li>
+<li><strong>"Record not found"</strong>: Check the record ID with <code>metagit record show</code></li>
+<li><strong>"OpenSearch connection failed"</strong>: Verify OpenSearch is running and accessible</li>
+<li><strong>"Permission denied"</strong>: Check file/directory permissions for local storage</li>
+</ol>
+<h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">#</a></h3>
+<p>Enable debug mode for detailed logging:</p>
+<div class="codehilite"><pre><span></span><code>metagit<span class="w"> </span>--debug<span class="w"> </span>record<span class="w"> </span>show
+</code></pre></div>
+
+<h3 id="verbose-output">Verbose Output<a class="headerlink" href="#verbose-output" title="Permanent link">#</a></h3>
+<p>Enable verbose output for more information:</p>
+<div class="codehilite"><pre><span></span><code>metagit<span class="w"> </span>--verbose<span class="w"> </span>record<span class="w"> </span>create
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
+      
+    
+  </body>
+</html>
