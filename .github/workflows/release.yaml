@@ -91,6 +91,8 @@ jobs:
 
   create-release:
     name: Create Release - ${{ github.ref_name }}
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     needs: publish-to-pypi
     if: github.ref_type == 'tag' # only publish release to GitHub on tag pushes
@@ -99,3 +101,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+
