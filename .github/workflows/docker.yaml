@@ -1,9 +1,7 @@
-name: Publish Docker Image
+name: Docker Image
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
 
 env:
@@ -69,16 +67,16 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' && github.ref_type == 'tag' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: VERSION=${{ steps.version.outputs.version }}
+          build-args: DEPLOY_VERSION=${{ steps.version.outputs.version }}
 
 
       - name: Generate artifact attestation
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref_type == 'tag'
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
