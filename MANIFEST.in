@@ -1,4 +1,16 @@
 include README.md LICENSE 
 recursive-include src/metagit/ *.py
-recursive-include src/metagit/data/*
+recursive-include src/metagit/data *
 exclude tests/*
+exclude tasks/*
+exclude examples/*
+exclude Dockerfile
+exclude site/*
+exclude .github/*
+exclude .vscode/*
+exclude .envrc
+exclude .env
+exclude .gitignore
+exclude .gitmodules
+exclude .gitignore
+exclude .cursor/*
