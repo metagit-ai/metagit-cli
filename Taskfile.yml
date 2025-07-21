@@ -125,6 +125,7 @@ tasks:
     cmds:
       - |
         uv run ruff check .
+        uv run black --check .
 
   lint:fix:
     desc: Run python linting and fix issues

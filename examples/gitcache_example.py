@@ -16,34 +16,36 @@ from metagit.core.gitcache import GitCacheConfig, GitCacheManager
 def create_sample_local_directory() -> Path:
     """Create a sample local directory for testing."""
     temp_dir = Path(tempfile.mkdtemp())
-    
+
     # Create some sample files
-    (temp_dir / "README.md").write_text("# Sample Project\n\nThis is a sample project for testing.")
+    (temp_dir / "README.md").write_text(
+        "# Sample Project\n\nThis is a sample project for testing."
+    )
     (temp_dir / "main.py").write_text('print("Hello, World!")')
     (temp_dir / "config.json").write_text('{"name": "sample", "version": "1.0.0"}')
-    
+
     # Create a subdirectory
     subdir = temp_dir / "src"
     subdir.mkdir()
     (subdir / "utils.py").write_text('def helper_function():\n    return "helper"')
-    
+
     return temp_dir
 
 
 def sync_example():
     """Demonstrate synchronous git cache operations."""
     print("=== Synchronous Git Cache Example ===\n")
-    
+
     # Create configuration
     config = GitCacheConfig(
         cache_root=Path("./.metagit/.cache"),
         default_timeout_minutes=30,
-        max_cache_size_gb=5.0
+        max_cache_size_gb=5.0,
     )
-    
+
     # Create manager
     manager = GitCacheManager(config)
-    
+
     # Example 1: Cache a git repository
     print("1. Caching a git repository...")
     try:
@@ -57,9 +59,9 @@ def sync_example():
             print(f"   Status: {entry.status}")
     except Exception as e:
         print(f"   Error: {e}")
-    
+
     print()
-    
+
     # Example 2: Cache a local directory
     print("2. Caching a local directory...")
     try:
@@ -74,17 +76,17 @@ def sync_example():
             print(f"   Status: {entry.status}")
     except Exception as e:
         print(f"   Error: {e}")
-    
+
     print()
-    
+
     # Example 3: List cache entries
     print("3. Listing cache entries...")
     entries = manager.list_cache_entries()
     for entry in entries:
         print(f"   - {entry.name}: {entry.cache_type} ({entry.status})")
-    
+
     print()
-    
+
     # Example 4: Get cache statistics
     print("4. Cache statistics...")
     stats = manager.get_cache_stats()
@@ -93,9 +95,9 @@ def sync_example():
     print(f"   Local entries: {stats['local_entries']}")
     print(f"   Total size: {stats['total_size_gb']:.2f} GB")
     print(f"   Cache full: {stats['cache_full']}")
-    
+
     print()
-    
+
     # Example 5: Get cached repository path
     print("5. Getting cached repository path...")
     try:
@@ -109,9 +111,9 @@ def sync_example():
                 print(f"   Contents: {list(cache_path.iterdir())}")
     except Exception as e:
         print(f"   Error: {e}")
-    
+
     print()
-    
+
     # Example 6: Refresh cache entry
     print("6. Refreshing cache entry...")
     try:
@@ -128,30 +130,30 @@ def sync_example():
 async def async_example():
     """Demonstrate asynchronous git cache operations."""
     print("=== Asynchronous Git Cache Example ===\n")
-    
+
     # Create configuration
     config = GitCacheConfig(
         cache_root=Path("./.metagit/.cache"),
         default_timeout_minutes=30,
         max_cache_size_gb=5.0,
-        enable_async=True
+        enable_async=True,
     )
-    
+
     # Create manager
     manager = GitCacheManager(config)
-    
+
     # Example 1: Cache multiple repositories concurrently
     print("1. Caching multiple repositories concurrently...")
     repositories = [
         "https://github.com/octocat/Hello-World.git",
-        "https://github.com/octocat/Spoon-Knife.git"
+        "https://github.com/octocat/Spoon-Knife.git",
     ]
-    
+
     tasks = []
     for repo_url in repositories:
         task = manager.cache_repository_async(repo_url)
         tasks.append(task)
-    
+
     try:
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for i, result in enumerate(results):
@@ -161,24 +163,24 @@ async def async_example():
                 print(f"   Successfully cached: {result.name}")
     except Exception as e:
         print(f"   Error: {e}")
-    
+
     print()
-    
+
     # Example 2: Cache local directories concurrently
     print("2. Caching local directories concurrently...")
     try:
         sample_dir1 = create_sample_local_directory()
         sample_dir2 = create_sample_local_directory()
-        
+
         # Add some unique content to distinguish them
         (sample_dir1 / "project.txt").write_text("Project 1")
         (sample_dir2 / "project.txt").write_text("Project 2")
-        
+
         tasks = [
             manager.cache_repository_async(str(sample_dir1), name="project1"),
-            manager.cache_repository_async(str(sample_dir2), name="project2")
+            manager.cache_repository_async(str(sample_dir2), name="project2"),
         ]
-        
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for i, result in enumerate(results):
             if isinstance(result, Exception):
@@ -187,9 +189,9 @@ async def async_example():
                 print(f"   Successfully cached: {result.name}")
     except Exception as e:
         print(f"   Error: {e}")
-    
+
     print()
-    
+
     # Example 3: Refresh multiple entries concurrently
     print("3. Refreshing multiple entries concurrently...")
     try:
@@ -199,7 +201,7 @@ async def async_example():
             for entry in entries[:2]:  # Refresh first 2 entries
                 task = manager.refresh_cache_entry_async(entry.name)
                 tasks.append(task)
-            
+
             results = await asyncio.gather(*tasks, return_exceptions=True)
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
@@ -215,17 +217,17 @@ async def async_example():
 def cleanup_example():
     """Demonstrate cache cleanup operations."""
     print("=== Cache Cleanup Example ===\n")
-    
+
     # Create configuration
     config = GitCacheConfig(
         cache_root=Path("./.metagit/.cache"),
         default_timeout_minutes=30,
-        max_cache_size_gb=5.0
+        max_cache_size_gb=5.0,
     )
-    
+
     # Create manager
     manager = GitCacheManager(config)
-    
+
     # Example 1: Remove specific cache entry
     print("1. Removing specific cache entry...")
     try:
@@ -236,9 +238,9 @@ def cleanup_example():
             print("   Successfully removed cache entry")
     except Exception as e:
         print(f"   Error: {e}")
-    
+
     print()
-    
+
     # Example 2: Clear all cache
     print("2. Clearing all cache...")
     try:
@@ -256,27 +258,27 @@ def main():
     print("Git Cache Management System Examples")
     print("=" * 50)
     print()
-    
+
     # Run synchronous examples
     sync_example()
-    
+
     print()
     print("=" * 50)
     print()
-    
+
     # Run asynchronous examples
     asyncio.run(async_example())
-    
+
     print()
     print("=" * 50)
     print()
-    
+
     # Run cleanup examples
     cleanup_example()
-    
+
     print()
     print("Examples completed!")
 
 
 if __name__ == "__main__":
-    main() 
+    main()

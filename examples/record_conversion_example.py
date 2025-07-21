@@ -48,15 +48,19 @@ def main():
         branch_strategy=BranchStrategy.TRUNK,
         license=License(kind=LicenseKind.MIT, file="LICENSE"),
         maintainers=[
-            Maintainer(name="Alice Developer", email="alice@example.com", role="Lead Developer"),
-            Maintainer(name="Bob Maintainer", email="bob@example.com", role="Maintainer"),
+            Maintainer(
+                name="Alice Developer", email="alice@example.com", role="Lead Developer"
+            ),
+            Maintainer(
+                name="Bob Maintainer", email="bob@example.com", role="Maintainer"
+            ),
         ],
         cicd=CICD(
             platform=CICDPlatform.GITHUB,
             pipelines=[
                 Pipeline(name="CI", ref=".github/workflows/ci.yml"),
                 Pipeline(name="CD", ref=".github/workflows/cd.yml"),
-            ]
+            ],
         ),
     )
     print(f"✅ Created MetagitConfig: {config.name}")
@@ -86,10 +90,12 @@ def main():
                 has_docker=True,
                 has_iac=True,
             ),
-            "language": Language(primary="Python", secondary=["JavaScript", "TypeScript"]),
+            "language": Language(
+                primary="Python", secondary=["JavaScript", "TypeScript"]
+            ),
             "language_version": "3.11",
             "domain": "web",
-        }
+        },
     )
     print(f"✅ Created MetagitRecord with detection data")
 
@@ -120,19 +126,21 @@ def main():
     print(f"  Names match: {config.name == converted_config.name}")
     print(f"  Descriptions match: {config.description == converted_config.description}")
     print(f"  Kinds match: {config.kind == converted_config.kind}")
-    print(f"  Branch strategies match: {config.branch_strategy == converted_config.branch_strategy}")
+    print(
+        f"  Branch strategies match: {config.branch_strategy == converted_config.branch_strategy}"
+    )
 
     # Example 6: Performance test
     print("\n6. Performance test (1000 conversions)...")
     import time
-    
+
     start_time = time.time()
     for i in range(1000):
         test_config = MetagitConfig(name=f"perf-test-{i}")
         test_record = MetagitRecord.from_metagit_config(test_config)
         back_to_config = test_record.to_metagit_config()
     end_time = time.time()
-    
+
     conversion_time = end_time - start_time
     print(f"✅ Completed 1000 round-trip conversions in {conversion_time:.3f} seconds")
     print(f"   Average time per conversion: {(conversion_time / 1000) * 1000:.2f} ms")
@@ -146,7 +154,9 @@ def main():
         branch_strategy=BranchStrategy.GITHUBFLOW,
         license=License(kind=LicenseKind.APACHE_2_0, file="LICENSE"),
         maintainers=[
-            Maintainer(name="Complex Alice", email="alice@complex.com", role="Architect"),
+            Maintainer(
+                name="Complex Alice", email="alice@complex.com", role="Architect"
+            ),
             Maintainer(name="Complex Bob", email="bob@complex.com", role="Developer"),
             Maintainer(name="Complex Carol", email="carol@complex.com", role="DevOps"),
         ],
@@ -156,7 +166,7 @@ def main():
                 Pipeline(name="Build", ref=".gitlab-ci.yml"),
                 Pipeline(name="Test", ref=".gitlab-ci-test.yml"),
                 Pipeline(name="Deploy", ref=".gitlab-ci-deploy.yml"),
-            ]
+            ],
         ),
     )
 
@@ -167,7 +177,7 @@ def main():
     )
 
     back_to_complex_config = complex_record.to_metagit_config()
-    
+
     print(f"✅ Complex conversion successful")
     print(f"  Maintainers preserved: {len(back_to_complex_config.maintainers)}")
     print(f"  Pipelines preserved: {len(back_to_complex_config.cicd.pipelines)}")
@@ -195,4 +205,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
