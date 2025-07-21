@@ -1,6 +1,6 @@
 [project]
 name = "metagit-cli"
-version = "0.1.1"
+dynamic = ["version"]
 description = "Metagit-ai multi-repo management tool"
 readme = "README.md"
 license-files = ["LICENSE"]
@@ -32,6 +32,7 @@ dependencies = [
     "types-tqdm>=4.67.0.20250516",
     "aiofiles>=23.2.1",
     "async>=0.6.2",
+    "setuptools-scm>=8.3.1",
 ]
 
 [project.urls]
@@ -69,6 +70,9 @@ dev = [
 [tool.setuptools]
 package-dir = {"" = "src"}
 
+[tool.setuptools_scm]
+version_file = "src/metagit/_version.py"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["metagit*"]
@@ -77,5 +81,5 @@ include = ["metagit*"]
 metagit = ["data/**/*"]
 
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
