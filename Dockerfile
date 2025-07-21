@@ -1,32 +1,26 @@
 # Build stage
 FROM python:3.13-slim AS builder
 
+# Install curl and uv (recommended install method for uv)
+RUN apt-get update && apt-get install -y curl git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install uv
+
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install uv
-RUN pip install uv
-
-# Set work directory
 WORKDIR /app
 
-# Copy pyproject.toml and lock file (if exists)
-COPY pyproject.toml ./
-COPY uv.lock ./
-COPY README.md ./
-COPY LICENSE ./
-# Copy application code
-COPY src ./src
+# Copy full source including .git for dynamic versioning
+COPY . /app
 
-# Install dependencies using uv
-RUN uv sync --frozen
-
-
-# Build wheel file using uv
-RUN uv build --wheel
+RUN \
+  uv sync --frozen && \
+  uv build --wheel
 
 # Final stage - only the installed application
 FROM python:3.13-slim
