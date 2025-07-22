@@ -40,7 +40,7 @@ def detect(ctx: click.Context) -> None:
     help="Output format (yaml, json, summary).",
 )
 @click.pass_context
-def repo(ctx: click.Context, path: str, output: str) -> None:
+def detect_repo(ctx: click.Context, path: str, output: str) -> None:
     """Detect the codebase."""
     logger = ctx.obj["logger"]
     try:
@@ -77,6 +77,7 @@ def repo(ctx: click.Context, path: str, output: str) -> None:
 @detect.command("repository")
 @click.option(
     "--path",
+    "-p",
     help="Path to local repository to analyze.",
 )
 @click.option(
@@ -85,15 +86,26 @@ def repo(ctx: click.Context, path: str, output: str) -> None:
 )
 @click.option(
     "--output",
-    default=None,
+    "-o",
+    default="summary",
     show_default=True,
     type=click.Choice(
-        ["summary", "yaml", "json", "record", "metagit", "metagitconfig", "all"]
+        [
+            "summary",
+            "yaml",
+            "json",
+            "record",
+            "metagit",
+            "metagitconfig",
+            "summary",
+            "all",
+        ]
     ),
     help="Output format. Defaults to 'summary'",
 )
 @click.option(
     "--save",
+    "-s",
     is_flag=True,
     default=False,
     help="Save the generated configuration to .metagit.yml in the repository path.",
@@ -134,7 +146,7 @@ def repo(ctx: click.Context, path: str, output: str) -> None:
     help="Path to the MetagitConfig file to save.",
 )
 @click.pass_context
-def repository(
+def detect_repository(
     ctx: click.Context,
     path: str,
     url: str,
@@ -207,8 +219,8 @@ def repository(
             logger.error("Please provide either --path or --url, not both.")
             ctx.abort()
 
-        if not output and not save:
-            output = "summary"
+        # if not output and not save:
+        #     output = "summary"
 
         # Create DetectionManager with all analyses enabled
         config = DetectionManagerConfig.all_enabled()
