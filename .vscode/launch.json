@@ -20,14 +20,6 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "Example console form prompt",
-      "type": "debugpy",
-      "module": "examples.prompt_user",
-      "request": "launch",
-      "justMyCode": true,
-      "console": "integratedTerminal"
-    },
-    {
       "name": "Detect local project",
       "type": "debugpy",
       "module": "metagit.cli.main",
@@ -36,7 +28,7 @@
       "console": "integratedTerminal",
       "args": [
         "detect",
-        "repository",
+        "repo",
         "--path",
         "./",
         "--output",

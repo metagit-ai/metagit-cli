@@ -7,7 +7,7 @@ logging class that does general logging via loguru and prints to the console via
 import json
 import logging
 import sys
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional, Protocol, Union
 
 from loguru import logger
 from pydantic import BaseModel, Field, PrivateAttr
@@ -16,6 +16,78 @@ from rich.panel import Panel
 from rich.theme import Theme
 
 
+class LoggerProtocol(Protocol):
+    """
+    Protocol for the logger interface.
+    This includes:
+        Standard log methods (info, debug, error, etc.)
+        Rich printing methods (print_json, print_info, print_task_status, etc.)
+        Optional console formatting methods (header, footer, etc.)
+        Return type of Union[None, Exception]
+    Notes:
+        - All the ... are placeholders for the actual methods per the Protocol definition
+        - This is a workaround to allow for the logger to be injected into classes that don't inherit from LoggingModel
+    """
+
+    # === Core logging methods ===
+    def debug(self, message: str) -> Union[None, Exception]: ...
+    def info(self, message: str) -> Union[None, Exception]: ...
+    def warning(self, message: str) -> Union[None, Exception]: ...
+    def error(self, message: str) -> Union[None, Exception]: ...
+    def critical(self, message: str) -> Union[None, Exception]: ...
+    def exception(self, message: str) -> Union[None, Exception]: ...
+
+    # === Print helpers ===
+    def print_info(self, message: str) -> Union[None, Exception]: ...
+    def print_debug(
+        self, message: str, title: str = "Debug Information"
+    ) -> Union[None, Exception]: ...
+    def print_debug_json(
+        self, data: dict[str, Any], title: str = "Debug JSON Data"
+    ) -> Union[None, Exception]: ...
+    def print_json(
+        self, data: dict[str, Any], title: str = "JSON Data"
+    ) -> Union[None, Exception]: ...
+    def print_error(self, error_message: str) -> Union[None, Exception]: ...
+    def print_success(self, message: str) -> Union[None, Exception]: ...
+    def print_input(self, input_data: dict[str, Any]) -> Union[None, Exception]: ...
+    def print_output(self, output_data: Any) -> Union[None, Exception]: ...
+    def print_agent_message(
+        self, agent_name: str, message: str, style: str = "agent"
+    ) -> Union[None, Exception]: ...
+    def print_task_status(
+        self, task_name: str, status: str, details: Optional[str] = None
+    ) -> Union[None, Exception]: ...
+    def print_crew_status(
+        self, message: str, status_type: str = "info"
+    ) -> Union[None, Exception]: ...
+
+    # === Console formatting ===
+    def header(
+        self, text: str, console: Optional[bool] = None
+    ) -> Union[None, Exception]: ...
+    def footer(self, text: str, console: bool = True) -> Union[None, Exception]: ...
+    def line(self, console: bool = True) -> Union[None, Exception]: ...
+    def success(self, text: str, console: bool = True) -> Union[None, Exception]: ...
+    def proc_out(self, text: str, console: bool = True) -> Union[None, Exception]: ...
+    def echo(
+        self, text: str, color: str = "", dim: bool = False, console: bool = True
+    ) -> Union[None, Exception]: ...
+    def param(
+        self, text: str, value: str, status: str, console: bool = True
+    ) -> Union[None, Exception]: ...
+    def config_element(
+        self,
+        name: str = "",
+        value: str = "",
+        separator: str = ": ",
+        console: bool = True,
+    ) -> Union[None, Exception]: ...
+
+    # Add any others you rely on via injection (e.g. print_json, print_info)
+
+
+# Logger configuration
 class LoggerConfig(BaseModel):
     """
     Pydantic model for unified logger configuration.
@@ -47,6 +119,9 @@ class LoggerConfig(BaseModel):
         default=False, description="Use terse output format (no borders or titles)."
     )
 
+    class Config:
+        env_prefix = "LOG_"
+
 
 LOG_LEVEL_MAP: dict[str, int] = {
     "CRITICAL": logging.CRITICAL,
@@ -55,6 +130,7 @@ LOG_LEVEL_MAP: dict[str, int] = {
     "INFO": logging.INFO,
     "DEBUG": logging.DEBUG,
 }
+
 LOG_LEVELS: dict[int, int] = {
     0: logging.NOTSET,
     1: logging.ERROR,
@@ -64,25 +140,101 @@ LOG_LEVELS: dict[int, int] = {
 }  #: a mapping of `verbose` option counts to logging levels
 
 
-class UnifiedLogger:
-    """
-    A unified logging system that combines structured logging with rich console output.
-    """
+# class UnifiedLogger:
+#     """
+#     A unified logging system that combines structured logging with rich console output.
+#     """
 
+#     def __init__(self, config: LoggerConfig):
+#         """
+#         Initialize the unified logger using a LoggerConfig instance.
+#         Args:
+#             config (LoggerConfig): Logger configuration.
+#         """
+#         self.config = config
+#         self.debug_mode = config.log_level == "DEBUG" or config.log_level == "TRACE"
+#         self._stdout_handler_id = None
+#         self._file_handler_id = None
+
+#         # Initialize rich console if enabled
+#         if config.use_rich_console:
+#             custom_theme = Theme(
+#                 {
+#                     "info": "cyan",
+#                     "success": "green",
+#                     "warning": "yellow",
+#                     "error": "red",
+#                     "debug": "dim cyan",
+#                     "agent": "magenta",
+#                     "task": "blue",
+#                     "crew": "bold green",
+#                     "input": "bold yellow",
+#                     "output": "bold white",
+#                     "json": "bold cyan",
+#                 }
+#             )
+#             self.console = Console(theme=custom_theme)
+#         else:
+#             self.console = None
+
+#         # Remove default logger to avoid duplicate logs
+#         logger.remove()
+
+#         # Format config
+#         if config.json_logs:
+#             log_format = "{message}"
+#             serialize = True
+#         elif config.minimal_console:
+#             log_format = "{message}"
+#             serialize = False
+#         else:
+#             log_format = (
+#                 "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+#                 "<level>{level: <8}</level> | "
+#                 "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+#                 "<dim>{file}:{module}</dim> - "
+#                 "<level>{message}</level>"
+#             )
+#             serialize = False
+#         # Console sink
+#         self._stdout_handler_id = logger.add(
+#             sys.stdout,
+#             level=config.log_level,
+#             format=log_format,
+#             backtrace=config.backtrace,
+#             diagnose=config.diagnose,
+#             serialize=serialize,
+#             enqueue=True,
+#         )
+
+#         # File sink (optional)
+#         if config.log_to_file:
+#             self._file_handler_id = logger.add(
+#                 config.log_file_path,
+#                 level=config.log_level,
+#                 format=log_format,
+#                 rotation=config.rotation,
+#                 retention=config.retention,
+#                 backtrace=config.backtrace,
+#                 diagnose=config.diagnose,
+#                 serialize=serialize,
+#                 enqueue=True,
+#             )
+
+#         self._intercept_std_logging()
+
+
+class UnifiedLogger(LoggerProtocol):
     def __init__(self, config: LoggerConfig):
-        """
-        Initialize the unified logger using a LoggerConfig instance.
-        Args:
-            config (LoggerConfig): Logger configuration.
-        """
         self.config = config
-        self.debug_mode = config.log_level == "DEBUG" or config.log_level == "TRACE"
+        self.debug_mode = config.log_level in ("DEBUG", "TRACE")
         self._stdout_handler_id = None
         self._file_handler_id = None
 
         # Initialize rich console if enabled
+        self.console = None
         if config.use_rich_console:
-            custom_theme = Theme(
+            theme = Theme(
                 {
                     "info": "cyan",
                     "success": "green",
@@ -97,20 +249,15 @@ class UnifiedLogger:
                     "json": "bold cyan",
                 }
             )
-            self.console = Console(theme=custom_theme)
-        else:
-            self.console = None
+            self.console = Console(theme=theme)
 
-        # Remove default logger to avoid duplicate logs
+        # Remove default loguru handler
         logger.remove()
 
-        # Format config
-        if config.json_logs:
+        # Choose formatting
+        if config.json_logs or config.minimal_console:
             log_format = "{message}"
-            serialize = True
-        elif config.minimal_console:
-            log_format = "{message}"
-            serialize = False
+            serialize = config.json_logs
         else:
             log_format = (
                 "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
@@ -120,6 +267,7 @@ class UnifiedLogger:
                 "<level>{message}</level>"
             )
             serialize = False
+
         # Console sink
         self._stdout_handler_id = logger.add(
             sys.stdout,
@@ -131,7 +279,7 @@ class UnifiedLogger:
             enqueue=True,
         )
 
-        # File sink (optional)
+        # Optional file sink
         if config.log_to_file:
             self._file_handler_id = logger.add(
                 config.log_file_path,

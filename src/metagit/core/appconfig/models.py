@@ -187,7 +187,7 @@ class AppConfig(BaseModel):
         """
         try:
             if not config_path:
-                config_path = Path.joinpath(
+                config_path = os.path.join(
                     Path.home(), ".config", "metagit", "config.yml"
                 )
 
@@ -286,7 +286,7 @@ class AppConfig(BaseModel):
         """
         try:
             if not config_path:
-                config_path = Path.joinpath(
+                config_path = os.path.join(
                     Path.home(), ".config", "metagit", "config.yml"
                 )
 

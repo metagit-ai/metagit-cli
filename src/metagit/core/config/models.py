@@ -30,6 +30,7 @@ class LicenseKind(str, Enum):
     BSD_3_CLAUSE = "BSD-3-Clause"
     PROPRIETARY = "proprietary"
     CUSTOM = "custom"
+    UNKNOWN = "unknown"
 
 
 class BranchStrategy(str, Enum):
@@ -55,6 +56,7 @@ class TaskerKind(str, Enum):
     ATMOS = "Atmos"
     CUSTOM = "custom"
     NONE = "none"
+    MISE_TASKS = "mise_tasks"
 
 
 class ArtifactType(str, Enum):
@@ -80,6 +82,13 @@ class ArtifactType(str, Enum):
     HASKELL_PACKAGE = "haskell_package"
     CUSTOM = "custom"
     NONE = "none"
+    UNKNOWN = "unknown"
+    OTHER = "other"
+    PLUGIN = "plugin"
+    TEMPLATE = "template"
+    CONFIG = "config"
+    BINARY = "binary"
+    ARCHIVE = "archive"
 
 
 class VersionStrategy(str, Enum):
@@ -88,6 +97,8 @@ class VersionStrategy(str, Enum):
     SEMVER = "semver"
     NONE = "none"
     CUSTOM = "custom"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class SecretKind(str, Enum):
@@ -106,6 +117,8 @@ class SecretKind(str, Enum):
     REFRESH_TOKEN = "refresh_token"
     PASSWORD = "password"
     DATABASE_PASSWORD = "database_password"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class VariableKind(str, Enum):
@@ -115,6 +128,8 @@ class VariableKind(str, Enum):
     INTEGER = "integer"
     BOOLEAN = "boolean"
     CUSTOM = "custom"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class CICDPlatform(str, Enum):
@@ -128,6 +143,8 @@ class CICDPlatform(str, Enum):
     TEKTON = "tekton"
     CUSTOM = "custom"
     NONE = "none"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class DeploymentStrategy(str, Enum):
@@ -140,6 +157,8 @@ class DeploymentStrategy(str, Enum):
     PIPELINE = "pipeline"
     CUSTOM = "custom"
     NONE = "none"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class ProvisioningTool(str, Enum):
@@ -152,6 +171,8 @@ class ProvisioningTool(str, Enum):
     BICEP = "Bicep"
     CUSTOM = "custom"
     NONE = "none"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class Hosting(str, Enum):
@@ -184,6 +205,7 @@ class Hosting(str, Enum):
     )
     CUSTOM = "custom"
     NONE = "none"
+    UNKNOWN = "unknown"
 
 
 class LoggingProvider(str, Enum):
@@ -195,6 +217,8 @@ class LoggingProvider(str, Enum):
     SENTRY = "sentry"
     CUSTOM = "custom"
     NONE = "none"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class MonitoringProvider(str, Enum):
@@ -206,6 +230,8 @@ class MonitoringProvider(str, Enum):
     SENTRY = "sentry"
     CUSTOM = "custom"
     NONE = "none"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class AlertingChannelType(str, Enum):
@@ -217,6 +243,8 @@ class AlertingChannelType(str, Enum):
     SMS = "sms"
     WEBHOOK = "webhook"
     CUSTOM = "custom"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class ComponentKind(str, Enum):
@@ -230,6 +258,8 @@ class DependencyKind(str, Enum):
 
     DOCKER_IMAGE = "docker_image"
     REPOSITORY = "repository"
+    UNKNOWN = "unknown"
+    OTHER = "other"
 
 
 class Maintainer(BaseModel):
@@ -522,6 +552,14 @@ class ProjectDomain(str, Enum):
     IOT = "iot"
     AGENT = "agent"
     OTHER = "other"
+    DOCUMENTATION = "documentation"
+    TEST = "test"
+    PLUGIN = "plugin"
+    TEMPLATE = "template"
+    CONFIG = "config"
+    DATA_SCIENCE = "data-science"
+    MICROSERVICE = "microservice"
+    CLI = "cli"
 
 
 class BuildTool(str, Enum):
@@ -639,6 +677,7 @@ class CommitFrequency(str, Enum):
     DAILY = "daily"
     WEEKLY = "weekly"
     MONTHLY = "monthly"
+    UNKNOWN = "unknown"
 
 
 class PullRequests(BaseModel):
@@ -826,7 +865,7 @@ class TenantConfig(AppConfig):
         """
         try:
             if not config_path:
-                config_path = Path.joinpath(
+                config_path = os.path.join(
                     Path.home(), ".config", "metagit", "config.yml"
                 )
 

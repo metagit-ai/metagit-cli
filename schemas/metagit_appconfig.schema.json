@@ -1,0 +1,369 @@
+{
+  "$defs": {
+    "Boundary": {
+      "additionalProperties": false,
+      "description": "Model for organization boundaries in AppConfig.",
+      "properties": {
+        "name": {
+          "description": "Boundary name",
+          "title": "Name",
+          "type": "string"
+        },
+        "values": {
+          "description": "Boundary values",
+          "items": {
+            "type": "string"
+          },
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Boundary",
+      "type": "object"
+    },
+    "GitHubProvider": {
+      "additionalProperties": false,
+      "description": "Model for GitHub provider configuration in AppConfig.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Whether GitHub provider is enabled",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "api_token": {
+          "default": "",
+          "description": "GitHub API token",
+          "title": "Api Token",
+          "type": "string"
+        },
+        "base_url": {
+          "default": "https://api.github.com",
+          "description": "GitHub API base URL",
+          "title": "Base Url",
+          "type": "string"
+        }
+      },
+      "title": "GitHubProvider",
+      "type": "object"
+    },
+    "GitLabProvider": {
+      "additionalProperties": false,
+      "description": "Model for GitLab provider configuration in AppConfig.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Whether GitLab provider is enabled",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "api_token": {
+          "default": "",
+          "description": "GitLab API token",
+          "title": "Api Token",
+          "type": "string"
+        },
+        "base_url": {
+          "default": "https://gitlab.com/api/v4",
+          "description": "GitLab API base URL",
+          "title": "Base Url",
+          "type": "string"
+        }
+      },
+      "title": "GitLabProvider",
+      "type": "object"
+    },
+    "LLM": {
+      "additionalProperties": false,
+      "description": "Model for LLM configuration in AppConfig.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Whether LLM is enabled",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "provider": {
+          "default": "openrouter",
+          "description": "LLM provider",
+          "title": "Provider",
+          "type": "string"
+        },
+        "provider_model": {
+          "default": "gpt-4o-mini",
+          "description": "LLM provider model",
+          "title": "Provider Model",
+          "type": "string"
+        },
+        "embedder": {
+          "default": "ollama",
+          "description": "Embedding provider",
+          "title": "Embedder",
+          "type": "string"
+        },
+        "embedder_model": {
+          "default": "nomic-embed-text",
+          "description": "Embedding model",
+          "title": "Embedder Model",
+          "type": "string"
+        },
+        "api_key": {
+          "default": "",
+          "description": "API key for LLM provider",
+          "title": "Api Key",
+          "type": "string"
+        }
+      },
+      "title": "LLM",
+      "type": "object"
+    },
+    "Profile": {
+      "additionalProperties": false,
+      "description": "Model for profile configuration.",
+      "properties": {
+        "name": {
+          "default": "default",
+          "description": "Profile name",
+          "title": "Name",
+          "type": "string"
+        },
+        "boundaries": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Boundary"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [
+            {
+              "name": "github",
+              "values": []
+            },
+            {
+              "name": "jfrog",
+              "values": []
+            },
+            {
+              "name": "gitlab",
+              "values": []
+            },
+            {
+              "name": "bitbucket",
+              "values": []
+            },
+            {
+              "name": "azure_devops",
+              "values": []
+            },
+            {
+              "name": "dockerhub",
+              "values": []
+            },
+            {
+              "name": "domain",
+              "values": [
+                "localhost",
+                "127.0.0.1",
+                "0.0.0.0",
+                "192.168.*",
+                "10.0.*",
+                "172.16.*"
+              ]
+            }
+          ],
+          "description": "Organization boundaries. Items in this list are internal to the profile.",
+          "title": "Boundaries"
+        }
+      },
+      "title": "Profile",
+      "type": "object"
+    },
+    "Providers": {
+      "additionalProperties": false,
+      "description": "Model for Git provider configuration in AppConfig.",
+      "properties": {
+        "github": {
+          "$ref": "#/$defs/GitHubProvider",
+          "description": "GitHub provider configuration"
+        },
+        "gitlab": {
+          "$ref": "#/$defs/GitLabProvider",
+          "description": "GitLab provider configuration"
+        }
+      },
+      "title": "Providers",
+      "type": "object"
+    },
+    "WorkspaceConfig": {
+      "additionalProperties": false,
+      "description": "Model for workspace configuration in AppConfig.",
+      "properties": {
+        "path": {
+          "default": "./.metagit",
+          "description": "Workspace path",
+          "title": "Path",
+          "type": "string"
+        },
+        "default_project": {
+          "default": "default",
+          "description": "Default project",
+          "title": "Default Project",
+          "type": "string"
+        }
+      },
+      "title": "WorkspaceConfig",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "version": {
+      "default": "0.1.7.dev5+g7eb515f.d20250722",
+      "description": "The version of the CLI",
+      "title": "Version",
+      "type": "string"
+    },
+    "description": {
+      "default": "Metagit configuration",
+      "title": "Description",
+      "type": "string"
+    },
+    "editor": {
+      "default": "code",
+      "description": "The editor to use for the CLI",
+      "title": "Editor",
+      "type": "string"
+    },
+    "api_url": {
+      "default": "",
+      "description": "The API URL to use for the CLI",
+      "title": "Api Url",
+      "type": "string"
+    },
+    "api_version": {
+      "default": "0.1.7.dev5+g7eb515f.d20250722",
+      "description": "The API version to use for the CLI",
+      "title": "Api Version",
+      "type": "string"
+    },
+    "api_key": {
+      "default": "",
+      "description": "The API key to use for the CLI",
+      "title": "Api Key",
+      "type": "string"
+    },
+    "cicd_file_data": {
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/metagit-detect/src/metagit/data/cicd-files.json",
+      "description": "The path to the cicd file data",
+      "title": "Cicd File Data",
+      "type": "string"
+    },
+    "file_type_data": {
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/metagit-detect/src/metagit/data/file-types.json",
+      "description": "The path to the file type data",
+      "title": "File Type Data",
+      "type": "string"
+    },
+    "package_manager_data": {
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/metagit-detect/src/metagit/data/package-managers.json",
+      "description": "The path to the package manager data",
+      "title": "Package Manager Data",
+      "type": "string"
+    },
+    "llm": {
+      "$ref": "#/$defs/LLM",
+      "default": {
+        "enabled": false,
+        "provider": "openrouter",
+        "provider_model": "gpt-4o-mini",
+        "embedder": "ollama",
+        "embedder_model": "nomic-embed-text",
+        "api_key": ""
+      },
+      "description": "The LLM configuration"
+    },
+    "workspace": {
+      "$ref": "#/$defs/WorkspaceConfig",
+      "default": {
+        "path": "./.metagit",
+        "default_project": "default"
+      },
+      "description": "The workspace configuration"
+    },
+    "profiles": {
+      "default": [
+        {
+          "name": "default",
+          "boundaries": [
+            {
+              "name": "github",
+              "values": []
+            },
+            {
+              "name": "jfrog",
+              "values": []
+            },
+            {
+              "name": "gitlab",
+              "values": []
+            },
+            {
+              "name": "bitbucket",
+              "values": []
+            },
+            {
+              "name": "azure_devops",
+              "values": []
+            },
+            {
+              "name": "dockerhub",
+              "values": []
+            },
+            {
+              "name": "domain",
+              "values": [
+                "localhost",
+                "127.0.0.1",
+                "0.0.0.0",
+                "192.168.*",
+                "10.0.*",
+                "172.16.*"
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "The profiles available to this appconfig",
+      "items": {
+        "$ref": "#/$defs/Profile"
+      },
+      "title": "Profiles",
+      "type": "array"
+    },
+    "providers": {
+      "$ref": "#/$defs/Providers",
+      "default": {
+        "github": {
+          "api_token": "",
+          "base_url": "https://api.github.com",
+          "enabled": false
+        },
+        "gitlab": {
+          "api_token": "",
+          "base_url": "https://gitlab.com/api/v4",
+          "enabled": false
+        }
+      },
+      "description": "Git provider plugin configuration"
+    }
+  },
+  "title": "AppConfig",
+  "type": "object"
+}

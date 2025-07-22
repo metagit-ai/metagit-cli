@@ -24,3 +24,4 @@ secret_results.json
 # Metagit workspace
 .metagit/
 src/metagit/_version.py
+site

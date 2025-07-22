@@ -111,8 +111,8 @@ In this mode metagit connects to our enterprise SaaS offering to help mine the w
 To install metagit, clone the repository and build the project:
 
 ```bash
-git clone https://github.com/metagit-ai/metagit-detect.git
-cd metagit-detect
+git clone https://github.com/metagit-ai/metagit-cli.git
+cd metagit-cli
 
 ./configure.sh
 task build

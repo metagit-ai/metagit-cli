@@ -1,0 +1,1269 @@
+{
+  "$defs": {
+    "AlertingChannel": {
+      "additionalProperties": false,
+      "description": "Model for alerting channel.",
+      "properties": {
+        "name": {
+          "description": "Alerting channel name",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/AlertingChannelType",
+          "description": "Alerting channel type"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Alerting channel URL",
+          "title": "Url"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "url"
+      ],
+      "title": "AlertingChannel",
+      "type": "object"
+    },
+    "AlertingChannelType": {
+      "description": "Enumeration of alerting channel types.",
+      "enum": [
+        "slack",
+        "teams",
+        "email",
+        "sms",
+        "webhook",
+        "custom",
+        "unknown",
+        "other"
+      ],
+      "title": "AlertingChannelType",
+      "type": "string"
+    },
+    "Artifact": {
+      "additionalProperties": false,
+      "description": "Model for generated artifacts.",
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/ArtifactType",
+          "description": "Artifact type"
+        },
+        "definition": {
+          "description": "Artifact definition",
+          "title": "Definition",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Artifact location",
+          "title": "Location"
+        },
+        "version_strategy": {
+          "$ref": "#/$defs/VersionStrategy",
+          "description": "Version strategy"
+        }
+      },
+      "required": [
+        "type",
+        "definition",
+        "location",
+        "version_strategy"
+      ],
+      "title": "Artifact",
+      "type": "object"
+    },
+    "ArtifactType": {
+      "description": "Enumeration of artifact types.",
+      "enum": [
+        "docker",
+        "github_release",
+        "helm_chart",
+        "npm_package",
+        "static_website",
+        "python_package",
+        "node_package",
+        "ruby_package",
+        "java_package",
+        "c_package",
+        "cpp_package",
+        "csharp_package",
+        "go_package",
+        "rust_package",
+        "php_package",
+        "dotnet_package",
+        "elixir_package",
+        "haskell_package",
+        "custom",
+        "none",
+        "unknown",
+        "other",
+        "plugin",
+        "template",
+        "config",
+        "binary",
+        "archive"
+      ],
+      "title": "ArtifactType",
+      "type": "string"
+    },
+    "BranchNaming": {
+      "additionalProperties": false,
+      "description": "Model for branch naming patterns.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/BranchStrategy",
+          "description": "Branch strategy"
+        },
+        "pattern": {
+          "description": "Branch naming pattern",
+          "title": "Pattern",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "pattern"
+      ],
+      "title": "BranchNaming",
+      "type": "object"
+    },
+    "BranchStrategy": {
+      "description": "Enumeration of branch strategies.",
+      "enum": [
+        "trunk",
+        "gitflow",
+        "githubflow",
+        "gitlabflow",
+        "fork",
+        "none",
+        "custom",
+        "unknown"
+      ],
+      "title": "BranchStrategy",
+      "type": "string"
+    },
+    "CICD": {
+      "additionalProperties": false,
+      "description": "Model for CI/CD configuration.",
+      "properties": {
+        "platform": {
+          "$ref": "#/$defs/CICDPlatform",
+          "description": "CI/CD platform"
+        },
+        "pipelines": {
+          "description": "List of pipelines",
+          "items": {
+            "$ref": "#/$defs/Pipeline"
+          },
+          "title": "Pipelines",
+          "type": "array"
+        }
+      },
+      "required": [
+        "platform",
+        "pipelines"
+      ],
+      "title": "CICD",
+      "type": "object"
+    },
+    "CICDPlatform": {
+      "description": "Enumeration of CI/CD platforms.",
+      "enum": [
+        "GitHub",
+        "GitLab",
+        "CircleCI",
+        "Jenkins",
+        "jx",
+        "tekton",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "CICDPlatform",
+      "type": "string"
+    },
+    "Dashboard": {
+      "additionalProperties": false,
+      "description": "Model for monitoring dashboard.",
+      "properties": {
+        "name": {
+          "description": "Dashboard name",
+          "title": "Name",
+          "type": "string"
+        },
+        "tool": {
+          "description": "Dashboard tool",
+          "title": "Tool",
+          "type": "string"
+        },
+        "url": {
+          "description": "Dashboard URL",
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "tool",
+        "url"
+      ],
+      "title": "Dashboard",
+      "type": "object"
+    },
+    "Deployment": {
+      "additionalProperties": false,
+      "description": "Model for deployment configuration.",
+      "properties": {
+        "strategy": {
+          "$ref": "#/$defs/DeploymentStrategy",
+          "description": "Deployment strategy"
+        },
+        "environments": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Environment"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deployment environments",
+          "title": "Environments"
+        },
+        "infrastructure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Infrastructure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Infrastructure configuration"
+        }
+      },
+      "required": [
+        "strategy"
+      ],
+      "title": "Deployment",
+      "type": "object"
+    },
+    "DeploymentStrategy": {
+      "description": "Enumeration of deployment strategies.",
+      "enum": [
+        "blue/green",
+        "rolling",
+        "manual",
+        "gitops",
+        "pipeline",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "DeploymentStrategy",
+      "type": "string"
+    },
+    "Environment": {
+      "additionalProperties": false,
+      "description": "Model for deployment environment.",
+      "properties": {
+        "name": {
+          "description": "Environment name",
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Environment URL",
+          "title": "Url"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Environment",
+      "type": "object"
+    },
+    "Hosting": {
+      "description": "Enumeration of hosting options.",
+      "enum": [
+        "EC2",
+        "VMware",
+        "Oracle",
+        "Kubernetes",
+        "Vercel",
+        "ECS",
+        "AWS Lambda",
+        "AWS Fargate",
+        "AWS EKS",
+        "AWS ECS",
+        "AWS ECS Fargate",
+        "AWS ECS Fargate Spot",
+        "AWS ECS Fargate Spot Spot",
+        "Elastic Beanstalk",
+        "Azure App Service",
+        "Azure Functions",
+        "Azure Container Instances",
+        "Azure Container Apps",
+        "Azure Container Apps Environment",
+        "Azure Container Apps Environment Service",
+        "Azure Container Apps Environment Service Service",
+        "custom",
+        "none",
+        "unknown"
+      ],
+      "title": "Hosting",
+      "type": "string"
+    },
+    "Infrastructure": {
+      "additionalProperties": false,
+      "description": "Model for infrastructure configuration.",
+      "properties": {
+        "provisioning_tool": {
+          "$ref": "#/$defs/ProvisioningTool",
+          "description": "Provisioning tool"
+        },
+        "hosting": {
+          "$ref": "#/$defs/Hosting",
+          "description": "Hosting platform"
+        }
+      },
+      "required": [
+        "provisioning_tool",
+        "hosting"
+      ],
+      "title": "Infrastructure",
+      "type": "object"
+    },
+    "License": {
+      "additionalProperties": false,
+      "description": "Model for project license information.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/LicenseKind",
+          "description": "License type"
+        },
+        "file": {
+          "default": "",
+          "description": "License file path",
+          "title": "File",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "License",
+      "type": "object"
+    },
+    "LicenseKind": {
+      "description": "Enumeration of license kinds.",
+      "enum": [
+        "None",
+        "MIT",
+        "Apache-2.0",
+        "GPL-3.0",
+        "BSD-3-Clause",
+        "proprietary",
+        "custom",
+        "unknown"
+      ],
+      "title": "LicenseKind",
+      "type": "string"
+    },
+    "LoggingProvider": {
+      "description": "Enumeration of logging providers.",
+      "enum": [
+        "console",
+        "cloudwatch",
+        "elk",
+        "sentry",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "LoggingProvider",
+      "type": "string"
+    },
+    "Maintainer": {
+      "additionalProperties": false,
+      "description": "Model for project maintainer information.",
+      "properties": {
+        "name": {
+          "description": "Maintainer name",
+          "title": "Name",
+          "type": "string"
+        },
+        "email": {
+          "description": "Maintainer email",
+          "title": "Email",
+          "type": "string"
+        },
+        "role": {
+          "description": "Maintainer role",
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "role"
+      ],
+      "title": "Maintainer",
+      "type": "object"
+    },
+    "MonitoringProvider": {
+      "description": "Enumeration of monitoring providers.",
+      "enum": [
+        "prometheus",
+        "datadog",
+        "grafana",
+        "sentry",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "MonitoringProvider",
+      "type": "string"
+    },
+    "Observability": {
+      "additionalProperties": false,
+      "description": "Model for observability configuration.",
+      "properties": {
+        "logging_provider": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LoggingProvider"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Logging provider"
+        },
+        "monitoring_providers": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MonitoringProvider"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Monitoring providers",
+          "title": "Monitoring Providers"
+        },
+        "alerting_channels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/AlertingChannel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alerting channels",
+          "title": "Alerting Channels"
+        },
+        "dashboards": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Dashboard"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Monitoring dashboards",
+          "title": "Dashboards"
+        }
+      },
+      "title": "Observability",
+      "type": "object"
+    },
+    "Pipeline": {
+      "additionalProperties": false,
+      "description": "Model for CI/CD pipeline.",
+      "properties": {
+        "name": {
+          "description": "Pipeline name",
+          "title": "Name",
+          "type": "string"
+        },
+        "ref": {
+          "description": "Pipeline reference",
+          "title": "Ref",
+          "type": "string"
+        },
+        "variables": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pipeline variables",
+          "title": "Variables"
+        }
+      },
+      "required": [
+        "name",
+        "ref"
+      ],
+      "title": "Pipeline",
+      "type": "object"
+    },
+    "ProjectKind": {
+      "description": "Enumeration of project kinds.",
+      "enum": [
+        "monorepo",
+        "umbrella",
+        "application",
+        "gitops",
+        "infrastructure",
+        "service",
+        "library",
+        "website",
+        "other",
+        "docker_image",
+        "repository",
+        "cli"
+      ],
+      "title": "ProjectKind",
+      "type": "string"
+    },
+    "ProjectPath": {
+      "additionalProperties": false,
+      "description": "Model for project path, dependency, component, or workspace project information.",
+      "properties": {
+        "name": {
+          "description": "Friendly name for the path or project",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description of the path or project",
+          "title": "Description"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProjectKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project kind"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reference in the current project for the target project, used in dependencies",
+          "title": "Ref"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project path",
+          "title": "Path"
+        },
+        "branches": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project branches",
+          "title": "Branches"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project URL",
+          "title": "Url"
+        },
+        "sync": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sync setting",
+          "title": "Sync"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Programming language",
+          "title": "Language"
+        },
+        "language_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Language version",
+          "title": "Language Version"
+        },
+        "package_manager": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Package manager used by the project",
+          "title": "Package Manager"
+        },
+        "frameworks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Frameworks used by the project",
+          "title": "Frameworks"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ProjectPath",
+      "type": "object"
+    },
+    "ProvisioningTool": {
+      "description": "Enumeration of provisioning tools.",
+      "enum": [
+        "Terraform",
+        "CloudFormation",
+        "CDKTF",
+        "AWS CDK",
+        "Bicep",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "ProvisioningTool",
+      "type": "string"
+    },
+    "Secret": {
+      "additionalProperties": false,
+      "description": "Model for secret definitions.",
+      "properties": {
+        "name": {
+          "description": "Secret name",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/SecretKind",
+          "description": "Secret type"
+        },
+        "ref": {
+          "description": "Secret reference",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "ref"
+      ],
+      "title": "Secret",
+      "type": "object"
+    },
+    "SecretKind": {
+      "description": "Enumeration of secret kinds.",
+      "enum": [
+        "remote_jwt",
+        "remote_api_key",
+        "generated_string",
+        "custom",
+        "dynamic",
+        "private_key",
+        "public_key",
+        "secret_key",
+        "api_key",
+        "access_token",
+        "refresh_token",
+        "password",
+        "database_password",
+        "unknown",
+        "other"
+      ],
+      "title": "SecretKind",
+      "type": "string"
+    },
+    "Tasker": {
+      "additionalProperties": false,
+      "description": "Model for task management tools.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/TaskerKind",
+          "description": "Tasker type"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "Tasker",
+      "type": "object"
+    },
+    "TaskerKind": {
+      "description": "Enumeration of tasker kinds.",
+      "enum": [
+        "Taskfile",
+        "Makefile",
+        "Jest",
+        "NPM",
+        "Atmos",
+        "custom",
+        "none",
+        "mise_tasks"
+      ],
+      "title": "TaskerKind",
+      "type": "string"
+    },
+    "Variable": {
+      "additionalProperties": false,
+      "description": "Model for variable definitions.",
+      "properties": {
+        "name": {
+          "description": "Variable name",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/VariableKind",
+          "description": "Variable type"
+        },
+        "ref": {
+          "description": "Variable reference",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "ref"
+      ],
+      "title": "Variable",
+      "type": "object"
+    },
+    "VariableKind": {
+      "description": "Enumeration of variable kinds.",
+      "enum": [
+        "string",
+        "integer",
+        "boolean",
+        "custom",
+        "unknown",
+        "other"
+      ],
+      "title": "VariableKind",
+      "type": "string"
+    },
+    "VersionStrategy": {
+      "description": "Enumeration of version strategies.",
+      "enum": [
+        "semver",
+        "none",
+        "custom",
+        "unknown",
+        "other"
+      ],
+      "title": "VersionStrategy",
+      "type": "string"
+    },
+    "Workspace": {
+      "description": "Model for workspace configuration.",
+      "properties": {
+        "projects": {
+          "description": "Workspace projects",
+          "items": {
+            "$ref": "#/$defs/WorkspaceProject"
+          },
+          "title": "Projects",
+          "type": "array"
+        }
+      },
+      "required": [
+        "projects"
+      ],
+      "title": "Workspace",
+      "type": "object"
+    },
+    "WorkspaceProject": {
+      "additionalProperties": false,
+      "description": "Model for workspace project.",
+      "properties": {
+        "name": {
+          "description": "Workspace project name",
+          "title": "Name",
+          "type": "string"
+        },
+        "repos": {
+          "description": "Repository list",
+          "items": {
+            "$ref": "#/$defs/ProjectPath"
+          },
+          "title": "Repos",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "repos"
+      ],
+      "title": "WorkspaceProject",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Main model for .metagit.yml configuration file.",
+  "properties": {
+    "name": {
+      "description": "Project name",
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "No description",
+      "description": "Project description",
+      "title": "Description"
+    },
+    "url": {
+      "anyOf": [
+        {
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Project URL",
+      "title": "Url"
+    },
+    "kind": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProjectKind"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "application",
+      "description": "Project kind. This is used to determine the type of project and the best way to manage it."
+    },
+    "documentation": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Documentation URLs or paths used by the project.",
+      "title": "Documentation"
+    },
+    "license": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/License"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "License information"
+    },
+    "maintainers": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Maintainer"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Project maintainers",
+      "title": "Maintainers"
+    },
+    "branch_strategy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/BranchStrategy"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": "unknown",
+      "description": "Branch strategy used by the project."
+    },
+    "taskers": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Tasker"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Task management tools employed by the project.",
+      "title": "Taskers"
+    },
+    "branch_naming": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/BranchNaming"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Branch naming patterns used by the project.",
+      "title": "Branch Naming"
+    },
+    "artifacts": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Artifact"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Generated artifacts from the project.",
+      "title": "Artifacts"
+    },
+    "secrets_management": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Secrets management tools employed by the project.",
+      "title": "Secrets Management"
+    },
+    "secrets": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Secret"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Secret definitions",
+      "title": "Secrets"
+    },
+    "variables": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Variable"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Variable definitions",
+      "title": "Variables"
+    },
+    "cicd": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CICD"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "CI/CD configuration"
+    },
+    "deployment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Deployment"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Deployment configuration"
+    },
+    "observability": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Observability"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Observability configuration"
+    },
+    "paths": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ProjectPath"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Important local project paths. In a monorepo, this would include any sub-projects typically found being built in the CICD pipelines.",
+      "title": "Paths"
+    },
+    "dependencies": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ProjectPath"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.",
+      "title": "Dependencies"
+    },
+    "components": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/ProjectPath"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Additional project component paths that may be useful in other projects.",
+      "title": "Components"
+    },
+    "workspace": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Workspace"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. The internal workspace name is reservice"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "title": "MetagitConfig",
+  "type": "object"
+}

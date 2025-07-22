@@ -1,6 +1,13 @@
 {
   "requirements.txt": "Python",
   "requirements.*.txt": "Python",
+  "pyproject.toml": "Python",
+  "setup.py": "Python",
+  "setup.cfg": "Python",
+  "Pipfile": "Python",
+  "poetry.lock": "Python",
+  "poetry.toml": "Python",
+  "uv.lock": "Python",
   "go.mod": "Go",
   "go.sum": "Go",
   "Cargo.toml": "Rust",

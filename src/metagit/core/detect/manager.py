@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import yaml
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
@@ -21,10 +21,14 @@ from metagit.core.config.models import (
     RepoMetadata,
 )
 from metagit.core.detect.models import (
+    BranchInfo,
+    BranchStrategy,
     CIConfigAnalysis,
     DetectionManagerConfig,
     GitBranchAnalysis,
     LanguageDetection,
+    ProjectDomain,
+    ProjectType,
     ProjectTypeDetection,
 )
 from metagit.core.record.models import MetagitRecord
@@ -213,21 +217,15 @@ class DetectionManager(MetagitRecord, LoggingModel):
             None if successful, Exception if failed
         """
         try:
-            self.logger.debug(f"Running all analysis methods for: {self.path}")
-
             # Check if this is a git repository
             try:
                 _ = Repo(self.path)
                 self.is_git_repo = True
-                self.logger.debug("Repository is a valid git repository")
             except (InvalidGitRepositoryError, NoSuchPathError):
                 self.is_git_repo = False
-                self.logger.debug("Repository is not a git repository")
 
-            # Extract basic metadata
             self._extract_metadata()
 
-            # Run language detection
             language_result = self._detect_languages()
             if isinstance(language_result, Exception):
                 self.logger.warning(f"Language detection failed: {language_result}")
@@ -258,9 +256,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
             # Run CI/CD analysis if enabled
             if self.detection_config.ci_config_analysis_enabled:
                 try:
-                    self.ci_config_analysis = CIConfigAnalysis.from_repo(
-                        self.path, self.logger
-                    )
+                    self.ci_config_analysis = self._ci_config_analysis()
                     if isinstance(self.ci_config_analysis, Exception):
                         self.logger.warning(
                             f"CI/CD analysis failed: {self.ci_config_analysis}"
@@ -334,7 +330,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
                 self.branch_analysis = result
 
             elif method_name == "ci_config_analysis":
-                result = CIConfigAnalysis.from_repo(self.path, self.logger)
+                result = self._ci_config_analysis()
                 if isinstance(result, Exception):
                     return result
                 self.ci_config_analysis = result
@@ -432,6 +428,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
                     package_managers.append("maven")
                 if "build.gradle" in files:
                     package_managers.append("gradle")
+            package_managers = list(set(package_managers))
 
             # Determine primary language (most common)
             if detected_languages:
@@ -733,11 +730,175 @@ class DetectionManager(MetagitRecord, LoggingModel):
         except Exception as e:
             return e
 
-    def cleanup(self) -> None:
-        """Clean up temporary files if this was a cloned repository."""
-        if self.is_cloned and self.temp_dir and os.path.exists(self.temp_dir):
-            try:
-                shutil.rmtree(self.temp_dir)
-                self.logger.debug(f"Cleaned up temporary directory: {self.temp_dir}")
-            except Exception as e:
-                self.logger.warning(f"Failed to clean up temporary directory: {e}")
+    def _ci_config_analysis(
+        self, repo_path: str = None
+    ) -> Union[CIConfigAnalysis, Exception]:
+        """
+        Analyze CI/CD configuration in the repository.
+
+        Args:
+            repo_path: Path to the repository
+
+        Returns:
+            CIConfigAnalysis object or Exception
+        """
+        if not repo_path:
+            repo_path = self.path
+        if not Path(repo_path).is_dir():
+            return Exception(f"Invalid repository path: {repo_path}")
+
+        if not repo_path_obj.exists():
+            return Exception(f"Repository path does not exist: {repo_path}")
+
+        repo_path_obj = Path(repo_path)
+        try:
+            analysis = CIConfigAnalysis()
+
+            # Check for common CI/CD configuration files
+            ci_files = self.detection_config.data_ci_file_source
+
+            for file_path, tool_name in ci_files.items():
+                full_path = os.path.join(repo_path_obj, file_path)
+                if full_path.exists():
+                    analysis.detected_tool = tool_name
+                    analysis.ci_config_path = str(full_path)
+
+                    # Read configuration content
+                    if full_path.is_dir():
+                        for file in full_path.iterdir():
+                            if file.is_file():
+                                with open(file, "r", encoding="utf-8") as f:
+                                    analysis.config_content = f.read()
+                    else:
+                        try:
+                            with open(full_path, "r", encoding="utf-8") as f:
+                                analysis.config_content = f.read()
+                        except Exception as e:
+                            self.logger.warning(
+                                f"Could not read CI config file {full_path}: {e}"
+                            )
+
+                    self.logger.debug(f"Detected CI/CD tool: {tool_name}")
+                    break
+
+            # Count pipelines (basic heuristic)
+            if analysis.config_content:
+                # Simple pipeline counting based on common patterns
+                pipeline_indicators = ["job:", "stage:", "pipeline:", "workflow:"]
+                analysis.pipeline_count = sum(
+                    1
+                    for indicator in pipeline_indicators
+                    if indicator in analysis.config_content
+                )
+
+            return analysis
+
+        except Exception as e:
+            self.logger.exception(f"CI/CD analysis failed: {e}")
+            return e
+
+    def _branch_analysis(
+        self, repo_path: str = "."
+    ) -> Union[GitBranchAnalysis, Exception]:
+        """
+        Analyze the git repository at the given path and return branch information and a strategy guess.
+        Uses GitPython for all git operations.
+
+        Args:
+            repo_path: Path to the repository
+
+        Returns:
+            GitBranchAnalysis object or Exception
+
+        Notes:
+          - Should look to replace this with a more sophisticated analysis
+          - Should replace GitPython with a more lightweight library
+        """
+
+        try:
+            repo = Repo(repo_path)
+        except (InvalidGitRepositoryError, NoSuchPathError) as e:
+            self.logger.exception(f"Invalid git repository at '{repo_path}': {e}")
+            return ValueError(f"Invalid git repository at '{repo_path}': {e}")
+
+        # Get local branches
+        local_branches = [
+            BranchInfo(name=branch.name, is_remote=False)
+            for branch in repo.branches
+            if branch.name != "HEAD"  # Exclude HEAD branch
+        ]
+
+        # Get remote branches
+        remote_branches = []
+        for remote in repo.remotes:
+            for ref in remote.refs:
+                # Remove remote name prefix (e.g., 'origin/')
+                branch_name = ref.name.split("/", 1)[1] if "/" in ref.name else ref.name
+                # Exclude HEAD branch from remote branches
+                if branch_name != "HEAD":
+                    remote_branches.append(BranchInfo(name=branch_name, is_remote=True))
+
+        # Combine and deduplicate branches (prefer local if name overlaps)
+        all_branches_dict = {b.name: b for b in remote_branches}
+        all_branches_dict.update({b.name: b for b in local_branches})
+        all_branches = list(all_branches_dict.values())
+
+        # Analyze branching strategy
+        strategy_guess = self._analyze_branching_strategy(all_branches)
+
+        return GitBranchAnalysis(branches=all_branches, strategy_guess=strategy_guess)
+
+    def _analyze_branching_strategy(self, branches: List[BranchInfo]) -> BranchStrategy:
+        """Analyze the branching strategy based on branch names and patterns.
+
+        Args:
+            branches: List of BranchInfo objects
+
+        Returns:
+            BranchStrategy enum value
+
+        Notes:
+          - Should look to replace this with a more sophisticated analysis
+          - Should replace GitPython with a more lightweight library
+          - Consider custom branch names via appconfig for analysis of additional strategies
+        """
+
+        if len(branches) == 0:
+            return BranchStrategy.UNKNOWN
+
+        # Only remote branches matter
+        remote_branch_names = [b.name for b in branches if b.is_remote]
+        # local_branch_names = [b.name for b in branches if not b.is_remote]
+
+        # Check for Git Flow patterns
+        if any(name in remote_branch_names for name in ["develop", "master", "main"]):
+            if "develop" in remote_branch_names:
+                return BranchStrategy.GIT_FLOW
+
+        # Check for GitHub Flow patterns
+        if "main" in remote_branch_names or "master" in remote_branch_names:
+            if len(remote_branch_names) <= 2:  # main/master + feature branches
+                return BranchStrategy.GITHUB_FLOW
+
+        # Check for GitLab Flow patterns
+        if any(name in remote_branch_names for name in ["staging", "production"]):
+            return BranchStrategy.GITLAB_FLOW
+
+        # Check for Trunk-Based Development
+        if len(remote_branch_names) <= 1:
+            return BranchStrategy.TRUNK_BASED_DEVELOPMENT
+
+        # Check for Release Branching
+        if any(name.startswith("release/") for name in remote_branch_names):
+            return BranchStrategy.RELEASE_BRANCHING
+
+        return BranchStrategy.UNKNOWN
+
+    # def cleanup(self) -> None:
+    #     """Clean up temporary files if this was a cloned repository."""
+    #     if self.is_cloned and self.temp_dir and os.path.exists(self.temp_dir):
+    #         try:
+    #             shutil.rmtree(self.temp_dir)
+    #             self.logger.debug(f"Cleaned up temporary directory: {self.temp_dir}")
+    #         except Exception as e:
+    #             self.logger.warning(f"Failed to clean up temporary directory: {e}")

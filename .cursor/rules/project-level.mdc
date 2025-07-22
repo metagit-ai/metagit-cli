@@ -19,7 +19,7 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Keep a component driven project structure with core logic for each component in their own directories within the metagit/core path.
 - Avoid duplication by using clear, modular code organization.
 - All functions and methods should return a union of the expected result type and exception and be handled appropriately when called.
-- All file paths should be os agnostic when constructed using Path.joinpath() instead of manual path construction.
+- All file paths should be constructed using os.path.join() instead of string concatenation
 - All library and class imports must be at the top of the file and not imported on-demand.
 - Unused import libraries and classes should be removed from your final output.
 - Do not assign variable names that are unused in try/except blocks, instead assign them to _.
