@@ -14,7 +14,7 @@ from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers.gitlab import GitLabProvider
 
 
-@click.group(name="detect", invoke_without_command=True)
+@click.group(name="detect", invoke_without_command=True, help="Detection subcommands")
 @click.pass_context
 def detect(ctx: click.Context) -> None:
     """Detection subcommands"""
@@ -26,25 +26,27 @@ def detect(ctx: click.Context) -> None:
 
 @detect.command("repo")
 @click.option(
-    "--repo-path",
+    "--path",
+    "-p",
     default="./",
     show_default=True,
     help="Path to the git repository to analyze.",
 )
 @click.option(
     "--output",
+    "-o",
     default="yaml",
     show_default=True,
-    help="Output format.",
+    help="Output format (yaml, json, summary).",
 )
 @click.pass_context
-def repo(ctx: click.Context, repo_path: str, output: str) -> None:
+def repo(ctx: click.Context, path: str, output: str) -> None:
     """Detect the codebase."""
     logger = ctx.obj["logger"]
     try:
         # Create DetectionManager with all analyses enabled
         config = DetectionManagerConfig.all_enabled()
-        project = DetectionManager.from_path(repo_path, logger, config)
+        project = DetectionManager.from_path(path, logger, config)
         if isinstance(project, Exception):
             raise project
 
@@ -68,7 +70,7 @@ def repo(ctx: click.Context, repo_path: str, output: str) -> None:
                 raise summary_output
             click.echo(summary_output)
     except Exception as e:
-        logger.error(f"Error analyzing project at {repo_path}: {e}")
+        logger.error(f"Error analyzing project at {path}: {e}")
         ctx.abort()
 
 

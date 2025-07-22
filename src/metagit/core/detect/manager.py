@@ -213,21 +213,15 @@ class DetectionManager(MetagitRecord, LoggingModel):
             None if successful, Exception if failed
         """
         try:
-            self.logger.debug(f"Running all analysis methods for: {self.path}")
-
             # Check if this is a git repository
             try:
                 _ = Repo(self.path)
                 self.is_git_repo = True
-                self.logger.debug("Repository is a valid git repository")
             except (InvalidGitRepositoryError, NoSuchPathError):
                 self.is_git_repo = False
-                self.logger.debug("Repository is not a git repository")
 
-            # Extract basic metadata
             self._extract_metadata()
 
-            # Run language detection
             language_result = self._detect_languages()
             if isinstance(language_result, Exception):
                 self.logger.warning(f"Language detection failed: {language_result}")

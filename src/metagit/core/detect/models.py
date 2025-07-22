@@ -10,6 +10,7 @@ and detection manager configuration.
 from pathlib import Path
 from typing import List, Literal, Optional, Union
 
+from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field
 
 from metagit.core.config.models import ProjectDomain, ProjectType
@@ -33,6 +34,10 @@ class LanguageDetection(BaseModel):
         default_factory=list, description="Detected build tools"
     )
 
+    class Config:
+        use_enum_values = True
+        extra = "forbid"
+
 
 class ProjectTypeDetection(BaseModel):
     """Model for project type detection results."""
@@ -47,6 +52,10 @@ class ProjectTypeDetection(BaseModel):
     indicators: List[str] = Field(
         default_factory=list, description="Indicators used for detection"
     )
+
+    class Config:
+        use_enum_values = True
+        extra = "forbid"
 
 
 class BranchInfo(BaseModel):
@@ -88,8 +97,6 @@ class GitBranchAnalysis(LoggingModel):
         logger = logger or UnifiedLogger().get_logger()
 
         try:
-            from git import InvalidGitRepositoryError, NoSuchPathError, Repo
-
             repo = Repo(repo_path)
         except (InvalidGitRepositoryError, NoSuchPathError) as e:
             logger.exception(f"Invalid git repository at '{repo_path}': {e}")
@@ -196,7 +203,7 @@ class CIConfigAnalysis(LoggingModel):
 
             # Check for common CI/CD configuration files
             ci_files = {
-                ".github/workflows": "GitHub Actions",
+                ".github/workflows/": "GitHub Actions",
                 ".gitlab-ci.yml": "GitLab CI",
                 ".circleci/config.yml": "CircleCI",
                 "Jenkinsfile": "Jenkins",
@@ -206,19 +213,25 @@ class CIConfigAnalysis(LoggingModel):
             }
 
             for file_path, tool_name in ci_files.items():
-                full_path = repo_path_obj / file_path
+                full_path = Path.joinpath(repo_path_obj, file_path)
                 if full_path.exists():
                     analysis.detected_tool = tool_name
                     analysis.ci_config_path = str(full_path)
 
                     # Read configuration content
-                    try:
-                        with open(full_path, "r", encoding="utf-8") as f:
-                            analysis.config_content = f.read()
-                    except Exception as e:
-                        logger.warning(
-                            f"Could not read CI config file {full_path}: {e}"
-                        )
+                    if full_path.is_dir():
+                        for file in full_path.iterdir():
+                            if file.is_file():
+                                with open(file, "r", encoding="utf-8") as f:
+                                    analysis.config_content = f.read()
+                    else:
+                        try:
+                            with open(full_path, "r", encoding="utf-8") as f:
+                                analysis.config_content = f.read()
+                        except Exception as e:
+                            logger.warning(
+                                f"Could not read CI config file {full_path}: {e}"
+                            )
 
                     logger.debug(f"Detected CI/CD tool: {tool_name}")
                     break
