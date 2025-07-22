@@ -4,7 +4,6 @@ build_files:
     - CMakeLists.txt
     - build.gradle
     - build.gradle.kts
-    - pom.xml
     - setup.py
     - setup.cfg
     - requirements.txt
@@ -18,13 +17,37 @@ build_files:
     - rollup.config.js
     - gulpfile.js
     - Gruntfile.js
-  ci_cd:
+  important:
+    - build.xml
+    - package.json
+    - pom.xml
+    - build.gradle
+    - build.sbt
     - .github/workflows/*.yml
     - .gitlab-ci.yml
     - .travis.yml
     - Jenkinsfile
     - circleci/config.yml
     - bitrise.yml
+    - appveyor.yml
+    - circle.yml
+    - .circleci/config.yml
+    - codeship-steps.yml
+    - wercker.yml
+    - docker-compose.yml
+    - docker-cloud.yml
+    - docker-stack.yml
+    - azure-pipelines.yml
+    - bitbucket-pipelines.yml
+    - Dockerfile
+    - docker-compose.yml
+    - skaffold.yaml
+    - pyproject.toml
+    - requirements.txt
+    - setup.py
+    - setup.cfg
+    - '*.tf'
+    - Pulumi.yaml
   testing:
     - Jestfile.js
     - jest.config.js
@@ -38,7 +61,7 @@ build_files:
     - docker-compose.yml
     - skaffold.yaml
   infrastructure:
-    - terraform.tf
+    - '*.tf'
     - Pulumi.yaml
   python:
     - pyproject.toml

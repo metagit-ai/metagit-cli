@@ -7,7 +7,7 @@
   "docker-compose.yml": "Docker",
   "docker-cloud.yml": "Docker Cloud",
   "docker-stack.yml": "Docker Stack",
-  ".github/workflows/": "GitHub Actions",
+  ".github/workflows/*.yml": "GitHub Actions",
   ".gitlab-ci.yml": "GitLab CI",
   "Jenkinsfile": "Jenkins",
   ".travis.yml": "Travis CI",
