@@ -865,7 +865,7 @@ class TenantConfig(AppConfig):
         """
         try:
             if not config_path:
-                config_path = Path.joinpath(
+                config_path = os.path.join(
                     Path.home(), ".config", "metagit", "config.yml"
                 )
 
