@@ -28,7 +28,12 @@ def config(ctx: click.Context, config_path: str) -> None:
         if ctx.invoked_subcommand is None:
             click.echo(ctx.get_help())
             return
+        ctx.ensure_object(dict)
         ctx.obj["config_path"] = config_path
+        # Initialize a dummy logger for testing purposes if not already present
+        if "logger" not in ctx.obj:
+            from metagit.core.utils.logging import UnifiedLogger, LoggerConfig
+            ctx.obj["logger"] = UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
     except Exception as e:
         logger = ctx.obj.get("logger")
         if logger:
@@ -295,6 +300,45 @@ def providers(
     except Exception as e:
         logger.error(f"Error managing provider configuration: {e}")
         ctx.abort()
+
+
+@config.command("set")
+@click.argument("key")
+@click.argument("value")
+@click.pass_context
+def config_set(ctx: click.Context, key: str, value: str) -> None:
+  """Set a specific configuration value."""
+  logger = ctx.obj["logger"]
+  config_path = ctx.obj["config_path"]
+
+  try:
+    config_manager = MetagitConfigManager(config_path=config_path)
+    current_config = config_manager.load_config()
+    if isinstance(current_config, Exception):
+      raise current_config
+
+    # Helper to set nested attributes
+    def set_nested_attr(obj, attr_path, val):
+      parts = attr_path.split('.')
+      for i, part in enumerate(parts):
+        if i == len(parts) - 1:
+          setattr(obj, part, val)
+        else:
+          obj = getattr(obj, part)
+
+    set_nested_attr(current_config, key, value)
+
+    # Save the updated configuration
+    result = config_manager.save_config(current_config)
+    if isinstance(result, Exception):
+      raise result
+
+    logger.success(f"Configuration key '{key}' set to '{value}' in {config_path}")
+
+  except Exception as e:
+    logger.error(f"Failed to set configuration key '{key}': {e}")
+    logger.debug(f"Error: {e}")
+    ctx.abort()
 
 
 @config.command("info")
