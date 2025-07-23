@@ -24,6 +24,7 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Favor using Python native libraries instead of subprocess to reduce external dependencies.
 - Use 2 spaces for indentation.
 - Private class members should be prefixed with an underscore (`_`).
+- Use `isinstance()` for type comparisons.
 
 ## Naming Conventions
 
@@ -62,14 +63,6 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 
 - Avoid introducing new external dependencies unless absolutely necessary.
 - If a new dependency is required, please state the reason.
-
-## CrewAI Guidelines
-- If prompted to create a crewai flow or crew do so using the crewai cli within the ./src/metagit/core path.
-- Support multiple AI providers using openrouter:
-  - Use environment variables for provider selection.
-  - Configure models and endpoints via environment.
-- Keep agent and task definitions in YAML for clarity.
-- Use the `BasicCrew` class as a foundation for custom implementations.
 
 ## Security
 

@@ -6,16 +6,16 @@ This module contains all the Pydantic models used in the detection system,
 including language detection, project type detection, branch analysis, CI/CD analysis,
 and detection manager configuration.
 """
+
 import os
 from enum import Enum
-from typing import List, Literal, Optional, Union
+from typing import List, Optional
 
-from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import BaseModel, Field
 
 from metagit import DATA_PATH
 from metagit.core.config.models import ProjectDomain, ProjectType
-from metagit.core.utils.logging import LoggingModel, UnifiedLogger
+from metagit.core.utils.logging import LoggingModel
 
 
 class LanguageDetection(BaseModel):

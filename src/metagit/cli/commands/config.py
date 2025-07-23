@@ -33,7 +33,10 @@ def config(ctx: click.Context, config_path: str) -> None:
         # Initialize a dummy logger for testing purposes if not already present
         if "logger" not in ctx.obj:
             from metagit.core.utils.logging import UnifiedLogger, LoggerConfig
-            ctx.obj["logger"] = UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
+
+            ctx.obj["logger"] = UnifiedLogger(
+                LoggerConfig(log_level="INFO", minimal_console=True)
+            )
     except Exception as e:
         logger = ctx.obj.get("logger")
         if logger:
@@ -307,38 +310,38 @@ def providers(
 @click.argument("value")
 @click.pass_context
 def config_set(ctx: click.Context, key: str, value: str) -> None:
-  """Set a specific configuration value."""
-  logger = ctx.obj["logger"]
-  config_path = ctx.obj["config_path"]
+    """Set a specific configuration value."""
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
 
-  try:
-    config_manager = MetagitConfigManager(config_path=config_path)
-    current_config = config_manager.load_config()
-    if isinstance(current_config, Exception):
-      raise current_config
+    try:
+        config_manager = MetagitConfigManager(config_path=config_path)
+        current_config = config_manager.load_config()
+        if isinstance(current_config, Exception):
+            raise current_config
 
-    # Helper to set nested attributes
-    def set_nested_attr(obj, attr_path, val):
-      parts = attr_path.split('.')
-      for i, part in enumerate(parts):
-        if i == len(parts) - 1:
-          setattr(obj, part, val)
-        else:
-          obj = getattr(obj, part)
+        # Helper to set nested attributes
+        def set_nested_attr(obj, attr_path, val):
+            parts = attr_path.split(".")
+            for i, part in enumerate(parts):
+                if i == len(parts) - 1:
+                    setattr(obj, part, val)
+                else:
+                    obj = getattr(obj, part)
 
-    set_nested_attr(current_config, key, value)
+        set_nested_attr(current_config, key, value)
 
-    # Save the updated configuration
-    result = config_manager.save_config(current_config)
-    if isinstance(result, Exception):
-      raise result
+        # Save the updated configuration
+        result = config_manager.save_config(current_config)
+        if isinstance(result, Exception):
+            raise result
 
-    logger.success(f"Configuration key '{key}' set to '{value}' in {config_path}")
+        logger.success(f"Configuration key '{key}' set to '{value}' in {config_path}")
 
-  except Exception as e:
-    logger.error(f"Failed to set configuration key '{key}': {e}")
-    logger.debug(f"Error: {e}")
-    ctx.abort()
+    except Exception as e:
+        logger.error(f"Failed to set configuration key '{key}': {e}")
+        logger.debug(f"Error: {e}")
+        ctx.abort()
 
 
 @config.command("info")

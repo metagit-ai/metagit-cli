@@ -74,15 +74,13 @@ def set_config(
         last_element = config_path[-1]
         if hasattr(current_level, last_element):
             field_type = type(getattr(current_level, last_element))
-            if field_type == bool:
+            if isinstance(field_type, bool):
                 if value.lower() in ["true", "1", "yes"]:
                     converted_value = True
                 elif value.lower() in ["false", "0", "no"]:
                     converted_value = False
                 else:
-                    return TypeError(
-                        f"Invalid value for boolean: {value}"
-                    )
+                    return TypeError(f"Invalid value for boolean: {value}")
             else:
                 try:
                     converted_value = field_type(value)
