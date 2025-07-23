@@ -22,6 +22,8 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Combine if statements instead of nesting them where possible.
 - Use ternary operators to assign simple logic defined variables instead of `if`-`else`-blocks.
 - Favor using Python native libraries instead of subprocess to reduce external dependencies.
+- Use 2 spaces for indentation.
+- Private class members should be prefixed with an underscore (`_`).
 
 ## Naming Conventions
 
@@ -56,6 +58,11 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Ensure secure loading of configuration files.
 - All functions and methods that produce exceptions should return a union of the expected result type and Exception and be handled appropriately when called.
 
+## Regarding Dependencies
+
+- Avoid introducing new external dependencies unless absolutely necessary.
+- If a new dependency is required, please state the reason.
+
 ## CrewAI Guidelines
 - If prompted to create a crewai flow or crew do so using the crewai cli within the ./src/metagit/core path.
 - Support multiple AI providers using openrouter:
@@ -82,10 +89,11 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 ## Project Structure
 
 - Root Directory:
-  - examples/: Example scripts and projects using the libraries and code in the src directory
-  - src/metagit/: Application source
-  - docs/: Documentation as markdown
-  - tests/: Unit tests
+  - `examples/`: Example scripts and projects using the libraries and code in the src directory
+  - `src/metagit/core/<component>/*`: Application core logic and pydantic models
+  - `src/metagit/cli/commands/*`: CLI subcommands, one file per subcommand with multiple depth subcommands separated by a '_'.
+  - `docs/`: Documentation as markdown
+  - `tests/`: Unit tests
 
 ## Command-Line Tools
 
