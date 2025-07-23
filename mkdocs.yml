@@ -4,9 +4,9 @@ theme:
 nav:
   - 'index.md'
   - 'Terminology': 'terminology.md'
-  - 'Multi-tenancy': 'multi_tenancy.md'
-  - 'Tenant Configuration': 'per_tenant_configuration.md'
+  - 'Application Logic': 'app.logic.md'
   - 'Development': 'development.md'
+  - 'Secrets': 'secrets.analysis.md'
   - 'CLI Reference': 'cli_reference.md'
 markdown_extensions:
   - mkdocs-click

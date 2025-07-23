@@ -1,10 +1,5 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
-description: Python/CrewAI/Agent Development
+description: Metagit
 globs: *
 alwaysApply: true
 ---
@@ -15,17 +10,16 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 
 - Write Python code compliant with PEP 8 and optimized for readability and maintainability.
 - Use type hints for all function parameters and return types.
-- Always strongly type variables using the pydantic library.
-- Keep a component driven project structure with core logic for each component in their own directories within the metagit/core path.
+- Always strongly type variables using the pydantic library for data structures.
+- Always use Protocol definitions for interface definitions.
+- Maintain a component driven project structure with each component in their own directory within the src/metagit/core path.
 - Avoid duplication by using clear, modular code organization.
-- All functions and methods should return a union of the expected result type and exception and be handled appropriately when called.
-- All file paths should be constructed using os.path.join() instead of string concatenation
-- All library and class imports must be at the top of the file and not imported on-demand.
-- Unused import libraries and classes should be removed from your final output.
-- Do not assign variable names that are unused in try/except blocks, instead assign them to _.
-- No bare exception statements.
+- All file paths should be constructed using os.path.join() instead of string concatenation.
+- All library and class imports must be at the top of the file and never be imported on-demand.
+- Remove all unused imports from each python file after editing them.
+- Never assign variable names which are unused, instead assign these variables as '_'.
 - Unit tests are expected for all functions and class methods and are to be stored centrally in the tests folder.
-- Combine if statements with and instead of nesting them where possible.
+- Combine if statements instead of nesting them where possible.
 - Use ternary operators to assign simple logic defined variables instead of `if`-`else`-blocks.
 - Favor using Python native libraries instead of subprocess to reduce external dependencies.
 
@@ -54,15 +48,16 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 
 ## Error Handling and Validation
 
-- Handle configuration errors gracefully:
-  - Validate environment variables at startup.
-  - Use try-except blocks with meaningful error messages.
-  - Never use bare exceptions.
-- Log errors appropriately using Python's `logging` module.
+- Validate environment variables at startup.
+- Use try-except blocks with meaningful error messages.
+- Never create bare exception statements.
+- Be as explicit as possible when handling exceptions.
+- Log errors appropriately using the UnifiedLogger module.
 - Ensure secure loading of configuration files.
+- All functions and methods that produce exceptions should return a union of the expected result type and Exception and be handled appropriately when called.
 
-## Integration Guidelines
-- If prompted to create a crewai flow or crew do so using the crewai cli within the ./src path.
+## CrewAI Guidelines
+- If prompted to create a crewai flow or crew do so using the crewai cli within the ./src/metagit/core path.
 - Support multiple AI providers using openrouter:
   - Use environment variables for provider selection.
   - Configure models and endpoints via environment.
@@ -71,7 +66,7 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 
 ## Security
 
-- Never hardcode sensitive data; use environment variables.
+- Never hardcode sensitive data; always use environment variables.
 - Keep API keys and sensitive data in `.env` (gitignored).
 - Sanitize all inputs passed to external services.
 
@@ -84,18 +79,46 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Document code with clear inline comments.
 - Keep CHANGELOG.md updated with all changes.
 
-## Dependencies
-
-- Keep pyproject.toml minimal and focused:
-  - crewai: Core functionality
-  - python-dotenv: Environment management
-  - PyYAML: Configuration parsing
-
 ## Project Structure
 
 - Root Directory:
-  - Examples: Example scripts and projects using the libraries and code in the src directory
-  - Python files: agents.py, crew.py, main.py
-  - Config files: agents.yaml, tasks.yaml
-  - Environment: .env.example, .env (local)
-  - Documentation: README.md, CHANGELOG.md
+  - examples/: Example scripts and projects using the libraries and code in the src directory
+  - src/metagit/: Application source
+  - docs/: Documentation as markdown
+  - tests/: Unit tests
+
+## Command-Line Tools
+
+### GitHub
+- Use the `gh` command-line to interact with GitHub.
+
+### Markdown
+- Use the `glow` command-line to present markdown content.
+
+### JSON
+- Use the `jq` command to read and extract information from JSON files.
+
+### RipGrep
+- The `rg` (ripgrep) command is available for fast searches in text files.
+
+### Clipboard
+- Pipe content into `pbcopy` to copy it into the clipboard. Example: `echo "hello" | pbcopy`.
+- Pipe from `pbpaste` to get the contents of the clipboard. Example: `pbpaste > fromclipboard.txt`.
+
+### Python
+- Unless instructed otherwise, always use the `uv` Python environment and package manager for Python.
+  - `uv run ...` for running a python script.
+  - `uvx ...` for running program directly from a PyPI package.
+  - `uv ... ...` for managing environments, installing packages, etc...
+
+### JavaScript / TypeScript
+- Unless instructed otherwise, always use `deno` to run .js or .ts scripts.
+- Use `npx` for running commands directly from npm packages.
+
+## Documentation Sources
+- If working with a new library or tool, consider looking for its documentation from its website, GitHub project, or the relevant llms.txt.
+  - It is always better to have accurate, up-to-date documentation at your disposal, rather than relying on your pre-trained knowledge.
+- You can search the following directories for llms.txt collections for many projects:
+  - https://llmstxt.site/
+  - https://directory.llmstxt.cloud/
+- If you find a relevant llms.txt file, follow the links until you have access to the complete documentation.
