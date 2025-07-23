@@ -158,8 +158,11 @@ tasks:
   docs:
     desc: Build the docs
     cmds:
+      - task: generate:schema
       - |
         uv pip install -e ".[docs]"
+        gemini -y -p 'You are an expert devops and software engineer. Explore this project for its use of secrets and variables paying special attention to only those affecting the runtime behavior of the code and the cicd workflows used to release the projects artifacts. Create a report in ./docs/secrets.analysis.md on each of the secrets found and were they are sourced from. Using this data create a yaml file at ./docs/secrets.definitions.yml that represents the secrets, their provenance, and where they should be placed.'
+        gemini -y -p 'Perform a comprehensive analysis of the files in this project. Update the yaml file named .metagit.example.yml in the root of this project in a manner that adheres to the jsonschema file located at ./schemas/metagit_config.schema.json. Ensure you skip files matching the patterns in .gitignore. Do your best to update even optional elements of this schema. Pay special attention to dependencies found in Dockerfiles, CICD files, and mcp definitions. When complete also create ./docs/app.logic.md with additional documentation on the project components that includes a mermaid diagram of how they interact.'
         uv run mkdocs build
 
   test:

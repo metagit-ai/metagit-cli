@@ -2,7 +2,6 @@
 
 import json
 import os
-import shutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,8 +26,6 @@ from metagit.core.detect.models import (
     DetectionManagerConfig,
     GitBranchAnalysis,
     LanguageDetection,
-    ProjectDomain,
-    ProjectType,
     ProjectTypeDetection,
 )
 from metagit.core.record.models import MetagitRecord
@@ -747,10 +744,10 @@ class DetectionManager(MetagitRecord, LoggingModel):
         if not Path(repo_path).is_dir():
             return Exception(f"Invalid repository path: {repo_path}")
 
+        repo_path_obj = Path(repo_path)
         if not repo_path_obj.exists():
             return Exception(f"Repository path does not exist: {repo_path}")
 
-        repo_path_obj = Path(repo_path)
         try:
             analysis = CIConfigAnalysis()
 

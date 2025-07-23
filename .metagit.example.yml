@@ -1,64 +1,63 @@
-
-name: metagit-detect
+name: metagit-cli
 description: Metagit-ai multi-repo management tool
 url: https://github.com/metagit-ai/metagit-cli
 kind: cli
 documentation:
   - https://metagit-ai.github.io/metagit-cli/
 license:
-  kind: "MIT"
-  file: "LICENSE"
+  kind: Apache-2.0
+  file: LICENSE
 maintainers:
-  - name: "Zachary Loeber"
-    email: "zloeber@gmail.com"
-    role: "Author"
-branch_strategy: "githubflow"
+  - name: Zachary Loeber
+    email: zloeber@gmail.com
+    role: author
+branch_strategy: githubflow
 taskers:
-  - kind: "Taskfile"
+  - kind: Taskfile
 paths:
-  - name: "src"
-    description: "Main source code directory"
-    kind: "library"
-    path: "src/metagit"
-    language: "python"
-    language_version: "3.12"
-    package_manager: "uv"
+  - name: metagit-cli
+    description: The main CLI application
+    kind: cli
+    path: src/metagit
+    language: python
+    language_version: "3.13"
+    package_manager: uv
     frameworks:
-      - "click"
-      - "pydantic"
-      - "loguru"
-  - name: "tests"
-    description: "Unit and integration tests"
-    kind: "library"
-    path: "tests"
-    language: "python"
-    language_version: "3.12"
-    package_manager: "uv"
-    frameworks:
-      - "pytest"
-  - name: "docs"
-    description: "Project documentation"
-    kind: "website"
-    path: "docs"
-    language: "markdown"
-    package_manager: "mkdocs"
+      - click
+      - pydantic
+      - loguru
 cicd:
-  platform: "GitHub"
+  platform: GitHub
   pipelines:
-    - name: "Test"
-      ref: ".github/workflows/test.yaml"
-    - name: "Release"
-      ref: ".github/workflows/release.yaml"
-    - name: "Docker Image"
-      ref: ".github/workflows/docker.yaml"
-    - name: "Docs"
-      ref: ".github/workflows/docs.yaml"
+    - name: test
+      ref: .github/workflows/test.yaml
+    - name: release
+      ref: .github/workflows/release.yaml
+    - name: docker
+      ref: .github/workflows/docker.yaml
+    - name: docs
+      ref: .github/workflows/docs.yaml
 artifacts:
-  - type: "docker"
-    definition: "Dockerfile"
-    location: "ghcr.io/metagit-ai/metagit-cli"
-    version_strategy: "semver"
-  - type: "python_package"
-    definition: "pyproject.toml"
-    location: "https://pypi.org/project/metagit-cli/"
-    version_strategy: "semver"
+  - type: docker
+    definition: Dockerfile
+    location: ghcr.io/metagit-ai/metagit-cli
+    version_strategy: semver
+  - type: python_package
+    definition: pyproject.toml
+    location: https://pypi.org/project/metagit-cli/
+    version_strategy: semver
+deployment:
+  strategy: pipeline
+observability:
+  logging_provider: console
+  monitoring_providers:
+    - sentry
+secrets_management:
+  - github_secrets
+secrets:
+  - name: GITHUB_TOKEN
+    kind: access_token
+    ref: ${{ secrets.GITHUB_TOKEN }}
+  - name: PYPI_API_TOKEN
+    kind: api_key
+    ref: ${{ secrets.PYPI_API_TOKEN }}

@@ -29,6 +29,74 @@ def load_config(config_path: str) -> Union[AppConfig, Exception]:
         return e
 
 
+def save_config(config_path: str, config: AppConfig) -> Union[None, Exception]:
+    """
+    Save the AppConfig object to a YAML file.
+    """
+    try:
+        config_dict = {"config": config.model_dump(exclude_none=True, mode="json")}
+        with open(config_path, "w") as f:
+            base_yaml.dump(
+                config_dict,
+                f,
+                default_flow_style=False,
+                sort_keys=False,
+                indent=2,
+                line_break=True,
+            )
+        return None
+    except Exception as e:
+        return e
+
+
+def set_config(
+    appconfig: AppConfig, name: str, value: str, logger=None
+) -> Union[AppConfig, Exception]:
+    """Set appconfig values"""
+    if logger is None:
+        logger = UnifiedLogger(
+            LoggerConfig(
+                log_level="INFO",
+                use_rich_console=True,
+                minimal_console=False,
+                terse=False,
+            )
+        )
+    try:
+        config_path = name.split(".")
+        current_level = appconfig
+        for element in config_path[:-1]:
+            if hasattr(current_level, element):
+                current_level = getattr(current_level, element)
+            else:
+                return ValueError(f"Invalid key: {name}")
+
+        last_element = config_path[-1]
+        if hasattr(current_level, last_element):
+            field_type = type(getattr(current_level, last_element))
+            if isinstance(field_type, bool):
+                if value.lower() in ["true", "1", "yes"]:
+                    converted_value = True
+                elif value.lower() in ["false", "0", "no"]:
+                    converted_value = False
+                else:
+                    return TypeError(f"Invalid value for boolean: {value}")
+            else:
+                try:
+                    converted_value = field_type(value)
+                except (ValueError, TypeError):
+                    return TypeError(
+                        f"Invalid value type for '{name}'. Expected {field_type.__name__}."
+                    )
+            setattr(current_level, last_element, converted_value)
+        else:
+            return ValueError(f"Invalid key: {name}")
+
+        return appconfig
+    except Exception as e:
+        return e
+
+
 def get_config(
     appconfig: AppConfig, name="", show_keys=False, output="json", logger=None
 ) -> Union[dict, None, Exception]:

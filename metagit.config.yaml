@@ -1,79 +1,52 @@
 config:
-  version: "0.1.0"
-  description: "Configuration for metagit CLI"
-
-  # Reserved for future use
-  api_url: ""
-  # Reserved for future use
-  api_version: ""
-  # Reserved for future use
-  api_key: ""
-  # Reserved for future use
+  version: 0.1.7
+  description: Configuration for metagit CLI
+  editor: code
+  api_url: ''
+  api_version: ''
+  api_key: ''
   cicd_file_data: data/cicd-files.json
   file_type_data: data/file-types.json
   package_manager_data: data/package-managers.json
-  default_profile: default
-
   llm:
     enabled: false
-    provider: "openrouter"
-    provider_model: "gpt-4o-mini"
-    embedder: "ollama"
-    embedder_model: "nomic-embed-text"
-    api_key: ""
-
+    provider: openrouter
+    provider_model: gpt-4o-mini
+    embedder: ollama
+    embedder_model: nomic-embed-text
+    api_key: ''
   workspace:
-    # Default workspace path, should be added to .gitignore
     path: ./.metagit
     default_project: default
-
+  profiles:
+  - name: default
+    boundaries:
+    - name: github
+      values: []
+    - name: jfrog
+      values: []
+    - name: gitlab
+      values: []
+    - name: bitbucket
+      values: []
+    - name: azure_devops
+      values: []
+    - name: dockerhub
+      values: []
+    - name: domain
+      values:
+      - localhost
+      - 127.0.0.1
+      - 0.0.0.0
+      - 192.168.*
+      - 10.0.*
+      - 172.16.*
   providers:
     github:
       enabled: true
+      api_token: ''
       base_url: https://api.github.com
     gitlab:
       enabled: false
+      api_token: ''
       base_url: https://gitlab.com/api/v4
-
-  profiles:
-    # Profiles are used to define multiple configurations for different organizations
-    # Boundaries are used to define the boundaries of the organization
-    # They are used to determine which repositories are part of the organization
-    # and which are not. This is important for auto-detection of internal and external repositories.
-    # Any artifact, repository, or registry that is not part of the defined boundaries is considered external.
-    - name: default
-      boundaries:
-        - name: github
-          values: []
-        - name: jfrog
-          values: []
-        - name: gitlab
-          values: []
-        - name: bitbucket
-          values: []
-        - name: azure_devops
-          values: []
-        - name: dockerhub
-          values: []
-        - name: domain
-          values:
-            - localhost
-            - "127.0.0.1"
-            - "0.0.0.0"
-            - 192.168.*
-            - 10.0.*
-            - 172.16.*
-
-# These are the equivalent of a tenant in a multi-tenant application
-# default boundaries are inherited from the global boundaries
-# profiles:
-#   default:
-#     name: "Personal"
-#     boundaries:
-#       - name: github
-#         values: []
-#       - name: jfrog
-#         values: []
-#       - name: gitlab
-#         values: []
-

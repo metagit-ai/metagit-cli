@@ -2,8 +2,8 @@
 Appconfig subcommand
 """
 
-import os
 import json
+import os
 import sys
 from typing import Union
 
@@ -11,11 +11,10 @@ import click
 import yaml as base_yaml
 from pydantic import ValidationError
 
-from metagit import DATA_PATH, DEFAULT_CONFIG
-from metagit.core.appconfig import get_config, load_config
+from metagit import DATA_PATH, DEFAULT_CONFIG, __version__
+from metagit.core.appconfig import get_config, load_config, save_config, set_config
 from metagit.core.appconfig.models import AppConfig
-from metagit.core.utils.logging import UnifiedLogger, LoggerConfig
-from metagit import __version__
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 
 @click.group(name="appconfig", invoke_without_command=True)
@@ -109,7 +108,6 @@ def appconfig_validate(
     "get",
     help="""
 Get a value from the application configuration.\n
-
 Example - show all keys in the providers section:\n
   metagit appconfig get --name config.providers --show-keys\n
 Example - show all values in the providers section:\n
@@ -175,6 +173,35 @@ def appconfig_create(ctx: click.Context, config_path: str = None) -> None:
         logger.warning(f"Configuration file {config_path} already exists!")
 
 
+@appconfig.command("set")
+@click.option("--name", help="Appconfig element to target")
+@click.option("--value", help="Value to set")
+@click.pass_context
+def appconfig_set(ctx: click.Context, name: str, value: str) -> None:
+    """Set a value in the application configuration."""
+    logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
+    try:
+        config = ctx.obj["config"]
+        config_path = ctx.obj["config_path"]
+
+        updated_config = set_config(appconfig=config, name=name, value=value)
+        if isinstance(updated_config, Exception):
+            raise updated_config
+
+        save_result = save_config(config_path=config_path, config=updated_config)
+        if isinstance(save_result, Exception):
+            raise save_result
+
+        logger.success(f"Updated '{name}' to '{value}' in {config_path}")
+
+    except Exception as e:
+        if logger:
+            logger.error(f"Failed to set appconfig value: {e}")
+        else:
+            click.echo(f"An error occurred: {e}", err=True)
+        ctx.abort()
+
+
 @appconfig.command("schema")
 @click.option(
     "--output-path",
@@ -195,60 +222,3 @@ def appconfig_schema(ctx: click.Context, output_path: str) -> None:
     except Exception as e:
         logger.error(f"Failed to generate JSON schema: {e}")
         ctx.abort()
-
-
-# @appconfig.command("init")
-# @click.option(
-#     "--config-path",
-#     help="Path to save configuration file (default: ~/.config/metagit/config.yml).",
-#     default=os.path.join(os.getcwd(), "metagit.config.yaml"),
-# )
-# @click.option(
-#     "--github-token",
-#     help="GitHub API token to include in initial configuration.",
-# )
-# @click.option(
-#     "--gitlab-token",
-#     help="GitLab API token to include in initial configuration.",
-# )
-# @click.pass_context
-# def init(
-#     ctx: click.Context,
-#     github_token: str = None,
-#     gitlab_token: str = None,
-#     config_path: str = None,
-# ) -> None:
-#     """Initialize AppConfig with default settings."""
-#     logger = ctx.obj["logger"]
-
-#     try:
-#         # Create default configuration
-#         app_config = AppConfig()
-
-#         # Set tokens if provided
-#         if github_token:
-#             app_config.providers.github.api_token = github_token
-#             app_config.providers.github.enabled = True
-#             click.echo("✅ GitHub token configured")
-
-#         if gitlab_token:
-#             app_config.providers.gitlab.api_token = gitlab_token
-#             app_config.providers.gitlab.enabled = True
-#             click.echo("✅ GitLab token configured")
-
-#         # Save configuration
-#         result = app_config.save(config_path)
-#         if isinstance(result, Exception):
-#             logger.error(f"Failed to save configuration: {result}")
-#             ctx.abort()
-
-#         click.echo(
-#             f"✅ Configuration initialized at: {config_path or '~/.config/metagit/config.yml'}"
-#         )
-#         click.echo(
-#             "You can now use 'metagit config providers --show' to view your configuration."
-#         )
-
-#     except Exception as e:
-#         logger.error(f"Error initializing configuration: {e}")
-#         ctx.abort()
