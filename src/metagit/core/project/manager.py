@@ -309,6 +309,8 @@ class ProjectManager:
         self,
         metagit_config: MetagitConfig,
         project: str,
+        show_preview: bool = False,
+        menu_length: int = 10,
     ) -> ProjectPath:
         """
         Select a repository from a synced project.
@@ -361,13 +363,13 @@ class ProjectManager:
         finder_config = FuzzyFinderConfig(
             items=projects,
             prompt_text="🔍 Search projects: ",
-            max_results=20,
+            max_results=menu_length,
             score_threshold=60.0,
             highlight_color="bold white bg:#0066cc",
             normal_color="cyan",
             prompt_color="bold green",
             separator_color="gray",
-            enable_preview=True,
+            enable_preview=show_preview,
             display_field="name",
             preview_field="description",
             preview_header="About",

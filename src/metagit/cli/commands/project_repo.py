@@ -32,8 +32,16 @@ def repo_select(ctx: click.Context) -> None:
     local_config: MetagitConfig = ctx.obj["local_config"]
     project = ctx.obj["project"]
     app_config: AppConfig = ctx.obj["config"]
-    project_manager = ProjectManager(app_config.workspace.path, logger)
-    selected_repo = project_manager.select_repo(local_config, project)
+    project_manager = ProjectManager(
+        app_config.workspace.path,
+        logger,
+    )
+    selected_repo = project_manager.select_repo(
+        local_config,
+        project,
+        show_preview=app_config.workspace.ui_show_preview,
+        menu_length=app_config.workspace.ui_menu_length,
+    )
     if isinstance(selected_repo, Exception):
         logger.error(f"Failed to select project repo: {selected_repo}")
         ctx.abort()

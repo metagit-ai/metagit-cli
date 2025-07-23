@@ -18,6 +18,12 @@ class WorkspaceConfig(BaseModel):
 
     path: str = Field(default="./.metagit", description="Workspace path")
     default_project: str = Field(default="default", description="Default project")
+    ui_show_preview: Optional[bool] = Field(
+        default=False, description="Show preview in fuzzy finder console UI"
+    )
+    ui_menu_length: Optional[int] = Field(
+        default=10, description="Number of items to show in menu"
+    )
 
     class Config:
         """Pydantic configuration."""
