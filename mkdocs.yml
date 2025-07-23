@@ -1,5 +1,7 @@
 site_name: Metagit-AI Documentation
 theme:
+  palette:
+    scheme: slate
   name: material
 nav:
   - 'index.md'
@@ -17,3 +19,9 @@ markdown_extensions:
   - sane_lists         # Enables list items with multiple paragraphs
   - toc:               # Builds a table of contents
       permalink: "#"   # Puts a "#" at the end of each header
+  - pymdownx.superfences:
+        # make exceptions to highlighting of code:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
