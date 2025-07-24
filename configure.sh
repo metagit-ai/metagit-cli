@@ -20,6 +20,4 @@ else
 fi
 
 mise install -y
-task install
-
-#task python:venv python:install
+uv sync

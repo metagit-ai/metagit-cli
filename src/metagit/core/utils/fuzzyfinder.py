@@ -9,6 +9,7 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import HSplit, Layout, Window
 from prompt_toolkit.layout.controls import BufferControl
+from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.styles import Style
 from pydantic import BaseModel, Field, field_validator
 from rapidfuzz import fuzz, process
@@ -61,9 +62,7 @@ class FuzzyFinderConfig(BaseModel):
     preview_field: Optional[str] = Field(
         None, description="Field name to use for preview if items are objects."
     )
-    preview_header: Optional[str] = Field(
-        "Preview:", description="Header for preview pane."
-    )
+    preview_header: Optional[str] = Field(None, description="Header for preview pane.")
     sort_items: bool = Field(True, description="Whether to sort the items.")
     # Styling options
     highlight_color: str = Field(
@@ -200,7 +199,7 @@ class FuzzyFinder:
         if self.config.enable_preview:
             self.preview_window = Window(
                 self.preview_control,
-                height=10,  # Increased height for better visibility
+                height=Dimension(min=3, max=6),
                 style="class:normal",
                 char=" ",
                 wrap_lines=True,  # Enable text wrapping
@@ -407,12 +406,15 @@ class FuzzyFinder:
                 preview_value = str(highlighted_item)
 
             # Format the preview text with better structure
-            formatted_preview = [
-                ("class:normal", f"{self.config.preview_header}\n"),
-                ("class:normal", "─" * 40 + "\n"),
-                ("class:normal", f"{preview_value}\n"),
-                ("class:normal", "─" * 40 + "\n"),
-            ]
+            if self.config.preview_header:
+                formatted_preview = [
+                    ("class:normal", f"{self.config.preview_header}\n"),
+                    ("class:normal", f"{preview_value}\n"),
+                ]
+            else:
+                formatted_preview = [
+                    ("class:normal", f"{preview_value}\n"),
+                ]
             self.preview_control.text = FormattedText(formatted_preview)
             return None
         except Exception as e:

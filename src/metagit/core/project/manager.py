@@ -334,13 +334,18 @@ class ProjectManager:
             )
             return
         project_dict = {}
+
         # Iterate through the project path and add the directories and symlinks to the project_dict
         for f in Path(project_path).iterdir():
+            description = ""
             if f.is_dir():
-                project_dict[f.name] = "Directory - non-workspace managed"
+                description = f"Directory: {f.name}\n"  # noqa: E501
+                project_dict[f.name] = description
             if f.is_symlink():
                 target_path = f.readlink()
-                project_dict[f.name] = f"Symlink({target_path}) - non-workspace managed"
+                description = f"Symlink: {f.name}\nTarget: {target_path}"
+                project_dict[f.name] = description
+
         # Iterate through the workspace project and add the repo descriptions to the project_dict
         for repo in workspace_project.repos:
             if repo.name in project_dict:
@@ -351,6 +356,8 @@ class ProjectManager:
                     project_dict[repo.name] = f"{target_kind} - no description"
                 else:
                     project_dict[repo.name] = f"{target_kind} - {repo.description}"
+            else:
+                project_dict[f.name].description += f"\nManaged: False"
         projects: List[FuzzyFinderTarget] = []
         for target in project_dict:
             projects.append(
@@ -372,7 +379,6 @@ class ProjectManager:
             enable_preview=show_preview,
             display_field="name",
             preview_field="description",
-            preview_header="About",
         )
         finder = FuzzyFinder(finder_config)
         selected = finder.run()

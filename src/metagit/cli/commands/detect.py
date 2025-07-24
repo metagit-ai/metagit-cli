@@ -12,6 +12,11 @@ from metagit.core.detect.manager import DetectionManager, DetectionManagerConfig
 from metagit.core.providers import registry
 from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers.gitlab import GitLabProvider
+from metagit.core.utils.files import (
+    FileExtensionLookup,
+    directory_details,
+    directory_summary,
+)
 
 
 @click.group(name="detect", invoke_without_command=True, help="Detection subcommands")
@@ -22,6 +27,53 @@ def detect(ctx: click.Context) -> None:
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         return
+
+
+@detect.command("repo_map")
+@click.option(
+    "--path",
+    "-p",
+    default="./",
+    show_default=True,
+    help="Path to the git repository to analyze.",
+)
+@click.option(
+    "--output",
+    "-o",
+    default="yaml",
+    show_default=True,
+    help="Output format (yaml, json, summary).",
+)
+@click.pass_context
+def detect_repo_map(ctx: click.Context, path: str, output: str) -> None:
+    """Create a map of files and folders in a repository for further analysis."""
+    logger = ctx.obj["logger"]
+    try:
+        summary = directory_summary(path)
+    except Exception as e:
+        logger.error(f"Error creating directory summary at {path}: {e}")
+        ctx.abort()
+
+    try:
+        details = directory_details(target_path=path, file_lookup=FileExtensionLookup())
+    except Exception as e:
+        logger.error(f"Error creating directory details at {path}: {e}")
+        ctx.abort()
+
+    result = {
+        "summary": summary.model_dump(mode="json"),
+        "details": details.model_dump(mode="json"),
+    }
+    if output == "yaml":
+        yaml_output = yaml.safe_dump(
+            result, default_flow_style=False, sort_keys=False, indent=2
+        )
+        click.echo(yaml_output)
+    elif output == "json":
+        json_output = json.dumps(result, indent=2)
+        click.echo(json_output)
+    else:
+        click.echo(result)
 
 
 @detect.command("repo")

@@ -279,6 +279,8 @@ def parse_gitignore(ignore_file: Path) -> Set[str]:
                     line = line.strip()
                     # Skip empty lines and comments
                     if line and not line.startswith("#"):
+                        # Remove trailing slash from patterns
+                        line = line.rstrip("/")
                         ignore_patterns.add(line)
         except Exception:
             pass
@@ -442,6 +444,7 @@ def directory_summary(
         raise ValueError(f"Path {target_path} is not a directory")
 
     ignore_file = os.path.join(path, ".gitignore")
+
     ignore_patterns = ignore_patterns or set()
     ignore_patterns = ignore_patterns.union(parse_gitignore(ignore_file))
 

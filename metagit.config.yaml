@@ -18,6 +18,8 @@ config:
   workspace:
     path: ./.metagit
     default_project: default
+    ui_show_preview: true
+    ui_menu_length: 20
   profiles:
   - name: default
     boundaries:

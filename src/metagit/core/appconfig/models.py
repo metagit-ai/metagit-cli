@@ -24,6 +24,9 @@ class WorkspaceConfig(BaseModel):
     ui_menu_length: Optional[int] = Field(
         default=10, description="Number of items to show in menu"
     )
+    ui_preview_height: Optional[int] = Field(
+        default=3, description="Height of preview in fuzzy finder console UI"
+    )
 
     class Config:
         """Pydantic configuration."""
