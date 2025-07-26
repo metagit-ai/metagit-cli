@@ -2,21 +2,21 @@
 Config subcommand
 """
 
-import os
 import json
-
+import os
 from typing import Union
 
 import click
 
 from metagit.core.appconfig import AppConfig
-from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
+from metagit.core.config.manager import (MetagitConfigManager,
+                                         create_metagit_config)
 from metagit.core.utils.yaml_class import yaml
 
 
 @click.group(name="config", invoke_without_command=True)
 @click.option(
-    "--config-path",
+    "--config-path", "-c",
     help="Path to the metagit configuration file",
     default=".metagit.yml",
 )
@@ -32,7 +32,7 @@ def config(ctx: click.Context, config_path: str) -> None:
         ctx.obj["config_path"] = config_path
         # Initialize a dummy logger for testing purposes if not already present
         if "logger" not in ctx.obj:
-            from metagit.core.utils.logging import UnifiedLogger, LoggerConfig
+            from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
             ctx.obj["logger"] = UnifiedLogger(
                 LoggerConfig(log_level="INFO", minimal_console=True)
@@ -63,8 +63,7 @@ def config_show(ctx: click.Context) -> None:
             config_result.model_dump(exclude_unset=True, exclude_none=True),
             default_flow_style=False,
             sort_keys=False,
-            indent=2,
-            line_break=True,
+            indent=2
         )
         logger.echo(output)
     except Exception as e:
@@ -298,7 +297,8 @@ def providers(
                 ctx.abort()
             click.echo("✅ Configuration saved")
         else:
-            click.echo("No changes made. Use --show to view current configuration.")
+            click.echo(
+                "No changes made. Use --show to view current configuration.")
 
     except Exception as e:
         logger.error(f"Error managing provider configuration: {e}")
@@ -336,7 +336,8 @@ def config_set(ctx: click.Context, key: str, value: str) -> None:
         if isinstance(result, Exception):
             raise result
 
-        logger.success(f"Configuration key '{key}' set to '{value}' in {config_path}")
+        logger.success(
+            f"Configuration key '{key}' set to '{value}' in {config_path}")
 
     except Exception as e:
         logger.error(f"Failed to set configuration key '{key}': {e}")
@@ -354,7 +355,37 @@ def config_info(ctx: click.Context) -> None:
     config_path = ctx.obj["config_path"]
 
     if os.path.exists(ctx.obj["config_path"]):
-        logger.config_element(name="config_path", value=config_path, console=True)
+        logger.config_element(name="config_path",
+                              value=config_path, console=True)
+        config_manager = MetagitConfigManager(config_path=config_path)
+        current_config = config_manager.load_config()
+        if isinstance(current_config, Exception):
+            logger.error(f"Failed to load configuration: {current_config}")
+            ctx.abort()
+        logger.config_element(
+            name="project_name",
+            value=current_config.name or "N/A",
+            console=True,
+        )
+        logger.config_element(
+            name="project_kind",
+            value=current_config.kind or "N/A",
+            console=True,
+        )
+        project_count = len(
+            current_config.workspace.projects) if current_config.workspace.projects else 0
+        logger.config_element(
+            name="project_count",
+            value=project_count,
+            console=True,
+        )
+        if project_count > 0:
+            for project in current_config.workspace.projects:
+                logger.config_element(
+                    name=f"project_{project.name}_entry_count",
+                    value=len(project.repos) if project.repos else 0,
+                    console=True,
+                )
     else:
         logger.echo("No project config file found!")
         logger.echo(

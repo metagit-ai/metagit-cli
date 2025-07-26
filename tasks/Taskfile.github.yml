@@ -41,3 +41,13 @@ tasks:
         else
           xdg-open {{.GITHUB_UI_PATH}}/actions
         fi
+
+  models:init:
+    desc: Initialize models for github project
+    cmds:
+      - gh extension install https://github.com/github/gh-models || true
+
+  models:list:
+    desc: List models for github project
+    cmds:
+      - gh models list

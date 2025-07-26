@@ -33,6 +33,7 @@ dependencies = [
     "aiofiles>=23.2.1",
     "async>=0.6.2",
     "setuptools-scm>=8.3.1",
+    "litellm>=1.74.8",
 ]
 
 [project.urls]
@@ -42,7 +43,7 @@ Issues = "https://github.com/metagit-ai/metagit-cli/issues"
 CI = "https://github.com/metagit-ai/metagit-cli/actions"
 
 [project.optional-dependencies]
-standard = ["crewai[tools]"]
+standard = []
 test = ["pytest", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio", "black"]
 dev = ["ruff", "black", "isort", "mypy"]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc", "mkdocs-mermaid2-plugin", "mkdocs-material"]
