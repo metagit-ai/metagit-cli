@@ -15,14 +15,14 @@ from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig, fuzzy
 def test_basic_fuzzyfinder():
     """Test the basic fuzzyfinder function."""
     print("Testing basic fuzzyfinder function...")
-    
+
     collection = ["apple", "banana", "grape", "apricot"]
     results = fuzzyfinder("ap", collection)
-    
-    print(f"Query: 'ap'")
+
+    print("Query: 'ap'")
     print(f"Collection: {collection}")
     print(f"Results: {results}")
-    
+
     assert "apple" in results
     assert "apricot" in results
     assert "banana" not in results
@@ -33,9 +33,9 @@ def test_basic_fuzzyfinder():
 def test_fuzzy_finder_config():
     """Test FuzzyFinderConfig creation."""
     print("Testing FuzzyFinderConfig...")
-    
+
     languages = ["python", "javascript", "typescript", "golang", "rust"]
-    
+
     config = FuzzyFinderConfig(
         items=languages,
         prompt_text="Search: ",
@@ -44,7 +44,7 @@ def test_fuzzy_finder_config():
         scorer="partial_ratio",
         case_sensitive=False,
     )
-    
+
     print(f"Config created with {len(config.items)} items")
     print(f"Prompt text: '{config.prompt_text}'")
     print(f"Max results: {config.max_results}")
@@ -55,16 +55,16 @@ def test_fuzzy_finder_config():
 def test_fuzzy_finder_class():
     """Test FuzzyFinder class creation."""
     print("Testing FuzzyFinder class...")
-    
+
     languages = ["python", "javascript", "typescript", "golang", "rust"]
-    
+
     config = FuzzyFinderConfig(
         items=languages,
         prompt_text="Search: ",
         max_results=5,
     )
-    
-    finder = FuzzyFinder(config)
+
+    _ = FuzzyFinder(config)
     print("✓ FuzzyFinder class created successfully!")
     print()
 
@@ -74,12 +74,12 @@ def main():
     print("Testing Textual migration for FuzzyFinder")
     print("=" * 50)
     print()
-    
+
     try:
         test_basic_fuzzyfinder()
         test_fuzzy_finder_config()
         test_fuzzy_finder_class()
-        
+
         print("🎉 All tests passed! The Textual migration is working correctly.")
         print()
         print("Key changes made:")
@@ -88,7 +88,7 @@ def main():
         print("- Added FuzzyFinderApp class with proper Textual widgets")
         print("- Maintained backward compatibility with existing API")
         print("- Kept the simple fuzzyfinder() function unchanged")
-        
+
     except Exception as e:
         print(f"❌ Test failed: {e}")
         sys.exit(1)

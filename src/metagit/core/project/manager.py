@@ -357,7 +357,7 @@ class ProjectManager:
                 else:
                     project_dict[repo.name] = f"{target_kind} - {repo.description}"
             else:
-                project_dict[f.name].description += f"\nManaged: False"
+                project_dict[f.name].description += "\nManaged: False"
         projects: List[FuzzyFinderTarget] = []
         for target in project_dict:
             projects.append(

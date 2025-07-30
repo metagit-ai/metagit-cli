@@ -1,11 +1,9 @@
-import os
-import sys
-from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, List, Optional, Union
+#! /usr/bin/env python3
+
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.reactive import reactive
 from textual.widgets import Input, Static, ListView, ListItem, Label
 from textual.binding import Binding
 from pydantic import BaseModel, Field, field_validator
@@ -146,7 +144,7 @@ class FuzzyFinderConfig(BaseModel):
 
 class FuzzyFinderApp(App):
     """A Textual app for fuzzy finding."""
-    
+
     CSS = """
     .fuzzy-finder-input {
         dock: top;
@@ -169,7 +167,7 @@ class FuzzyFinderApp(App):
         color: $text;
     }
     """
-    
+
     BINDINGS = [
         Binding("ctrl+c", "quit", "Quit"),
         Binding("escape", "quit", "Quit"),
@@ -177,14 +175,14 @@ class FuzzyFinderApp(App):
         Binding("up", "cursor_up", "Up", show=False),
         Binding("down", "cursor_down", "Down", show=False),
     ]
-    
+
     def __init__(self, config: FuzzyFinderConfig, **kwargs):
         super().__init__(**kwargs)
         self.config = config
         self.current_results: List[Any] = []
         self.selected_item: Optional[Any] = None
         self.highlighted_index = 0
-        
+
     def compose(self) -> ComposeResult:
         """Create child widgets for the app."""
         with Vertical():
@@ -192,9 +190,9 @@ class FuzzyFinderApp(App):
             yield Input(
                 placeholder=self.config.prompt_text,
                 id="search_input",
-                classes="fuzzy-finder-input"
+                classes="fuzzy-finder-input",
             )
-            
+
             if self.config.enable_preview:
                 # Split layout with results and preview
                 with Horizontal():
@@ -203,19 +201,19 @@ class FuzzyFinderApp(App):
             else:
                 # Just results
                 yield ListView(id="results_list", classes="fuzzy-finder-results")
-    
+
     def on_mount(self) -> None:
         """Called when app starts."""
         # Initial search with empty query
         self._perform_search("")
         # Focus the input
         self.query_one("#search_input", Input).focus()
-    
+
     def on_input_changed(self, event: Input.Changed) -> None:
         """Called when the input changes."""
         if event.input.id == "search_input":
             self._perform_search(event.value)
-    
+
     def _perform_search(self, query: str) -> None:
         """Perform fuzzy search and update results."""
         try:
@@ -223,68 +221,72 @@ class FuzzyFinderApp(App):
             if isinstance(results, Exception):
                 # Handle error - for now just show empty results
                 results = []
-            
+
             self.current_results = results
             self.highlighted_index = 0
             self._update_results_list()
-            
+
             if self.config.enable_preview:
                 self._update_preview()
-                
-        except Exception as e:
+
+        except Exception:
             # Handle error gracefully
             self.current_results = []
             self._update_results_list()
-    
+
     def _update_results_list(self) -> None:
         """Update the results ListView."""
         results_list = self.query_one("#results_list", ListView)
         results_list.clear()
-        
+
         for i, result in enumerate(self.current_results):
             display_value = self.config.get_display_value(result)
             if isinstance(display_value, Exception):
                 display_value = str(result)
-            
+
             # Create list item
             item = ListItem(Label(display_value))
             if i == self.highlighted_index:
                 item.add_class("highlighted")
             results_list.append(item)
-    
+
     def _update_preview(self) -> None:
         """Update the preview pane."""
         if not self.config.enable_preview:
             return
-            
+
         preview_pane = self.query_one("#preview_pane", Static)
-        
-        if not self.current_results or self.highlighted_index >= len(self.current_results):
+
+        if not self.current_results or self.highlighted_index >= len(
+            self.current_results
+        ):
             preview_pane.update("No preview available")
             return
-        
+
         highlighted_item = self.current_results[self.highlighted_index]
         preview_value = self.config.get_preview_value(highlighted_item)
-        
+
         if isinstance(preview_value, Exception) or preview_value is None:
             preview_value = str(highlighted_item)
-        
+
         if self.config.preview_header:
             preview_text = f"{self.config.preview_header}\n\n{preview_value}"
         else:
             preview_text = preview_value
-            
+
         preview_pane.update(preview_text)
-    
+
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Called when a list item is selected."""
         if event.list_view.id == "results_list" and self.current_results:
             # Update highlighted index based on selection
-            self.highlighted_index = event.item.index if hasattr(event.item, 'index') else 0
+            self.highlighted_index = (
+                event.item.index if hasattr(event.item, "index") else 0
+            )
             if self.highlighted_index < len(self.current_results):
                 self.selected_item = self.current_results[self.highlighted_index]
                 self.exit(self.selected_item)
-    
+
     def action_cursor_up(self) -> None:
         """Move cursor up."""
         if self.current_results and self.highlighted_index > 0:
@@ -292,15 +294,18 @@ class FuzzyFinderApp(App):
             self._update_results_list()
             if self.config.enable_preview:
                 self._update_preview()
-    
+
     def action_cursor_down(self) -> None:
         """Move cursor down."""
-        if self.current_results and self.highlighted_index < len(self.current_results) - 1:
+        if (
+            self.current_results
+            and self.highlighted_index < len(self.current_results) - 1
+        ):
             self.highlighted_index += 1
             self._update_results_list()
             if self.config.enable_preview:
                 self._update_preview()
-    
+
     def action_select(self) -> None:
         """Select the highlighted item."""
         if self.current_results and self.highlighted_index < len(self.current_results):
@@ -308,11 +313,11 @@ class FuzzyFinderApp(App):
             self.exit(self.selected_item)
         else:
             self.exit(None)
-    
+
     def action_quit(self) -> None:
         """Quit the application."""
         self.exit(None)
-    
+
     def _search(self, query: str) -> Union[List[Any], Exception]:
         """Perform fuzzy search based on the query."""
         try:
@@ -410,7 +415,7 @@ class FuzzyFinder:
         try:
             app = FuzzyFinderApp(self.config)
             result = app.run()
-            
+
             if self.config.multi_select:
                 # Multi-select not fully implemented yet
                 return [result] if result else []
