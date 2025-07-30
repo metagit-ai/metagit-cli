@@ -155,9 +155,11 @@ def appconfig_create(ctx: click.Context, config_path: str = None) -> None:
     if not os.path.exists(config_path):
         try:
             output = base_yaml.dump(
-                default_config.model_dump(
-                    exclude_none=True, exclude_defaults=False, mode="json"
-                ),
+                {
+                    "config": default_config.model_dump(
+                        exclude_none=True, exclude_defaults=False, mode="json"
+                    )
+                },
                 default_flow_style=False,
                 sort_keys=False,
                 indent=2,
