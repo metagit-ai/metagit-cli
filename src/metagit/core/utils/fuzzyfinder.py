@@ -3,19 +3,16 @@ import sys
 from contextlib import contextmanager
 from typing import Any, Callable, Dict, Generator, List, Optional, Union
 
-from prompt_toolkit import Application
-from prompt_toolkit.buffer import Buffer
-from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout import HSplit, Layout, Window
-from prompt_toolkit.layout.controls import BufferControl
-from prompt_toolkit.layout.dimension import Dimension
-from prompt_toolkit.styles import Style
+from textual.app import App, ComposeResult
+from textual.containers import Horizontal, Vertical
+from textual.reactive import reactive
+from textual.widgets import Input, Static, ListView, ListItem, Label
+from textual.binding import Binding
 from pydantic import BaseModel, Field, field_validator
 from rapidfuzz import fuzz, process
 
 """
-This is a fuzzy finder that uses prompt_toolkit and rapidfuzz to find items in a list.
+This is a fuzzy finder that uses Textual and rapidfuzz to find items in a list.
 I'm only doing this because I don't want to have to wrap the fzf binary in a python script.
 """
 
@@ -28,7 +25,7 @@ class FuzzyFinderTarget(BaseModel):
 
 
 class FuzzyFinderConfig(BaseModel):
-    """Configuration for a fuzzy finder using prompt_toolkit and rapidfuzz."""
+    """Configuration for a fuzzy finder using Textual and rapidfuzz."""
 
     items: List[Union[str, Any]] = Field(
         ..., description="List of items to search. Can be strings or objects."
@@ -147,135 +144,175 @@ class FuzzyFinderConfig(BaseModel):
             return e
 
 
-class FuzzyFinder:
-    """A reusable fuzzy finder using prompt_toolkit and rapidfuzz with navigation support."""
-
-    def __init__(self, config: FuzzyFinderConfig):
-        """Initialize the fuzzy finder with a configuration."""
+class FuzzyFinderApp(App):
+    """A Textual app for fuzzy finding."""
+    
+    CSS = """
+    .fuzzy-finder-input {
+        dock: top;
+        height: 3;
+        border: solid $primary;
+    }
+    
+    .fuzzy-finder-results {
+        border: solid $primary;
+    }
+    
+    .fuzzy-finder-preview {
+        dock: right;
+        width: 40%;
+        border: solid $primary;
+    }
+    
+    .highlighted {
+        background: $primary;
+        color: $text;
+    }
+    """
+    
+    BINDINGS = [
+        Binding("ctrl+c", "quit", "Quit"),
+        Binding("escape", "quit", "Quit"),
+        Binding("enter", "select", "Select"),
+        Binding("up", "cursor_up", "Up", show=False),
+        Binding("down", "cursor_down", "Down", show=False),
+    ]
+    
+    def __init__(self, config: FuzzyFinderConfig, **kwargs):
+        super().__init__(**kwargs)
         self.config = config
-        self.input_buffer = Buffer()
-        self.selected_items = []
-        self.highlighted_index = 0  # Track the highlighted item
-        self.current_results: List[Any] = []  # Track current search results
-
-        # Create dynamic style based on configuration
-        self.style = Style.from_dict(
-            {
-                "prompt": self.config.prompt_color,
-                "highlighted": self.config.highlight_color,
-                "normal": self.config.normal_color,
-                "separator": self.config.separator_color,
-                "query": "bold yellow",
-                "input": self.config.normal_color,
-            }
-        )
-
-        from prompt_toolkit.layout.containers import VSplit
-        from prompt_toolkit.layout.controls import FormattedTextControl
-
-        # Prompt window
-        prompt_window = Window(
-            FormattedTextControl(lambda: [("class:prompt", self.config.prompt_text)]),
-            height=1,
-            width=len(self.config.prompt_text) + 1,
-            dont_extend_width=True,
-        )
-        # Input window
-        self.input_window = Window(
-            BufferControl(buffer=self.input_buffer),
-            height=1,
-            style="class:input",
-        )
-        # Combine prompt and input
-        self.input_container = VSplit([prompt_window, self.input_window], padding=0)
-
-        # Output window uses FormattedTextControl for styling
-        self.output_control = FormattedTextControl(text="")
-        self.output_window = Window(self.output_control)
-
-        # Create preview window if enabled
-        self.preview_control = FormattedTextControl(text="")
-        self.preview_window = None
-        if self.config.enable_preview:
-            self.preview_window = Window(
-                self.preview_control,
-                height=Dimension(min=3, max=6),
-                style="class:normal",
-                char=" ",
-                wrap_lines=True,  # Enable text wrapping
+        self.current_results: List[Any] = []
+        self.selected_item: Optional[Any] = None
+        self.highlighted_index = 0
+        
+    def compose(self) -> ComposeResult:
+        """Create child widgets for the app."""
+        with Vertical():
+            # Input field
+            yield Input(
+                placeholder=self.config.prompt_text,
+                id="search_input",
+                classes="fuzzy-finder-input"
             )
-
-        # Setup layout with styled separator
-        separator_window = Window(height=1, char="-", style="class:separator")
-
-        # Create layout components
-        layout_components = [self.input_container, separator_window, self.output_window]
-
-        # Add preview window if enabled
-        if self.config.enable_preview and self.preview_window:
-            preview_separator = Window(height=1, char="=", style="class:separator")
-            layout_components.extend([preview_separator, self.preview_window])
-
-        self.layout = Layout(HSplit(layout_components))
-
-        # Setup key bindings
-        self.bindings = KeyBindings()
-        self._setup_key_bindings()
-
-        # Connect input buffer to update results
-        self.input_buffer.on_text_changed += self._on_text_changed
-
-        # Initialize application
-        self.app: Application[Any] = Application(
-            layout=self.layout,
-            key_bindings=self.bindings,
-            full_screen=True,
-            style=self.style,
-            mouse_support=False,
-        )
-
-    def _setup_key_bindings(self) -> Union[None, Exception]:
-        """Configure key bindings for the finder, including navigation."""
+            
+            if self.config.enable_preview:
+                # Split layout with results and preview
+                with Horizontal():
+                    yield ListView(id="results_list", classes="fuzzy-finder-results")
+                    yield Static("", id="preview_pane", classes="fuzzy-finder-preview")
+            else:
+                # Just results
+                yield ListView(id="results_list", classes="fuzzy-finder-results")
+    
+    def on_mount(self) -> None:
+        """Called when app starts."""
+        # Initial search with empty query
+        self._perform_search("")
+        # Focus the input
+        self.query_one("#search_input", Input).focus()
+    
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Called when the input changes."""
+        if event.input.id == "search_input":
+            self._perform_search(event.value)
+    
+    def _perform_search(self, query: str) -> None:
+        """Perform fuzzy search and update results."""
         try:
-
-            @self.bindings.add("c-c")
-            def _(event: Any) -> None:
-                event.app.exit(result=None)
-
-            @self.bindings.add("enter")
-            def _(event: Any) -> None:
-                if self.config.multi_select:
-                    # In multi-select mode, toggle selection (not implemented here)
-                    pass
-                else:
-                    selected = (
-                        self.current_results[self.highlighted_index]
-                        if self.current_results
-                        else None
-                    )
-                    event.app.exit(result=selected if selected else None)
-
-            @self.bindings.add("up")
-            def _(_: Any) -> None:
-                if self.highlighted_index > 0:
-                    self.highlighted_index -= 1
-                    self._update_output_buffer()
-
-            @self.bindings.add("down")
-            def _(_: Any) -> None:
-                if self.highlighted_index < len(self.current_results) - 1:
-                    self.highlighted_index += 1
-                    self._update_output_buffer()
-
-            return None
+            results = self._search(query)
+            if isinstance(results, Exception):
+                # Handle error - for now just show empty results
+                results = []
+            
+            self.current_results = results
+            self.highlighted_index = 0
+            self._update_results_list()
+            
+            if self.config.enable_preview:
+                self._update_preview()
+                
         except Exception as e:
-            return e
-
-    def _display_prompt(self) -> None:
-        """Display the styled prompt text."""
-        # This is now handled by the FloatContainer in the layout
-        pass
-
+            # Handle error gracefully
+            self.current_results = []
+            self._update_results_list()
+    
+    def _update_results_list(self) -> None:
+        """Update the results ListView."""
+        results_list = self.query_one("#results_list", ListView)
+        results_list.clear()
+        
+        for i, result in enumerate(self.current_results):
+            display_value = self.config.get_display_value(result)
+            if isinstance(display_value, Exception):
+                display_value = str(result)
+            
+            # Create list item
+            item = ListItem(Label(display_value))
+            if i == self.highlighted_index:
+                item.add_class("highlighted")
+            results_list.append(item)
+    
+    def _update_preview(self) -> None:
+        """Update the preview pane."""
+        if not self.config.enable_preview:
+            return
+            
+        preview_pane = self.query_one("#preview_pane", Static)
+        
+        if not self.current_results or self.highlighted_index >= len(self.current_results):
+            preview_pane.update("No preview available")
+            return
+        
+        highlighted_item = self.current_results[self.highlighted_index]
+        preview_value = self.config.get_preview_value(highlighted_item)
+        
+        if isinstance(preview_value, Exception) or preview_value is None:
+            preview_value = str(highlighted_item)
+        
+        if self.config.preview_header:
+            preview_text = f"{self.config.preview_header}\n\n{preview_value}"
+        else:
+            preview_text = preview_value
+            
+        preview_pane.update(preview_text)
+    
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        """Called when a list item is selected."""
+        if event.list_view.id == "results_list" and self.current_results:
+            # Update highlighted index based on selection
+            self.highlighted_index = event.item.index if hasattr(event.item, 'index') else 0
+            if self.highlighted_index < len(self.current_results):
+                self.selected_item = self.current_results[self.highlighted_index]
+                self.exit(self.selected_item)
+    
+    def action_cursor_up(self) -> None:
+        """Move cursor up."""
+        if self.current_results and self.highlighted_index > 0:
+            self.highlighted_index -= 1
+            self._update_results_list()
+            if self.config.enable_preview:
+                self._update_preview()
+    
+    def action_cursor_down(self) -> None:
+        """Move cursor down."""
+        if self.current_results and self.highlighted_index < len(self.current_results) - 1:
+            self.highlighted_index += 1
+            self._update_results_list()
+            if self.config.enable_preview:
+                self._update_preview()
+    
+    def action_select(self) -> None:
+        """Select the highlighted item."""
+        if self.current_results and self.highlighted_index < len(self.current_results):
+            self.selected_item = self.current_results[self.highlighted_index]
+            self.exit(self.selected_item)
+        else:
+            self.exit(None)
+    
+    def action_quit(self) -> None:
+        """Quit the application."""
+        self.exit(None)
+    
     def _search(self, query: str) -> Union[List[Any], Exception]:
         """Perform fuzzy search based on the query."""
         try:
@@ -287,14 +324,14 @@ class FuzzyFinder:
                         items_to_search,
                         key=lambda item: str(self.config.get_display_value(item) or ""),
                     )
-                except Exception as exc:
-                    # If sorting fails (e.g., unorderable types), proceed without sorting
-                    raise exc
+                except Exception:
+                    # If sorting fails, proceed without sorting
+                    pass
 
             choices_with_originals = [
                 (self.config.get_display_value(item), item) for item in items_to_search
             ]
-            # check for exception
+            # Check for exceptions
             choice_exceptions = [
                 c[0] for c in choices_with_originals if isinstance(c[0], Exception)
             ]
@@ -344,8 +381,6 @@ class FuzzyFinder:
                     custom_score += 500
                 # Bonus for longer matches (more specific)
                 elif len(choice_lower) > len(query_lower):
-                    # Give bonus for items that are longer than the query
-                    # This helps prioritize "metagit_cli" over "metagit" when typing "metagit_cli"
                     length_bonus = min(100, (len(choice_lower) - len(query_lower)) * 10)
                     custom_score += length_bonus
 
@@ -362,118 +397,26 @@ class FuzzyFinder:
         except Exception as e:
             return e
 
-    def _update_output_buffer(self) -> Union[None, Exception]:
-        """Update the output buffer with the current search results and highlight."""
-        try:
-            formatted_text: List[Any] = []
-            for i, result in enumerate(self.current_results):
-                display_value = self.config.get_display_value(result)
-                if isinstance(display_value, Exception):
-                    return display_value
-                if i == self.highlighted_index:
-                    formatted_text.append(("class:highlighted", f"> {display_value}\n"))
-                else:
-                    formatted_text.append(("class:normal", f"  {display_value}\n"))
-            self.output_control.text = FormattedText(formatted_text)
 
-            # Update preview if enabled (always update, even with no results)
-            if self.config.enable_preview:
-                self._update_preview()
+class FuzzyFinder:
+    """A reusable fuzzy finder using Textual and rapidfuzz with navigation support."""
 
-            return None
-        except Exception as e:
-            return e
-
-    def _update_preview(self) -> Union[None, Exception]:
-        """Update the preview pane with information about the highlighted item."""
-        try:
-            if not self.current_results or self.highlighted_index >= len(
-                self.current_results
-            ):
-                self.preview_control.text = FormattedText(
-                    [("class:normal", "No preview available")]
-                )
-                return None
-
-            highlighted_item = self.current_results[self.highlighted_index]
-            preview_value = self.config.get_preview_value(highlighted_item)
-
-            if isinstance(preview_value, Exception):
-                return preview_value
-
-            if preview_value is None:
-                # Fallback to string representation
-                preview_value = str(highlighted_item)
-
-            # Format the preview text with better structure
-            if self.config.preview_header:
-                formatted_preview = [
-                    ("class:normal", f"{self.config.preview_header}\n"),
-                    ("class:normal", f"{preview_value}\n"),
-                ]
-            else:
-                formatted_preview = [
-                    ("class:normal", f"{preview_value}\n"),
-                ]
-            self.preview_control.text = FormattedText(formatted_preview)
-            return None
-        except Exception as e:
-            return e
-
-    def _on_text_changed(self, _: Any) -> Union[None, Exception]:
-        """Handle text changes in the input buffer."""
-        try:
-            search_results = self._search(self.input_buffer.text)
-            if isinstance(search_results, Exception):
-                # How to show this to the user? For now, just exit.
-                self.app.exit(result=search_results)
-                return None
-            self.current_results = search_results
-            self.highlighted_index = 0
-            update_result = self._update_output_buffer()
-            if isinstance(update_result, Exception):
-                self.app.exit(result=update_result)
-                return update_result
-            return None
-        except Exception as e:
-            self.app.exit(result=e)
-            return e
+    def __init__(self, config: FuzzyFinderConfig):
+        """Initialize the fuzzy finder with a configuration."""
+        self.config = config
 
     def run(self) -> Union[Optional[Union[str, List[str], Any]], Exception]:
         """Run the fuzzy finder application."""
         try:
-            # Initialize with empty search
-            init_result = self._on_text_changed(None)
-            if isinstance(init_result, Exception):
-                return init_result
-
-            with suppress_stdout() as so:
-                if isinstance(so, Exception):
-                    return so
-                result: Optional[Union[str, List[str], Any]] = self.app.run()
-
+            app = FuzzyFinderApp(self.config)
+            result = app.run()
+            
             if self.config.multi_select:
-                return self.selected_items
+                # Multi-select not fully implemented yet
+                return [result] if result else []
             return result
         except Exception as e:
             return e
-
-
-@contextmanager
-def suppress_stdout() -> Generator[Any, None, None]:
-    """A context manager to suppress stdout, for cleaner full-screen app display."""
-    original_stdout = sys.stdout
-    devnull = None
-    try:
-        devnull = open(os.devnull, "w")
-        sys.stdout = devnull
-        yield
-    except Exception as e:
-        yield e
-    finally:
-        if devnull:
-            devnull.close()
-        sys.stdout = original_stdout
 
 
 def fuzzyfinder(query: str, collection: List[str]) -> List[str]:
