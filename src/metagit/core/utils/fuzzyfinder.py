@@ -66,6 +66,9 @@ class FuzzyFinderConfig(BaseModel):
     normal_color: str = Field("white", description="Color/style for normal items.")
     prompt_color: str = Field("bold cyan", description="Color/style for prompt text.")
     separator_color: str = Field("gray", description="Color/style for separator line.")
+    item_opacity: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="Optional opacity for list items (0.0-1.0)."
+    )
 
     @field_validator("items")
     @classmethod
@@ -154,17 +157,29 @@ class FuzzyFinderApp(App):
     
     .fuzzy-finder-results {
         border: solid $primary;
+        scrollbar-gutter: stable;
+        overflow-y: auto;
+        height: 1fr;
     }
     
     .fuzzy-finder-preview {
         dock: right;
         width: 40%;
         border: solid $primary;
+        overflow-y: auto;
     }
     
     .highlighted {
         background: $primary;
         color: $text;
+    }
+    
+    .list-item-normal {
+        opacity: 1.0;
+    }
+    
+    .list-item-opacity {
+        /* Opacity will be set dynamically */
     }
     """
 
@@ -174,6 +189,10 @@ class FuzzyFinderApp(App):
         Binding("enter", "select", "Select"),
         Binding("up", "cursor_up", "Up", show=False),
         Binding("down", "cursor_down", "Down", show=False),
+        Binding("pageup", "page_up", "Page Up", show=False),
+        Binding("pagedown", "page_down", "Page Down", show=False),
+        Binding("home", "cursor_home", "Home", show=False),
+        Binding("end", "cursor_end", "End", show=False),
     ]
 
     def __init__(self, config: FuzzyFinderConfig, **kwargs):
@@ -246,8 +265,19 @@ class FuzzyFinderApp(App):
 
             # Create list item
             item = ListItem(Label(display_value))
+            
+            # Apply highlighting
             if i == self.highlighted_index:
                 item.add_class("highlighted")
+            
+            # Apply opacity if configured
+            if self.config.item_opacity is not None:
+                item.add_class("list-item-opacity")
+                # Set opacity via inline style
+                item.styles.opacity = self.config.item_opacity
+            else:
+                item.add_class("list-item-normal")
+                
             results_list.append(item)
 
     def _update_preview(self) -> None:
@@ -292,6 +322,7 @@ class FuzzyFinderApp(App):
         if self.current_results and self.highlighted_index > 0:
             self.highlighted_index -= 1
             self._update_results_list()
+            self._scroll_to_highlighted()
             if self.config.enable_preview:
                 self._update_preview()
 
@@ -303,6 +334,59 @@ class FuzzyFinderApp(App):
         ):
             self.highlighted_index += 1
             self._update_results_list()
+            self._scroll_to_highlighted()
+            if self.config.enable_preview:
+                self._update_preview()
+
+    def _scroll_to_highlighted(self) -> None:
+        """Scroll the results list to ensure the highlighted item is visible."""
+        try:
+            results_list = self.query_one("#results_list", ListView)
+            if self.highlighted_index < len(results_list.children):
+                # Get the highlighted list item
+                highlighted_item = results_list.children[self.highlighted_index]
+                # Scroll to make the item visible
+                results_list.scroll_to_widget(highlighted_item)
+        except Exception:
+            # If scrolling fails, continue without it
+            pass
+
+    def action_page_up(self) -> None:
+        """Move cursor up by a page (10 items)."""
+        if self.current_results:
+            page_size = 10
+            self.highlighted_index = max(0, self.highlighted_index - page_size)
+            self._update_results_list()
+            self._scroll_to_highlighted()
+            if self.config.enable_preview:
+                self._update_preview()
+
+    def action_page_down(self) -> None:
+        """Move cursor down by a page (10 items)."""
+        if self.current_results:
+            page_size = 10
+            max_index = len(self.current_results) - 1
+            self.highlighted_index = min(max_index, self.highlighted_index + page_size)
+            self._update_results_list()
+            self._scroll_to_highlighted()
+            if self.config.enable_preview:
+                self._update_preview()
+
+    def action_cursor_home(self) -> None:
+        """Move cursor to the first item."""
+        if self.current_results:
+            self.highlighted_index = 0
+            self._update_results_list()
+            self._scroll_to_highlighted()
+            if self.config.enable_preview:
+                self._update_preview()
+
+    def action_cursor_end(self) -> None:
+        """Move cursor to the last item."""
+        if self.current_results:
+            self.highlighted_index = len(self.current_results) - 1
+            self._update_results_list()
+            self._scroll_to_highlighted()
             if self.config.enable_preview:
                 self._update_preview()
 
