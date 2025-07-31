@@ -7,22 +7,22 @@ including language detection, project classification, branch analysis, CI/CD det
 and metrics collection.
 """
 
-from .manager import DetectionManager
-from .models import (
-    BranchInfo,
-    CIConfigAnalysis,
-    DetectionManagerConfig,
-    GitBranchAnalysis,
-    LanguageDetection,
-    ProjectTypeDetection,
-)
+# from .manager import DetectionManager
+# from .models import (
+#     BranchInfo,
+#     CIConfigAnalysis,
+#     DetectionManagerConfig,
+#     GitBranchAnalysis,
+#     LanguageDetection,
+#     ProjectTypeDetection,
+# )
 
-__all__ = [
-    "DetectionManager",
-    "DetectionManagerConfig",
-    "LanguageDetection",
-    "ProjectTypeDetection",
-    "GitBranchAnalysis",
-    "CIConfigAnalysis",
-    "BranchInfo",
-]
+# __all__ = [
+#     "DetectionManager",
+#     "DetectionManagerConfig",
+#     "LanguageDetection",
+#     "ProjectTypeDetection",
+#     "GitBranchAnalysis",
+#     "CIConfigAnalysis",
+#     "BranchInfo",
+# ]

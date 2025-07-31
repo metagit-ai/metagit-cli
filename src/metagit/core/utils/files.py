@@ -10,8 +10,62 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 from pydantic import BaseModel
+from git import Repo
 
 from metagit import DATA_PATH
+
+
+def directory_tree(paths: List[Path], show_files: bool = False) -> str:
+    """
+    Generate a tree diagram of directory structure from a list of paths.
+
+    Args:
+        paths: List of Path objects representing files and directories
+        show_files: Whether to display individual files in each directory
+
+    Returns:
+        String representation of the directory tree
+    """
+    if not paths:
+        return ""
+
+    # Build a tree structure from the paths
+    tree = {}
+
+    # Normalize all paths
+    normalized_paths = [path.resolve() for path in paths]
+
+    # Build tree structure
+    for path in normalized_paths:
+        parts = path.parts
+        current = tree
+        for part in parts:
+            if part not in current:
+                current[part] = {}
+            current = current[part]
+
+    # Generate tree string representation
+    def _build_tree(
+        tree_dict: dict, prefix: str = "", is_last: bool = True
+    ) -> List[str]:
+        lines = []
+        keys = sorted(tree_dict.keys())
+
+        for i, key in enumerate(keys):
+            is_last_item = i == len(keys) - 1
+            connector = "└── " if is_last_item else "├── "
+            lines.append(f"{prefix}{connector}{key}")
+
+            if tree_dict[key]:  # Has children
+                extension = "    " if is_last_item else "│   "
+                child_lines = _build_tree(
+                    tree_dict[key], prefix + extension, is_last_item
+                )
+                lines.extend(child_lines)
+
+        return lines
+
+    return "\n".join(_build_tree(tree))
 
 
 def is_binary_file(file_path: str) -> bool:
@@ -78,6 +132,29 @@ def list_files(directory_path: str) -> List[str]:
         return files
     except (OSError, IOError):
         return []
+
+
+def list_git_files(directory_path: str) -> List[Path]:
+    """
+    List all files in a Git repository.
+
+    Args:
+        directory_path: Path to the Git repository
+    Returns:
+        List of file paths in the repository
+    """
+    try:
+        repo = Repo(directory_path)
+    except Exception as e:
+        return Exception(f"Not a valid Git repository: {e}")
+    try:
+        values = repo.git.ls_files(
+            "--cached", "--others", "--exclude-standard"
+        ).splitlines()
+    except Exception as e:
+        return Exception(f"Error listing files in Git repository: {e}")
+
+    return [Path(v) for v in values]
 
 
 def read_file_lines(file_path: str) -> List[str]:
@@ -468,7 +545,10 @@ def directory_summary(
         else:
             # Count file and type
             num_files += 1
-            file_ext = item.suffix or ".no_ext"
+
+            file_ext = (
+                item.suffix[1:] if item.suffix else item.name
+            )  # Only the extension without the dot, or full name if no extension
             file_types[file_ext] = file_types.get(file_ext, 0) + 1
 
     # Convert file types to list of FileType models

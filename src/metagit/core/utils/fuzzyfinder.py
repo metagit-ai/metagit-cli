@@ -20,6 +20,8 @@ class FuzzyFinderTarget(BaseModel):
 
     name: str
     description: str
+    color: Optional[str] = None
+    opacity: Optional[float] = None
 
 
 class FuzzyFinderConfig(BaseModel):
@@ -66,6 +68,17 @@ class FuzzyFinderConfig(BaseModel):
     normal_color: str = Field("white", description="Color/style for normal items.")
     prompt_color: str = Field("bold cyan", description="Color/style for prompt text.")
     separator_color: str = Field("gray", description="Color/style for separator line.")
+    item_opacity: Optional[float] = Field(
+        None, ge=0.0, le=1.0, description="Optional opacity for list items (0.0-1.0)."
+    )
+    custom_colors: Optional[Dict[str, str]] = Field(
+        None,
+        description="Optional mapping of item keys to custom colors. Keys can be item values (for strings) or field values (for objects).",
+    )
+    color_field: Optional[str] = Field(
+        None,
+        description="Field name to use for color mapping if items are objects. If not specified, uses display_field or string value.",
+    )
 
     @field_validator("items")
     @classmethod
@@ -141,6 +154,47 @@ class FuzzyFinderConfig(BaseModel):
         except Exception as e:
             return e
 
+    def get_item_color(self, item: Any) -> Optional[str]:
+        """Get the color for an item, prioritizing FuzzyFinderTarget.color over custom_colors."""
+        try:
+            # First check if item is a FuzzyFinderTarget with a color property
+            if isinstance(item, FuzzyFinderTarget) and item.color:
+                return item.color
+
+            # Fall back to custom_colors mapping if available
+            if not self.custom_colors:
+                return None
+
+            # Determine the key to use for color lookup
+            if self.color_field:
+                # Use specified color field
+                if isinstance(item, str):
+                    color_key = item
+                else:
+                    color_key = str(getattr(item, self.color_field))
+            elif self.display_field and not isinstance(item, str):
+                # Use display field
+                color_key = str(getattr(item, self.display_field))
+            else:
+                # Use string representation
+                color_key = str(item)
+
+            return self.custom_colors.get(color_key)
+        except Exception:
+            return None
+
+    def get_item_opacity(self, item: Any) -> Optional[float]:
+        """Get the opacity for an item, prioritizing FuzzyFinderTarget.opacity over config.item_opacity."""
+        try:
+            # First check if item is a FuzzyFinderTarget with an opacity property
+            if isinstance(item, FuzzyFinderTarget) and item.opacity is not None:
+                return item.opacity
+
+            # Fall back to config's item_opacity
+            return self.config.item_opacity
+        except Exception:
+            return self.config.item_opacity
+
 
 class FuzzyFinderApp(App):
     """A Textual app for fuzzy finding."""
@@ -154,26 +208,46 @@ class FuzzyFinderApp(App):
     
     .fuzzy-finder-results {
         border: solid $primary;
+        scrollbar-gutter: stable;
+        overflow-y: auto;
+        height: 1fr;
     }
     
     .fuzzy-finder-preview {
         dock: right;
         width: 40%;
         border: solid $primary;
+        overflow-y: auto;
     }
     
     .highlighted {
         background: $primary;
         color: $text;
     }
+    
+    .list-item-normal {
+        opacity: 1.0;
+    }
+    
+    .list-item-opacity {
+        /* Opacity will be set dynamically */
+    }
+    
+    .list-item-custom-color {
+        /* Custom color will be set dynamically via styles */
+    }
     """
 
     BINDINGS = [
         Binding("ctrl+c", "quit", "Quit"),
         Binding("escape", "quit", "Quit"),
-        Binding("enter", "select", "Select"),
-        Binding("up", "cursor_up", "Up", show=False),
-        Binding("down", "cursor_down", "Down", show=False),
+        Binding("enter", "select", "Select", priority=True),
+        Binding("up", "cursor_up", "Up", show=False, priority=True),
+        Binding("down", "cursor_down", "Down", show=False, priority=True),
+        Binding("pageup", "page_up", "Page Up", show=False, priority=True),
+        Binding("pagedown", "page_down", "Page Down", show=False, priority=True),
+        Binding("home", "cursor_home", "Home", show=False, priority=True),
+        Binding("end", "cursor_end", "End", show=False, priority=True),
     ]
 
     def __init__(self, config: FuzzyFinderConfig, **kwargs):
@@ -246,9 +320,71 @@ class FuzzyFinderApp(App):
 
             # Create list item
             item = ListItem(Label(display_value))
+
+            # Apply highlighting
             if i == self.highlighted_index:
                 item.add_class("highlighted")
+
+            # Apply custom color if configured
+            custom_color = self.config.get_item_color(result)
+            if custom_color:
+                item.add_class("list-item-custom-color")
+                # Parse and apply the custom color
+                self._apply_custom_color(item, custom_color)
+
+            # Apply opacity - prioritize FuzzyFinderTarget.opacity over config.item_opacity
+            item_opacity = self.config.get_item_opacity(result)
+            if item_opacity is not None:
+                item.add_class("list-item-opacity")
+                # Set opacity via inline style
+                item.styles.opacity = item_opacity
+            else:
+                item.add_class("list-item-normal")
+
             results_list.append(item)
+
+        # Set the ListView's index to match our highlighted_index
+        if self.current_results and 0 <= self.highlighted_index < len(
+            self.current_results
+        ):
+            results_list.index = self.highlighted_index
+
+    def _apply_custom_color(self, item: ListItem, color_spec: str) -> None:
+        """Apply custom color to a list item based on color specification."""
+        try:
+            # Handle different color formats
+            if color_spec.startswith("#"):
+                # Hex color
+                item.styles.color = color_spec
+            elif color_spec.startswith("bg:"):
+                # Background color
+                bg_color = color_spec[3:]  # Remove 'bg:' prefix
+                item.styles.background = bg_color
+            elif " bg:" in color_spec:
+                # Color with background (e.g., "white bg:#ff0000")
+                parts = color_spec.split(" bg:")
+                if len(parts) == 2:
+                    text_color, bg_color = parts
+                    item.styles.color = text_color.strip()
+                    item.styles.background = bg_color.strip()
+            elif color_spec in [
+                "red",
+                "green",
+                "blue",
+                "yellow",
+                "cyan",
+                "magenta",
+                "white",
+                "black",
+            ]:
+                # Basic color names
+                item.styles.color = color_spec
+            else:
+                # Try to apply as-is (could be a rich color spec)
+                item.styles.color = color_spec
+        except Exception:
+            # If color application fails, silently continue
+            pass
 
     def _update_preview(self) -> None:
         """Update the preview pane."""
@@ -280,18 +416,32 @@ class FuzzyFinderApp(App):
         """Called when a list item is selected."""
         if event.list_view.id == "results_list" and self.current_results:
             # Update highlighted index based on selection
-            self.highlighted_index = (
-                event.item.index if hasattr(event.item, "index") else 0
-            )
-            if self.highlighted_index < len(self.current_results):
+            results_list = self.query_one("#results_list", ListView)
+            if results_list.index is not None and 0 <= results_list.index < len(
+                self.current_results
+            ):
+                self.highlighted_index = results_list.index
                 self.selected_item = self.current_results[self.highlighted_index]
                 self.exit(self.selected_item)
+
+    def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
+        """Called when a list item is highlighted (but not selected)."""
+        if event.list_view.id == "results_list" and self.current_results:
+            # Keep our highlighted_index in sync with ListView
+            results_list = self.query_one("#results_list", ListView)
+            if results_list.index is not None and 0 <= results_list.index < len(
+                self.current_results
+            ):
+                self.highlighted_index = results_list.index
+                if self.config.enable_preview:
+                    self._update_preview()
 
     def action_cursor_up(self) -> None:
         """Move cursor up."""
         if self.current_results and self.highlighted_index > 0:
             self.highlighted_index -= 1
             self._update_results_list()
+            self._scroll_to_highlighted()
             if self.config.enable_preview:
                 self._update_preview()
 
@@ -303,11 +453,75 @@ class FuzzyFinderApp(App):
         ):
             self.highlighted_index += 1
             self._update_results_list()
+            self._scroll_to_highlighted()
+            if self.config.enable_preview:
+                self._update_preview()
+
+    def _scroll_to_highlighted(self) -> None:
+        """Scroll the results list to ensure the highlighted item is visible."""
+        try:
+            results_list = self.query_one("#results_list", ListView)
+            if self.highlighted_index < len(results_list.children):
+                # Get the highlighted list item
+                highlighted_item = results_list.children[self.highlighted_index]
+                # Scroll to make the item visible
+                results_list.scroll_to_widget(highlighted_item)
+        except Exception:
+            # If scrolling fails, continue without it
+            pass
+
+    def action_page_up(self) -> None:
+        """Move cursor up by a page (10 items)."""
+        if self.current_results:
+            page_size = 10
+            self.highlighted_index = max(0, self.highlighted_index - page_size)
+            self._update_results_list()
+            self._scroll_to_highlighted()
+            if self.config.enable_preview:
+                self._update_preview()
+
+    def action_page_down(self) -> None:
+        """Move cursor down by a page (10 items)."""
+        if self.current_results:
+            page_size = 10
+            max_index = len(self.current_results) - 1
+            self.highlighted_index = min(max_index, self.highlighted_index + page_size)
+            self._update_results_list()
+            self._scroll_to_highlighted()
+            if self.config.enable_preview:
+                self._update_preview()
+
+    def action_cursor_home(self) -> None:
+        """Move cursor to the first item."""
+        if self.current_results:
+            self.highlighted_index = 0
+            self._update_results_list()
+            self._scroll_to_highlighted()
+            if self.config.enable_preview:
+                self._update_preview()
+
+    def action_cursor_end(self) -> None:
+        """Move cursor to the last item."""
+        if self.current_results:
+            self.highlighted_index = len(self.current_results) - 1
+            self._update_results_list()
+            self._scroll_to_highlighted()
             if self.config.enable_preview:
                 self._update_preview()
 
     def action_select(self) -> None:
         """Select the highlighted item."""
+        # First try to get the current selection from the ListView
+        try:
+            results_list = self.query_one("#results_list", ListView)
+            if results_list.index is not None and 0 <= results_list.index < len(
+                self.current_results
+            ):
+                self.highlighted_index = results_list.index
+        except Exception:
+            pass
+
+        # Select the highlighted item
         if self.current_results and self.highlighted_index < len(self.current_results):
             self.selected_item = self.current_results[self.highlighted_index]
             self.exit(self.selected_item)

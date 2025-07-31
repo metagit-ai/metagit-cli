@@ -48,10 +48,12 @@ def workspace(ctx: click.Context, config: str) -> None:
 def workspace_select(ctx: click.Context, project: str = None) -> None:
     """Select project repo to work on"""
     app_config: AppConfig = ctx.obj["config"]
+    # If no project is specified, use the default project from app config
     if not project:
         project: str = app_config.workspace.default_project
         ctx.obj["project"] = project
     else:
         ctx.obj["project"] = project
+    # Call the repo_select command with the current context
     call_click_command_with_ctx(repo_select, ctx)
     return

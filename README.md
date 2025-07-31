@@ -1,6 +1,6 @@
 # Metagit
 
-Metagit is situational awareness for developers and agents. It can make a sprawling multi-repo project feel more like a monorepo and provide concise information on the software stacks, generated artifacts, dependencies, and more.
+Metagit is situational awareness for your git projects. Metagit makes sprawling multi-repo projects feel like monorepos and provide concise information on the software stacks, generated artifacts, dependencies, and more.
 
 ## About
 
@@ -37,6 +37,14 @@ Metagit makes extensive use of CI library definitions (like go.mod, packages.jso
 ### ...a git Client
 
 Despite the name this tool still requires git and all the trappings of a git hosting solution.
+
+## ...a full project packer
+
+For brevity and usefulness Metagit detections are selective to only the most important parts of a project. It will not package up an entire project. For a comprehensive git project packer [try repomix](https://github.com/yamadashy/repomix/tree/main). It is both fast and incredibly useful for LLM ingestion.
+
+### Why brevity?
+
+One of the goals of this project is to reduce human cognitive load for understanding projects and their relationships. This has the benefit of reducing token usage in automated AI agents as well. 
 
 ## How It Works
 
@@ -117,6 +125,9 @@ cd metagit-cli
 ./configure.sh
 task build
 uv tool install dist/metagit-*-py3-none-any.whl
+
+# or for development, target the local files for install
+uv pip install -e .
 ```
 
 **docker:**

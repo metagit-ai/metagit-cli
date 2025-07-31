@@ -334,39 +334,118 @@ class ProjectManager:
             )
             return
         project_dict = {}
-
         # Iterate through the project path and add the directories and symlinks to the project_dict
         for f in Path(project_path).iterdir():
-            description = ""
-            if f.is_dir():
-                description = f"Directory: {f.name}\n"  # noqa: E501
-                project_dict[f.name] = description
-            if f.is_symlink():
-                target_path = f.readlink()
-                description = f"Symlink: {f.name}\nTarget: {target_path}"
-                project_dict[f.name] = description
+            if f.is_dir() or f.is_symlink():
+                # Determine type
+                item_type = "Symlink" if f.is_symlink() else "Directory"
+
+                # Check for git repository
+                has_git = (f / ".git").exists() if f.is_dir() else False
+
+                # Check for .metagit.yml file
+                has_metagit_yml = (f / ".metagit.yml").exists() if f.is_dir() else False
+
+                # Build initial description
+                description_parts = [
+                    f"Name: {f.name}",
+                    f"Type: {item_type}",
+                ]
+
+                if f.is_symlink():
+                    target_path = f.readlink()
+                    # Convert absolute path to relative path from project_path
+                    try:
+                        if target_path.is_absolute():
+                            relative_target = os.path.relpath(target_path, project_path)
+                            description_parts.append(f"Target: {relative_target}")
+                        else:
+                            description_parts.append(f"Target: {target_path}")
+                    except (ValueError, OSError):
+                        # Fallback to original path if relative path calculation fails
+                        description_parts.append(f"Target: {target_path}")
+
+                # Add git and metagit info
+                if has_git:
+                    description_parts.append("Git: ✅ Repository")
+                else:
+                    description_parts.append("Git: ❌ No repository")
+
+                if has_metagit_yml:
+                    description_parts.append("MetaGit: ✅ .metagit.yml found")
+                else:
+                    description_parts.append("MetaGit: ❌ No .metagit.yml")
+
+                project_dict[f.name] = "\n".join(description_parts)
+
+        # Track which items exist in the project configuration
+        managed_repos = {repo.name for repo in workspace_project.repos}
 
         # Iterate through the workspace project and add the repo descriptions to the project_dict
         for repo in workspace_project.repos:
             if repo.name in project_dict:
-                target_kind = "Directory"
-                if repo.path is not None:
-                    target_kind = f"Symlink ({repo.path})"
-                if repo.description is None:
-                    project_dict[repo.name] = f"{target_kind} - no description"
+                # Update the description with management status and repo description
+                current_description = project_dict[repo.name]
+
+                # Add management status
+                current_description += "\nStatus: ✅ Managed"
+
+                # Add repo description if available
+                if repo.description:
+                    current_description += f"\nDescription: {repo.description}"
                 else:
-                    project_dict[repo.name] = f"{target_kind} - {repo.description}"
+                    current_description += "\nDescription: No description available"
+
+                project_dict[repo.name] = current_description
             else:
-                project_dict[f.name].description += "\nManaged: False"
+                # This repo is configured but doesn't exist on filesystem
+                description_parts = [
+                    f"Name: {repo.name}",
+                    "Type: Missing (configured but not synced)",
+                    "Status: ⚠️ Configured but missing",
+                    "Git: ❓ Unknown (not synced)",
+                    "MetaGit: ❓ Unknown (not synced)",
+                ]
+
+                if repo.description:
+                    description_parts.append(f"Description: {repo.description}")
+                else:
+                    description_parts.append("Description: No description available")
+
+                project_dict[repo.name] = "\n".join(description_parts)
+
+        # Add unmanaged status to items that exist on filesystem but not in config
+        for item_name in list(project_dict.keys()):
+            if item_name not in managed_repos:
+                current_description = project_dict[item_name]
+                current_description += "\nStatus: ❌ Unmanaged"
+                project_dict[item_name] = current_description
+
         projects: List[FuzzyFinderTarget] = []
         for target in project_dict:
+            # Determine color based on directory type (check filesystem)
+            target_path = Path(project_path) / target
+            is_symlink = target_path.is_symlink()
+
+            # Set color: white for directories, light blue for symlinks
+            color = (
+                "#87ceeb" if is_symlink else "white"
+            )  # light blue for symlinks, white for directories
+
+            # Set opacity: 1.0 if managed (exists in project list), 0.5 if not managed
+            opacity = 1.0 if target in managed_repos else 0.5
+
             projects.append(
-                FuzzyFinderTarget(name=target, description=project_dict[target])
+                FuzzyFinderTarget(
+                    name=target,
+                    description=project_dict[target],
+                    color=color,
+                    opacity=opacity,
+                )
             )
         if len(projects) == 0:
             self.logger.warning(f"No projects found in workspace: {project_path}")
             return
-
         finder_config = FuzzyFinderConfig(
             items=projects,
             prompt_text="🔍 Search projects: ",
@@ -387,4 +466,8 @@ class ProjectManager:
         if selected is None:
             return None
         else:
-            return os.path.join(project_path, selected.name)
+            selected_path = os.path.join(project_path, selected.name)
+            # If the path starts with ../../, replace it with ./
+            if selected_path.startswith("../../"):
+                selected_path = selected_path.replace("../../", "./", 1)
+            return selected_path

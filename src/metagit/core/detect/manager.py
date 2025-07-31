@@ -6,6 +6,8 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Union
+import importlib
+import pkgutil
 
 import yaml
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
@@ -27,6 +29,9 @@ from metagit.core.detect.models import (
     GitBranchAnalysis,
     LanguageDetection,
     ProjectTypeDetection,
+    Detector,
+    DiscoveryResult,
+    ProjectScanContext,
 )
 from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
@@ -34,8 +39,13 @@ from metagit.core.utils.files import (
     FileExtensionLookup,
     directory_details,
     directory_summary,
+    list_git_files,
 )
 from metagit.core.utils.logging import LoggerConfig, LoggingModel, UnifiedLogger
+
+import metagit.core.detect.detectors as detectors
+
+# from metagit.core.detect.detectors.terraform import TerraformModuleDiscovery
 
 
 class DetectionManager(MetagitRecord, LoggingModel):
@@ -899,3 +909,118 @@ class DetectionManager(MetagitRecord, LoggingModel):
     #             self.logger.debug(f"Cleaned up temporary directory: {self.temp_dir}")
     #         except Exception as e:
     #             self.logger.warning(f"Failed to clean up temporary directory: {e}")
+
+
+# class ProjectDiscovery(Protocol):
+#     def discover(self, metadata: ProjectMetadata) -> None:
+#         """Mutates the metadata object by adding discovered dependencies"""
+#         ...
+
+# def run_discovery(root_dir: Path, logger: UnifiedLogger) -> ProjectMetadata:
+#     """Create a map of files and folders in a repository for further analysis."""
+
+#     try:
+#         summary = directory_summary(root_dir, file_lookup=FileExtensionLookup())
+#     except Exception as e:
+#         logger.error(f"Error creating directory summary at {root_dir}: {e}")
+#         return Exception(f"Error creating directory summary at {root_dir}: {e}")
+
+#     try:
+#         details = directory_details(target_path=root_dir, file_lookup=FileExtensionLookup())
+#     except Exception as e:
+#         logger.error(f"Error creating directory details at {root_dir}: {e}")
+#         return Exception(f"Error creating directory details at {root_dir}: {e}")
+
+#     metadata = ProjectMetadata(project_root=root_dir, directory_summary=summary, directory_details=details)
+
+#     detectors = [TerraformModuleDiscovery()]  # Add more detectors here
+
+#     for detector in detectors:
+#         detector.discover(metadata)
+
+#     return metadata
+
+
+class ProjectDetection:
+    """
+    Class to manage project detection and analysis.
+    This class is responsible for running various detection methods on a project.
+    """
+
+    def __init__(self, logger: Optional[UnifiedLogger] = None):
+        # Dynamically register all detectors found in src/metagit/core/detect/detectors/
+
+        self.detectors: List[Detector] = []
+        self.logger = logger or UnifiedLogger(LoggerConfig()).get_logger()
+        self._load_detectors()
+
+    def _load_detectors(self) -> None:
+        """
+        Load all detector modules dynamically from the detectors package.
+        This method uses pkgutil to find all modules in the detectors package and registers
+        all classes that are subclasses of Detector.
+        """
+
+        for _, module_name, is_pkg in pkgutil.iter_modules(detectors.__path__):
+            if not is_pkg:
+                try:
+                    module = importlib.import_module(
+                        f"metagit.core.detect.detectors.{module_name}"
+                    )
+                    # Register all classes that are subclasses of Detector
+                    for attr_name in dir(module):
+                        attr = getattr(module, attr_name)
+                        if isinstance(attr, Detector):
+                            self.detectors.append(attr())
+                except Exception as e:
+                    if self.logger:
+                        self.logger.warning(
+                            f"Failed to load detector '{module_name}': {e}"
+                        )
+
+    def run(self, path: str) -> Union[List[DiscoveryResult], Exception]:
+        """
+        Run all registered detectors on the specified path.
+
+        Args:
+            path (str): The path to the project directory.
+
+        Returns:
+            Union[List[DiscoveryResult], Exception]: A list of discovery results if detection is successful, otherwise an exception.
+        """
+        try:
+            path_files = list_git_files(path)
+        except Exception as e:
+            self.logger.error(f"Error enumerating files in {path}: {e}")
+            return Exception(f"Error enumerating files in {path}: {e}")
+        if not path_files:
+            self.logger.error(f"No git files found in the specified path: {path}")
+            return Exception(f"No git files found in the specified path: {path}")
+        scan_context = ProjectScanContext(root_path=Path(path), all_files=path_files)
+        results = []
+        for detector in self.detectors:
+            result = detector.run(scan_context)
+            if isinstance(result, DiscoveryResult):
+                results.append(result)
+        if results:
+            return results
+        return Exception("No valid discovery results found.")
+
+    def all_files(self, path: str) -> Union[List[Path], Exception]:
+        """
+        Get all files in the specified path.
+        This method uses the list_git_files utility to enumerate all files in the project directory rapidly.
+
+        Args:
+            path (str): The path to the project directory.
+
+        Returns:
+            List[Path]: A list of all file paths in the project directory.
+        """
+        files = list_git_files(path)
+        file_list = [f.as_posix() for f in files]
+        try:
+            return file_list
+        except Exception as e:
+            self.logger.error(f"Error enumerating files in {path}: {e}")
+            return []
