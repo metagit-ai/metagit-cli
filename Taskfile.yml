@@ -225,3 +225,9 @@ tasks:
         uv pip install -e .
         uv run metagit config schema --output-path ./schemas/metagit_config.schema.json
         uv run metagit appconfig schema --output-path ./schemas/metagit_appconfig.schema.json
+
+  repomix:
+    desc: Run the repo mixin
+    cmds:
+      - |
+        repomix --style=markdown --output=docs/repomix.md --compress

@@ -7,8 +7,8 @@ import os
 
 import click
 import yaml
-
-from metagit.core.detect.manager import DetectionManager, DetectionManagerConfig
+from pathlib import Path
+from metagit.core.detect.manager import DetectionManager, DetectionManagerConfig, ProjectDetection
 from metagit.core.providers import registry
 from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers.gitlab import GitLabProvider
@@ -16,6 +16,7 @@ from metagit.core.utils.files import (
     FileExtensionLookup,
     directory_details,
     directory_summary,
+    list_git_files,
 )
 
 
@@ -27,6 +28,79 @@ def detect(ctx: click.Context) -> None:
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         return
+
+
+@detect.command("project")
+@click.option(
+    "--path",
+    "-p",
+    default="./",
+    show_default=True,
+    help="Path to the git repository to analyze.",
+)
+@click.option(
+    "--output",
+    "-o",
+    default="yaml",
+    show_default=True,
+    help="Output format (yaml, json, summary).",
+)
+@click.pass_context
+def detect_project(ctx: click.Context, path: str, output: str) -> None:
+    """Perform project detection and analysis."""
+    logger = ctx.obj["logger"]
+    try:
+        path_files = list_git_files(path)
+        if not path_files:
+            logger.error(f"No git files found in the specified path: {path}")
+            ctx.abort()
+
+    except Exception as e:
+        logger.error(f"Error enumerating files in {path}: {e}")
+        ctx.abort()
+
+    detection = ProjectDetection(logger=logger)
+    try:
+        results = detection.run(path)
+    except Exception as e:
+        logger.error(f"Error during project detection: {e}")
+        ctx.abort()
+
+    detections = []
+    for result in results:
+        detections.append(result.model_dump(exclude_none=True, exclude_defaults=True))
+
+    if not detections:
+        logger.warning("No project detections found.")
+        return
+
+    if output == "summary":
+        summary = {
+            "project_path": path,
+            "project_detections": [d["name"] for d in detections],
+            "total_detections": len(detections),
+        }
+        click.echo(json.dumps(summary, indent=2))
+        return
+
+    #.model_dump(exclude_none=True, exclude_defaults=True)
+    full_result = {
+        "project_path": path,
+        "project_detections": detections,
+        "total_detections": len(detections),
+        "all_files": detection.all_files(path)
+    }
+
+    if output == "yaml":
+        yaml_output = yaml.safe_dump(
+            full_result, default_flow_style=False, sort_keys=False, indent=2
+        )
+        click.echo(yaml_output)
+    elif output == "json":
+        json_output = json.dumps(full_result, indent=2)
+        click.echo(json_output)
+    else:
+        click.echo(detections)
 
 
 @detect.command("repo_map")

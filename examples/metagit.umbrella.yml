@@ -19,5 +19,5 @@ workspace:
       description: "Openrouter lab for crewai"
       url: git@github.com:zloeber/crewai-openrouter-lab.git
     - name: metagit_cli
-      description: "Metagit CLI project"
-      path: ./metagit/cli
+      description: "Metagit CLI project (symlinked)"
+      path: ./src/metagit/cli

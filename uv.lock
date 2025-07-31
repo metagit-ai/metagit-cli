@@ -1301,6 +1301,15 @@ wheels = [
 ]
 
 [[package]]
+name = "lark"
+version = "1.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/af/60/bc7622aefb2aee1c0b4ba23c1446d3e30225c8770b38d7aedbfb65ca9d5a/lark-1.2.2.tar.gz", hash = "sha256:ca807d0162cd16cef15a8feecb862d7319e7a09bdb13aef927968e45040fed80", size = 252132, upload-time = "2024-08-13T19:49:00.652Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/00/d90b10b962b4277f5e64a78b6609968859ff86889f5b898c1a778c06ec00/lark-1.2.2-py3-none-any.whl", hash = "sha256:c2276486b02f0f1b90be155f2c8ba4a8e194d42775786db622faccd652d8e80c", size = 111036, upload-time = "2024-08-13T19:48:58.603Z" },
+]
+
+[[package]]
 name = "linkify-it-py"
 version = "2.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1492,12 +1501,14 @@ dependencies = [
     { name = "pydantic" },
     { name = "pygithub" },
     { name = "python-dotenv" },
+    { name = "python-hcl2" },
     { name = "pyyaml" },
     { name = "rapidfuzz" },
     { name = "requests" },
     { name = "rich" },
     { name = "setuptools-scm" },
     { name = "textual-dev" },
+    { name = "tomli" },
     { name = "tqdm" },
     { name = "types-tqdm" },
 ]
@@ -1583,6 +1594,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'test'" },
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
+    { name = "python-hcl2", specifier = ">=7.3.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "rapidfuzz", specifier = ">=3.13.0" },
     { name = "requests", specifier = ">=2.32.3" },
@@ -1592,6 +1604,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'test'" },
     { name = "setuptools-scm", specifier = ">=8.3.1" },
     { name = "textual-dev", specifier = ">=1.7.0" },
+    { name = "tomli", specifier = ">=2.2.1" },
     { name = "tqdm", specifier = ">=4.66.4" },
     { name = "types-tqdm", specifier = ">=4.67.0.20250516" },
 ]
@@ -2829,6 +2842,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f6/b0/4bc07ccd3572a2f9df7e6782f52b0c6c90dcbb803ac4a167702d7d0dfe1e/python_dotenv-1.1.1.tar.gz", hash = "sha256:a8a6399716257f45be6a007360200409fce5cda2661e3dec71d23dc15f6189ab", size = 41978, upload-time = "2025-06-24T04:21:07.341Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5f/ed/539768cf28c661b5b068d66d96a2f155c4971a5d55684a514c1a0e0dec2f/python_dotenv-1.1.1-py3-none-any.whl", hash = "sha256:31f23644fe2602f88ff55e1f5c79ba497e01224ee7737937930c448e4d0e24dc", size = 20556, upload-time = "2025-06-24T04:21:06.073Z" },
+]
+
+[[package]]
+name = "python-hcl2"
+version = "7.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "lark" },
+    { name = "regex" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/50/8e/f82ed407a10c2dd4228ff0fceec8a16dd6a9191a2ed119233c04dccf2ca4/python_hcl2-7.3.1.tar.gz", hash = "sha256:f8f55583703daf7bbcb595a33c68de891064d565974ea39998b81d15a4c4657b", size = 35352, upload-time = "2025-07-24T12:33:49.883Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/56/8f6418645fee59dd7a85a6e155d13ebf07608edc98965b211b0ed86ef35a/python_hcl2-7.3.1-py3-none-any.whl", hash = "sha256:6bf6036d3dffac04e05e6aa58ff6e9a3710bba2171325584dfd7b3f8c99c6d4d", size = 22426, upload-time = "2025-07-24T12:33:49.015Z" },
 ]
 
 [[package]]

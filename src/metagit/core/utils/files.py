@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 from pydantic import BaseModel
+from git import Repo
 
 from metagit import DATA_PATH
 
@@ -78,6 +79,26 @@ def list_files(directory_path: str) -> List[str]:
         return files
     except (OSError, IOError):
         return []
+
+def list_git_files(directory_path: str) -> List[Path]:
+    """
+    List all files in a Git repository.
+
+    Args:
+        directory_path: Path to the Git repository
+    Returns:
+        List of file paths in the repository
+    """
+    try:
+        repo = Repo(directory_path)
+    except Exception as e:
+        return Exception(f"Not a valid Git repository: {e}")
+    try:
+        values = repo.git.ls_files('--cached', '--others', '--exclude-standard').splitlines()
+    except Exception as e:
+        return Exception(f"Error listing files in Git repository: {e}")
+
+    return [Path(v) for v in values]
 
 
 def read_file_lines(file_path: str) -> List[str]:
@@ -324,6 +345,51 @@ def should_ignore_path(path: Path, ignore_patterns: Set[str], base_path: Path) -
 
     return False
 
+def directory_tree(
+    target_path: str,
+    ignore_patterns: Optional[Set[str]] = None,
+    ) -> List[str]:
+    """Recursively walks a directory and returns a list of all files and directories.
+    Args:
+        target_path: Path to the target directory to analyze
+    Returns:
+        List[str]: List of all files and directories in the target path
+    """
+    path = Path(target_path)
+    if not path.is_dir():
+        raise ValueError(f"Path {target_path} is not a directory")
+    ignore_file = os.path.join(path, ".gitignore")
+    ignore_patterns = ignore_patterns or set()
+    ignore_patterns = ignore_patterns.union(parse_gitignore(ignore_file))
+    # Initialize the tree structure
+    tree = []
+        # Process directory contents
+    for item in path.iterdir():
+        # Always ignore .git folders
+        if item.name == ".git":
+            continue
+        # Check if item should be ignored based on ignore_patterns
+        if should_ignore_path(item, ignore_patterns, Path(target_path)):
+            continue
+        if item.is_dir():
+            # Recursively process subdirectory with the same ignore_patterns
+            sub_metadata = directory_tree(
+                str(item), ignore_patterns
+            )
+            subpaths.append(sub_metadata)
+        else:
+            # Count file and get detailed type information
+            num_files += 1
+            file_info = file_lookup.get_file_info(item.name)
+            if file_info:
+                # Group by type category and count by kind
+                category = file_info.type
+                kind = file_info.kind
+                if category in file_type_counts:
+                    file_type_counts[category][kind] = (
+                        file_type_counts[category].get(kind, 0) + 1
+                    )
+
 
 def directory_details(
     target_path: str,
@@ -468,7 +534,8 @@ def directory_summary(
         else:
             # Count file and type
             num_files += 1
-            file_ext = item.suffix or ".no_ext"
+
+            file_ext = item.suffix[1:] if item.suffix else item.name  # Only the extension without the dot, or full name if no extension
             file_types[file_ext] = file_types.get(file_ext, 0) + 1
 
     # Convert file types to list of FileType models

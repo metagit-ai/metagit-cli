@@ -20,7 +20,8 @@ class FuzzyFinderTarget(BaseModel):
 
     name: str
     description: str
-
+    color: Optional[str] = None
+    opacity: Optional[float] = None
 
 class FuzzyFinderConfig(BaseModel):
     """Configuration for a fuzzy finder using Textual and rapidfuzz."""
@@ -151,11 +152,16 @@ class FuzzyFinderConfig(BaseModel):
             return e
 
     def get_item_color(self, item: Any) -> Optional[str]:
-        """Get the custom color for an item if custom_colors is configured."""
-        if not self.custom_colors:
-            return None
-        
+        """Get the color for an item, prioritizing FuzzyFinderTarget.color over custom_colors."""
         try:
+            # First check if item is a FuzzyFinderTarget with a color property
+            if isinstance(item, FuzzyFinderTarget) and item.color:
+                return item.color
+            
+            # Fall back to custom_colors mapping if available
+            if not self.custom_colors:
+                return None
+
             # Determine the key to use for color lookup
             if self.color_field:
                 # Use specified color field
@@ -173,6 +179,18 @@ class FuzzyFinderConfig(BaseModel):
             return self.custom_colors.get(color_key)
         except Exception:
             return None
+
+    def get_item_opacity(self, item: Any) -> Optional[float]:
+        """Get the opacity for an item, prioritizing FuzzyFinderTarget.opacity over config.item_opacity."""
+        try:
+            # First check if item is a FuzzyFinderTarget with an opacity property
+            if isinstance(item, FuzzyFinderTarget) and item.opacity is not None:
+                return item.opacity
+            
+            # Fall back to config's item_opacity
+            return self.config.item_opacity
+        except Exception:
+            return self.config.item_opacity
 
 
 class FuzzyFinderApp(App):
@@ -311,11 +329,12 @@ class FuzzyFinderApp(App):
                 # Parse and apply the custom color
                 self._apply_custom_color(item, custom_color)
             
-            # Apply opacity if configured
-            if self.config.item_opacity is not None:
+            # Apply opacity - prioritize FuzzyFinderTarget.opacity over config.item_opacity
+            item_opacity = self.config.get_item_opacity(result)
+            if item_opacity is not None:
                 item.add_class("list-item-opacity")
                 # Set opacity via inline style
-                item.styles.opacity = self.config.item_opacity
+                item.styles.opacity = item_opacity
             else:
                 item.add_class("list-item-normal")
                 
