@@ -23,6 +23,7 @@ class FuzzyFinderTarget(BaseModel):
     color: Optional[str] = None
     opacity: Optional[float] = None
 
+
 class FuzzyFinderConfig(BaseModel):
     """Configuration for a fuzzy finder using Textual and rapidfuzz."""
 
@@ -71,10 +72,12 @@ class FuzzyFinderConfig(BaseModel):
         None, ge=0.0, le=1.0, description="Optional opacity for list items (0.0-1.0)."
     )
     custom_colors: Optional[Dict[str, str]] = Field(
-        None, description="Optional mapping of item keys to custom colors. Keys can be item values (for strings) or field values (for objects)."
+        None,
+        description="Optional mapping of item keys to custom colors. Keys can be item values (for strings) or field values (for objects).",
     )
     color_field: Optional[str] = Field(
-        None, description="Field name to use for color mapping if items are objects. If not specified, uses display_field or string value."
+        None,
+        description="Field name to use for color mapping if items are objects. If not specified, uses display_field or string value.",
     )
 
     @field_validator("items")
@@ -157,7 +160,7 @@ class FuzzyFinderConfig(BaseModel):
             # First check if item is a FuzzyFinderTarget with a color property
             if isinstance(item, FuzzyFinderTarget) and item.color:
                 return item.color
-            
+
             # Fall back to custom_colors mapping if available
             if not self.custom_colors:
                 return None
@@ -175,7 +178,7 @@ class FuzzyFinderConfig(BaseModel):
             else:
                 # Use string representation
                 color_key = str(item)
-            
+
             return self.custom_colors.get(color_key)
         except Exception:
             return None
@@ -186,7 +189,7 @@ class FuzzyFinderConfig(BaseModel):
             # First check if item is a FuzzyFinderTarget with an opacity property
             if isinstance(item, FuzzyFinderTarget) and item.opacity is not None:
                 return item.opacity
-            
+
             # Fall back to config's item_opacity
             return self.config.item_opacity
         except Exception:
@@ -237,7 +240,7 @@ class FuzzyFinderApp(App):
 
     BINDINGS = [
         Binding("ctrl+c", "quit", "Quit"),
-        Binding("escape", "quit", "Quit"),  
+        Binding("escape", "quit", "Quit"),
         Binding("enter", "select", "Select", priority=True),
         Binding("up", "cursor_up", "Up", show=False, priority=True),
         Binding("down", "cursor_down", "Down", show=False, priority=True),
@@ -317,18 +320,18 @@ class FuzzyFinderApp(App):
 
             # Create list item
             item = ListItem(Label(display_value))
-            
+
             # Apply highlighting
             if i == self.highlighted_index:
                 item.add_class("highlighted")
-            
+
             # Apply custom color if configured
             custom_color = self.config.get_item_color(result)
             if custom_color:
                 item.add_class("list-item-custom-color")
                 # Parse and apply the custom color
                 self._apply_custom_color(item, custom_color)
-            
+
             # Apply opacity - prioritize FuzzyFinderTarget.opacity over config.item_opacity
             item_opacity = self.config.get_item_opacity(result)
             if item_opacity is not None:
@@ -337,32 +340,43 @@ class FuzzyFinderApp(App):
                 item.styles.opacity = item_opacity
             else:
                 item.add_class("list-item-normal")
-                
+
             results_list.append(item)
-        
+
         # Set the ListView's index to match our highlighted_index
-        if self.current_results and 0 <= self.highlighted_index < len(self.current_results):
+        if self.current_results and 0 <= self.highlighted_index < len(
+            self.current_results
+        ):
             results_list.index = self.highlighted_index
 
     def _apply_custom_color(self, item: ListItem, color_spec: str) -> None:
         """Apply custom color to a list item based on color specification."""
         try:
             # Handle different color formats
-            if color_spec.startswith('#'):
+            if color_spec.startswith("#"):
                 # Hex color
                 item.styles.color = color_spec
-            elif color_spec.startswith('bg:'):
+            elif color_spec.startswith("bg:"):
                 # Background color
                 bg_color = color_spec[3:]  # Remove 'bg:' prefix
                 item.styles.background = bg_color
-            elif ' bg:' in color_spec:
+            elif " bg:" in color_spec:
                 # Color with background (e.g., "white bg:#ff0000")
-                parts = color_spec.split(' bg:')
+                parts = color_spec.split(" bg:")
                 if len(parts) == 2:
                     text_color, bg_color = parts
                     item.styles.color = text_color.strip()
                     item.styles.background = bg_color.strip()
-            elif color_spec in ['red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'white', 'black']:
+            elif color_spec in [
+                "red",
+                "green",
+                "blue",
+                "yellow",
+                "cyan",
+                "magenta",
+                "white",
+                "black",
+            ]:
                 # Basic color names
                 item.styles.color = color_spec
             else:
@@ -403,7 +417,9 @@ class FuzzyFinderApp(App):
         if event.list_view.id == "results_list" and self.current_results:
             # Update highlighted index based on selection
             results_list = self.query_one("#results_list", ListView)
-            if results_list.index is not None and 0 <= results_list.index < len(self.current_results):
+            if results_list.index is not None and 0 <= results_list.index < len(
+                self.current_results
+            ):
                 self.highlighted_index = results_list.index
                 self.selected_item = self.current_results[self.highlighted_index]
                 self.exit(self.selected_item)
@@ -413,7 +429,9 @@ class FuzzyFinderApp(App):
         if event.list_view.id == "results_list" and self.current_results:
             # Keep our highlighted_index in sync with ListView
             results_list = self.query_one("#results_list", ListView)
-            if results_list.index is not None and 0 <= results_list.index < len(self.current_results):
+            if results_list.index is not None and 0 <= results_list.index < len(
+                self.current_results
+            ):
                 self.highlighted_index = results_list.index
                 if self.config.enable_preview:
                     self._update_preview()
@@ -496,11 +514,13 @@ class FuzzyFinderApp(App):
         # First try to get the current selection from the ListView
         try:
             results_list = self.query_one("#results_list", ListView)
-            if results_list.index is not None and 0 <= results_list.index < len(self.current_results):
+            if results_list.index is not None and 0 <= results_list.index < len(
+                self.current_results
+            ):
                 self.highlighted_index = results_list.index
         except Exception:
             pass
-        
+
         # Select the highlighted item
         if self.current_results and self.highlighted_index < len(self.current_results):
             self.selected_item = self.current_results[self.highlighted_index]

@@ -16,12 +16,8 @@ from pydantic import BaseModel, Field
 
 from metagit import DATA_PATH
 from metagit.core.config.models import ProjectDomain, ProjectType
-from metagit.core.project.models import GitUrl
 from metagit.core.utils.logging import LoggingModel
-from metagit.core.utils.files import (
-    DirectorySummary,
-    DirectoryDetails
-)
+
 
 class LanguageDetection(BaseModel):
     """Model for language detection results."""
@@ -346,6 +342,7 @@ class DetectionManagerConfig(BaseModel):
             enabled.append("tag_analysis")
         return enabled
 
+
 class DiscoveryResult(BaseModel):
     name: str
     description: Optional[str] = None
@@ -353,18 +350,16 @@ class DiscoveryResult(BaseModel):
     confidence: float = 1.0
     data: dict[str, Any] = {}  # detector-specific structured data
 
+
 class ProjectScanContext(BaseModel):
     root_path: Path
     all_files: List[Path]
+
 
 @runtime_checkable
 class Detector(Protocol):
     name: str
 
-    def should_run(self, ctx: ProjectScanContext) -> bool:
-        ...
+    def should_run(self, ctx: ProjectScanContext) -> bool: ...
 
-    def run(self, ctx: ProjectScanContext) -> Optional[DiscoveryResult]:
-        ...
-
-
+    def run(self, ctx: ProjectScanContext) -> Optional[DiscoveryResult]: ...

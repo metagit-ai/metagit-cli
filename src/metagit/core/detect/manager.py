@@ -31,7 +31,7 @@ from metagit.core.detect.models import (
     ProjectTypeDetection,
     Detector,
     DiscoveryResult,
-    ProjectScanContext
+    ProjectScanContext,
 )
 from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
@@ -39,13 +39,13 @@ from metagit.core.utils.files import (
     FileExtensionLookup,
     directory_details,
     directory_summary,
-    list_git_files
+    list_git_files,
 )
 from metagit.core.utils.logging import LoggerConfig, LoggingModel, UnifiedLogger
 
 import metagit.core.detect.detectors as detectors
 
-#from metagit.core.detect.detectors.terraform import TerraformModuleDiscovery
+# from metagit.core.detect.detectors.terraform import TerraformModuleDiscovery
 
 
 class DetectionManager(MetagitRecord, LoggingModel):
@@ -918,7 +918,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
 
 # def run_discovery(root_dir: Path, logger: UnifiedLogger) -> ProjectMetadata:
 #     """Create a map of files and folders in a repository for further analysis."""
-    
+
 #     try:
 #         summary = directory_summary(root_dir, file_lookup=FileExtensionLookup())
 #     except Exception as e:
@@ -940,6 +940,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
 
 #     return metadata
 
+
 class ProjectDetection:
     """
     Class to manage project detection and analysis.
@@ -947,12 +948,12 @@ class ProjectDetection:
     """
 
     def __init__(self, logger: Optional[UnifiedLogger] = None):
-    # Dynamically register all detectors found in src/metagit/core/detect/detectors/
+        # Dynamically register all detectors found in src/metagit/core/detect/detectors/
 
         self.detectors: List[Detector] = []
         self.logger = logger or UnifiedLogger(LoggerConfig()).get_logger()
         self._load_detectors()
-    
+
     def _load_detectors(self) -> None:
         """
         Load all detector modules dynamically from the detectors package.
@@ -963,7 +964,9 @@ class ProjectDetection:
         for _, module_name, is_pkg in pkgutil.iter_modules(detectors.__path__):
             if not is_pkg:
                 try:
-                    module = importlib.import_module(f"metagit.core.detect.detectors.{module_name}")
+                    module = importlib.import_module(
+                        f"metagit.core.detect.detectors.{module_name}"
+                    )
                     # Register all classes that are subclasses of Detector
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
@@ -971,12 +974,14 @@ class ProjectDetection:
                             self.detectors.append(attr())
                 except Exception as e:
                     if self.logger:
-                        self.logger.warning(f"Failed to load detector '{module_name}': {e}")
+                        self.logger.warning(
+                            f"Failed to load detector '{module_name}': {e}"
+                        )
 
     def run(self, path: str) -> Union[List[DiscoveryResult], Exception]:
         """
         Run all registered detectors on the specified path.
-    
+
         Args:
             path (str): The path to the project directory.
 

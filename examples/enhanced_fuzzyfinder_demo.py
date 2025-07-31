@@ -17,15 +17,43 @@ from metagit.core.utils.fuzzyfinder import FuzzyFinder, FuzzyFinderConfig
 
 def main():
     """Demonstrate enhanced FuzzyFinder features."""
-    
+
     # Create a larger dataset to show scrolling
     programming_languages = [
-        "Python", "JavaScript", "TypeScript", "Java", "C++", "C#", "Go", "Rust",
-        "Ruby", "PHP", "Swift", "Kotlin", "Scala", "Clojure", "Haskell", "Erlang",
-        "Elixir", "Dart", "Lua", "Perl", "R", "MATLAB", "Julia", "F#", "OCaml",
-        "Assembly", "C", "Objective-C", "Pascal", "Fortran", "COBOL", "Ada"
+        "Python",
+        "JavaScript",
+        "TypeScript",
+        "Java",
+        "C++",
+        "C#",
+        "Go",
+        "Rust",
+        "Ruby",
+        "PHP",
+        "Swift",
+        "Kotlin",
+        "Scala",
+        "Clojure",
+        "Haskell",
+        "Erlang",
+        "Elixir",
+        "Dart",
+        "Lua",
+        "Perl",
+        "R",
+        "MATLAB",
+        "Julia",
+        "F#",
+        "OCaml",
+        "Assembly",
+        "C",
+        "Objective-C",
+        "Pascal",
+        "Fortran",
+        "COBOL",
+        "Ada",
     ]
-    
+
     print("Enhanced FuzzyFinder Demo")
     print("=" * 30)
     print(f"Dataset: {len(programming_languages)} programming languages")
@@ -39,7 +67,7 @@ def main():
     print("   - Home/End: Jump to first/last")
     print("4. 🎯 Auto-scroll to highlighted item")
     print()
-    
+
     # Configure with new features
     config = FuzzyFinderConfig(
         items=programming_languages,
@@ -49,23 +77,23 @@ def main():
         item_opacity=0.8,  # 80% opacity for subtle transparency
         highlight_color="bold white bg:#2563eb",  # Nice blue highlight
         normal_color="white",
-        sort_items=True
+        sort_items=True,
     )
-    
+
     # Create and run the fuzzy finder
     finder = FuzzyFinder(config)
-    
+
     print("Starting enhanced FuzzyFinder...")
     print("Try typing partial names like 'py', 'java', 'rust', etc.")
-    
+
     try:
         result = finder.run()
-        
+
         if result:
             print(f"\n🎉 You selected: {result}")
         else:
             print("\n👋 No selection made.")
-            
+
     except KeyboardInterrupt:
         print("\n👋 Exited by user.")
 

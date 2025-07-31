@@ -1,18 +1,24 @@
-import re
 import yaml
-from pathlib import Path
 from typing import Optional
 from metagit.core.detect.models import ProjectScanContext, DiscoveryResult
+
 
 class DockerDetector:
     name = "DockerDetector"
 
     def should_run(self, ctx: ProjectScanContext) -> bool:
-        return any("dockerfile" in p.name.lower() or "docker-compose" in p.name.lower() for p in ctx.all_files)
+        return any(
+            "dockerfile" in p.name.lower() or "docker-compose" in p.name.lower()
+            for p in ctx.all_files
+        )
 
     def run(self, ctx: ProjectScanContext) -> Optional[DiscoveryResult]:
         dockerfiles = [p for p in ctx.all_files if "dockerfile" in p.name.lower()]
-        composefiles = [p for p in ctx.all_files if "docker-compose" in p.name.lower() and p.suffix in {".yml", ".yaml"}]
+        composefiles = [
+            p
+            for p in ctx.all_files
+            if "docker-compose" in p.name.lower() and p.suffix in {".yml", ".yaml"}
+        ]
 
         containers = []
         for dockerfile in dockerfiles:
@@ -30,19 +36,21 @@ class DockerDetector:
                         elif line.upper().startswith("EXPOSE"):
                             exposed_ports.extend(line.split()[1:])
                         elif line.upper().startswith("ENTRYPOINT"):
-                            entrypoint = line[len("ENTRYPOINT"):].strip()
+                            entrypoint = line[len("ENTRYPOINT") :].strip()
                         elif line.upper().startswith("CMD"):
-                            cmd = line[len("CMD"):].strip()
+                            cmd = line[len("CMD") :].strip()
             except Exception:
                 continue  # corrupt file
 
-            containers.append({
-                "file": str(dockerfile.relative_to(ctx.root_path)),
-                "base_image": base_image,
-                "exposed_ports": exposed_ports,
-                "entrypoint": entrypoint,
-                "cmd": cmd,
-            })
+            containers.append(
+                {
+                    "file": str(dockerfile.relative_to(ctx.root_path)),
+                    "base_image": base_image,
+                    "exposed_ports": exposed_ports,
+                    "entrypoint": entrypoint,
+                    "cmd": cmd,
+                }
+            )
 
         services = []
         for composefile in composefiles:
@@ -52,12 +60,14 @@ class DockerDetector:
                     if not isinstance(data, dict):
                         continue
                     for svc_name, svc_def in data.get("services", {}).items():
-                        services.append({
-                            "name": svc_name,
-                            "image": svc_def.get("image"),
-                            "build": svc_def.get("build"),
-                            "ports": svc_def.get("ports", [])
-                        })
+                        services.append(
+                            {
+                                "name": svc_name,
+                                "image": svc_def.get("image"),
+                                "build": svc_def.get("build"),
+                                "ports": svc_def.get("ports", []),
+                            }
+                        )
             except Exception:
                 continue
 
@@ -72,5 +82,5 @@ class DockerDetector:
             data={
                 "containers": containers,
                 "compose_services": services,
-            }
+            },
         )

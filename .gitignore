@@ -25,3 +25,6 @@ secret_results.json
 .metagit/
 src/metagit/_version.py
 site
+
+# Crush contextual files
+.crush

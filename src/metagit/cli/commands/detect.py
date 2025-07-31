@@ -7,8 +7,11 @@ import os
 
 import click
 import yaml
-from pathlib import Path
-from metagit.core.detect.manager import DetectionManager, DetectionManagerConfig, ProjectDetection
+from metagit.core.detect.manager import (
+    DetectionManager,
+    DetectionManagerConfig,
+    ProjectDetection,
+)
 from metagit.core.providers import registry
 from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers.gitlab import GitLabProvider
@@ -83,12 +86,12 @@ def detect_project(ctx: click.Context, path: str, output: str) -> None:
         click.echo(json.dumps(summary, indent=2))
         return
 
-    #.model_dump(exclude_none=True, exclude_defaults=True)
+    # .model_dump(exclude_none=True, exclude_defaults=True)
     full_result = {
         "project_path": path,
         "project_detections": detections,
         "total_detections": len(detections),
-        "all_files": detection.all_files(path)
+        "all_files": detection.all_files(path),
     }
 
     if output == "yaml":

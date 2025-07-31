@@ -23,7 +23,7 @@ class PythonDetector:
             description="Detected a Python project using modern or legacy packaging standards",
             tags=["python"],
             confidence=0.98,
-            data={"dependencies": dependencies}
+            data={"dependencies": dependencies},
         )
 
     def _get_dependencies(self, root: Path) -> list[str]:
@@ -46,14 +46,18 @@ class PythonDetector:
         reqs = root / "requirements.txt"
         if reqs.exists():
             with reqs.open("r") as f:
-                deps.extend([
-                    line.strip().split("==")[0]
-                    for line in f
-                    if line.strip() and not line.startswith("#")
-                ])
+                deps.extend(
+                    [
+                        line.strip().split("==")[0]
+                        for line in f
+                        if line.strip() and not line.startswith("#")
+                    ]
+                )
 
         setup = root / "setup.py"
         if setup.exists():
-            deps.append("[from setup.py]")  # You could parse with `ast`, but keep it simple here
+            deps.append(
+                "[from setup.py]"
+            )  # You could parse with `ast`, but keep it simple here
 
         return sorted(set(deps))
