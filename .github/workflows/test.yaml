@@ -43,7 +43,7 @@ jobs:
       - name: Linting
         if: matrix.os != 'windows-latest'
         run: |
-          uv run black --check ${{ env.PROJECT_PATH }}
+          uv run ruff check ${{ env.PROJECT_PATH }}
           uv run ruff format --check ${{ env.PROJECT_PATH }}
       # - name: Type Checking
       #   if: matrix.os != 'windows-latest'
