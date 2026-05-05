@@ -45,6 +45,84 @@ jobs:
           name: python-package-distributions
           path: dist/
 
+  semantic-tag:
+    name: Create semantic version tag
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate version bump from commit prefixes
+        id: semver
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          latest_tag="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+          if [[ -z "${latest_tag}" ]]; then
+            latest_tag="v0.0.0"
+            range="HEAD"
+          else
+            range="${latest_tag}..HEAD"
+          fi
+
+          commit_text="$(git log "${range}" --pretty=%s%n%b)"
+          bump="patch"
+
+          if echo "${commit_text}" | grep -Eq 'BREAKING CHANGE|^[[:alpha:]]+(\([^)]+\))?!:'; then
+            bump="major"
+          elif echo "${commit_text}" | grep -Eq '^feat(\([^)]+\))?:'; then
+            bump="minor"
+          fi
+
+          current="${latest_tag#v}"
+          IFS='.' read -r major minor patch <<< "${current}"
+
+          case "${bump}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+
+          next_tag="v${major}.${minor}.${patch}"
+          echo "latest_tag=${latest_tag}" >> "$GITHUB_OUTPUT"
+          echo "next_tag=${next_tag}" >> "$GITHUB_OUTPUT"
+          echo "bump=${bump}" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if tag already exists
+        id: tag_check
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git rev-parse "${{ steps.semver.outputs.next_tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.tag_check.outputs.exists == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git tag "${{ steps.semver.outputs.next_tag }}"
+          git push origin "${{ steps.semver.outputs.next_tag }}"
+          echo "Created ${{ steps.semver.outputs.next_tag }} (${{ steps.semver.outputs.bump }})"
+
   publish-to-pypi:
     name: Publish Python 🐍 distribution 📦 to PyPI
     runs-on: ubuntu-latest

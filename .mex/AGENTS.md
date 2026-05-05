@@ -15,6 +15,7 @@ Metagit CLI manages and validates repository/workspace metadata (`.metagit.yml`)
 - Keep mutating repo operations explicitly guarded (especially MCP sync modes).
 - Put business logic in `src/metagit/core/*`; keep CLI command handlers thin.
 - Run lint + relevant tests before claiming a change is complete.
+- Default commit messages to patch semantics (`fix:`). Use `feat:` only for additive backward-compatible changes, and use major/breaking prefixes only when schema/config compatibility is intentionally broken.
 
 ## Commands
 - Setup: `./configure.sh && task install`

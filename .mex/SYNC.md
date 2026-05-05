@@ -54,6 +54,7 @@ Critical rules for updating:
 - In all other files: update content to reflect current reality
 - Update last_updated in the YAML frontmatter of every file you change
 - After updating each file, update ROUTER.md Current Project State
+- Commit-message semantics: default to `fix:` for patch-level updates; use `feat:` only for additive backward-compatible changes; use breaking markers only when intentionally breaking schema/config compatibility.
 
 When done, report:
 - Which files were updated and what changed

@@ -113,7 +113,7 @@ In this mode metagit connects to our enterprise SaaS offering to help mine the w
 
 **uv:**
 
-`uv tool install metagit-ai`
+`uv tool install metagit-cli` (PyPI project name; the unrelated `metagit` package is a different tool.)
 
 **From source:**
 To install metagit, clone the repository and build the project:
@@ -342,6 +342,16 @@ The default configuration file is `metagit.config.yaml`, which can be customized
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+
+### Versioning and Release Prefixes
+
+Merges to `main` trigger semantic tag creation (`vX.Y.Z`) based on commit message prefixes:
+
+- `fix:` -> patch bump
+- `feat:` -> minor bump
+- `type(scope)!:` or `BREAKING CHANGE:` -> major bump
+
+Default to `fix:` unless the change is additive (`feat:`) or intentionally breaks schema/config compatibility (major markers).
 
 ## License
 
