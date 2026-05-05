@@ -23,7 +23,10 @@ class ResourcePublisher:
     ) -> dict[str, Any]:
         """Return a resource payload for known URIs."""
         if uri == "metagit://workspace/config":
-            return {"uri": uri, "data": config.model_dump(exclude_none=True) if config else {}}
+            return {
+                "uri": uri,
+                "data": config.model_dump(exclude_none=True) if config else {},
+            }
         if uri == "metagit://workspace/repos/status":
             return {"uri": uri, "data": repos_status or []}
         if uri == "metagit://workspace/ops-log":

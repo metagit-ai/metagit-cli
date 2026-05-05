@@ -20,7 +20,9 @@ class RepoOperationsService:
             repo = Repo(repo_path)
             return {
                 "ok": True,
-                "branch": str(repo.active_branch.name) if not repo.head.is_detached else "DETACHED",
+                "branch": str(repo.active_branch.name)
+                if not repo.head.is_detached
+                else "DETACHED",
                 "dirty": repo.is_dirty(untracked_files=True),
             }
         except Exception as exc:
@@ -39,12 +41,18 @@ class RepoOperationsService:
             return {"ok": False, "error": "Unsupported sync mode."}
 
         if normalized_mode in {"pull", "clone"} and not allow_mutation:
-            return {"ok": False, "error": "Mutation disabled for pull/clone operations."}
+            return {
+                "ok": False,
+                "error": "Mutation disabled for pull/clone operations.",
+            }
 
         try:
             if normalized_mode == "clone":
                 if not origin_url:
-                    return {"ok": False, "error": "origin_url is required for clone mode."}
+                    return {
+                        "ok": False,
+                        "error": "origin_url is required for clone mode.",
+                    }
                 Repo.clone_from(origin_url, repo_path)
                 return {"ok": True, "mode": "clone"}
 

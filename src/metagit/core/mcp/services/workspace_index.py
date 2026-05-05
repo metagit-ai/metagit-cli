@@ -13,7 +13,9 @@ from metagit.core.config.models import MetagitConfig
 class WorkspaceIndexService:
     """Build normalized repository status rows from workspace configuration."""
 
-    def build_index(self, config: MetagitConfig, workspace_root: str) -> list[dict[str, Any]]:
+    def build_index(
+        self, config: MetagitConfig, workspace_root: str
+    ) -> list[dict[str, Any]]:
         """Return repository index rows for all configured workspace repos."""
         rows: list[dict[str, Any]] = []
         if not config.workspace:

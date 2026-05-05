@@ -32,7 +32,9 @@ class UpstreamHintService:
                     "repo_name": repo.get("repo_name"),
                     "repo_path": repo.get("repo_path"),
                     "score": score,
-                    "rationale": self._rationale(blocker_lower=blocker_lower, repo=repo),
+                    "rationale": self._rationale(
+                        blocker_lower=blocker_lower, repo=repo
+                    ),
                 }
             )
 

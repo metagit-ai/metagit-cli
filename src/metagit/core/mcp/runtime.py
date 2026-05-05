@@ -22,7 +22,9 @@ from metagit.core.mcp.services.upstream_hints import UpstreamHintService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 from metagit.core.mcp.tool_registry import ToolRegistry
-from metagit.core.mcp.tools.bootstrap_plan_only import metagit_bootstrap_config_plan_only
+from metagit.core.mcp.tools.bootstrap_plan_only import (
+    metagit_bootstrap_config_plan_only,
+)
 from metagit.core.mcp.tools.workspace_status import metagit_workspace_status
 
 
@@ -232,7 +234,9 @@ class MetagitMcpRuntime:
                     },
                 ]
             )
-        resources.append({"uri": "metagit://workspace/ops-log", "name": "Operations Log"})
+        resources.append(
+            {"uri": "metagit://workspace/ops-log", "name": "Operations Log"}
+        )
         return {"resources": resources}
 
     def _handle_resources_read(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -241,8 +245,18 @@ class MetagitMcpRuntime:
             raise ValueError("uri is required")
         status, config = self._resolve_status_and_config()
         repos = self._build_repo_index(status=status, config=config)
-        payload = self._resources.get_resource(uri=uri, config=config, repos_status=repos)
-        return {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(payload)}]}
+        payload = self._resources.get_resource(
+            uri=uri, config=config, repos_status=repos
+        )
+        return {
+            "contents": [
+                {
+                    "uri": uri,
+                    "mimeType": "application/json",
+                    "text": json.dumps(payload),
+                }
+            ]
+        }
 
     def _dispatch_tool(
         self,
@@ -280,7 +294,9 @@ class MetagitMcpRuntime:
             if not blocker:
                 raise InvalidToolArgumentsError("blocker is required")
             repos = self._build_repo_index(status=status, config=config)
-            return {"hints": self._hints_service.rank(blocker=blocker, repo_context=repos)}
+            return {
+                "hints": self._hints_service.rank(blocker=blocker, repo_context=repos)
+            }
 
         if name == "metagit_repo_inspect":
             repo_path = str(arguments.get("repo_path", "")).strip()
@@ -304,7 +320,11 @@ class MetagitMcpRuntime:
                 if sampling_payload and sampling_payload.get("content"):
                     sampled_text = self._extract_sampling_text(sampling_payload)
                     if sampled_text:
-                        sampler = lambda _: sampled_text
+
+                        def sampler(_payload: dict[str, str]) -> str:
+                            _ = _payload
+                            return sampled_text
+
                         sampled_service = BootstrapSamplingService(
                             sampling_supported=True,
                             sampler=sampler,
@@ -321,7 +341,9 @@ class MetagitMcpRuntime:
         raise ValueError(f"Unsupported tool: {name}")
 
     def _resolve_status_and_config(self) -> tuple[WorkspaceStatus, Any]:
-        resolved_root = self._resolver.resolve(cwd=os.getcwd(), cli_root=self._root_override)
+        resolved_root = self._resolver.resolve(
+            cwd=os.getcwd(), cli_root=self._root_override
+        )
         status = self._gate.evaluate(root_path=resolved_root)
         config = None
         if status.state == McpActivationState.ACTIVE and status.root_path:
@@ -332,10 +354,18 @@ class MetagitMcpRuntime:
             config = None if isinstance(loaded, Exception) else loaded
         return status, config
 
-    def _build_repo_index(self, status: WorkspaceStatus, config: Any) -> list[dict[str, Any]]:
-        if status.state != McpActivationState.ACTIVE or not config or not status.root_path:
+    def _build_repo_index(
+        self, status: WorkspaceStatus, config: Any
+    ) -> list[dict[str, Any]]:
+        if (
+            status.state != McpActivationState.ACTIVE
+            or not config
+            or not status.root_path
+        ):
             return []
-        return self._index_service.build_index(config=config, workspace_root=status.root_path)
+        return self._index_service.build_index(
+            config=config, workspace_root=status.root_path
+        )
 
     def _error_response(
         self,
