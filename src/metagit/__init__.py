@@ -8,15 +8,17 @@ Metagit detection tool
 
 import os
 from os import path
+from importlib.metadata import PackageNotFoundError, version
 
 here = path.abspath(path.dirname(__file__))
 
 try:
     from ._version import version as __version__
 except ImportError:
-    from setuptools_scm import get_version
-
-    __version__ = get_version(root="../../", relative_to=__file__)
+    try:
+        __version__ = version("metagit-cli")
+    except PackageNotFoundError:
+        __version__ = "0.0.0"
 
 
 SCRIPT_PATH = os.path.abspath(os.path.split(__file__)[0])
