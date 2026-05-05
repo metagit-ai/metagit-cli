@@ -3,32 +3,69 @@
 UserPrompt utility for dynamically prompting users for Pydantic object properties.
 """
 
+from __future__ import annotations
+
 import json
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
-from prompt_toolkit import PromptSession
-from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.shortcuts import print_formatted_text
-from prompt_toolkit.styles import Style
-from prompt_toolkit.validation import ValidationError as PTValidationError
-from prompt_toolkit.validation import Validator
 from pydantic import BaseModel, ValidationError
 
 T = TypeVar("T", bound=BaseModel)
 
-# Define styles for different prompt elements
-PROMPT_STYLE = Style.from_dict(
-    {
-        "title": "bold cyan",
-        "field": "bold green",
-        "description": "italic yellow",
-        "default": "blue",
-        "error": "bold red",
-        "success": "bold green",
-        "optional": "white",
-        "prompt": "white",
-    }
-)
+_pt_cache: Optional[SimpleNamespace] = None
+_prompt_style_cache: Any = None
+
+
+def _promptkit() -> SimpleNamespace:
+    """
+    Lazily import prompt_toolkit so CLI modules can load without it.
+
+    Interactive commands require the dependency; install with metagit-cli or
+    ``pip install 'prompt-toolkit>=3.0'``.
+    """
+    global _pt_cache
+    if _pt_cache is None:
+        try:
+            from prompt_toolkit import PromptSession
+            from prompt_toolkit.formatted_text import FormattedText
+            from prompt_toolkit.shortcuts import print_formatted_text
+            from prompt_toolkit.styles import Style
+            from prompt_toolkit.validation import ValidationError as PTValidationError
+            from prompt_toolkit.validation import Validator
+        except ImportError as exc:
+            raise ImportError(
+                "Interactive prompts require 'prompt-toolkit'. "
+                "Install: pip install 'prompt-toolkit>=3.0' or reinstall metagit-cli."
+            ) from exc
+        _pt_cache = SimpleNamespace(
+            PromptSession=PromptSession,
+            FormattedText=FormattedText,
+            print_formatted_text=print_formatted_text,
+            Style=Style,
+            PTValidationError=PTValidationError,
+            Validator=Validator,
+        )
+    return _pt_cache
+
+
+def _prompt_style() -> Any:
+    global _prompt_style_cache
+    if _prompt_style_cache is None:
+        pk = _promptkit()
+        _prompt_style_cache = pk.Style.from_dict(
+            {
+                "title": "bold cyan",
+                "field": "bold green",
+                "description": "italic yellow",
+                "default": "blue",
+                "error": "bold red",
+                "success": "bold green",
+                "optional": "white",
+                "prompt": "white",
+            }
+        )
+    return _prompt_style_cache
 
 
 class UserPrompt:
@@ -39,8 +76,9 @@ class UserPrompt:
     fields of any Pydantic model, with validation and type conversion using prompt_toolkit.
     """
 
-    def __init__(self):
-        self.session = PromptSession(style=PROMPT_STYLE)
+    def __init__(self) -> None:
+        pk = _promptkit()
+        self.session = pk.PromptSession(style=_prompt_style())
 
     @staticmethod
     def prompt_for_model(
@@ -70,6 +108,7 @@ class UserPrompt:
             if not issubclass(model_class, BaseModel):
                 return ValueError(f"{model_class} is not a valid Pydantic model")
 
+            pk = _promptkit()
             existing_data = existing_data or {}
             field_data = {}
             prompt_instance = UserPrompt()
@@ -79,14 +118,14 @@ class UserPrompt:
 
             if title:
                 # Print title
-                title_text = FormattedText([("class:title", f"\n=== {title} ===\n")])
-                print_formatted_text(title_text)
+                title_text = pk.FormattedText([("class:title", f"\n=== {title} ===\n")])
+                pk.print_formatted_text(title_text)
 
             for field_name, field_info in model_fields.items():
                 # Skip if field already has a value
                 if field_name in existing_data:
                     field_data[field_name] = existing_data[field_name]
-                    success_text = FormattedText(
+                    success_text = pk.FormattedText(
                         [
                             ("class:success", f"✓ {field_name}: "),
                             (
@@ -95,7 +134,7 @@ class UserPrompt:
                             ),
                         ]
                     )
-                    print_formatted_text(success_text)
+                    pk.print_formatted_text(success_text)
                     continue
 
                 # If fields_to_prompt is specified, only prompt for those fields
@@ -133,10 +172,11 @@ class UserPrompt:
             try:
                 return model_class(**field_data)
             except ValidationError as e:
-                error_text = FormattedText(
+                pk = _promptkit()
+                error_text = pk.FormattedText(
                     [("class:error", f"\n❌ Validation error: {e}\n")]
                 )
-                print_formatted_text(error_text)
+                pk.print_formatted_text(error_text)
                 # Retry with corrected data
                 return UserPrompt.prompt_for_model(
                     model_class, field_data, title, fields_to_prompt
@@ -158,6 +198,7 @@ class UserPrompt:
             The user input value, converted to appropriate type
         """
         try:
+            pk = _promptkit()
             field_type = field_info.annotation
             description = field_info.description or ""
 
@@ -193,7 +234,7 @@ class UserPrompt:
 
             prompt_parts.append(("class:prompt", ": "))
 
-            prompt_text = FormattedText(prompt_parts)
+            prompt_text = pk.FormattedText(prompt_parts)
 
             # Create validator for the field type
             validator = self._create_field_validator(field_type, field_info)
@@ -217,7 +258,7 @@ class UserPrompt:
 
                     # Handle empty input for required fields
                     if not user_input and field_info.is_required():
-                        error_text = FormattedText(
+                        error_text = pk.FormattedText(
                             [
                                 (
                                     "class:error",
@@ -225,23 +266,25 @@ class UserPrompt:
                                 )
                             ]
                         )
-                        print_formatted_text(error_text)
+                        pk.print_formatted_text(error_text)
                         continue
 
                     # Convert and return the input
                     converted_value = self._convert_input(user_input, field_type)
                     if isinstance(converted_value, Exception):
                         # This should be caught by the validator, but as a fallback
-                        error_text = FormattedText(
+                        error_text = pk.FormattedText(
                             [("class:error", f"❌ {converted_value}\n")]
                         )
-                        print_formatted_text(error_text)
+                        pk.print_formatted_text(error_text)
                         continue
                     return converted_value
 
-                except PTValidationError as e:
-                    error_text = FormattedText([("class:error", f"❌ {e.message}\n")])
-                    print_formatted_text(error_text)
+                except pk.PTValidationError as e:
+                    error_text = pk.FormattedText(
+                        [("class:error", f"❌ {e.message}\n")]
+                    )
+                    pk.print_formatted_text(error_text)
                     continue
         except Exception as e:
             return e
@@ -260,6 +303,7 @@ class UserPrompt:
             The user input value (converted to appropriate type) or None if no value provided
         """
         try:
+            pk = _promptkit()
             field_type = field_info.annotation
             description = field_info.description or ""
 
@@ -304,7 +348,7 @@ class UserPrompt:
 
             prompt_parts.append(("class:prompt", ": "))
 
-            prompt_text = FormattedText(prompt_parts)
+            prompt_text = pk.FormattedText(prompt_parts)
 
             # Create validator for the field type
             validator = self._create_field_validator(field_type, field_info)
@@ -334,23 +378,25 @@ class UserPrompt:
                     converted_value = self._convert_input(user_input, field_type)
                     if isinstance(converted_value, Exception):
                         # This should be caught by the validator, but as a fallback
-                        error_text = FormattedText(
+                        error_text = pk.FormattedText(
                             [("class:error", f"❌ {converted_value}\n")]
                         )
-                        print_formatted_text(error_text)
+                        pk.print_formatted_text(error_text)
                         continue
                     return converted_value
 
-                except PTValidationError as e:
-                    error_text = FormattedText([("class:error", f"❌ {e.message}\n")])
-                    print_formatted_text(error_text)
+                except pk.PTValidationError as e:
+                    error_text = pk.FormattedText(
+                        [("class:error", f"❌ {e.message}\n")]
+                    )
+                    pk.print_formatted_text(error_text)
                     continue
         except Exception as e:
             return e
 
     def _create_field_validator(
         self, field_type: Any, field_info: Any = None
-    ) -> Union[Optional[Validator], Exception]:
+    ) -> Union[Any, Exception]:
         """
         Create a validator for the given field type.
 
@@ -363,6 +409,7 @@ class UserPrompt:
             A prompt_toolkit Validator instance or None
         """
         try:
+            pk = _promptkit()
 
             def validate_type(text: str) -> bool:
                 if not text:
@@ -386,19 +433,18 @@ class UserPrompt:
                 if is_bool_field:
                     if text.strip().lower() in ["true", "false", "y", "n", "yes", "no"]:
                         return True
-                    else:
-                        raise PTValidationError(
-                            message="Please enter 'true', 'false', 'y', or 'n'"
-                        )
+                    raise pk.PTValidationError(
+                        message="Please enter 'true', 'false', 'y', or 'n'"
+                    )
 
                 # For other types, try to convert
                 try:
                     self._convert_input(text, field_type)
                     return True
                 except (ValueError, TypeError) as exc:
-                    raise PTValidationError(message=f"Invalid value: {exc}") from exc
+                    raise pk.PTValidationError(message=f"Invalid value: {exc}") from exc
 
-            return Validator.from_callable(validate_type)
+            return pk.Validator.from_callable(validate_type)
         except Exception as e:
             return e
 
@@ -457,10 +503,9 @@ class UserPrompt:
             if target_type is bool:
                 if user_input.lower() in ["true", "y", "yes"]:
                     return True
-                elif user_input.lower() in ["false", "n", "no"]:
+                if user_input.lower() in ["false", "n", "no"]:
                     return False
-                else:
-                    raise ValueError(f"Cannot convert '{user_input}' to boolean")
+                raise ValueError(f"Cannot convert '{user_input}' to boolean")
 
             # Default conversion
             try:
@@ -499,8 +544,6 @@ class UserPrompt:
                 "default": default,
             }
             # Mock field_info object for _prompt_for_field
-            from types import SimpleNamespace
-
             mock_field_info = SimpleNamespace(
                 annotation=field_type,
                 description=description,
@@ -523,20 +566,20 @@ class UserPrompt:
             bool: True if user confirms, False otherwise
         """
         try:
-            session = PromptSession(style=PROMPT_STYLE)
-            prompt_text = FormattedText([("class:field", f"\n{message} (y/n): ")])
+            pk = _promptkit()
+            session = pk.PromptSession(style=_prompt_style())
+            prompt_text = pk.FormattedText([("class:field", f"\n{message} (y/n): ")])
 
             while True:
                 response = session.prompt(prompt_text).strip().lower()
                 if response in ["y", "yes"]:
                     return True
-                elif response in ["n", "no"]:
+                if response in ["n", "no"]:
                     return False
-                else:
-                    error_text = FormattedText(
-                        [("class:error", "❌ Please enter 'y' or 'n'.\n")]
-                    )
-                    print_formatted_text(error_text)
+                error_text = pk.FormattedText(
+                    [("class:error", "❌ Please enter 'y' or 'n'.\n")]
+                )
+                pk.print_formatted_text(error_text)
         except Exception as e:
             return e
 
@@ -582,9 +625,8 @@ def yes_no_prompt(message: str = "Continue?") -> bool:
             response = input(f"{message} (y/n): ").lower().strip()
             if response in ["y", "yes"]:
                 return True
-            elif response in ["n", "no"]:
+            if response in ["n", "no"]:
                 return False
-            else:
-                print("Please enter 'y' or 'n'")
+            print("Please enter 'y' or 'n'")
     except Exception:
         return False
