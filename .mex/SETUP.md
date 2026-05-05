@@ -226,3 +226,7 @@ Once the scaffold is populated, use these to keep it aligned with your codebase:
 - **`mex check`** — detect drift (zero tokens, zero AI)
 - **`.mex/sync.sh`** — interactive drift check + targeted or full resync
 - **`mex watch`** — auto drift score after every commit
+
+## Commit Prefix Policy
+
+When committing scaffold updates, default to `fix:` (patch intent). Use `feat:` only for additive backward-compatible updates. Use breaking markers (`type(scope)!:` or `BREAKING CHANGE:`) only for intentional schema/config compatibility breaks.

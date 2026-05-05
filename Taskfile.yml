@@ -31,14 +31,11 @@ includes:
   github:
     taskfile: ./tasks/Taskfile.github.yml
     optional: true
-  git:
-    taskfile: ./tasks/Taskfile.git.yml
-    optional: true
-  precommit:
-    taskfile: ./tasks/Taskfile.precommit.yml
-    optional: true
   python:
     taskfile: ./tasks/Taskfile.python.yml
+    optional: true
+  mcp:
+    taskfile: ./tasks/Taskfile.mcp.yml
     optional: true
 
 tasks:

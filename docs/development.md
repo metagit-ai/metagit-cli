@@ -15,3 +15,19 @@ task format lint:fix test
   - `inactive_missing_config` when `.metagit.yml` is not present
   - `inactive_invalid_config` when `.metagit.yml` fails validation
   - `active` when `.metagit.yml` loads successfully
+
+## Semantic Release Tags
+
+Merges to `main` automatically create a semantic version tag (`vX.Y.Z`) based on commit message prefixes since the previous tag.
+
+- `fix:` -> patch release (`X.Y.Z+1`) **default for most updates**
+- `feat:` -> minor release (`X.Y+1.0`)
+- `type(scope)!:` or `BREAKING CHANGE:` -> major release (`X+1.0.0`)
+
+### Commit Prefix Guidance
+
+Use patch semantics first (`fix:`) unless schema/config compatibility is intentionally broken.
+
+- Use `fix:` for normal maintenance and safe behavior changes.
+- Use `feat:` only for additive, backward-compatible functionality.
+- Use `!` / `BREAKING CHANGE` when changing `.metagit.yml` or app config schema in a non-backward-compatible way.

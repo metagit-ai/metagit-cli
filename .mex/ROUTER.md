@@ -33,6 +33,8 @@ Then read this file fully before doing anything else in this session.
 - Workspace index/search/upstream hint services and guarded repo inspect/sync flows.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
+- Docs build path resolves CLI imports correctly in CI by including interactive prompt runtime dependency.
+- Semantic version tags are auto-created on merges to `main` from commit prefixes (`fix:` patch, `feat:` minor, breaking markers major) and drive tag-based release publishing.
 
 **Not yet built:**
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
@@ -71,3 +73,8 @@ For every task, follow this loop:
    - If a pattern exists but you deviated from it or discovered a new gotcha, update it with what you learned.
    - If any `context/` file is now out of date because of this work, update it surgically — do not rewrite entire files.
    - Update the "Current Project State" section above if the work was significant.
+
+## Commit Message Semantics
+- Use `fix:` by default (patch-level intent).
+- Use `feat:` only for additive backward-compatible behavior.
+- Use breaking-change markers (`type(scope)!:` or `BREAKING CHANGE:`) only when intentionally breaking schema/config compatibility (for example `.metagit.yml` or app configuration schema changes).

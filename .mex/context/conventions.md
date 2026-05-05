@@ -62,3 +62,8 @@ Before presenting any code:
 - [ ] `.metagit.yml`/config model interactions still pass validation paths (no silent schema drift).
 - [ ] Lint/format checks pass via project commands (`task lint`, and format if needed).
 - [ ] Mutating operations remain explicitly guarded (especially MCP sync/tool paths).
+
+## Commit Semantics
+- Default to `fix:` commit prefixes (patch intent) for normal maintenance and safe behavior updates.
+- Use `feat:` only for additive backward-compatible capabilities.
+- Use `type(scope)!:` or `BREAKING CHANGE:` only when changes intentionally break schema/config compatibility.
