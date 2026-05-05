@@ -27,6 +27,7 @@ from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.config import config
 from metagit.cli.commands.detect import detect
 from metagit.cli.commands.init import init
+from metagit.cli.commands.mcp import mcp
 from metagit.cli.commands.project import project
 from metagit.cli.commands.record import record
 from metagit.cli.commands.workspace import workspace
@@ -129,6 +130,7 @@ cli.add_command(workspace)
 cli.add_command(config)
 cli.add_command(record)
 cli.add_command(init)
+cli.add_command(mcp)
 
 
 def main() -> None:

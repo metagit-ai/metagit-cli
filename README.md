@@ -297,6 +297,20 @@ Manage multi-repository workspaces:
 metagit workspace select
 ```
 
+### `mcp` - MCP Runtime
+Run Metagit as an MCP server over stdio with workspace gating:
+
+```bash
+# Start MCP stdio runtime in current context
+metagit mcp serve
+
+# Resolve and gate against a specific workspace root
+metagit mcp serve --root /path/to/workspace
+
+# Print one-shot state/tool snapshot and exit
+metagit mcp serve --root /path/to/workspace --status-once
+```
+
 ### `info` - Configuration Information
 Display current configuration:
 
@@ -334,6 +348,10 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 This project is licensed under the MIT License. See the LICENSE file for details.
 
 # Development
+
+## Agent Skills
+
+- [Metagit Skills Index](skills/README.md)
 
 # Links
 
