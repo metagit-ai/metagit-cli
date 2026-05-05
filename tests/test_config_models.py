@@ -9,6 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from metagit.core.config import models
+from metagit.core.project.models import ProjectPath
 
 
 def test_license_kind_enum():
@@ -109,6 +110,8 @@ def test_observability():
 def test_project_and_metadata():
     lang = models.Language(primary="python", secondary=["js"])
     proj = models.Project(
+        description="Service catalog API",
+        agent_prompt="Prefer small PRs and integration tests.",
         type=models.ProjectType.APPLICATION,
         domain=models.ProjectDomain.WEB,
         language=lang,
@@ -117,6 +120,8 @@ def test_project_and_metadata():
         build_tool=models.BuildTool.MAKE,
         deploy_targets=["prod"],
     )
+    assert proj.description == "Service catalog API"
+    assert proj.agent_prompt == "Prefer small PRs and integration tests."
     assert proj.type == models.ProjectType.APPLICATION
     assert proj.language.primary == "python"
     meta = models.RepoMetadata(tags=["tag1"], created_at=datetime.now())
@@ -140,8 +145,30 @@ def test_metrics_and_pull_requests():
 def test_metagit_config_minimal():
     cfg = models.MetagitConfig(name="proj")
     assert cfg.name == "proj"
+    assert cfg.agent_prompt is None
     # Test serialization
     assert isinstance(cfg.serialize_url(None, None), type(None))
+
+
+def test_workspace_description_and_agent_prompt():
+    """Workspace and workspace projects accept optional description and agent_prompt."""
+    repo = ProjectPath(name="example", path="/tmp/example")
+    ws = models.Workspace(
+        description="Multi-repo analytics workspace",
+        agent_prompt="Keep migrations reversible.",
+        projects=[
+            models.WorkspaceProject(
+                name="core",
+                description="Core services",
+                agent_prompt="Use typed APIs.",
+                repos=[repo],
+            )
+        ],
+    )
+    assert ws.description == "Multi-repo analytics workspace"
+    assert ws.agent_prompt == "Keep migrations reversible."
+    assert ws.projects[0].description == "Core services"
+    assert ws.projects[0].agent_prompt == "Use typed APIs."
 
 
 class TestMetagitConfig:
@@ -152,11 +179,13 @@ class TestMetagitConfig:
         config = models.MetagitConfig(
             name="test-project",
             description="A test project",
+            agent_prompt="Follow the contributor guide.",
             kind=models.ProjectKind.APPLICATION,
         )
 
         assert config.name == "test-project"
         assert config.description == "A test project"
+        assert config.agent_prompt == "Follow the contributor guide."
         assert config.kind == models.ProjectKind.APPLICATION
 
     def test_metagit_config_with_optional_fields(self):

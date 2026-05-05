@@ -70,6 +70,7 @@ jobs:
     needs:
     - build
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')  # only publish to TestPyPI on tag pushes
 
     environment:
       name: testpypi

@@ -3,7 +3,7 @@
 Pydantic models for .metagit.yml workspace configuration.
 """
 
-from typing import Any, List
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -14,6 +14,12 @@ class WorkspaceProject(BaseModel):
     """Model for workspace project."""
 
     name: str = Field(..., description="Workspace project name")
+    description: Optional[str] = Field(
+        None, description="Human-readable description of this workspace project"
+    )
+    agent_prompt: Optional[str] = Field(
+        None, description="Optional prompt text for agents working in this project"
+    )
     repos: List[ProjectPath] = Field(..., description="Repository list")
 
     @field_validator("repos", mode="before")
@@ -40,6 +46,12 @@ class WorkspaceProject(BaseModel):
 class Workspace(BaseModel):
     """Model for workspace configuration."""
 
+    description: Optional[str] = Field(
+        None, description="Human-readable description of this workspace"
+    )
+    agent_prompt: Optional[str] = Field(
+        None, description="Optional prompt text for agents working in this workspace"
+    )
     projects: List[WorkspaceProject] = Field(..., description="Workspace projects")
 
     class Config:

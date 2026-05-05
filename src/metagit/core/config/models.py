@@ -611,6 +611,12 @@ class Language(BaseModel):
 class Project(BaseModel):
     """Model for project information."""
 
+    description: Optional[str] = Field(
+        None, description="Human-readable description of this project"
+    )
+    agent_prompt: Optional[str] = Field(
+        None, description="Optional prompt text for agents working on this project"
+    )
     type: ProjectType = Field(..., description="Project type")
     domain: ProjectDomain = Field(..., description="Project domain")
     language: Language = Field(..., description="Language information")
@@ -719,6 +725,9 @@ class MetagitConfig(BaseModel):
     name: str = Field(..., description="Project name")
     description: Optional[str] = Field(
         default="No description", description="Project description"
+    )
+    agent_prompt: Optional[str] = Field(
+        None, description="Optional prompt text for agents working on this project"
     )
     url: Optional[Union[HttpUrl, GitUrl]] = Field(None, description="Project URL")
     kind: Optional[ProjectKind] = Field(

@@ -923,6 +923,32 @@
     "Workspace": {
       "description": "Model for workspace configuration.",
       "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human-readable description of this workspace",
+          "title": "Description"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional prompt text for agents working in this workspace",
+          "title": "Agent Prompt"
+        },
         "projects": {
           "description": "Workspace projects",
           "items": {
@@ -946,6 +972,32 @@
           "description": "Workspace project name",
           "title": "Name",
           "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human-readable description of this workspace project",
+          "title": "Description"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional prompt text for agents working in this project",
+          "title": "Agent Prompt"
         },
         "repos": {
           "description": "Repository list",
@@ -984,6 +1036,19 @@
       "default": "No description",
       "description": "Project description",
       "title": "Description"
+    },
+    "agent_prompt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional prompt text for agents working on this project",
+      "title": "Agent Prompt"
     },
     "url": {
       "anyOf": [

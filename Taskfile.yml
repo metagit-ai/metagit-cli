@@ -125,7 +125,7 @@ tasks:
     cmds:
       - |
         uv run ruff check .
-        uv run black --check .
+        uv run ruff format --check .
 
   lint:fix:
     desc: Run python linting and fix issues
@@ -138,7 +138,6 @@ tasks:
     cmds:
       - |
         uv run ruff format .
-        uv run black .
   
   start:mcp:
     desc: Start MCP servers
