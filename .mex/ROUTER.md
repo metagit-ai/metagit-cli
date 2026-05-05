@@ -32,6 +32,7 @@ Then read this file fully before doing anything else in this session.
 - MCP runtime with state-aware gating, tool/resource handlers, protocol-framed stdio loop, and runtime tests.
 - Workspace index/search/upstream hint services and guarded repo inspect/sync flows.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows.
+- Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
 
 **Not yet built:**
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
