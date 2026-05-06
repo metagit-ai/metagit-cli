@@ -18,7 +18,10 @@ task format lint:fix test
 
 ## Semantic Release Tags
 
-Merges to `main` automatically create a semantic version tag (`vX.Y.Z`) based on commit message prefixes since the previous tag.
+`release-please` runs on merges to `main` and uses conventional commit prefixes to prepare/version releases.
+
+- It opens/updates a release PR with computed next version + changelog.
+- When that PR is merged, it creates the semantic tag (`vX.Y.Z`) and GitHub release.
 
 - `fix:` -> patch release (`X.Y.Z+1`) **default for most updates**
 - `feat:` -> minor release (`X.Y+1.0`)

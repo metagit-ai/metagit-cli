@@ -34,7 +34,7 @@ Then read this file fully before doing anything else in this session.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
 - Docs build path resolves CLI imports correctly in CI by including interactive prompt runtime dependency.
-- Semantic version tags are auto-created on merges to `main` from commit prefixes (`fix:` patch, `feat:` minor, breaking markers major) and drive tag-based release publishing.
+- `release-please` now manages semantic release PRs/tags from conventional commits on `main`, and tag pushes drive PyPI/TestPyPI publish workflows.
 
 **Not yet built:**
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).

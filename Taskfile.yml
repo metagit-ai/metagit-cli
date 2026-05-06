@@ -227,3 +227,8 @@ tasks:
     cmds:
       - |
         repomix --style=markdown --output=docs/repomix.md --compress
+
+  update:github:actions:
+    desc: Update GitHub Actions in workflows
+    cmds:
+      - npx actions-up -y
