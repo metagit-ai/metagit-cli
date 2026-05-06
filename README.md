@@ -345,7 +345,7 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 
 ### Versioning and Release Prefixes
 
-Merges to `main` trigger semantic tag creation (`vX.Y.Z`) based on commit message prefixes:
+`release-please` manages versioning from conventional commits and creates release PRs. Merging the release PR creates semantic tags (`vX.Y.Z`) and GitHub releases.
 
 - `fix:` -> patch bump
 - `feat:` -> minor bump
