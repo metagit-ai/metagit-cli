@@ -180,6 +180,27 @@ tasks:
       - |
         zsh ./scripts/prepush-gate.zsh --loop --rounds={{default "3" .CLI_ARGS}}
 
+  skills:sync:
+    desc: Sync local skills into .cursor/skills mirrors
+    cmds:
+      - |
+        uv run python - <<'PY'
+        from pathlib import Path
+        import shutil
+
+        src_root = Path("skills")
+        dst_root = Path(".cursor/skills")
+        dst_root.mkdir(parents=True, exist_ok=True)
+
+        source_skill_dirs = [p for p in src_root.iterdir() if p.is_dir()]
+        for src_dir in source_skill_dirs:
+            dst_dir = dst_root / src_dir.name
+            if dst_dir.exists():
+                shutil.rmtree(dst_dir)
+            shutil.copytree(src_dir, dst_dir)
+            print(f"synced {src_dir} -> {dst_dir}")
+        PY
+
   typecheck:
     desc: Run the type checker
     cmds:

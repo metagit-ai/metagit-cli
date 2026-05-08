@@ -765,6 +765,58 @@
           "default": null,
           "description": "Frameworks used by the project",
           "title": "Frameworks"
+        },
+        "source_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider used to discover this repository",
+          "title": "Source Provider"
+        },
+        "source_namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source namespace identifier (org/user/group)",
+          "title": "Source Namespace"
+        },
+        "source_repo_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider-native repository identifier",
+          "title": "Source Repo Id"
+        },
+        "protected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "If true, reconcile mode must not remove this repository automatically",
+          "title": "Protected"
         }
       },
       "required": [

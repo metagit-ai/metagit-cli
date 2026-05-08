@@ -75,7 +75,7 @@ For every task, follow this loop:
    - If a pattern exists but you deviated from it or discovered a new gotcha, update it with what you learned.
    - If any `context/` file is now out of date because of this work, update it surgically — do not rewrite entire files.
    - Update the "Current Project State" section above if the work was significant.
-6. **SESSION CLOSEOUT** — Run `task qa:prepush` before ending the session. If it fails, fix issues and re-run until green (or document blockers explicitly).
+6. **SESSION CLOSEOUT** — Run `task skills:sync generate:schema` and then `task qa:prepush` before ending the session. If either fails, fix issues and re-run until green (or document blockers explicitly).
 
 ## Commit Message Semantics
 - Use `fix:` by default (patch-level intent).
