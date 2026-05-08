@@ -247,6 +247,11 @@ metagit project select
 # Sync project within workspace
 metagit project sync
 
+# Discover and sync repos from providers into a workspace project
+metagit project source sync --provider github --org my-org --mode discover
+metagit project source sync --provider github --org my-org --mode additive --apply
+metagit project source sync --provider gitlab --group my-group/subgroup --mode reconcile --apply --yes
+
 # Repository-specific operations
 metagit project repo <subcommand>
 ```

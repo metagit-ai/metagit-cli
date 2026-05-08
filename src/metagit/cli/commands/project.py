@@ -8,6 +8,7 @@ import click
 import yaml
 
 from metagit.cli.commands.project_repo import repo, repo_select
+from metagit.cli.commands.project_source import source
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
@@ -53,6 +54,7 @@ def project(ctx: click.Context, config: str, project: str = None) -> None:
 
 # Add repo group to project group
 project.add_command(repo)
+project.add_command(source)
 
 
 @project.command("list")

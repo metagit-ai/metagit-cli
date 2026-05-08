@@ -168,6 +168,18 @@ tasks:
         uv pip install -e ".[test]"
         pytest --maxfail=1 --disable-warnings -v tests
 
+  qa:prepush:
+    desc: Token-optimized local pre-push quality gate
+    cmds:
+      - |
+        zsh ./scripts/prepush-gate.zsh
+
+  qa:prepush:loop:
+    desc: Repeat local pre-push gate (use -- rounds=N)
+    cmds:
+      - |
+        zsh ./scripts/prepush-gate.zsh --loop --rounds={{default "3" .CLI_ARGS}}
+
   typecheck:
     desc: Run the type checker
     cmds:
