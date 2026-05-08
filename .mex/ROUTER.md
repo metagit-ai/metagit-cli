@@ -37,6 +37,8 @@ Then read this file fully before doing anything else in this session.
 - A semantic-release workflow now computes and pushes tags from conventional commits on `main`, and tag pushes drive PyPI/TestPyPI publish workflows.
 - Cross-agent token-optimized pre-push gate is available via `scripts/prepush-gate.py` (with `scripts/prepush-gate.zsh` wrapper) and is expected during session closeout.
 - Provider source sync is available via `metagit project source sync` for GitHub org/user and GitLab group recursive discovery with discover/additive/reconcile modes.
+- Fuzzy finder repo selection UX now shows result counters, keeps full scrollable match sets, respects project `.gitignore` entries during filesystem candidate discovery, and provides richer repo metadata in preview.
+- New `skills` CLI command (`list`, `show`, `install`) plus `mcp install` now support auto-detected agent targets across project/user scopes, with bundled package skills deployed from `src/metagit/data/skills`.
 
 **Not yet built:**
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
