@@ -8,6 +8,11 @@ from typing import Optional
 import click
 
 from metagit.core.mcp.runtime import MetagitMcpRuntime
+from metagit.core.skills import (
+    SUPPORTED_TARGETS,
+    install_mcp_for_targets,
+    resolve_targets,
+)
 
 
 @click.group()
@@ -38,3 +43,67 @@ def serve(ctx: click.Context, root: Optional[str], status_once: bool) -> None:
     if logger:
         logger.info("Metagit MCP stdio runtime initialized.")
     runtime.run_stdio()
+
+
+@mcp.command("install")
+@click.option(
+    "--scope",
+    type=click.Choice(["project", "user"]),
+    default="user",
+    show_default=True,
+    help="Install to local project config or user-global location.",
+)
+@click.option(
+    "--target",
+    "targets",
+    multiple=True,
+    type=click.Choice(SUPPORTED_TARGETS),
+    help="Explicit target to install (repeatable). If omitted, auto-detect targets.",
+)
+@click.option(
+    "--disable-target",
+    "disable_targets",
+    multiple=True,
+    type=click.Choice(SUPPORTED_TARGETS),
+    help="Disable one or more auto-detected targets.",
+)
+@click.option(
+    "--server-name",
+    default="metagit",
+    show_default=True,
+    help="MCP server key to write in target config files.",
+)
+@click.pass_context
+def install(
+    ctx: click.Context,
+    scope: str,
+    targets: list[str],
+    disable_targets: list[str],
+    server_name: str,
+) -> None:
+    """Install metagit MCP server entry into supported agent configs."""
+    logger = ctx.obj["logger"] if ctx.obj else None
+    selected_targets = resolve_targets(
+        mode="mcp",
+        scope=scope,
+        enable_targets=list(targets),
+        disable_targets=list(disable_targets),
+    )
+    if not selected_targets:
+        if logger:
+            logger.warning(
+                "No targets selected. Use --target to choose targets explicitly."
+            )
+        else:
+            click.echo(
+                "No targets selected. Use --target to choose targets explicitly."
+            )
+        return
+    results = install_mcp_for_targets(
+        targets=selected_targets, scope=scope, server_name=server_name
+    )
+    for result in results:
+        if logger:
+            logger.success(f"[{result.target}] {result.details} -> {result.path}")
+        else:
+            click.echo(f"[{result.target}] {result.details} -> {result.path}")

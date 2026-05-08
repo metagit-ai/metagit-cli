@@ -20,6 +20,7 @@ from metagit.core.utils.fuzzyfinder import (
     FuzzyFinderConfig,
     FuzzyFinderTarget,
 )
+from metagit.core.utils.files import parse_gitignore, should_ignore_path
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.utils.userprompt import UserPrompt
 from metagit.core.workspace.models import WorkspaceProject
@@ -334,9 +335,12 @@ class ProjectManager:
             )
             return
         project_dict = {}
+        ignore_patterns = parse_gitignore(Path(project_path) / ".gitignore")
         # Iterate through the project path and add the directories and symlinks to the project_dict
         for f in Path(project_path).iterdir():
             if f.is_dir() or f.is_symlink():
+                if should_ignore_path(f, ignore_patterns, Path(project_path)):
+                    continue
                 # Determine type
                 item_type = "Symlink" if f.is_symlink() else "Directory"
 
@@ -376,7 +380,7 @@ class ProjectManager:
                 else:
                     description_parts.append("MetaGit: ❌ No .metagit.yml")
 
-                project_dict[f.name] = "\n".join(description_parts)
+                project_dict[f.name] = self._build_preview_sections(description_parts)
 
         # Track which items exist in the project configuration
         managed_repos = {repo.name for repo in workspace_project.repos}
@@ -385,18 +389,10 @@ class ProjectManager:
         for repo in workspace_project.repos:
             if repo.name in project_dict:
                 # Update the description with management status and repo description
-                current_description = project_dict[repo.name]
-
-                # Add management status
-                current_description += "\nStatus: ✅ Managed"
-
-                # Add repo description if available
-                if repo.description:
-                    current_description += f"\nDescription: {repo.description}"
-                else:
-                    current_description += "\nDescription: No description available"
-
-                project_dict[repo.name] = current_description
+                summary_lines = self._build_project_repo_summary(repo)
+                project_dict[repo.name] = self._append_preview_lines(
+                    project_dict[repo.name], summary_lines
+                )
             else:
                 # This repo is configured but doesn't exist on filesystem
                 description_parts = [
@@ -407,12 +403,10 @@ class ProjectManager:
                     "MetaGit: ❓ Unknown (not synced)",
                 ]
 
-                if repo.description:
-                    description_parts.append(f"Description: {repo.description}")
-                else:
-                    description_parts.append("Description: No description available")
-
-                project_dict[repo.name] = "\n".join(description_parts)
+                description_parts.extend(self._build_project_repo_summary(repo))
+                project_dict[repo.name] = self._build_preview_sections(
+                    description_parts
+                )
 
         # Add unmanaged status to items that exist on filesystem but not in config
         for item_name in list(project_dict.keys()):
@@ -450,6 +444,8 @@ class ProjectManager:
             items=projects,
             prompt_text="🔍 Search projects: ",
             max_results=menu_length,
+            total_count=len(projects),
+            query_mode_label="matches",
             score_threshold=60.0,
             highlight_color="bold white bg:#0066cc",
             normal_color="cyan",
@@ -471,3 +467,47 @@ class ProjectManager:
             if selected_path.startswith("../../"):
                 selected_path = selected_path.replace("../../", "./", 1)
             return selected_path
+
+    @staticmethod
+    def _append_preview_lines(existing: str, lines: List[str]) -> str:
+        """Append non-empty lines to an existing preview block."""
+        final_lines = [line for line in lines if line]
+        if not final_lines:
+            return existing
+        return f"{existing}\n" + "\n".join(final_lines)
+
+    @staticmethod
+    def _build_preview_sections(lines: List[str]) -> str:
+        """Build a readable preview body from collected lines."""
+        return "\n".join([line for line in lines if line])
+
+    @staticmethod
+    def _build_project_repo_summary(repo: ProjectPath) -> List[str]:
+        """Build metadata lines for configured project repositories."""
+        summary_lines = ["Status: ✅ Managed"]
+        summary_lines.append(
+            f"Description: {repo.description or 'No description available'}"
+        )
+        if repo.path:
+            summary_lines.append(f"Path: {repo.path}")
+        if repo.url:
+            summary_lines.append(f"URL: {repo.url}")
+        if repo.kind:
+            summary_lines.append(f"Kind: {repo.kind}")
+        if repo.ref:
+            summary_lines.append(f"Ref: {repo.ref}")
+        if repo.language:
+            summary_lines.append(f"Language: {repo.language}")
+        if repo.language_version:
+            summary_lines.append(f"Language Version: {repo.language_version}")
+        if repo.package_manager:
+            summary_lines.append(f"Package Manager: {repo.package_manager}")
+        if repo.frameworks:
+            summary_lines.append(f"Frameworks: {', '.join(repo.frameworks)}")
+        if repo.source_provider:
+            summary_lines.append(f"Source Provider: {repo.source_provider}")
+        if repo.source_namespace:
+            summary_lines.append(f"Source Namespace: {repo.source_namespace}")
+        if repo.protected is not None:
+            summary_lines.append(f"Protected: {repo.protected}")
+        return summary_lines

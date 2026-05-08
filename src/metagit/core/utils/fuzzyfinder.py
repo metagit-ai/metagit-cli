@@ -79,6 +79,14 @@ class FuzzyFinderConfig(BaseModel):
         None,
         description="Field name to use for color mapping if items are objects. If not specified, uses display_field or string value.",
     )
+    total_count: Optional[int] = Field(
+        None,
+        ge=0,
+        description="Total candidates available before filtering/capping (for UI status text).",
+    )
+    query_mode_label: str = Field(
+        "filtered", description="Label used in UI status text for matched results."
+    )
 
     @field_validator("items")
     @classmethod
@@ -275,6 +283,7 @@ class FuzzyFinderApp(App):
             else:
                 # Just results
                 yield ListView(id="results_list", classes="fuzzy-finder-results")
+            yield Static("", id="results_meta")
 
     def on_mount(self) -> None:
         """Called when app starts."""
@@ -299,6 +308,7 @@ class FuzzyFinderApp(App):
             self.current_results = results
             self.highlighted_index = 0
             self._update_results_list()
+            self._update_results_meta(query)
 
             if self.config.enable_preview:
                 self._update_preview()
@@ -307,6 +317,26 @@ class FuzzyFinderApp(App):
             # Handle error gracefully
             self.current_results = []
             self._update_results_list()
+            self._update_results_meta(query)
+
+    def _update_results_meta(self, query: str) -> None:
+        """Show concise result counters for current query."""
+        try:
+            meta = self.query_one("#results_meta", Static)
+            shown_count = len(self.current_results)
+            total_count = (
+                self.config.total_count
+                if self.config.total_count is not None
+                else len(self.config.items)
+            )
+            cap_count = self.config.max_results
+            mode_label = self.config.query_mode_label
+            query_label = query if query else "all"
+            meta.update(
+                f"Showing {shown_count}/{total_count} ({mode_label}, limit={cap_count}) | query: {query_label}"
+            )
+        except Exception:
+            return
 
     def _update_results_list(self) -> None:
         """Update the results ListView."""
@@ -560,9 +590,7 @@ class FuzzyFinderApp(App):
             choices = [str(c[0]) for c in choices_with_originals]
 
             if not query:
-                return [item[1] for item in choices_with_originals][
-                    : self.config.max_results
-                ]
+                return [item[1] for item in choices_with_originals]
 
             # Prepare query for case-insensitive matching
             query_lower = query.lower() if not self.config.case_sensitive else query
@@ -610,8 +638,8 @@ class FuzzyFinderApp(App):
             # Sort by custom score (highest first) and then by original string length (shorter first for same score)
             scored_results.sort(key=lambda x: (-x[0], len(x[1])))
 
-            # Return the top results
-            return [item[2] for item in scored_results[: self.config.max_results]]
+            # Return all matched results to allow full manual scrolling.
+            return [item[2] for item in scored_results]
 
         except Exception as e:
             return e

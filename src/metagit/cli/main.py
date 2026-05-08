@@ -30,6 +30,7 @@ from metagit.cli.commands.init import init
 from metagit.cli.commands.mcp import mcp
 from metagit.cli.commands.project import project
 from metagit.cli.commands.record import record
+from metagit.cli.commands.skills import skills
 from metagit.cli.commands.workspace import workspace
 from metagit.core.appconfig import load_config
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
@@ -129,6 +130,7 @@ cli.add_command(project)
 cli.add_command(workspace)
 cli.add_command(config)
 cli.add_command(record)
+cli.add_command(skills)
 cli.add_command(init)
 cli.add_command(mcp)
 

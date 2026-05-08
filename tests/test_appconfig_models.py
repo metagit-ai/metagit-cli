@@ -34,6 +34,7 @@ def test_workspace_model():
     w = WorkspaceConfig()
     assert w.path == "./.metagit"
     assert w.default_project == "default"
+    assert w.ui_show_preview is True
 
 
 def test_llm_model():
