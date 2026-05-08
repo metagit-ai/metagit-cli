@@ -28,3 +28,4 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |
 | [debug-mcp-runtime.md](debug-mcp-runtime.md) | Diagnosing MCP runtime protocol, framing, gating, and tool/resource failures |
 | [debug-workspace-discovery.md](debug-workspace-discovery.md) | Diagnosing empty/incorrect workspace index, search hits, or upstream hint ranking |
+| [update-release-workflow.md](update-release-workflow.md) | Replacing or repairing GitHub release automation and tag-driven publish flow |

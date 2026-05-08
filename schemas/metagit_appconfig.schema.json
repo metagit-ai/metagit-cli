@@ -264,7 +264,7 @@
   },
   "properties": {
     "version": {
-      "default": "0.2.2.dev2+g1f26fba81.d20260508",
+      "default": "0.2.3.dev5+gb0bbbac74.d20260508",
       "description": "The version of the CLI",
       "title": "Version",
       "type": "string"
@@ -287,7 +287,7 @@
       "type": "string"
     },
     "api_version": {
-      "default": "0.2.2.dev2+g1f26fba81.d20260508",
+      "default": "0.2.3.dev5+gb0bbbac74.d20260508",
       "description": "The API version to use for the CLI",
       "title": "Api Version",
       "type": "string"

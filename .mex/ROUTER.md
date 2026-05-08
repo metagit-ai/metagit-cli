@@ -34,7 +34,7 @@ Then read this file fully before doing anything else in this session.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
 - Docs build path resolves CLI imports correctly in CI by including interactive prompt runtime dependency.
-- `release-please` now manages semantic release PRs/tags from conventional commits on `main`, and tag pushes drive PyPI/TestPyPI publish workflows.
+- A semantic-release workflow now computes and pushes tags from conventional commits on `main`, and tag pushes drive PyPI/TestPyPI publish workflows.
 - Cross-agent token-optimized pre-push gate is available via `scripts/prepush-gate.py` (with `scripts/prepush-gate.zsh` wrapper) and is expected during session closeout.
 - Provider source sync is available via `metagit project source sync` for GitHub org/user and GitLab group recursive discovery with discover/additive/reconcile modes.
 
