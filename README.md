@@ -1,22 +1,22 @@
 # Metagit
 
-Metagit is situational awareness for your git projects. Metagit makes sprawling multi-repo projects feel like monorepos and provide concise information on the software stacks, generated artifacts, dependencies, and more.
+Metagit gives you situational awareness across Git repositories. It helps multi-repo projects feel manageable by keeping stack details, generated artifacts, dependencies, and related metadata in one place.
 
 ## About
 
-This tool is well suited for a number of scenarios including;
+This tool works well for scenarios like:
 
 1. At-a-glance view of a project's technical stacks, languages, external dependencies, and generated artifacts.
-2. Rapid pivoting between numerous git projects throughout the day while still maintaining a steady clip of productivity.
+2. Switching between many Git projects during the day without losing context.
 3. Isolating outside dependencies that weaken the security and dependability of your software delivery pipelines.
 4. Automated documentation of a code's provenance.
-5. As a new contributor to a project or team, go from zero to first code commit in as little time as possible.
+5. Helping new contributors get from onboarding to first commit faster.
 
-Metagit aims to provide situational awareness for developers, SREs, AI agents, and engineers on the git projects they work in every day. It is meant to shed light on the numerous interconnected dependencies that comprise the whole of the entire solution being worked on in a single easily read, updated, and version controlled file.
+Metagit is designed for developers, SREs, and AI agents who work across connected repositories. It tracks the dependencies and project relationships that are easy to miss when you only look at one repo at a time.
 
 ## Audience
 
-This tool targets;
+This tool targets:
 
 - DevOps Engineers
 - Polyglot developers
@@ -28,61 +28,61 @@ This tool targets;
 
 ## Metagit is NOT...
 
-### ...an SBOM Tool
+### ...an SBOM tool
 
-SBOM output can be thousands of lines long and encompass all the software dependencies, their transitive dependencies, and more. This kind of data is too much for the simple need of situational awareness and AI integration. As such, a comprehensive SBOM report is overkill for the goals outlined above. The development roadmap may include the ability to read in SBOM manifests as a data source though!
+SBOM output is often thousands of lines and includes full transitive dependency trees. That level of detail is usually too heavy for day-to-day situational awareness and agent context. Metagit may read SBOM manifests as an input in the future, but it is not trying to replace SBOM tooling.
 
-Metagit makes extensive use of CI library definitions (like go.mod, packages.json, requirements.txt, et cetera) for detection and boundary validations. Such files will be used to help determine technology stacks in use but not extensive versioning or other deep information.
+Metagit uses common project files (for example `go.mod`, `package.json`, and `requirements.txt`) for detection and validation boundaries. These are used to identify stack composition, not to provide exhaustive version intelligence.
 
-### ...a git Client
+### ...a Git client
 
-Despite the name this tool still requires git and all the trappings of a git hosting solution.
+Despite the name, this still relies on Git and your existing hosting platform.
 
 ## ...a full project packer
 
-For brevity and usefulness Metagit detections are selective to only the most important parts of a project. It will not package up an entire project. For a comprehensive git project packer [try repomix](https://github.com/yamadashy/repomix/tree/main). It is both fast and incredibly useful for LLM ingestion.
+Metagit intentionally focuses on the highest-value project signals. It does not package full repositories. If you need full-project packing, use [repomix](https://github.com/yamadashy/repomix/tree/main).
 
 ### Why brevity?
 
-One of the goals of this project is to reduce human cognitive load for understanding projects and their relationships. This has the benefit of reducing token usage in automated AI agents as well. 
+One of the core goals is reducing cognitive load when understanding project relationships. A practical side effect is lower token usage for automated AI workflows.
 
 ## How It Works
 
-This app accesses and saves project configuration metadata within the repository as a `.metagit.yml` file. This file follows a schema that can be read via the cli.
+Metagit stores project configuration metadata in `.metagit.yml` inside the repository. That file follows a schema that the CLI can validate and read.
 
-If using this tool to manage several dozen git repos (aka. an umbrella repo) then everything within the configuration file can be manually updated. You can also attempt to automatically update the file using a mix of standard heuristics and AI driven workflows.
+If you use Metagit for dozens of repositories (an umbrella workspace), you can edit the config manually or refresh it with heuristics and AI-assisted workflows.
 
 ## Modes
 
-This application will have multiple modes of operation as described below.
+Metagit supports several operating modes:
 
 ### Workspace Mode
 
-This mode is the first planned release feature as an open source cli tool.
+This is the first planned open-source CLI mode.
 
-In this mode users stitch together various repositories that comprise the components of a project into one workspace that can be loaded via vscode or accessed individually via fast context switching at the console.
+In this mode, you group related repositories into one workspace that you can open in VS Code or access individually from the terminal.
 
 > **AKA** Multi-repo as Monorepo
 
-In this mode you are using metagit as a means to externally track and work with multiple git projects as a whole. One top level 'umbrella' project has the only metagit definition file which contains definitions for all related git repos and local target folders in the current project. Optionally you then sync the project to your local workstation.
+You use one top-level umbrella project with a single metagit definition file that tracks related repositories and local target folders. You can then sync that workspace locally.
 
-The metagit configuration file is then be checked into version control as a stand-alone project.
+The metagit configuration file is committed to version control as its own project artifact.
 
-This mode is ideal for;
+This mode is useful for:
 
 - Creating umbrella projects for new team members of a multi-repo project
 - Individual power users that need to quickly pivot between several project repositories that comprise a larger team effort
-- Keeping loosely coupled git projects grouped together to work on without having to deal with git submodules (yuk)
+- Keeping loosely coupled Git projects grouped without relying on submodules
 
 ## Metadata Mode
 
-This mode uses the same config file that workspace mode employs but with additional information about the project's primary language, frameworks, and other situational awareness information you always wish you had at hand when diving into a new project. This mode can be used in tandem with workspace mode.
+This mode uses the same config file as workspace mode, with additional metadata such as primary language, frameworks, and other context you want available when entering a repo.
 
-To configure this metadata for a single project by hand would be easy. To do so for several dozen or even thousands of repos is a no small task. Towards that end, metagit will include detection heuristics to automate a good deal of this task. What cannot be done easily through code initially will be done with AI.
+Configuring this by hand for one project is simple. Doing it across dozens or thousands of repos is not. Metagit uses detection heuristics to automate as much as possible and can use AI workflows where deterministic code is not enough.
 
-> **NOTE** This too will need to be actively monitored by other AI agents to convert into static code over time.
+> **Note**: AI-assisted detection should be monitored and converted into deterministic logic over time.
 
-In this mode, metagit would be used to answer questions such as;
+In this mode, Metagit helps answer questions like:
 
 - What other projects are related to this project?
 - What application and development stacks does this project use?
@@ -91,281 +91,46 @@ In this mode, metagit would be used to answer questions such as;
 - What branch strategy is employed?
 - What version strategy is employed?
 
-> **External Dependencies** are the devil! If you ever experienced a pipeline that suddenly fails due to a missing outside/external dependency you know exactly why they stink.
+> **External dependencies** are a common source of pipeline instability.
 
-## Metadata+ Mode
+## Install
 
-All the prior metadata is incredibly useful already. But if we add context around this then we are cooking with gas! If we setup basic organization boundaries like owned registries or github/gitlab groups we can then start looking for dangers such as outside dependencies.
+### Global CLI install (recommended)
 
-## Enterprise (TBD)
-
-Enterprise mode is using metagit at scale.
-
-In this mode metagit connects to our enterprise SaaS offering to help mine the whole of your organization's code assets continuously.
-
-- Imagine if you could mine your entire organization's copious amounts of code repos for the exact thing you need for your own project? 
-- How many times do wheels get recreated simply because you cannot find the artifact needed for your own project even though you know it must exist? 
-- How much time is wasted looking for a project using your language and framework to use as a starting point for your own efforts?
-- How frustrated do you get when, after putting in days or weeks of effort to create something you find another internal project that does it twice as elegantly that was done 6 months ago by another team? Enterprise mode of metagit aims to target this issue head on.
-
-
-## Installation
-
-**uv:**
-
-`uv tool install metagit-cli` (PyPI project name; the unrelated `metagit` package is a different tool.)
-
-**From source:**
-To install metagit, clone the repository and build the project:
+Use `uv tool` to install Metagit globally:
 
 ```bash
-git clone https://github.com/metagit-ai/metagit-cli.git
-cd metagit-cli
-
-./configure.sh
-task build
-uv tool install dist/metagit-*-py3-none-any.whl
-
-# or for development, target the local files for install
-uv pip install -e .
+uv tool install metagit-cli
 ```
 
-**docker:**
+> **WARNING** Use `metagit-cli` as the package name on PyPI. The `metagit` package name belongs to a different project!
+
+Upgrade later with:
 
 ```bash
-# Pull the latest version
-docker pull ghcr.io/metagit-ai/metagit-cli:latest
-
-# Pull a specific version
-docker pull ghcr.io/metagit-ai/metagit-cli:0.1.0
-
-# Run the CLI
-docker run --rm ghcr.io/metagit-ai/metagit-cli:latest --help
+uv tool install -U metagit-cli
 ```
-# Usage
 
-## Quick Start
+### Local first-run
 
-To get started with metagit, initialize a new configuration in your Git repository:
+Inside any Git repository:
 
 ```bash
 metagit init
 ```
 
-This creates a `metagit.yaml` configuration file and updates your `.gitignore` file.
+That creates `.metagit.yml` and updates `.gitignore`.
 
-## Subcommands
+## Skills
 
-### `init` - Initialize Repository
-Initialize a new metagit configuration in your current Git repository:
+Metagit includes local skills under `skills/` you can clone into your skills folders for various agents.
 
-```bash
-metagit init
-```
+## Documentation
 
-This command will:
-- Check if the current directory is a Git repository
-- Create a `metagit.yaml` configuration file if it doesn't exist
-- Add `.metagit` to your `.gitignore` file
+For installation guidance, detailed usage, including full CLI command surface, local MCP runtime setup, API-oriented flows, and advanced examples, use the documentation site:
 
-### `appconfig` - Application Configuration
-
-Manage metagit's application-level configuration:
-
-```bash
-# Show current application configuration
-metagit appconfig show
-
-# Create default application config
-metagit appconfig create
-
-# Get a specific configuration value
-metagit appconfig get <key>
-
-# Validate configuration file
-metagit appconfig validate
-
-# Generate JSON schema for configuration
-metagit appconfig schema
-
-# Show configuration information
-metagit appconfig info
-```
-
-### `config` - Project Configuration
-
-Manage project-specific (local git project) metagit configuration:
-
-```bash
-# Show current project configuration
-metagit config show
-
-# Create new metagit config files
-metagit config create
-
-# Validate metagit configuration
-metagit config validate
-
-# Generate JSON schema for MetagitConfig
-metagit config schema
-
-# Display project configuration information
-metagit config info
-
-# Manage git provider plugins
-metagit config providers
-```
-
-### `detect` - Repository Detection
-
-Analyze and detect project characteristics:
-
-```bash
-# Basic repository detection
-metagit detect repo
-
-# Comprehensive repository analysis with MetagitConfig generation
-metagit detect repository
-```
-
-The detection system analyzes your repository to automatically identify:
-- Programming languages and frameworks
-- Build tools and package managers
-- CI/CD configurations
-- Project structure and dependencies
-
-### `project` - Project Management
-Manage projects within workspaces:
-
-```bash
-# List current project configuration
-metagit project list
-
-# Select a project repository to work on
-metagit project select
-
-# Sync project within workspace
-metagit project sync
-
-# Repository-specific operations
-metagit project repo <subcommand>
-```
-
-Options:
-- `-c, --config`: Path to metagit definition file
-- `-p, --project`: Specific project within workspace
-
-### `record` - Record Management
-Manage metagit records with various storage backends:
-
-```bash
-# Create a record from metagit configuration
-metagit record create
-
-# Show record(s)
-metagit record show
-
-# Search records
-metagit record search <query>
-
-# Update an existing record
-metagit record update
-
-# Delete a record
-metagit record delete
-
-# Export record to file
-metagit record export
-
-# Import record from file
-metagit record import
-
-# Show storage statistics
-metagit record stats
-```
-
-Storage options:
-- `--storage-type`: Choose between `local` or `opensearch`
-- `--storage-path`: Path for local storage
-- `--opensearch-*`: OpenSearch connection parameters
-
-### `workspace` - Workspace Management
-Manage multi-repository workspaces:
-
-```bash
-# Select project repository to work on
-metagit workspace select
-```
-
-### `mcp` - MCP Runtime
-Run Metagit as an MCP server over stdio with workspace gating:
-
-```bash
-# Start MCP stdio runtime in current context
-metagit mcp serve
-
-# Resolve and gate against a specific workspace root
-metagit mcp serve --root /path/to/workspace
-
-# Print one-shot state/tool snapshot and exit
-metagit mcp serve --root /path/to/workspace --status-once
-```
-
-### `info` - Configuration Information
-Display current configuration:
-
-```bash
-metagit info
-```
-
-### `version` - Version Information
-Get application version:
-
-```bash
-metagit version
-```
-
-## Global Options
-
-Available for all commands:
-
-- `--version`: Show version and exit
-- `-c, --config`: Path to configuration file
-- `--debug / --no-debug`: Enable/disable debug mode
-- `--verbose / --no-verbose`: Enable/disable verbose output
-- `-h, --help`: Show help message
-
-# Configuration
-
-The default configuration file is `metagit.config.yaml`, which can be customized to suit your project's needs.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
-
-### Versioning and Release Prefixes
-
-`release-please` manages versioning from conventional commits and creates release PRs. Merging the release PR creates semantic tags (`vX.Y.Z`) and GitHub releases.
-
-- `fix:` -> patch bump
-- `feat:` -> minor bump
-- `type(scope)!:` or `BREAKING CHANGE:` -> major bump
-
-Default to `fix:` unless the change is additive (`feat:`) or intentionally breaks schema/config compatibility (major markers).
+- [Documentation](https://metagit-ai.github.io/metagit-cli/)
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-# Development
-
-## Agent Skills
-
-- [Metagit Skills Index](skills/README.md)
-
-# Links
-
-## MCP Servers
-
-[Sequential Thinking](https://github.com/modelcontextprotocol/servers/tree/HEAD/src/sequentialthinking)
-
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE.md) file for details.

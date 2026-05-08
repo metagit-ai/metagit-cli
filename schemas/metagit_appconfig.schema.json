@@ -217,6 +217,45 @@
           "description": "Default project",
           "title": "Default Project",
           "type": "string"
+        },
+        "ui_show_preview": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Show preview in fuzzy finder console UI",
+          "title": "Ui Show Preview"
+        },
+        "ui_menu_length": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 10,
+          "description": "Number of items to show in menu",
+          "title": "Ui Menu Length"
+        },
+        "ui_preview_height": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": 3,
+          "description": "Height of preview in fuzzy finder console UI",
+          "title": "Ui Preview Height"
         }
       },
       "title": "WorkspaceConfig",
@@ -225,7 +264,7 @@
   },
   "properties": {
     "version": {
-      "default": "0.1.8.dev0+g6dce795.d20250723",
+      "default": "0.2.2.dev2+g1f26fba81.d20260508",
       "description": "The version of the CLI",
       "title": "Version",
       "type": "string"
@@ -248,7 +287,7 @@
       "type": "string"
     },
     "api_version": {
-      "default": "0.1.8.dev0+g6dce795.d20250723",
+      "default": "0.2.2.dev2+g1f26fba81.d20260508",
       "description": "The API version to use for the CLI",
       "title": "Api Version",
       "type": "string"
@@ -260,19 +299,19 @@
       "type": "string"
     },
     "cicd_file_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/metagit-detect/src/metagit/data/cicd-files.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/cicd-files.json",
       "description": "The path to the cicd file data",
       "title": "Cicd File Data",
       "type": "string"
     },
     "file_type_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/metagit-detect/src/metagit/data/file-types.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/file-types.json",
       "description": "The path to the file type data",
       "title": "File Type Data",
       "type": "string"
     },
     "package_manager_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/metagit-detect/src/metagit/data/package-managers.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/package-managers.json",
       "description": "The path to the package manager data",
       "title": "Package Manager Data",
       "type": "string"
@@ -293,7 +332,10 @@
       "$ref": "#/$defs/WorkspaceConfig",
       "default": {
         "path": "./.metagit",
-        "default_project": "default"
+        "default_project": "default",
+        "ui_show_preview": false,
+        "ui_menu_length": 10,
+        "ui_preview_height": 3
       },
       "description": "The workspace configuration"
     },

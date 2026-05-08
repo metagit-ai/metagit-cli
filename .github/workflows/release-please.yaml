@@ -18,5 +18,6 @@ jobs:
       - name: Run release-please
         uses: google-github-actions/release-please-action@e4dc86ba9405554aeba3c6bb2d169500e7d3b4ee # v4.1.1
         with:
+          token: ${{ secrets.PAT_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json

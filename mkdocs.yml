@@ -5,11 +5,15 @@ theme:
   name: material
 nav:
   - 'index.md'
+  - 'Installation': 'install.md'
   - 'Terminology': 'terminology.md'
   - 'Application Logic': 'app.logic.md'
   - 'Development': 'development.md'
   - 'Secrets': 'secrets.analysis.md'
   - 'CLI Reference': 'cli_reference.md'
+  - 'Features':
+    - 'Repository Detection': 'repository_detection.md'
+    - 'Skills': 'skills.md'
 markdown_extensions:
   - mkdocs-click
   - admonition         # Adds boxes for Notes, Warnings, etc.

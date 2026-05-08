@@ -80,6 +80,19 @@ class ProjectPath(BaseModel):
     frameworks: Optional[List[str]] = Field(
         None, description="Frameworks used by the project"
     )
+    source_provider: Optional[str] = Field(
+        None, description="Provider used to discover this repository"
+    )
+    source_namespace: Optional[str] = Field(
+        None, description="Source namespace identifier (org/user/group)"
+    )
+    source_repo_id: Optional[str] = Field(
+        None, description="Provider-native repository identifier"
+    )
+    protected: Optional[bool] = Field(
+        False,
+        description="If true, reconcile mode must not remove this repository automatically",
+    )
 
     @field_validator("language_version", mode="before")
     def validate_language_version(cls, v: Any) -> Optional[str]:

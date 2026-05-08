@@ -16,6 +16,14 @@ task format lint:fix test
   - `inactive_invalid_config` when `.metagit.yml` fails validation
   - `active` when `.metagit.yml` loads successfully
 
+## Provider Source Sync
+
+Use source sync to discover repositories from GitHub/GitLab and plan/apply workspace updates:
+
+- Discover-only: `metagit project source sync --provider github --org <org> --mode discover`
+- Additive apply: `metagit project source sync --provider github --org <org> --mode additive --apply`
+- Reconcile apply: `metagit project source sync --provider gitlab --group <group> --mode reconcile --apply --yes`
+
 ## Semantic Release Tags
 
 `release-please` runs on merges to `main` and uses conventional commit prefixes to prepare/version releases.

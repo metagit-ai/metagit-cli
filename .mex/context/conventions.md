@@ -62,6 +62,8 @@ Before presenting any code:
 - [ ] `.metagit.yml`/config model interactions still pass validation paths (no silent schema drift).
 - [ ] Lint/format checks pass via project commands (`task lint`, and format if needed).
 - [ ] Mutating operations remain explicitly guarded (especially MCP sync/tool paths).
+- [ ] Run `task skills:sync generate:schema` for session closeout sync/schema regeneration.
+- [ ] Run `task qa:prepush` for session closeout before push/hand-off.
 
 ## Commit Semantics
 - Default to `fix:` commit prefixes (patch intent) for normal maintenance and safe behavior updates.
