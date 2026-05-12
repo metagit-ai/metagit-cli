@@ -15,3 +15,7 @@ This page contains the auto-generated documentation for the `metagit` command-li
   - `metagit mcp serve --root /path/to/workspace`
 - Print status snapshot and exit:
   - `metagit mcp serve --status-once`
+
+## Workspace configuration
+
+Under `workspace.projects[].repos`, each repository entry may include a flat string-to-string `tags` map (for example `tier: "1"`). These tags are carried into the workspace index for filtering and for upcoming managed-repo lookup via `metagit search` once that command is available.

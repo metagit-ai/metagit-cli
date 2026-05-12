@@ -89,6 +89,10 @@ class ProjectPath(BaseModel):
     source_repo_id: Optional[str] = Field(
         None, description="Provider-native repository identifier"
     )
+    tags: dict[str, str] = Field(
+        default_factory=dict,
+        description="Flat metadata tags for managed repo search and filtering",
+    )
     protected: Optional[bool] = Field(
         False,
         description="If true, reconcile mode must not remove this repository automatically",
