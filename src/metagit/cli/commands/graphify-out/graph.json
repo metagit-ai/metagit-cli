@@ -1,0 +1,2718 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "project_repo.py",
+      "file_type": "code",
+      "source_file": "project_repo.py",
+      "source_location": "L1",
+      "id": "project_repo_py",
+      "community": 4,
+      "norm_label": "project_repo.py"
+    },
+    {
+      "label": "repo()",
+      "file_type": "code",
+      "source_file": "project_repo.py",
+      "source_location": "L20",
+      "id": "commands_project_repo_repo",
+      "community": 4,
+      "norm_label": "repo()"
+    },
+    {
+      "label": "repo_select()",
+      "file_type": "code",
+      "source_file": "project_repo.py",
+      "source_location": "L29",
+      "id": "commands_project_repo_repo_select",
+      "community": 4,
+      "norm_label": "repo_select()"
+    },
+    {
+      "label": "repo_add()",
+      "file_type": "code",
+      "source_file": "project_repo.py",
+      "source_location": "L83",
+      "id": "commands_project_repo_repo_add",
+      "community": 5,
+      "norm_label": "repo_add()"
+    },
+    {
+      "label": "Repository subcommands",
+      "file_type": "rationale",
+      "source_file": "project_repo.py",
+      "source_location": "L21",
+      "id": "commands_project_repo_rationale_21",
+      "community": 4,
+      "norm_label": "repository subcommands"
+    },
+    {
+      "label": "Select project repo to work on",
+      "file_type": "rationale",
+      "source_file": "project_repo.py",
+      "source_location": "L30",
+      "id": "commands_project_repo_rationale_30",
+      "community": 4,
+      "norm_label": "select project repo to work on"
+    },
+    {
+      "label": "Add a repository to the current project",
+      "file_type": "rationale",
+      "source_file": "project_repo.py",
+      "source_location": "L98",
+      "id": "commands_project_repo_rationale_98",
+      "community": 5,
+      "norm_label": "add a repository to the current project"
+    },
+    {
+      "label": "config.py",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L1",
+      "id": "config_py",
+      "community": 1,
+      "norm_label": "config.py"
+    },
+    {
+      "label": "config()",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L24",
+      "id": "commands_config_config",
+      "community": 1,
+      "norm_label": "config()"
+    },
+    {
+      "label": "config_show()",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L51",
+      "id": "commands_config_config_show",
+      "community": 1,
+      "norm_label": "config_show()"
+    },
+    {
+      "label": "config_create()",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L98",
+      "id": "commands_config_config_create",
+      "community": 1,
+      "norm_label": "config_create()"
+    },
+    {
+      "label": "config_validate()",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L130",
+      "id": "commands_config_config_validate",
+      "community": 1,
+      "norm_label": "config_validate()"
+    },
+    {
+      "label": "providers()",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L198",
+      "id": "commands_config_providers",
+      "community": 1,
+      "norm_label": "providers()"
+    },
+    {
+      "label": "config_set()",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L311",
+      "id": "commands_config_config_set",
+      "community": 1,
+      "norm_label": "config_set()"
+    },
+    {
+      "label": "config_info()",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L348",
+      "id": "commands_config_config_info",
+      "community": 1,
+      "norm_label": "config_info()"
+    },
+    {
+      "label": "config_schema()",
+      "file_type": "code",
+      "source_file": "config.py",
+      "source_location": "L403",
+      "id": "commands_config_config_schema",
+      "community": 1,
+      "norm_label": "config_schema()"
+    },
+    {
+      "label": "Configuration subcommands",
+      "file_type": "rationale",
+      "source_file": "config.py",
+      "source_location": "L25",
+      "id": "commands_config_rationale_25",
+      "community": 1,
+      "norm_label": "configuration subcommands"
+    },
+    {
+      "label": "Show metagit configuration",
+      "file_type": "rationale",
+      "source_file": "config.py",
+      "source_location": "L52",
+      "id": "commands_config_rationale_52",
+      "community": 1,
+      "norm_label": "show metagit configuration"
+    },
+    {
+      "label": "Create metagit config files",
+      "file_type": "rationale",
+      "source_file": "config.py",
+      "source_location": "L106",
+      "id": "commands_config_rationale_106",
+      "community": 1,
+      "norm_label": "create metagit config files"
+    },
+    {
+      "label": "Validate metagit configuration",
+      "file_type": "rationale",
+      "source_file": "config.py",
+      "source_location": "L131",
+      "id": "commands_config_rationale_131",
+      "community": 1,
+      "norm_label": "validate metagit configuration"
+    },
+    {
+      "label": "Manage git provider plugin configuration.",
+      "file_type": "rationale",
+      "source_file": "config.py",
+      "source_location": "L211",
+      "id": "commands_config_rationale_211",
+      "community": 1,
+      "norm_label": "manage git provider plugin configuration."
+    },
+    {
+      "label": "Set a specific configuration value.",
+      "file_type": "rationale",
+      "source_file": "config.py",
+      "source_location": "L312",
+      "id": "commands_config_rationale_312",
+      "community": 1,
+      "norm_label": "set a specific configuration value."
+    },
+    {
+      "label": "Display information about the local project configuration.",
+      "file_type": "rationale",
+      "source_file": "config.py",
+      "source_location": "L349",
+      "id": "commands_config_rationale_349",
+      "community": 1,
+      "norm_label": "display information about the local project configuration."
+    },
+    {
+      "label": "Generate a JSON schema for the MetagitConfig class and write it to a file.",
+      "file_type": "rationale",
+      "source_file": "config.py",
+      "source_location": "L404",
+      "id": "commands_config_rationale_404",
+      "community": 1,
+      "norm_label": "generate a json schema for the metagitconfig class and write it to a file."
+    },
+    {
+      "label": "skills.py",
+      "file_type": "code",
+      "source_file": "skills.py",
+      "source_location": "L1",
+      "id": "skills_py",
+      "community": 7,
+      "norm_label": "skills.py"
+    },
+    {
+      "label": "skills()",
+      "file_type": "code",
+      "source_file": "skills.py",
+      "source_location": "L21",
+      "id": "commands_skills_skills",
+      "community": 7,
+      "norm_label": "skills()"
+    },
+    {
+      "label": "skills_list()",
+      "file_type": "code",
+      "source_file": "skills.py",
+      "source_location": "L30",
+      "id": "commands_skills_skills_list",
+      "community": 7,
+      "norm_label": "skills_list()"
+    },
+    {
+      "label": "skills_show()",
+      "file_type": "code",
+      "source_file": "skills.py",
+      "source_location": "L45",
+      "id": "commands_skills_skills_show",
+      "community": 7,
+      "norm_label": "skills_show()"
+    },
+    {
+      "label": "skills_install()",
+      "file_type": "code",
+      "source_file": "skills.py",
+      "source_location": "L88",
+      "id": "commands_skills_skills_install",
+      "community": 7,
+      "norm_label": "skills_install()"
+    },
+    {
+      "label": "Bundled skill management commands.",
+      "file_type": "rationale",
+      "source_file": "skills.py",
+      "source_location": "L22",
+      "id": "commands_skills_rationale_22",
+      "community": 7,
+      "norm_label": "bundled skill management commands."
+    },
+    {
+      "label": "List bundled skills available for install.",
+      "file_type": "rationale",
+      "source_file": "skills.py",
+      "source_location": "L31",
+      "id": "commands_skills_rationale_31",
+      "community": 7,
+      "norm_label": "list bundled skills available for install."
+    },
+    {
+      "label": "Show a bundled skill document.",
+      "file_type": "rationale",
+      "source_file": "skills.py",
+      "source_location": "L46",
+      "id": "commands_skills_rationale_46",
+      "community": 7,
+      "norm_label": "show a bundled skill document."
+    },
+    {
+      "label": "Install bundled skills into supported agent targets.",
+      "file_type": "rationale",
+      "source_file": "skills.py",
+      "source_location": "L94",
+      "id": "commands_skills_rationale_94",
+      "community": 7,
+      "norm_label": "install bundled skills into supported agent targets."
+    },
+    {
+      "label": "appconfig.py",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L1",
+      "id": "appconfig_py",
+      "community": 2,
+      "norm_label": "appconfig.py"
+    },
+    {
+      "label": "appconfig()",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L22",
+      "id": "commands_appconfig_appconfig",
+      "community": 2,
+      "norm_label": "appconfig()"
+    },
+    {
+      "label": "appconfig_info()",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L32",
+      "id": "commands_appconfig_appconfig_info",
+      "community": 2,
+      "norm_label": "appconfig_info()"
+    },
+    {
+      "label": "appconfig_show()",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L45",
+      "id": "commands_appconfig_appconfig_show",
+      "community": 2,
+      "norm_label": "appconfig_show()"
+    },
+    {
+      "label": "appconfig_validate()",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L78",
+      "id": "commands_appconfig_appconfig_validate",
+      "community": 2,
+      "norm_label": "appconfig_validate()"
+    },
+    {
+      "label": "appconfig_get()",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L126",
+      "id": "commands_appconfig_appconfig_get",
+      "community": 2,
+      "norm_label": "appconfig_get()"
+    },
+    {
+      "label": "appconfig_create()",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L151",
+      "id": "commands_appconfig_appconfig_create",
+      "community": 2,
+      "norm_label": "appconfig_create()"
+    },
+    {
+      "label": "appconfig_set()",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L182",
+      "id": "commands_appconfig_appconfig_set",
+      "community": 2,
+      "norm_label": "appconfig_set()"
+    },
+    {
+      "label": "appconfig_schema()",
+      "file_type": "code",
+      "source_file": "appconfig.py",
+      "source_location": "L214",
+      "id": "commands_appconfig_appconfig_schema",
+      "community": 2,
+      "norm_label": "appconfig_schema()"
+    },
+    {
+      "label": "Application configuration subcommands",
+      "file_type": "rationale",
+      "source_file": "appconfig.py",
+      "source_location": "L23",
+      "id": "commands_appconfig_rationale_23",
+      "community": 2,
+      "norm_label": "application configuration subcommands"
+    },
+    {
+      "label": "Information about the application configuration.",
+      "file_type": "rationale",
+      "source_file": "appconfig.py",
+      "source_location": "L33",
+      "id": "commands_appconfig_rationale_33",
+      "community": 2,
+      "norm_label": "information about the application configuration."
+    },
+    {
+      "label": "Show current configuration",
+      "file_type": "rationale",
+      "source_file": "appconfig.py",
+      "source_location": "L46",
+      "id": "commands_appconfig_rationale_46",
+      "community": 2,
+      "norm_label": "show current configuration"
+    },
+    {
+      "label": "Validate a configuration file",
+      "file_type": "rationale",
+      "source_file": "appconfig.py",
+      "source_location": "L81",
+      "id": "commands_appconfig_rationale_81",
+      "community": 2,
+      "norm_label": "validate a configuration file"
+    },
+    {
+      "label": "Display appconfig value",
+      "file_type": "rationale",
+      "source_file": "appconfig.py",
+      "source_location": "L127",
+      "id": "commands_appconfig_rationale_127",
+      "community": 2,
+      "norm_label": "display appconfig value"
+    },
+    {
+      "label": "Create default application config",
+      "file_type": "rationale",
+      "source_file": "appconfig.py",
+      "source_location": "L152",
+      "id": "commands_appconfig_rationale_152",
+      "community": 2,
+      "norm_label": "create default application config"
+    },
+    {
+      "label": "Set a value in the application configuration.",
+      "file_type": "rationale",
+      "source_file": "appconfig.py",
+      "source_location": "L183",
+      "id": "commands_appconfig_rationale_183",
+      "community": 2,
+      "norm_label": "set a value in the application configuration."
+    },
+    {
+      "label": "Generate a JSON schema for the AppConfig class and write it to a file.",
+      "file_type": "rationale",
+      "source_file": "appconfig.py",
+      "source_location": "L215",
+      "id": "commands_appconfig_rationale_215",
+      "community": 2,
+      "norm_label": "generate a json schema for the appconfig class and write it to a file."
+    },
+    {
+      "label": "init.py",
+      "file_type": "code",
+      "source_file": "init.py",
+      "source_location": "L1",
+      "id": "init_py",
+      "community": 4,
+      "norm_label": "init.py"
+    },
+    {
+      "label": "gitcache.py",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L1",
+      "id": "gitcache_py",
+      "community": 3,
+      "norm_label": "gitcache.py"
+    },
+    {
+      "label": "gitcache()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L18",
+      "id": "commands_gitcache_gitcache",
+      "community": 3,
+      "norm_label": "gitcache()"
+    },
+    {
+      "label": "cache()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L32",
+      "id": "commands_gitcache_cache",
+      "community": 3,
+      "norm_label": "cache()"
+    },
+    {
+      "label": "list()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L73",
+      "id": "commands_gitcache_list",
+      "community": 5,
+      "norm_label": "list()"
+    },
+    {
+      "label": "stats()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L114",
+      "id": "commands_gitcache_stats",
+      "community": 3,
+      "norm_label": "stats()"
+    },
+    {
+      "label": "refresh()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L144",
+      "id": "commands_gitcache_refresh",
+      "community": 3,
+      "norm_label": "refresh()"
+    },
+    {
+      "label": "remove()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L171",
+      "id": "commands_gitcache_remove",
+      "community": 3,
+      "norm_label": "remove()"
+    },
+    {
+      "label": "clear()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L194",
+      "id": "commands_gitcache_clear",
+      "community": 3,
+      "norm_label": "clear()"
+    },
+    {
+      "label": "path()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L221",
+      "id": "commands_gitcache_path",
+      "community": 0,
+      "norm_label": "path()"
+    },
+    {
+      "label": "details()",
+      "file_type": "code",
+      "source_file": "gitcache.py",
+      "source_location": "L249",
+      "id": "commands_gitcache_details",
+      "community": 3,
+      "norm_label": "details()"
+    },
+    {
+      "label": "Git cache management commands.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L19",
+      "id": "commands_gitcache_rationale_19",
+      "community": 3,
+      "norm_label": "git cache management commands."
+    },
+    {
+      "label": "Cache a repository or local directory.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L40",
+      "id": "commands_gitcache_rationale_40",
+      "community": 3,
+      "norm_label": "cache a repository or local directory."
+    },
+    {
+      "label": "List all cache entries.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L74",
+      "id": "commands_gitcache_rationale_74",
+      "community": 5,
+      "norm_label": "list all cache entries."
+    },
+    {
+      "label": "Show cache statistics.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L115",
+      "id": "commands_gitcache_rationale_115",
+      "community": 3,
+      "norm_label": "show cache statistics."
+    },
+    {
+      "label": "Refresh a cache entry.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L145",
+      "id": "commands_gitcache_rationale_145",
+      "community": 3,
+      "norm_label": "refresh a cache entry."
+    },
+    {
+      "label": "Remove a cache entry.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L172",
+      "id": "commands_gitcache_rationale_172",
+      "community": 3,
+      "norm_label": "remove a cache entry."
+    },
+    {
+      "label": "Clear all cache entries.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L195",
+      "id": "commands_gitcache_rationale_195",
+      "community": 3,
+      "norm_label": "clear all cache entries."
+    },
+    {
+      "label": "Get the path to a cached repository.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L222",
+      "id": "commands_gitcache_rationale_222",
+      "community": 0,
+      "norm_label": "get the path to a cached repository."
+    },
+    {
+      "label": "Get detailed information about a cache entry.",
+      "file_type": "rationale",
+      "source_file": "gitcache.py",
+      "source_location": "L250",
+      "id": "commands_gitcache_rationale_250",
+      "community": 3,
+      "norm_label": "get detailed information about a cache entry."
+    },
+    {
+      "label": "mcp.py",
+      "file_type": "code",
+      "source_file": "mcp.py",
+      "source_location": "L1",
+      "id": "mcp_py",
+      "community": 5,
+      "norm_label": "mcp.py"
+    },
+    {
+      "label": "mcp()",
+      "file_type": "code",
+      "source_file": "mcp.py",
+      "source_location": "L19",
+      "id": "commands_mcp_mcp",
+      "community": 5,
+      "norm_label": "mcp()"
+    },
+    {
+      "label": "serve()",
+      "file_type": "code",
+      "source_file": "mcp.py",
+      "source_location": "L32",
+      "id": "commands_mcp_serve",
+      "community": 5,
+      "norm_label": "serve()"
+    },
+    {
+      "label": "install()",
+      "file_type": "code",
+      "source_file": "mcp.py",
+      "source_location": "L77",
+      "id": "commands_mcp_install",
+      "community": 5,
+      "norm_label": "install()"
+    },
+    {
+      "label": "Metagit MCP server commands.",
+      "file_type": "rationale",
+      "source_file": "mcp.py",
+      "source_location": "L20",
+      "id": "commands_mcp_rationale_20",
+      "community": 5,
+      "norm_label": "metagit mcp server commands."
+    },
+    {
+      "label": "Start MCP runtime over stdio.",
+      "file_type": "rationale",
+      "source_file": "mcp.py",
+      "source_location": "L33",
+      "id": "commands_mcp_rationale_33",
+      "community": 5,
+      "norm_label": "start mcp runtime over stdio."
+    },
+    {
+      "label": "Install metagit MCP server entry into supported agent configs.",
+      "file_type": "rationale",
+      "source_file": "mcp.py",
+      "source_location": "L84",
+      "id": "commands_mcp_rationale_84",
+      "community": 5,
+      "norm_label": "install metagit mcp server entry into supported agent configs."
+    },
+    {
+      "label": "project_source.py",
+      "file_type": "code",
+      "source_file": "project_source.py",
+      "source_location": "L1",
+      "id": "project_source_py",
+      "community": 9,
+      "norm_label": "project_source.py"
+    },
+    {
+      "label": "source()",
+      "file_type": "code",
+      "source_file": "project_source.py",
+      "source_location": "L21",
+      "id": "commands_project_source_source",
+      "community": 9,
+      "norm_label": "source()"
+    },
+    {
+      "label": "source_sync()",
+      "file_type": "code",
+      "source_file": "project_source.py",
+      "source_location": "L78",
+      "id": "commands_project_source_source_sync",
+      "community": 9,
+      "norm_label": "source_sync()"
+    },
+    {
+      "label": "Source-backed project sync operations.",
+      "file_type": "rationale",
+      "source_file": "project_source.py",
+      "source_location": "L22",
+      "id": "commands_project_source_rationale_22",
+      "community": 9,
+      "norm_label": "source-backed project sync operations."
+    },
+    {
+      "label": "Discover and sync repositories from provider sources.",
+      "file_type": "rationale",
+      "source_file": "project_source.py",
+      "source_location": "L92",
+      "id": "commands_project_source_rationale_92",
+      "community": 9,
+      "norm_label": "discover and sync repositories from provider sources."
+    },
+    {
+      "label": "record.py",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L1",
+      "id": "record_py",
+      "community": 0,
+      "norm_label": "record.py"
+    },
+    {
+      "label": "DateTimeEncoder",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L27",
+      "id": "commands_record_datetimeencoder",
+      "community": 11,
+      "norm_label": "datetimeencoder"
+    },
+    {
+      "label": ".default()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L30",
+      "id": "commands_record_datetimeencoder_default",
+      "community": 11,
+      "norm_label": ".default()"
+    },
+    {
+      "label": "record()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L74",
+      "id": "commands_record_record",
+      "community": 0,
+      "norm_label": "record()"
+    },
+    {
+      "label": "_get_record_manager()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L109",
+      "id": "commands_record_get_record_manager",
+      "community": 0,
+      "norm_label": "_get_record_manager()"
+    },
+    {
+      "label": "record_create()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L184",
+      "id": "commands_record_record_create",
+      "community": 0,
+      "norm_label": "record_create()"
+    },
+    {
+      "label": "record_show()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L250",
+      "id": "commands_record_record_show",
+      "community": 0,
+      "norm_label": "record_show()"
+    },
+    {
+      "label": "record_search()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L330",
+      "id": "commands_record_record_search",
+      "community": 0,
+      "norm_label": "record_search()"
+    },
+    {
+      "label": "record_update()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L418",
+      "id": "commands_record_record_update",
+      "community": 0,
+      "norm_label": "record_update()"
+    },
+    {
+      "label": "record_delete()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L490",
+      "id": "commands_record_record_delete",
+      "community": 0,
+      "norm_label": "record_delete()"
+    },
+    {
+      "label": "record_export()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L542",
+      "id": "commands_record_record_export",
+      "community": 0,
+      "norm_label": "record_export()"
+    },
+    {
+      "label": "record_import()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L595",
+      "id": "commands_record_record_import",
+      "community": 0,
+      "norm_label": "record_import()"
+    },
+    {
+      "label": "record_stats()",
+      "file_type": "code",
+      "source_file": "record.py",
+      "source_location": "L638",
+      "id": "commands_record_record_stats",
+      "community": 0,
+      "norm_label": "record_stats()"
+    },
+    {
+      "label": "Custom JSON encoder that handles datetime objects.",
+      "file_type": "rationale",
+      "source_file": "record.py",
+      "source_location": "L28",
+      "id": "commands_record_rationale_28",
+      "community": 11,
+      "norm_label": "custom json encoder that handles datetime objects."
+    },
+    {
+      "label": "Record management subcommands",
+      "file_type": "rationale",
+      "source_file": "record.py",
+      "source_location": "L84",
+      "id": "commands_record_rationale_84",
+      "community": 0,
+      "norm_label": "record management subcommands"
+    },
+    {
+      "label": "Get a configured MetagitRecordManager instance.",
+      "file_type": "rationale",
+      "source_file": "record.py",
+      "source_location": "L110",
+      "id": "commands_record_rationale_110",
+      "community": 0,
+      "norm_label": "get a configured metagitrecordmanager instance."
+    },
+    {
+      "label": "Create a record from metagit configuration",
+      "file_type": "rationale",
+      "source_file": "record.py",
+      "source_location": "L191",
+      "id": "commands_record_rationale_191",
+      "community": 0,
+      "norm_label": "create a record from metagit configuration"
+    },
+    {
+      "label": "Update an existing record",
+      "file_type": "rationale",
+      "source_file": "record.py",
+      "source_location": "L425",
+      "id": "commands_record_rationale_425",
+      "community": 0,
+      "norm_label": "update an existing record"
+    },
+    {
+      "label": "Export a record to file",
+      "file_type": "rationale",
+      "source_file": "record.py",
+      "source_location": "L545",
+      "id": "commands_record_rationale_545",
+      "community": 0,
+      "norm_label": "export a record to file"
+    },
+    {
+      "label": "Import a record from file",
+      "file_type": "rationale",
+      "source_file": "record.py",
+      "source_location": "L601",
+      "id": "commands_record_rationale_601",
+      "community": 0,
+      "norm_label": "import a record from file"
+    },
+    {
+      "label": "Show record storage statistics",
+      "file_type": "rationale",
+      "source_file": "record.py",
+      "source_location": "L639",
+      "id": "commands_record_rationale_639",
+      "community": 0,
+      "norm_label": "show record storage statistics"
+    },
+    {
+      "label": "workspace.py",
+      "file_type": "code",
+      "source_file": "workspace.py",
+      "source_location": "L1",
+      "id": "workspace_py",
+      "community": 10,
+      "norm_label": "workspace.py"
+    },
+    {
+      "label": "workspace()",
+      "file_type": "code",
+      "source_file": "workspace.py",
+      "source_location": "L20",
+      "id": "commands_workspace_workspace",
+      "community": 10,
+      "norm_label": "workspace()"
+    },
+    {
+      "label": "workspace_select()",
+      "file_type": "code",
+      "source_file": "workspace.py",
+      "source_location": "L48",
+      "id": "commands_workspace_workspace_select",
+      "community": 10,
+      "norm_label": "workspace_select()"
+    },
+    {
+      "label": "Workspace subcommands",
+      "file_type": "rationale",
+      "source_file": "workspace.py",
+      "source_location": "L21",
+      "id": "commands_workspace_rationale_21",
+      "community": 10,
+      "norm_label": "workspace subcommands"
+    },
+    {
+      "label": "Select project repo to work on",
+      "file_type": "rationale",
+      "source_file": "workspace.py",
+      "source_location": "L49",
+      "id": "commands_workspace_rationale_49",
+      "community": 10,
+      "norm_label": "select project repo to work on"
+    },
+    {
+      "label": "init()",
+      "file_type": "code",
+      "source_file": "init.py",
+      "source_location": "L42",
+      "id": "commands_init_init",
+      "community": 4,
+      "norm_label": "init()"
+    },
+    {
+      "label": "_sanitize_workspace_path()",
+      "file_type": "code",
+      "source_file": "init.py",
+      "source_location": "L117",
+      "id": "commands_init_sanitize_workspace_path",
+      "community": 4,
+      "norm_label": "_sanitize_workspace_path()"
+    },
+    {
+      "label": "_update_gitignore()",
+      "file_type": "code",
+      "source_file": "init.py",
+      "source_location": "L127",
+      "id": "commands_init_update_gitignore",
+      "community": 4,
+      "norm_label": "_update_gitignore()"
+    },
+    {
+      "label": "Initialize local metagit environment by creating .metagit.yml and updating .giti",
+      "file_type": "rationale",
+      "source_file": "init.py",
+      "source_location": "L43",
+      "id": "commands_init_rationale_43",
+      "community": 4,
+      "norm_label": "initialize local metagit environment by creating .metagit.yml and updating .giti"
+    },
+    {
+      "label": "Sanitize workspace path to ensure it is a valid path without leading ./ and with",
+      "file_type": "rationale",
+      "source_file": "init.py",
+      "source_location": "L118",
+      "id": "commands_init_rationale_118",
+      "community": 4,
+      "norm_label": "sanitize workspace path to ensure it is a valid path without leading ./ and with"
+    },
+    {
+      "label": "Update .gitignore file to include workspace path.",
+      "file_type": "rationale",
+      "source_file": "init.py",
+      "source_location": "L130",
+      "id": "commands_init_rationale_130",
+      "community": 4,
+      "norm_label": "update .gitignore file to include workspace path."
+    },
+    {
+      "label": "detect.py",
+      "file_type": "code",
+      "source_file": "detect.py",
+      "source_location": "L1",
+      "id": "detect_py",
+      "community": 6,
+      "norm_label": "detect.py"
+    },
+    {
+      "label": "detect()",
+      "file_type": "code",
+      "source_file": "detect.py",
+      "source_location": "L28",
+      "id": "commands_detect_detect",
+      "community": 6,
+      "norm_label": "detect()"
+    },
+    {
+      "label": "detect_project()",
+      "file_type": "code",
+      "source_file": "detect.py",
+      "source_location": "L52",
+      "id": "commands_detect_detect_project",
+      "community": 6,
+      "norm_label": "detect_project()"
+    },
+    {
+      "label": "detect_repo_map()",
+      "file_type": "code",
+      "source_file": "detect.py",
+      "source_location": "L125",
+      "id": "commands_detect_detect_repo_map",
+      "community": 6,
+      "norm_label": "detect_repo_map()"
+    },
+    {
+      "label": "detect_repo()",
+      "file_type": "code",
+      "source_file": "detect.py",
+      "source_location": "L172",
+      "id": "commands_detect_detect_repo",
+      "community": 6,
+      "norm_label": "detect_repo()"
+    },
+    {
+      "label": "detect_repository()",
+      "file_type": "code",
+      "source_file": "detect.py",
+      "source_location": "L278",
+      "id": "commands_detect_detect_repository",
+      "community": 6,
+      "norm_label": "detect_repository()"
+    },
+    {
+      "label": "Detection subcommands",
+      "file_type": "rationale",
+      "source_file": "detect.py",
+      "source_location": "L29",
+      "id": "commands_detect_rationale_29",
+      "community": 6,
+      "norm_label": "detection subcommands"
+    },
+    {
+      "label": "Perform project detection and analysis.",
+      "file_type": "rationale",
+      "source_file": "detect.py",
+      "source_location": "L53",
+      "id": "commands_detect_rationale_53",
+      "community": 6,
+      "norm_label": "perform project detection and analysis."
+    },
+    {
+      "label": "Create a map of files and folders in a repository for further analysis.",
+      "file_type": "rationale",
+      "source_file": "detect.py",
+      "source_location": "L126",
+      "id": "commands_detect_rationale_126",
+      "community": 6,
+      "norm_label": "create a map of files and folders in a repository for further analysis."
+    },
+    {
+      "label": "Comprehensive repository analysis and MetagitConfig generation using DetectionMa",
+      "file_type": "rationale",
+      "source_file": "detect.py",
+      "source_location": "L292",
+      "id": "commands_detect_rationale_292",
+      "community": 6,
+      "norm_label": "comprehensive repository analysis and metagitconfig generation using detectionma"
+    },
+    {
+      "label": "project.py",
+      "file_type": "code",
+      "source_file": "project.py",
+      "source_location": "L1",
+      "id": "project_py",
+      "community": 8,
+      "norm_label": "project.py"
+    },
+    {
+      "label": "project()",
+      "file_type": "code",
+      "source_file": "project.py",
+      "source_location": "L32",
+      "id": "commands_project_project",
+      "community": 8,
+      "norm_label": "project()"
+    },
+    {
+      "label": "project_list()",
+      "file_type": "code",
+      "source_file": "project.py",
+      "source_location": "L62",
+      "id": "commands_project_project_list",
+      "community": 8,
+      "norm_label": "project_list()"
+    },
+    {
+      "label": "project_select()",
+      "file_type": "code",
+      "source_file": "project.py",
+      "source_location": "L117",
+      "id": "commands_project_project_select",
+      "community": 8,
+      "norm_label": "project_select()"
+    },
+    {
+      "label": "project_sync()",
+      "file_type": "code",
+      "source_file": "project.py",
+      "source_location": "L125",
+      "id": "commands_project_project_sync",
+      "community": 8,
+      "norm_label": "project_sync()"
+    },
+    {
+      "label": "List the current project configuration in YAML format",
+      "file_type": "rationale",
+      "source_file": "project.py",
+      "source_location": "L63",
+      "id": "commands_project_rationale_63",
+      "community": 8,
+      "norm_label": "list the current project configuration in yaml format"
+    },
+    {
+      "label": "Shortcut: Uses 'project repo select' to select workspace project repo to work on",
+      "file_type": "rationale",
+      "source_file": "project.py",
+      "source_location": "L118",
+      "id": "commands_project_rationale_118",
+      "community": 8,
+      "norm_label": "shortcut: uses 'project repo select' to select workspace project repo to work on"
+    },
+    {
+      "label": "Sync project within workspace",
+      "file_type": "rationale",
+      "source_file": "project.py",
+      "source_location": "L126",
+      "id": "commands_project_rationale_126",
+      "community": 8,
+      "norm_label": "sync project within workspace"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project_repo.py",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "project_repo_py",
+      "target": "commands_project_repo_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project_repo.py",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "project_repo_py",
+      "target": "commands_project_repo_repo_select",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project_repo.py",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "project_repo_py",
+      "target": "commands_project_repo_repo_add",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "project_repo.py",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "commands_project_repo_rationale_21",
+      "target": "commands_project_repo_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "init.py",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "commands_init_init",
+      "target": "commands_project_repo_repo"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "project_repo.py",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "commands_project_repo_rationale_30",
+      "target": "commands_project_repo_repo_select",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "project_repo.py",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "commands_project_repo_rationale_98",
+      "target": "commands_project_repo_repo_add",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "project_repo.py",
+      "source_location": "L132",
+      "weight": 1.0,
+      "source": "commands_project_repo_repo_add",
+      "target": "commands_gitcache_list"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "config_py",
+      "target": "commands_config_config",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "config_py",
+      "target": "commands_config_config_show",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "config_py",
+      "target": "commands_config_config_create",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L130",
+      "weight": 1.0,
+      "source": "config_py",
+      "target": "commands_config_config_validate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L198",
+      "weight": 1.0,
+      "source": "config_py",
+      "target": "commands_config_providers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L311",
+      "weight": 1.0,
+      "source": "config_py",
+      "target": "commands_config_config_set",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L348",
+      "weight": 1.0,
+      "source": "config_py",
+      "target": "commands_config_config_info",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L403",
+      "weight": 1.0,
+      "source": "config_py",
+      "target": "commands_config_config_schema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "commands_config_rationale_25",
+      "target": "commands_config_config",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "commands_config_rationale_52",
+      "target": "commands_config_config_show",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L106",
+      "weight": 1.0,
+      "source": "commands_config_rationale_106",
+      "target": "commands_config_config_create",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L131",
+      "weight": 1.0,
+      "source": "commands_config_rationale_131",
+      "target": "commands_config_config_validate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L211",
+      "weight": 1.0,
+      "source": "commands_config_rationale_211",
+      "target": "commands_config_providers",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L312",
+      "weight": 1.0,
+      "source": "commands_config_rationale_312",
+      "target": "commands_config_config_set",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L349",
+      "weight": 1.0,
+      "source": "commands_config_rationale_349",
+      "target": "commands_config_config_info",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "config.py",
+      "source_location": "L404",
+      "weight": 1.0,
+      "source": "commands_config_rationale_404",
+      "target": "commands_config_config_schema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills.py",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "skills_py",
+      "target": "commands_skills_skills",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills.py",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "skills_py",
+      "target": "commands_skills_skills_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills.py",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "skills_py",
+      "target": "commands_skills_skills_show",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "skills.py",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "skills_py",
+      "target": "commands_skills_skills_install",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "skills.py",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "commands_skills_rationale_22",
+      "target": "commands_skills_skills",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "skills.py",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "commands_skills_rationale_31",
+      "target": "commands_skills_skills_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "skills.py",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "commands_skills_rationale_46",
+      "target": "commands_skills_skills_show",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "skills.py",
+      "source_location": "L94",
+      "weight": 1.0,
+      "source": "commands_skills_rationale_94",
+      "target": "commands_skills_skills_install",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "skills.py",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "commands_skills_skills_install",
+      "target": "commands_gitcache_list"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "appconfig_py",
+      "target": "commands_appconfig_appconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "appconfig_py",
+      "target": "commands_appconfig_appconfig_info",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L45",
+      "weight": 1.0,
+      "source": "appconfig_py",
+      "target": "commands_appconfig_appconfig_show",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "appconfig_py",
+      "target": "commands_appconfig_appconfig_validate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L126",
+      "weight": 1.0,
+      "source": "appconfig_py",
+      "target": "commands_appconfig_appconfig_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L151",
+      "weight": 1.0,
+      "source": "appconfig_py",
+      "target": "commands_appconfig_appconfig_create",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L182",
+      "weight": 1.0,
+      "source": "appconfig_py",
+      "target": "commands_appconfig_appconfig_set",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L214",
+      "weight": 1.0,
+      "source": "appconfig_py",
+      "target": "commands_appconfig_appconfig_schema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "commands_appconfig_appconfig_validate",
+      "target": "commands_appconfig_appconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "commands_appconfig_rationale_23",
+      "target": "commands_appconfig_appconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "commands_appconfig_rationale_33",
+      "target": "commands_appconfig_appconfig_info",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "commands_appconfig_rationale_46",
+      "target": "commands_appconfig_appconfig_show",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "commands_appconfig_rationale_81",
+      "target": "commands_appconfig_appconfig_validate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "commands_appconfig_rationale_127",
+      "target": "commands_appconfig_appconfig_get",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L152",
+      "weight": 1.0,
+      "source": "commands_appconfig_rationale_152",
+      "target": "commands_appconfig_appconfig_create",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L183",
+      "weight": 1.0,
+      "source": "commands_appconfig_rationale_183",
+      "target": "commands_appconfig_appconfig_set",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "appconfig.py",
+      "source_location": "L215",
+      "weight": 1.0,
+      "source": "commands_appconfig_rationale_215",
+      "target": "commands_appconfig_appconfig_schema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "init.py",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "init_py",
+      "target": "commands_init_init",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "init.py",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "init_py",
+      "target": "commands_init_sanitize_workspace_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "init.py",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "init_py",
+      "target": "commands_init_update_gitignore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_gitcache",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_cache",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L73",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L114",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_stats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L144",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_refresh",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L171",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_remove",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L194",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_clear",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L221",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L249",
+      "weight": 1.0,
+      "source": "gitcache_py",
+      "target": "commands_gitcache_details",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_19",
+      "target": "commands_gitcache_gitcache",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "commands_gitcache_cache",
+      "target": "commands_gitcache_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_40",
+      "target": "commands_gitcache_cache",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L237",
+      "weight": 1.0,
+      "source": "commands_gitcache_path",
+      "target": "commands_gitcache_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_74",
+      "target": "commands_gitcache_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "mcp.py",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "commands_mcp_install",
+      "target": "commands_gitcache_list"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "commands_gitcache_stats",
+      "target": "commands_gitcache_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L115",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_115",
+      "target": "commands_gitcache_stats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L147",
+      "weight": 1.0,
+      "source": "commands_gitcache_refresh",
+      "target": "commands_gitcache_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L145",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_145",
+      "target": "commands_gitcache_refresh",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "commands_gitcache_remove",
+      "target": "commands_gitcache_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L172",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_172",
+      "target": "commands_gitcache_remove",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L201",
+      "weight": 1.0,
+      "source": "commands_gitcache_clear",
+      "target": "commands_gitcache_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L195",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_195",
+      "target": "commands_gitcache_clear",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L252",
+      "weight": 1.0,
+      "source": "commands_gitcache_details",
+      "target": "commands_gitcache_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L222",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_222",
+      "target": "commands_gitcache_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "record.py",
+      "source_location": "L116",
+      "weight": 1.0,
+      "source": "commands_record_get_record_manager",
+      "target": "commands_gitcache_path"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "record.py",
+      "source_location": "L196",
+      "weight": 1.0,
+      "source": "commands_record_record_create",
+      "target": "commands_gitcache_path"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "record.py",
+      "source_location": "L440",
+      "weight": 1.0,
+      "source": "commands_record_record_update",
+      "target": "commands_gitcache_path"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "record.py",
+      "source_location": "L560",
+      "weight": 1.0,
+      "source": "commands_record_record_export",
+      "target": "commands_gitcache_path"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "record.py",
+      "source_location": "L608",
+      "weight": 1.0,
+      "source": "commands_record_record_import",
+      "target": "commands_gitcache_path"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "init.py",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "commands_init_init",
+      "target": "commands_gitcache_path"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "init.py",
+      "source_location": "L133",
+      "weight": 1.0,
+      "source": "commands_init_update_gitignore",
+      "target": "commands_gitcache_path"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "gitcache.py",
+      "source_location": "L250",
+      "weight": 1.0,
+      "source": "commands_gitcache_rationale_250",
+      "target": "commands_gitcache_details",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mcp.py",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "mcp_py",
+      "target": "commands_mcp_mcp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mcp.py",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "mcp_py",
+      "target": "commands_mcp_serve",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "mcp.py",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "mcp_py",
+      "target": "commands_mcp_install",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "mcp.py",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "commands_mcp_rationale_20",
+      "target": "commands_mcp_mcp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "mcp.py",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "commands_mcp_rationale_33",
+      "target": "commands_mcp_serve",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "mcp.py",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "commands_mcp_rationale_84",
+      "target": "commands_mcp_install",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project_source.py",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "project_source_py",
+      "target": "commands_project_source_source",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project_source.py",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "project_source_py",
+      "target": "commands_project_source_source_sync",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "project_source.py",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "commands_project_source_rationale_22",
+      "target": "commands_project_source_source",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "project_source.py",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "commands_project_source_rationale_92",
+      "target": "commands_project_source_source_sync",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_datetimeencoder",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L109",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record_create",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L250",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record_show",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L330",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record_search",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L418",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record_update",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L490",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record_delete",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L542",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record_export",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L595",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record_import",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L638",
+      "weight": 1.0,
+      "source": "record_py",
+      "target": "commands_record_record_stats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "commands_record_datetimeencoder",
+      "target": "commands_record_datetimeencoder_default",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "commands_record_rationale_28",
+      "target": "commands_record_datetimeencoder",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "commands_record_rationale_84",
+      "target": "commands_record_record",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L202",
+      "weight": 1.0,
+      "source": "commands_record_record_create",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L255",
+      "weight": 1.0,
+      "source": "commands_record_record_show",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L337",
+      "weight": 1.0,
+      "source": "commands_record_record_search",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L429",
+      "weight": 1.0,
+      "source": "commands_record_record_update",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L497",
+      "weight": 1.0,
+      "source": "commands_record_record_delete",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L549",
+      "weight": 1.0,
+      "source": "commands_record_record_export",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L605",
+      "weight": 1.0,
+      "source": "commands_record_record_import",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L643",
+      "weight": 1.0,
+      "source": "commands_record_record_stats",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L110",
+      "weight": 1.0,
+      "source": "commands_record_rationale_110",
+      "target": "commands_record_get_record_manager",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L191",
+      "weight": 1.0,
+      "source": "commands_record_rationale_191",
+      "target": "commands_record_record_create",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L425",
+      "weight": 1.0,
+      "source": "commands_record_rationale_425",
+      "target": "commands_record_record_update",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L545",
+      "weight": 1.0,
+      "source": "commands_record_rationale_545",
+      "target": "commands_record_record_export",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L601",
+      "weight": 1.0,
+      "source": "commands_record_rationale_601",
+      "target": "commands_record_record_import",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "record.py",
+      "source_location": "L639",
+      "weight": 1.0,
+      "source": "commands_record_rationale_639",
+      "target": "commands_record_record_stats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "workspace.py",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "workspace_py",
+      "target": "commands_workspace_workspace",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "workspace.py",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "workspace_py",
+      "target": "commands_workspace_workspace_select",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "workspace.py",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "commands_workspace_rationale_21",
+      "target": "commands_workspace_workspace",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "workspace.py",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "commands_workspace_rationale_49",
+      "target": "commands_workspace_workspace_select",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "init.py",
+      "source_location": "L93",
+      "weight": 1.0,
+      "source": "commands_init_init",
+      "target": "commands_init_update_gitignore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "init.py",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "commands_init_rationale_43",
+      "target": "commands_init_init",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "init.py",
+      "source_location": "L131",
+      "weight": 1.0,
+      "source": "commands_init_update_gitignore",
+      "target": "commands_init_sanitize_workspace_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "init.py",
+      "source_location": "L118",
+      "weight": 1.0,
+      "source": "commands_init_rationale_118",
+      "target": "commands_init_sanitize_workspace_path",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "init.py",
+      "source_location": "L130",
+      "weight": 1.0,
+      "source": "commands_init_rationale_130",
+      "target": "commands_init_update_gitignore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "detect_py",
+      "target": "commands_detect_detect",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "detect_py",
+      "target": "commands_detect_detect_project",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "detect_py",
+      "target": "commands_detect_detect_repo_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L172",
+      "weight": 1.0,
+      "source": "detect_py",
+      "target": "commands_detect_detect_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L278",
+      "weight": 1.0,
+      "source": "detect_py",
+      "target": "commands_detect_detect_repository",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "commands_detect_rationale_29",
+      "target": "commands_detect_detect",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "commands_detect_rationale_53",
+      "target": "commands_detect_detect_project",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L126",
+      "weight": 1.0,
+      "source": "commands_detect_rationale_126",
+      "target": "commands_detect_detect_repo_map",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "detect.py",
+      "source_location": "L292",
+      "weight": 1.0,
+      "source": "commands_detect_rationale_292",
+      "target": "commands_detect_detect_repository",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project.py",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "project_py",
+      "target": "commands_project_project",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project.py",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "project_py",
+      "target": "commands_project_project_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project.py",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "project_py",
+      "target": "commands_project_project_select",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "project.py",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "project_py",
+      "target": "commands_project_project_sync",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "project.py",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "commands_project_rationale_63",
+      "target": "commands_project_project_list",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "project.py",
+      "source_location": "L118",
+      "weight": 1.0,
+      "source": "commands_project_rationale_118",
+      "target": "commands_project_project_select",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "project.py",
+      "source_location": "L126",
+      "weight": 1.0,
+      "source": "commands_project_rationale_126",
+      "target": "commands_project_project_sync",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "16349ce63385c3fb046250c1f66e9e6f40fcfc78"
+}
