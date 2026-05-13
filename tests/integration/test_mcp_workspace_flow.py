@@ -8,6 +8,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from metagit.cli.main import cli
+from metagit.core.mcp.runtime import MetagitMcpRuntime
 
 
 def test_end_to_end_workspace_activation_and_discovery(tmp_path: Path) -> None:
@@ -43,3 +44,11 @@ def test_end_to_end_workspace_activation_and_discovery(tmp_path: Path) -> None:
     )
     assert active_result.exit_code == 0
     assert "mcp_state=active" in active_result.output
+
+    runtime = MetagitMcpRuntime(root=str(workspace_root))
+    tools_response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 20, "method": "tools/list", "params": {}}
+    )
+    assert tools_response is not None
+    tool_names = [item["name"] for item in tools_response["result"]["tools"]]
+    assert "metagit_repo_search" in tool_names
