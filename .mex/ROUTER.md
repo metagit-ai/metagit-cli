@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-05-11
+last_updated: 2026-05-12
 ---
 
 # Session Bootstrap
@@ -27,10 +27,10 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
-- Core CLI command surface (`config`, `detect`, `project`, `record`, `workspace`, `mcp`) with shared app config + logger bootstrapping.
+- Core CLI command surface (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search` / `find` for managed-repo lookup from `.metagit.yml`) with shared app config + logger bootstrapping.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
 - MCP runtime with state-aware gating, tool/resource handlers, protocol-framed stdio loop, and runtime tests.
-- Workspace index/search/upstream hint services and guarded repo inspect/sync flows.
+- Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, and guarded repo inspect/sync flows.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
 - Docs build path resolves CLI imports correctly in CI by including interactive prompt runtime dependency.
