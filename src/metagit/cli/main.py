@@ -23,6 +23,7 @@ from pathlib import Path
 import click
 
 from metagit import DEFAULT_CONFIG, __version__
+from metagit.cli.commands.api import api
 from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.config import config
 from metagit.cli.commands.detect import detect
@@ -134,6 +135,7 @@ cli.add_command(record)
 cli.add_command(skills)
 cli.add_command(init)
 cli.add_command(mcp)
+cli.add_command(api)
 cli.add_command(search)
 cli.add_command(search, name="find")
 
