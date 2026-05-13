@@ -68,6 +68,8 @@ You use one top-level umbrella project with a single metagit definition file tha
 
 The metagit configuration file is committed to version control as its own project artifact.
 
+**Managed repo lookup:** Use `metagit search` / `metagit find` for quick CLI lookup of repos declared in `.metagit.yml` (with optional tags and JSON output). MCP clients can call `metagit_repo_search`, and `metagit api serve` exposes the same search and resolve behavior over a small local JSON HTTP API for agents and scripts.
+
 This mode is useful for:
 
 - Creating umbrella projects for new team members of a multi-repo project

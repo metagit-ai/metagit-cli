@@ -33,11 +33,7 @@ class WorkspaceIndexService:
                 is_git_repo = (
                     bool(is_git_repository(resolved_path)) if exists else False
                 )
-                status = (
-                    "synced"
-                    if exists and is_git_repo
-                    else "configured_missing"
-                )
+                status = "synced" if exists and is_git_repo else "configured_missing"
                 rows.append(
                     {
                         "project_name": project.name,

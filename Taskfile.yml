@@ -166,7 +166,7 @@ tasks:
     cmds:
       - |
         uv pip install -e ".[test]"
-        pytest --maxfail=1 --disable-warnings -v tests
+        uv run pytest --maxfail=1 --disable-warnings -v tests
 
   qa:prepush:
     desc: Token-optimized local pre-push quality gate
