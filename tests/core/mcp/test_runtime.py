@@ -151,3 +151,64 @@ def test_bootstrap_uses_sampling_when_client_supports_it(tmp_path: Path) -> None
     assert response is not None
     payload = json.loads(response["result"]["content"][0]["text"])
     assert payload["mode"] == "sampled"
+
+
+def test_tools_list_includes_repo_search_for_active_workspace(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: platform",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 10, "method": "tools/list", "params": {}}
+    )
+
+    assert response is not None
+    names = [item["name"] for item in response["result"]["tools"]]
+    assert "metagit_repo_search" in names
+
+
+def test_tools_call_repo_search_returns_matches(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "platform" / "abacus-app"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: platform",
+                "      repos:",
+                "        - name: abacus-app",
+                "          path: platform/abacus-app",
+                "          sync: true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 11,
+            "method": "tools/call",
+            "params": {"name": "metagit_repo_search", "arguments": {"query": "abacus"}},
+        }
+    )
+
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["matches"][0]["repo_name"] == "abacus-app"

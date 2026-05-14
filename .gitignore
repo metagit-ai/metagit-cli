@@ -29,3 +29,5 @@ site
 # Crush contextual files
 .crush
 .gitnexus
+graphify-*
+docs/superpowers

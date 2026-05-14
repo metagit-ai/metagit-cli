@@ -36,6 +36,7 @@ def test_active_registry_exposes_full_toolset() -> None:
     assert "metagit_workspace_status" in tools
     assert "metagit_workspace_index" in tools
     assert "metagit_workspace_search" in tools
+    assert "metagit_repo_search" in tools
     assert "metagit_upstream_hints" in tools
     assert "metagit_repo_sync" in tools
     assert "metagit_bootstrap_config_plan_only" not in tools

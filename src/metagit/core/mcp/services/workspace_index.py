@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from metagit.core.config.models import MetagitConfig
+from metagit.core.utils.common import is_git_repository
 
 
 class WorkspaceIndexService:
@@ -28,14 +29,23 @@ class WorkspaceIndexService:
                     configured_path=repo.path,
                     repo_name=repo.name,
                 )
+                exists = os.path.isdir(resolved_path)
+                is_git_repo = (
+                    bool(is_git_repository(resolved_path)) if exists else False
+                )
+                status = "synced" if exists and is_git_repo else "configured_missing"
                 rows.append(
                     {
                         "project_name": project.name,
                         "repo_name": repo.name,
+                        "configured_path": repo.path,
                         "repo_path": resolved_path,
-                        "exists": os.path.isdir(resolved_path),
+                        "exists": exists,
+                        "is_git_repo": is_git_repo,
+                        "status": status,
                         "url": str(repo.url) if repo.url else None,
                         "sync": repo.sync if repo.sync is not None else False,
+                        "tags": dict(repo.tags),
                     }
                 )
         return rows

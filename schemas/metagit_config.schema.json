@@ -805,6 +805,14 @@
           "description": "Provider-native repository identifier",
           "title": "Source Repo Id"
         },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags for managed repo search and filtering",
+          "title": "Tags",
+          "type": "object"
+        },
         "protected": {
           "anyOf": [
             {

@@ -1,5 +1,4 @@
 config:
-  version: "0.1.0"
   description: "Configuration for metagit CLI"
   # Reserved for future use
   api_url: ""
@@ -24,6 +23,7 @@ config:
     # Default workspace path, should be added to .gitignore
     path: ./.metagit
     default_project: default
+    ui_ignore_hidden: true
 
   profiles:
     # Profiles are used to define multiple configurations for different organizations

@@ -22,6 +22,7 @@ from metagit.core.mcp.services.upstream_hints import UpstreamHintService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 from metagit.core.mcp.tool_registry import ToolRegistry
+from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.mcp.tools.bootstrap_plan_only import (
     metagit_bootstrap_config_plan_only,
 )
@@ -42,6 +43,7 @@ class MetagitMcpRuntime:
         self._registry = ToolRegistry()
         self._index_service = WorkspaceIndexService()
         self._search_service = WorkspaceSearchService()
+        self._managed_repo_search = ManagedRepoSearchService()
         self._hints_service = UpstreamHintService()
         self._repo_ops = RepoOperationsService()
         self._discovery_service = DiscoveryContextService()
@@ -63,6 +65,22 @@ class MetagitMcpRuntime:
                     "query": {"type": "string"},
                     "preset": {"type": "string"},
                     "max_results": {"type": "integer", "minimum": 1},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_repo_search": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                    "query": {"type": "string"},
+                    "project": {"type": "string"},
+                    "exact": {"type": "boolean"},
+                    "synced_only": {"type": "boolean"},
+                    "limit": {"type": "integer", "minimum": 1},
+                    "tags": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"},
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -288,6 +306,37 @@ class MetagitMcpRuntime:
                     max_results=int(arguments.get("max_results", 25)),
                 )
             }
+
+        if name == "metagit_repo_search":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "managed repo search requires an active workspace"
+                )
+            query = str(arguments.get("query", "")).strip()
+            if not query:
+                raise InvalidToolArgumentsError("query is required")
+            raw_tags = arguments.get("tags")
+            tag_filter: dict[str, str] | None = None
+            if isinstance(raw_tags, dict) and raw_tags:
+                tag_filter = {str(k): str(v) for k, v in raw_tags.items()}
+            limit_raw = arguments.get("limit", 10)
+            try:
+                limit_val = int(limit_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("limit must be an integer") from exc
+            if limit_val < 1:
+                raise InvalidToolArgumentsError("limit must be at least 1")
+            result = self._managed_repo_search.search(
+                config=config,
+                workspace_root=status.root_path,
+                query=query,
+                project=arguments.get("project"),
+                exact=bool(arguments.get("exact", False)),
+                synced_only=bool(arguments.get("synced_only", False)),
+                tags=tag_filter,
+                limit=limit_val,
+            )
+            return result.model_dump(mode="json")
 
         if name == "metagit_upstream_hints":
             blocker = str(arguments.get("blocker", "")).strip()

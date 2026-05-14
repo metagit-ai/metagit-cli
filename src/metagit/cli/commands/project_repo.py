@@ -3,6 +3,7 @@
 Project repo subcommand
 """
 
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -41,6 +42,7 @@ def repo_select(ctx: click.Context) -> None:
         project,
         show_preview=app_config.workspace.ui_show_preview,
         menu_length=app_config.workspace.ui_menu_length,
+        ignore_hidden=app_config.workspace.ui_ignore_hidden,
     )
     if isinstance(selected_repo, Exception):
         logger.error(f"Failed to select project repo: {selected_repo}")
@@ -157,3 +159,101 @@ def repo_add(
 
     except Exception as e:
         logger.warning(f"Failed to add repository: {e}")
+
+
+@repo.command("prune")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="List unmanaged directories only; do not prompt or delete.",
+)
+@click.option(
+    "--include-hidden",
+    is_flag=True,
+    default=False,
+    help="Include dot-directories (overrides workspace.ui_ignore_hidden).",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Remove all listed unmanaged paths without prompting (no effect with --dry-run).",
+)
+@click.pass_context
+def repo_prune(
+    ctx: click.Context,
+    dry_run: bool,
+    include_hidden: bool,
+    force: bool,
+) -> None:
+    """
+    Walk the project sync folder and offer to remove directories not in .metagit.yml.
+
+    Only considers immediate children of the project directory (same layout as sync).
+    """
+    logger: UnifiedLogger = ctx.obj["logger"]
+    project: str = ctx.obj["project"]
+    app_config: AppConfig = ctx.obj["config"]
+    local_config = ctx.obj["local_config"]
+
+    if project == "local":
+        raise click.UsageError("The local project is not supported for this command")
+
+    if not local_config.workspace:
+        logger.error("No workspace configuration found")
+        ctx.abort()
+
+    try:
+        project_manager = ProjectManager(app_config.workspace.path, logger)
+    except Exception as exc:
+        logger.warning(f"Failed to initialize ProjectManager: {exc}")
+        ctx.abort()
+
+    workspace_root = Path(app_config.workspace.path).expanduser().resolve()
+    project_sync_folder = (workspace_root / project).resolve()
+    click.echo("Prune context:")
+    click.echo(f"  workspace.path (sync root): {workspace_root}")
+    click.echo(f"  project: {project}")
+    click.echo(f"  project sync folder: {project_sync_folder}")
+
+    ignore_hidden = (
+        False if include_hidden else bool(app_config.workspace.ui_ignore_hidden)
+    )
+    candidates = project_manager.list_unmanaged_sync_directories(
+        local_config,
+        project,
+        ignore_hidden=ignore_hidden,
+    )
+    if not candidates:
+        click.echo("No unmanaged sync directories found under the project sync folder.")
+        return
+
+    click.echo(
+        f"Found {len(candidates)} unmanaged entr{'y' if len(candidates) == 1 else 'ies'}:"
+    )
+    for path in candidates:
+        click.echo(f"  - {path}")
+
+    if dry_run:
+        click.echo("Dry run: no changes made.")
+        return
+
+    removed = 0
+    for path in candidates:
+        rel = path.name
+        if not force and not click.confirm(
+            f"Remove unmanaged path {rel!r} at {path}?", default=False
+        ):
+            continue
+        try:
+            project_manager.remove_sync_directory(path)
+            removed += 1
+            logger.success(f"Removed {path}")
+        except OSError as exc:
+            logger.error(f"Failed to remove {path}: {exc}")
+
+    if force:
+        click.echo(f"Prune finished (--force): {removed} removed.")
+    else:
+        click.echo(f"Prune finished: {removed} removed.")

@@ -19,7 +19,7 @@ edges:
     condition: when adding a new MCP tool or changing tool schemas
   - target: patterns/debug-mcp-runtime.md
     condition: when MCP message loop, framing, or tool dispatch fails
-last_updated: 2026-05-05
+last_updated: 2026-05-12
 ---
 
 # MCP Runtime
@@ -32,7 +32,8 @@ last_updated: 2026-05-05
 
 ## Active Runtime Services
 - `WorkspaceRootResolver` + `WorkspaceGate` + `ToolRegistry` for state-aware tool visibility.
-- Workspace services: index/search/upstream hints.
+- Workspace services: index, path-based workspace search, upstream hints.
+- `ManagedRepoSearchService` for `metagit_repo_search` (managed `.metagit.yml` repos only, with tags/status).
 - Repo ops service for inspect/sync with mutation guardrails.
 - Resource publisher for config/repo-status/ops-log resources.
 - Bootstrap sampling service with fallback and optional client sampling flow.

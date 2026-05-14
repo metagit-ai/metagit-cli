@@ -1,0 +1,54 @@
+{
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/project_repo.py": {
+    "mtime": 1777928266.4070218,
+    "hash": "efd1fcbfe3b73eefa2472fb2565e4a59"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/config.py": {
+    "mtime": 1777928266.405454,
+    "hash": "8e1e66b76c4019748fabebbfedeca610"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/skills.py": {
+    "mtime": 1778364528.9473138,
+    "hash": "602e2f2ac3524c206768c49e7431a46f"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/appconfig.py": {
+    "mtime": 1777928266.4051883,
+    "hash": "9aed9df9a6c5cae15fe176005efad6e9"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/__init__.py": {
+    "mtime": 1777928266.4049313,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/gitcache.py": {
+    "mtime": 1777928266.4063718,
+    "hash": "e67399ccb022f2f2c0381da7f08b6f46"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/mcp.py": {
+    "mtime": 1778364528.946794,
+    "hash": "a06f40dc40654bfd4f878bb0a43f4d1f"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/project_source.py": {
+    "mtime": 1778255864.599259,
+    "hash": "a7f30b74fc7ef395e71e2b134f036dc5"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/record.py": {
+    "mtime": 1777928266.4072473,
+    "hash": "8f24fa441cffda05210a11189d5f2ad0"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/workspace.py": {
+    "mtime": 1777928266.4074707,
+    "hash": "011749cfabc60251916551265cec2020"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/init.py": {
+    "mtime": 1777928266.4065688,
+    "hash": "0ed8de7fb71f7bb83e9720ce312cf2d0"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/detect.py": {
+    "mtime": 1777928266.4058805,
+    "hash": "6c4c5c2ad79c61eaf6b1f24de49b7669"
+  },
+  "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/cli/commands/project.py": {
+    "mtime": 1778255864.598895,
+    "hash": "b70c782c6715eff4b99f488b65d1e81d"
+  }
+}

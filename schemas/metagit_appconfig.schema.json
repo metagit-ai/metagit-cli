@@ -227,7 +227,7 @@
               "type": "null"
             }
           ],
-          "default": false,
+          "default": true,
           "description": "Show preview in fuzzy finder console UI",
           "title": "Ui Show Preview"
         },
@@ -256,19 +256,20 @@
           "default": 3,
           "description": "Height of preview in fuzzy finder console UI",
           "title": "Ui Preview Height"
+        },
+        "ui_ignore_hidden": {
+          "default": true,
+          "description": "When true, hide dotfiles and dot-directories from repo picker UI",
+          "title": "Ui Ignore Hidden",
+          "type": "boolean"
         }
       },
       "title": "WorkspaceConfig",
       "type": "object"
     }
   },
+  "description": "Application-level settings (not the Metagit package release version \u2014 use `metagit version`).",
   "properties": {
-    "version": {
-      "default": "0.2.3.dev5+gb0bbbac74.d20260508",
-      "description": "The version of the CLI",
-      "title": "Version",
-      "type": "string"
-    },
     "description": {
       "default": "Metagit configuration",
       "title": "Description",
@@ -287,8 +288,8 @@
       "type": "string"
     },
     "api_version": {
-      "default": "0.2.3.dev5+gb0bbbac74.d20260508",
-      "description": "The API version to use for the CLI",
+      "default": "",
+      "description": "Reserved for a future remote API contract version (METAGIT_API_VERSION)",
       "title": "Api Version",
       "type": "string"
     },
@@ -333,9 +334,10 @@
       "default": {
         "path": "./.metagit",
         "default_project": "default",
-        "ui_show_preview": false,
+        "ui_show_preview": true,
         "ui_menu_length": 10,
-        "ui_preview_height": 3
+        "ui_preview_height": 3,
+        "ui_ignore_hidden": true
       },
       "description": "The workspace configuration"
     },
