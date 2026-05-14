@@ -3,6 +3,7 @@
 Project repo subcommand
 """
 
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -173,11 +174,18 @@ def repo_add(
     default=False,
     help="Include dot-directories (overrides workspace.ui_ignore_hidden).",
 )
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Remove all listed unmanaged paths without prompting (no effect with --dry-run).",
+)
 @click.pass_context
 def repo_prune(
     ctx: click.Context,
     dry_run: bool,
     include_hidden: bool,
+    force: bool,
 ) -> None:
     """
     Walk the project sync folder and offer to remove directories not in .metagit.yml.
@@ -202,6 +210,13 @@ def repo_prune(
         logger.warning(f"Failed to initialize ProjectManager: {exc}")
         ctx.abort()
 
+    workspace_root = Path(app_config.workspace.path).expanduser().resolve()
+    project_sync_folder = (workspace_root / project).resolve()
+    click.echo("Prune context:")
+    click.echo(f"  workspace.path (sync root): {workspace_root}")
+    click.echo(f"  project: {project}")
+    click.echo(f"  project sync folder: {project_sync_folder}")
+
     ignore_hidden = (
         False if include_hidden else bool(app_config.workspace.ui_ignore_hidden)
     )
@@ -211,24 +226,23 @@ def repo_prune(
         ignore_hidden=ignore_hidden,
     )
     if not candidates:
-        logger.info("No unmanaged sync directories found.")
+        click.echo("No unmanaged sync directories found under the project sync folder.")
         return
 
-    logger.info(
-        f"Found {len(candidates)} unmanaged entr{'y' if len(candidates) == 1 else 'ies'} "
-        f"under project {project!r}:"
+    click.echo(
+        f"Found {len(candidates)} unmanaged entr{'y' if len(candidates) == 1 else 'ies'}:"
     )
     for path in candidates:
         click.echo(f"  - {path}")
 
     if dry_run:
-        logger.info("Dry run: no changes made.")
+        click.echo("Dry run: no changes made.")
         return
 
     removed = 0
     for path in candidates:
         rel = path.name
-        if not click.confirm(
+        if not force and not click.confirm(
             f"Remove unmanaged path {rel!r} at {path}?", default=False
         ):
             continue
@@ -239,4 +253,7 @@ def repo_prune(
         except OSError as exc:
             logger.error(f"Failed to remove {path}: {exc}")
 
-    logger.info(f"Prune finished ({removed} removed).")
+    if force:
+        click.echo(f"Prune finished (--force): {removed} removed.")
+    else:
+        click.echo(f"Prune finished: {removed} removed.")

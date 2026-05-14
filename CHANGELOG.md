@@ -5,7 +5,7 @@
 ### Added
 
 - Managed repository search across `.metagit.yml` workspace repos: CLI (`metagit search` / `metagit find`), MCP tool `metagit_repo_search`, and local JSON HTTP API (`metagit api serve` with `/v1/repos/search` and `/v1/repos/resolve`).
-- `metagit project repo prune` to review and remove sync-folder directories not declared in `.metagit.yml` (with `--dry-run` and `--include-hidden`).
+- `metagit project repo prune` to review and remove sync-folder directories not declared in `.metagit.yml` (with `--dry-run`, `--include-hidden`, and `--force` to skip prompts).
 - `workspace.ui_ignore_hidden` in app config (default true) to hide dot-directories from the repo picker UI.
 
 ### Changed
