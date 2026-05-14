@@ -1,5 +1,4 @@
 config:
-  version: 0.1.7
   description: Configuration for metagit CLI
   editor: code
   api_url: ''
@@ -20,6 +19,7 @@ config:
     default_project: default
     ui_show_preview: true
     ui_menu_length: 20
+    ui_ignore_hidden: true
   profiles:
   - name: default
     boundaries:

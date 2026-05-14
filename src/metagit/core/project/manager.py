@@ -5,6 +5,7 @@ Class for managing projects.
 
 import concurrent.futures
 import os
+import shutil
 from pathlib import Path
 from typing import List, Union
 
@@ -306,12 +307,65 @@ class ProjectManager:
                     f"Error: {e.stderr}"
                 )
 
+    def list_unmanaged_sync_directories(
+        self,
+        metagit_config: MetagitConfig,
+        project: str,
+        *,
+        ignore_hidden: bool,
+    ) -> List[Path]:
+        """
+        Directories or symlinks under the project sync folder that are not declared repos.
+
+        Uses the same .gitignore rules as the repo picker. When ``ignore_hidden`` is true,
+        dotfiles and dot-directories are skipped.
+        """
+        project_path = Path(self.workspace_path) / project
+        if project == "local":
+            workspace_project = metagit_config.local_workspace_project
+        else:
+            matches = [
+                p
+                for p in (metagit_config.workspace.projects or [])
+                if p.name == project
+            ]
+            if not matches:
+                return []
+            workspace_project = matches[0]
+
+        if not project_path.exists(follow_symlinks=True):
+            return []
+
+        managed = {repo.name for repo in workspace_project.repos}
+        ignore_patterns = parse_gitignore(project_path / ".gitignore")
+        unmanaged: List[Path] = []
+        for entry in project_path.iterdir():
+            if not (entry.is_dir() or entry.is_symlink()):
+                continue
+            if ignore_hidden and entry.name.startswith("."):
+                continue
+            if should_ignore_path(entry, ignore_patterns, project_path):
+                continue
+            if entry.name in managed:
+                continue
+            unmanaged.append(entry)
+        return sorted(unmanaged, key=lambda p: p.name.lower())
+
+    @staticmethod
+    def remove_sync_directory(path: Path) -> None:
+        """Remove a synced repo directory or symlink under a project folder."""
+        if path.is_symlink() or path.is_file():
+            path.unlink(missing_ok=False)
+        elif path.is_dir():
+            shutil.rmtree(path)
+
     def select_repo(
         self,
         metagit_config: MetagitConfig,
         project: str,
         show_preview: bool = False,
         menu_length: int = 10,
+        ignore_hidden: bool = True,
     ) -> ProjectPath:
         """
         Select a repository from a synced project.
@@ -339,6 +393,8 @@ class ProjectManager:
         # Iterate through the project path and add the directories and symlinks to the project_dict
         for f in Path(project_path).iterdir():
             if f.is_dir() or f.is_symlink():
+                if ignore_hidden and f.name.startswith("."):
+                    continue
                 if should_ignore_path(f, ignore_patterns, Path(project_path)):
                     continue
                 # Determine type

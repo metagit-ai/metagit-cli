@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from metagit import DATA_PATH, __version__
+from metagit import DATA_PATH
 from metagit.core.utils.yaml_class import yaml
 
 success_blurb: str = "Success! ✅"
@@ -26,6 +26,10 @@ class WorkspaceConfig(BaseModel):
     )
     ui_preview_height: Optional[int] = Field(
         default=3, description="Height of preview in fuzzy finder console UI"
+    )
+    ui_ignore_hidden: bool = Field(
+        default=True,
+        description="When true, hide dotfiles and dot-directories from repo picker UI",
     )
 
     class Config:
@@ -148,14 +152,18 @@ class Providers(BaseModel):
 
 
 class AppConfig(BaseModel):
-    version: str = Field(default=__version__, description="The version of the CLI")
+    """Application-level settings (not the Metagit package release version — use `metagit version`)."""
+
+    model_config = ConfigDict(extra="ignore")
+
     description: str = "Metagit configuration"
     editor: str = Field(default="code", description="The editor to use for the CLI")
     # Reserved for future use
     api_url: str = Field(default="", description="The API URL to use for the CLI")
     # Reserved for future use
     api_version: str = Field(
-        default=__version__, description="The API version to use for the CLI"
+        default="",
+        description="Reserved for a future remote API contract version (METAGIT_API_VERSION)",
     )
     # Reserved for future use
     api_key: str = Field(default="", description="The API key to use for the CLI")

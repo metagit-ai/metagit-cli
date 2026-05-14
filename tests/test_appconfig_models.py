@@ -35,6 +35,7 @@ def test_workspace_model():
     assert w.path == "./.metagit"
     assert w.default_project == "default"
     assert w.ui_show_preview is True
+    assert w.ui_ignore_hidden is True
 
 
 def test_llm_model():
@@ -63,9 +64,9 @@ def test_providers_model():
 
 def test_appconfig_defaults():
     cfg = AppConfig()
-    assert cfg.version
     assert cfg.llm.provider == "openrouter"
     assert isinstance(cfg.providers, Providers)
+    assert cfg.workspace.ui_ignore_hidden is True
 
 
 def test_appconfig_load_and_save(tmp_path):
@@ -101,3 +102,16 @@ def test_appconfig_load_and_save(tmp_path):
 def test_appconfig_load_file_not_found(tmp_path):
     result = AppConfig.load(str(tmp_path / "nope.yaml"))
     assert isinstance(result, AppConfig)
+
+
+def test_appconfig_load_ignores_legacy_version_key(tmp_path):
+    """Older metagit.config.yaml files stored a frozen CLI version; ignore it on load."""
+    config_path = os.path.join(tmp_path, "legacy.yaml")
+    with open(config_path, "w", encoding="utf-8") as handle:
+        yaml.dump(
+            {"config": {"version": "0.1.7", "description": "legacy"}},
+            handle,
+        )
+    cfg = AppConfig.load(config_path)
+    assert isinstance(cfg, AppConfig)
+    assert cfg.description == "legacy"
