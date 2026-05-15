@@ -17,11 +17,21 @@ class ToolRegistry:
         "metagit_workspace_status",
         "metagit_workspace_index",
         "metagit_workspace_search",
+        "metagit_workspace_semantic_search",
         "metagit_repo_search",
         "metagit_upstream_hints",
         "metagit_repo_inspect",
         "metagit_repo_sync",
+        "metagit_workspace_sync",
         "metagit_bootstrap_config",
+        "metagit_project_context_switch",
+        "metagit_workspace_state_snapshot",
+        "metagit_workspace_state_restore",
+        "metagit_session_update",
+        "metagit_cross_project_dependencies",
+        "metagit_workspace_health_check",
+        "metagit_workspace_discover",
+        "metagit_project_template_apply",
     ]
 
     def list_tools(self, status: WorkspaceStatus) -> list[str]:

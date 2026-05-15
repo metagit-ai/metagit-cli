@@ -17,10 +17,21 @@ from metagit.core.mcp.root_resolver import WorkspaceRootResolver
 from metagit.core.mcp.services.bootstrap_sampling import BootstrapSamplingService
 from metagit.core.mcp.services.discovery_context import DiscoveryContextService
 from metagit.core.mcp.services.ops_log import OperationsLogService
+from metagit.core.mcp.services.project_context import ProjectContextService
 from metagit.core.mcp.services.repo_ops import RepoOperationsService
+from metagit.core.mcp.services.workspace_snapshot import WorkspaceSnapshotService
 from metagit.core.mcp.services.upstream_hints import UpstreamHintService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
+from metagit.core.mcp.services.workspace_semantic_search import (
+    WorkspaceSemanticSearchService,
+)
+from metagit.core.mcp.services.cross_project_dependencies import (
+    CrossProjectDependencyService,
+)
+from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
+from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
+from metagit.core.mcp.services.workspace_template import WorkspaceTemplateService
 from metagit.core.mcp.tool_registry import ToolRegistry
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.mcp.tools.bootstrap_plan_only import (
@@ -43,9 +54,16 @@ class MetagitMcpRuntime:
         self._registry = ToolRegistry()
         self._index_service = WorkspaceIndexService()
         self._search_service = WorkspaceSearchService()
+        self._semantic_search = WorkspaceSemanticSearchService()
+        self._workspace_sync = WorkspaceSyncService()
+        self._cross_project_deps = CrossProjectDependencyService()
+        self._workspace_health = WorkspaceHealthService()
+        self._workspace_template = WorkspaceTemplateService()
         self._managed_repo_search = ManagedRepoSearchService()
         self._hints_service = UpstreamHintService()
         self._repo_ops = RepoOperationsService()
+        self._project_context = ProjectContextService()
+        self._workspace_snapshot = WorkspaceSnapshotService()
         self._discovery_service = DiscoveryContextService()
         self._bootstrap_service = BootstrapSamplingService(sampling_supported=False)
         self._ops_log = OperationsLogService()
@@ -65,6 +83,25 @@ class MetagitMcpRuntime:
                     "query": {"type": "string"},
                     "preset": {"type": "string"},
                     "max_results": {"type": "integer", "minimum": 1},
+                    "repos": {"type": "array", "items": {"type": "string"}},
+                    "paths": {"type": "array", "items": {"type": "string"}},
+                    "exclude": {"type": "array", "items": {"type": "string"}},
+                    "context_lines": {"type": "integer", "minimum": 0},
+                    "include_paths": {"type": "boolean"},
+                    "intent": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_semantic_search": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                    "query": {"type": "string"},
+                    "repos": {"type": "array", "items": {"type": "string"}},
+                    "task_context": {"type": "string"},
+                    "goal": {"type": "string"},
+                    "limit_per_repo": {"type": "integer", "minimum": 1},
+                    "timeout_seconds": {"type": "integer", "minimum": 5},
                 },
                 "additionalProperties": False,
             },
@@ -77,10 +114,41 @@ class MetagitMcpRuntime:
                     "exact": {"type": "boolean"},
                     "synced_only": {"type": "boolean"},
                     "limit": {"type": "integer", "minimum": 1},
+                    "sort": {
+                        "type": "string",
+                        "enum": ["score", "project", "name"],
+                    },
+                    "status": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "has_url": {"type": "boolean"},
+                    "sync_enabled": {"type": "boolean"},
                     "tags": {
                         "type": "object",
                         "additionalProperties": {"type": "string"},
                     },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_sync": {
+                "type": "object",
+                "properties": {
+                    "repos": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": ["fetch", "pull", "clone"],
+                    },
+                    "only_if": {
+                        "type": "string",
+                        "enum": ["any", "missing", "dirty", "behind_origin"],
+                    },
+                    "allow_mutation": {"type": "boolean"},
+                    "max_parallel": {"type": "integer", "minimum": 1},
+                    "dry_run": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -113,6 +181,125 @@ class MetagitMcpRuntime:
             "metagit_bootstrap_config": {
                 "type": "object",
                 "properties": {"confirm_write": {"type": "boolean"}},
+                "additionalProperties": False,
+            },
+            "metagit_project_context_switch": {
+                "type": "object",
+                "required": ["project_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "setup_env": {"type": "boolean"},
+                    "restore_session": {"type": "boolean"},
+                    "save_previous": {"type": "boolean"},
+                    "primary_repo": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_state_snapshot": {
+                "type": "object",
+                "properties": {
+                    "label": {"type": "string"},
+                    "project_name": {"type": "string"},
+                    "include_all_projects": {"type": "boolean"},
+                    "include_env_state": {"type": "boolean"},
+                    "link_session": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_state_restore": {
+                "type": "object",
+                "required": ["snapshot_id"],
+                "properties": {
+                    "snapshot_id": {"type": "string"},
+                    "switch_project": {"type": "boolean"},
+                    "restore_session": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_cross_project_dependencies": {
+                "type": "object",
+                "required": ["source_project"],
+                "properties": {
+                    "source_project": {"type": "string"},
+                    "dependency_types": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "declared",
+                                "imports",
+                                "shared_config",
+                                "url_match",
+                                "ref",
+                            ],
+                        },
+                    },
+                    "depth": {"type": "integer", "minimum": 1},
+                    "include_external_repos": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_health_check": {
+                "type": "object",
+                "properties": {
+                    "check_git_status": {"type": "boolean"},
+                    "check_dependencies": {"type": "boolean"},
+                    "check_stale_branches": {"type": "boolean"},
+                    "check_gitnexus": {"type": "boolean"},
+                    "project_name": {"type": "string"},
+                    "branch_head_warning_days": {"type": "number", "minimum": 0},
+                    "branch_head_critical_days": {"type": "number", "minimum": 0},
+                    "integration_stale_days": {"type": "number", "minimum": 0},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_discover": {
+                "type": "object",
+                "properties": {
+                    "intent": {"type": "string"},
+                    "pattern": {"type": "string"},
+                    "repos": {"type": "array", "items": {"type": "string"}},
+                    "project_scope": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "exclude_generated": {"type": "boolean"},
+                    "max_results": {"type": "integer", "minimum": 1},
+                    "categorize": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_project_template_apply": {
+                "type": "object",
+                "required": ["template", "target_projects"],
+                "properties": {
+                    "template": {"type": "string"},
+                    "target_projects": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 1,
+                    },
+                    "dry_run": {"type": "boolean"},
+                    "confirm_apply": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_session_update": {
+                "type": "object",
+                "required": ["project_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "recent_repos": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "primary_repo_path": {"type": "string"},
+                    "agent_notes": {"type": "string"},
+                    "env_overrides": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"},
+                    },
+                },
                 "additionalProperties": False,
             },
         }
@@ -250,6 +437,14 @@ class MetagitMcpRuntime:
                         "uri": "metagit://workspace/repos/status",
                         "name": "Workspace Repos Status",
                     },
+                    {
+                        "uri": "metagit://workspace/health",
+                        "name": "Workspace Health",
+                    },
+                    {
+                        "uri": "metagit://workspace/context",
+                        "name": "Workspace Context",
+                    },
                 ]
             )
         resources.append(
@@ -263,8 +458,18 @@ class MetagitMcpRuntime:
             raise ValueError("uri is required")
         status, config = self._resolve_status_and_config()
         repos = self._build_repo_index(status=status, config=config)
+        health_payload = None
+        if uri == "metagit://workspace/health" and config and status.root_path:
+            health_payload = self._workspace_health.check(
+                config=config,
+                workspace_root=status.root_path,
+            ).model_dump(mode="json")
         payload = self._resources.get_resource(
-            uri=uri, config=config, repos_status=repos
+            uri=uri,
+            config=config,
+            repos_status=repos,
+            workspace_root=status.root_path,
+            health_payload=health_payload,
         )
         return {
             "contents": [
@@ -294,18 +499,72 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_search":
             repos = self._build_repo_index(status=status, config=config)
-            repo_paths = [row["repo_path"] for row in repos if row.get("exists")]
+            raw_repos = arguments.get("repos")
+            repo_selectors = (
+                [str(item) for item in raw_repos]
+                if isinstance(raw_repos, list)
+                else None
+            )
+            repo_paths = self._search_service.filter_repo_paths(
+                repo_rows=repos,
+                repos=repo_selectors,
+            )
             query = str(arguments.get("query", "")).strip()
             if not query:
                 raise InvalidToolArgumentsError("query is required")
+            raw_paths = arguments.get("paths")
+            raw_exclude = arguments.get("exclude")
             return {
                 "hits": self._search_service.search(
                     query=query,
                     repo_paths=repo_paths,
                     preset=arguments.get("preset"),
                     max_results=int(arguments.get("max_results", 25)),
+                    paths=[str(item) for item in raw_paths]
+                    if isinstance(raw_paths, list)
+                    else None,
+                    exclude=[str(item) for item in raw_exclude]
+                    if isinstance(raw_exclude, list)
+                    else None,
+                    context_lines=int(arguments.get("context_lines", 0)),
+                    include_paths=bool(arguments.get("include_paths", False)),
+                    intent=arguments.get("intent"),
                 )
             }
+
+        if name == "metagit_workspace_semantic_search":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "semantic workspace search requires an active workspace"
+                )
+            repos = self._build_repo_index(status=status, config=config)
+            raw_sem_repos = arguments.get("repos")
+            sem_selectors = (
+                [str(item) for item in raw_sem_repos]
+                if isinstance(raw_sem_repos, list)
+                else None
+            )
+            repo_paths = self._search_service.filter_repo_paths(
+                repo_rows=repos,
+                repos=sem_selectors,
+            )
+            sem_query = str(arguments.get("query", "")).strip()
+            if not sem_query:
+                raise InvalidToolArgumentsError("query is required")
+            limit_sem = int(arguments.get("limit_per_repo", 5))
+            if limit_sem < 1:
+                raise InvalidToolArgumentsError("limit_per_repo must be at least 1")
+            timeout_sem = int(arguments.get("timeout_seconds", 120))
+            if timeout_sem < 5:
+                raise InvalidToolArgumentsError("timeout_seconds must be at least 5")
+            return self._semantic_search.search_across_repos(
+                query=sem_query,
+                repo_paths=repo_paths,
+                task_context=arguments.get("task_context"),
+                goal=arguments.get("goal"),
+                limit_per_repo=limit_sem,
+                timeout_seconds=timeout_sem,
+            )
 
         if name == "metagit_repo_search":
             if not config or not status.root_path:
@@ -326,6 +585,21 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError("limit must be an integer") from exc
             if limit_val < 1:
                 raise InvalidToolArgumentsError("limit must be at least 1")
+            raw_status = arguments.get("status")
+            status_filter = (
+                [str(item) for item in raw_status]
+                if isinstance(raw_status, list)
+                else None
+            )
+            sort_val = str(arguments.get("sort", "score"))
+            if sort_val not in {"score", "project", "name"}:
+                raise InvalidToolArgumentsError("sort must be score, project, or name")
+            has_url = arguments.get("has_url")
+            has_url_val = bool(has_url) if isinstance(has_url, bool) else None
+            sync_enabled = arguments.get("sync_enabled")
+            sync_enabled_val = (
+                bool(sync_enabled) if isinstance(sync_enabled, bool) else None
+            )
             result = self._managed_repo_search.search(
                 config=config,
                 workspace_root=status.root_path,
@@ -334,6 +608,10 @@ class MetagitMcpRuntime:
                 exact=bool(arguments.get("exact", False)),
                 synced_only=bool(arguments.get("synced_only", False)),
                 tags=tag_filter,
+                status=status_filter,
+                has_url=has_url_val,
+                sync_enabled=sync_enabled_val,
+                sort=sort_val,
                 limit=limit_val,
             )
             return result.model_dump(mode="json")
@@ -360,6 +638,247 @@ class MetagitMcpRuntime:
                 allow_mutation=bool(arguments.get("allow_mutation", False)),
                 origin_url=arguments.get("origin_url"),
             )
+
+        if name == "metagit_workspace_sync":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "workspace sync requires an active workspace"
+                )
+            repos = self._build_repo_index(status=status, config=config)
+            raw_repos = arguments.get("repos")
+            repo_selectors = (
+                [str(item) for item in raw_repos]
+                if isinstance(raw_repos, list)
+                else ["all"]
+            )
+            only_if = str(arguments.get("only_if", "any"))
+            if only_if not in {"any", "missing", "dirty", "behind_origin"}:
+                raise InvalidToolArgumentsError(
+                    "only_if must be any, missing, dirty, or behind_origin"
+                )
+            max_parallel_raw = arguments.get("max_parallel", 4)
+            try:
+                max_parallel = int(max_parallel_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError(
+                    "max_parallel must be an integer"
+                ) from exc
+            if max_parallel < 1:
+                raise InvalidToolArgumentsError("max_parallel must be at least 1")
+            return self._workspace_sync.sync_many(
+                repo_rows=repos,
+                repos=repo_selectors,
+                mode=str(arguments.get("mode", "fetch")),
+                only_if=only_if,
+                allow_mutation=bool(arguments.get("allow_mutation", False)),
+                max_parallel=max_parallel,
+                dry_run=bool(arguments.get("dry_run", False)),
+            )
+
+        if name == "metagit_project_context_switch":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "project context requires an active workspace"
+                )
+            project_name = str(arguments.get("project_name", "")).strip()
+            if not project_name:
+                raise InvalidToolArgumentsError("project_name is required")
+            bundle = self._project_context.switch(
+                config=config,
+                workspace_root=status.root_path,
+                project_name=project_name,
+                setup_env=bool(arguments.get("setup_env", True)),
+                restore_session=bool(arguments.get("restore_session", True)),
+                save_previous=bool(arguments.get("save_previous", True)),
+                primary_repo=arguments.get("primary_repo"),
+            )
+            return bundle.model_dump(mode="json")
+
+        if name == "metagit_workspace_state_snapshot":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "workspace snapshot requires an active workspace"
+                )
+            return self._workspace_snapshot.create(
+                config=config,
+                workspace_root=status.root_path,
+                label=arguments.get("label"),
+                project_name=arguments.get("project_name"),
+                include_all_projects=bool(arguments.get("include_all_projects", False)),
+                include_env_state=bool(arguments.get("include_env_state", True)),
+                link_session=bool(arguments.get("link_session", True)),
+            )
+
+        if name == "metagit_workspace_state_restore":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "workspace snapshot restore requires an active workspace"
+                )
+            snapshot_id = str(arguments.get("snapshot_id", "")).strip()
+            if not snapshot_id:
+                raise InvalidToolArgumentsError("snapshot_id is required")
+            result = self._workspace_snapshot.restore(
+                config=config,
+                workspace_root=status.root_path,
+                snapshot_id=snapshot_id,
+                switch_project=bool(arguments.get("switch_project", True)),
+                restore_session=bool(arguments.get("restore_session", True)),
+            )
+            return result.model_dump(mode="json")
+
+        if name == "metagit_workspace_health_check":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "workspace health check requires an active workspace"
+                )
+            raw_warn = arguments.get("branch_head_warning_days")
+            raw_crit = arguments.get("branch_head_critical_days")
+            raw_integration = arguments.get("integration_stale_days")
+            try:
+                branch_warn = float(raw_warn) if raw_warn is not None else 180.0
+                branch_crit = float(raw_crit) if raw_crit is not None else 365.0
+                integration_td = (
+                    float(raw_integration) if raw_integration is not None else 90.0
+                )
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError(
+                    "branch age thresholds must be numbers"
+                ) from exc
+            if branch_warn < 0 or branch_crit < 0 or integration_td < 0:
+                raise InvalidToolArgumentsError(
+                    "branch age thresholds must be non-negative"
+                )
+            result = self._workspace_health.check(
+                config=config,
+                workspace_root=status.root_path,
+                check_git_status=bool(arguments.get("check_git_status", True)),
+                check_dependencies=bool(arguments.get("check_dependencies", True)),
+                check_stale_branches=bool(arguments.get("check_stale_branches", True)),
+                check_gitnexus=bool(arguments.get("check_gitnexus", True)),
+                project_name=arguments.get("project_name"),
+                branch_head_warning_days=branch_warn,
+                branch_head_critical_days=branch_crit,
+                integration_stale_days=integration_td,
+            )
+            return result.model_dump(mode="json")
+
+        if name == "metagit_workspace_discover":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "workspace discover requires an active workspace"
+                )
+            intent = arguments.get("intent")
+            pattern = arguments.get("pattern")
+            if not intent and not pattern:
+                raise InvalidToolArgumentsError("intent or pattern is required")
+            repos = self._build_repo_index(status=status, config=config)
+            raw_repos = arguments.get("repos")
+            raw_scope = arguments.get("project_scope")
+            selectors = (
+                [str(item) for item in raw_repos]
+                if isinstance(raw_repos, list)
+                else (
+                    [str(item) for item in raw_scope]
+                    if isinstance(raw_scope, list)
+                    else None
+                )
+            )
+            repo_paths = self._search_service.filter_repo_paths(
+                repo_rows=repos,
+                repos=selectors,
+            )
+            return self._search_service.discover_files(
+                repo_paths=repo_paths,
+                intent=str(intent) if intent else None,
+                pattern=str(pattern) if pattern else None,
+                exclude_generated=bool(arguments.get("exclude_generated", True)),
+                max_results=int(arguments.get("max_results", 200)),
+                categorize=bool(arguments.get("categorize", True)),
+            )
+
+        if name == "metagit_project_template_apply":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "template apply requires an active workspace"
+                )
+            template = str(arguments.get("template", "")).strip()
+            raw_targets = arguments.get("target_projects")
+            if not template:
+                raise InvalidToolArgumentsError("template is required")
+            if not isinstance(raw_targets, list) or not raw_targets:
+                raise InvalidToolArgumentsError("target_projects is required")
+            return self._workspace_template.apply(
+                config=config,
+                workspace_root=status.root_path,
+                template=template,
+                target_projects=[str(item) for item in raw_targets],
+                dry_run=bool(arguments.get("dry_run", True)),
+                confirm_apply=bool(arguments.get("confirm_apply", False)),
+            )
+
+        if name == "metagit_cross_project_dependencies":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "cross-project dependencies require an active workspace"
+                )
+            source_project = str(arguments.get("source_project", "")).strip()
+            if not source_project:
+                raise InvalidToolArgumentsError("source_project is required")
+            raw_types = arguments.get("dependency_types")
+            dependency_types = (
+                [str(item) for item in raw_types]
+                if isinstance(raw_types, list)
+                else None
+            )
+            depth_raw = arguments.get("depth", 2)
+            try:
+                depth_val = int(depth_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("depth must be an integer") from exc
+            if depth_val < 1:
+                raise InvalidToolArgumentsError("depth must be at least 1")
+            result = self._cross_project_deps.map_dependencies(
+                config=config,
+                workspace_root=status.root_path,
+                source_project=source_project,
+                dependency_types=dependency_types,
+                depth=depth_val,
+                include_external_repos=bool(
+                    arguments.get("include_external_repos", False)
+                ),
+            )
+            return result.model_dump(mode="json")
+
+        if name == "metagit_session_update":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "session update requires an active workspace"
+                )
+            project_name = str(arguments.get("project_name", "")).strip()
+            if not project_name:
+                raise InvalidToolArgumentsError("project_name is required")
+            recent = arguments.get("recent_repos")
+            recent_repos = (
+                [str(item) for item in recent] if isinstance(recent, list) else None
+            )
+            env_raw = arguments.get("env_overrides")
+            env_overrides = (
+                {str(k): str(v) for k, v in env_raw.items()}
+                if isinstance(env_raw, dict)
+                else None
+            )
+            try:
+                return self._project_context.update_session(
+                    config=config,
+                    workspace_root=status.root_path,
+                    project_name=project_name,
+                    recent_repos=recent_repos,
+                    primary_repo_path=arguments.get("primary_repo_path"),
+                    agent_notes=arguments.get("agent_notes"),
+                    env_overrides=env_overrides,
+                )
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
 
         if name == "metagit_bootstrap_config":
             root = status.root_path or str(Path.cwd())

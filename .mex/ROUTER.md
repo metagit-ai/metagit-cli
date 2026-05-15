@@ -29,7 +29,7 @@ Then read this file fully before doing anything else in this session.
 **Working:**
 - Core CLI command surface (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search` / `find`, `api serve` for local JSON, `project repo prune` for sync-folder cleanup) with shared app config + logger bootstrapping.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
-- MCP runtime with state-aware gating, tool/resource handlers (including **`metagit_repo_search`** for managed-repo lookup), protocol-framed stdio loop, and runtime tests.
+- MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply), resources for health/context, protocol-framed stdio loop, and runtime tests.
 - Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api`, and guarded repo inspect/sync flows.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows, including `metagit-projects` for OpenClaw/Hermes workspace project lifecycle (check-before-create, register in `.metagit.yml`).
 - `docs/skills.md` documents global install, `metagit skills install`, and bundled skill overview.

@@ -32,25 +32,33 @@ class ManagedRepoSearchService:
         exact: bool = False,
         synced_only: bool = False,
         tags: dict[str, str] | None = None,
+        status: list[str] | None = None,
+        has_url: bool | None = None,
+        sync_enabled: bool | None = None,
+        sort: str = "score",
         limit: int = 10,
     ) -> ManagedRepoSearchResult:
         """Return ranked matches for a free-text query and optional filters."""
         rows = self._index.build_index(config=config, workspace_root=workspace_root)
+        status_filter = set(status) if status else None
         matches: list[ManagedRepoMatch] = []
         for row in rows:
-            if project and row["project_name"] != project:
-                continue
-            if synced_only and row["status"] != "synced":
-                continue
-            row_tags = row.get("tags") or {}
-            if tags and any(row_tags.get(key) != value for key, value in tags.items()):
+            if not self._row_passes_filters(
+                row=row,
+                project=project,
+                synced_only=synced_only,
+                tags=tags,
+                status_filter=status_filter,
+                has_url=has_url,
+                sync_enabled=sync_enabled,
+            ):
                 continue
             score, reasons = self._match_row(row=row, query=query, exact=exact)
             if score <= 0:
                 continue
             matches.append(self._to_match(row=row, score=score, reasons=reasons))
-        matches.sort(key=lambda item: (-item.score, item.project_name, item.repo_name))
-        return ManagedRepoSearchResult(query=query, matches=matches[:limit])
+        ordered = self._sort_matches(matches=matches, sort=sort)
+        return ManagedRepoSearchResult(query=query, matches=ordered[:limit])
 
     def resolve_one(
         self,
@@ -62,6 +70,10 @@ class ManagedRepoSearchService:
         exact: bool = False,
         synced_only: bool = True,
         tags: dict[str, str] | None = None,
+        status: list[str] | None = None,
+        has_url: bool | None = None,
+        sync_enabled: bool | None = None,
+        sort: str = "score",
     ) -> ManagedRepoResolveResult:
         """Return a single best match or a structured not_found / ambiguous error."""
         result = self.search(
@@ -72,6 +84,10 @@ class ManagedRepoSearchService:
             exact=exact,
             synced_only=synced_only,
             tags=tags,
+            status=status,
+            has_url=has_url,
+            sync_enabled=sync_enabled,
+            sort=sort,
             limit=25,
         )
         if not result.matches:
@@ -116,13 +132,70 @@ class ManagedRepoSearchService:
             score=score,
         )
 
+    def _row_passes_filters(
+        self,
+        *,
+        row: dict[str, Any],
+        project: str | None,
+        synced_only: bool,
+        tags: dict[str, str] | None,
+        status_filter: set[str] | None,
+        has_url: bool | None,
+        sync_enabled: bool | None,
+    ) -> bool:
+        """Return whether an index row satisfies structural filters."""
+        if project and row["project_name"] != project:
+            return False
+        if synced_only and row["status"] != "synced":
+            return False
+        if status_filter and row["status"] not in status_filter:
+            return False
+        row_url = row.get("url")
+        if has_url is True and not row_url:
+            return False
+        if has_url is False and row_url:
+            return False
+        row_sync = bool(row.get("sync"))
+        if sync_enabled is True and not row_sync:
+            return False
+        if sync_enabled is False and row_sync:
+            return False
+        row_tags = row.get("tags") or {}
+        if tags and any(row_tags.get(key) != value for key, value in tags.items()):
+            return False
+        return True
+
+    def _sort_matches(
+        self, *, matches: list[ManagedRepoMatch], sort: str
+    ) -> list[ManagedRepoMatch]:
+        """Sort matches by score, project, or repository name."""
+        normalized = sort.lower()
+        if normalized == "name":
+            return sorted(
+                matches,
+                key=lambda item: (item.repo_name.lower(), -item.score),
+            )
+        if normalized == "project":
+            return sorted(
+                matches,
+                key=lambda item: (
+                    item.project_name.lower(),
+                    item.repo_name.lower(),
+                    -item.score,
+                ),
+            )
+        return sorted(
+            matches,
+            key=lambda item: (-item.score, item.project_name, item.repo_name),
+        )
+
     def _match_row(
         self, *, row: dict[str, Any], query: str, exact: bool
     ) -> tuple[int, list[str]]:
         reasons: list[str] = []
         q = query.strip()
-        if not q:
-            return 0, []
+        if not q or q == "*":
+            return 1, ["filter:match"]
         name = row.get("repo_name") or ""
         if exact:
             if name == q:
