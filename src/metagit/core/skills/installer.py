@@ -48,7 +48,9 @@ class InstallResult(BaseModel):
     applied: bool
     path: str
     details: str
-    dry_run: bool = Field(default=False, description="True when no changes were written")
+    dry_run: bool = Field(
+        default=False, description="True when no changes were written"
+    )
 
 
 TARGET_PATHS: Dict[str, TargetPaths] = {
@@ -115,8 +117,7 @@ def resolve_skill_names(skill_names: Optional[List[str]]) -> List[str]:
     if unknown:
         available = ", ".join(bundled) if bundled else "(none)"
         raise ValueError(
-            f"Unknown skill(s): {', '.join(unknown)}. "
-            f"Available: {available}"
+            f"Unknown skill(s): {', '.join(unknown)}. Available: {available}"
         )
     return list(dict.fromkeys(skill_names))
 
