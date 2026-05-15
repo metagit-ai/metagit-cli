@@ -20,6 +20,7 @@
 
 ### Fixed
 
+- Workspace search fallback without `rg` now matches preset-expanded terms (e.g. `preset=terraform`) instead of treating the composed `|` pattern as one literal string; fixes empty results in CI when ripgrep is not installed.
 - `task test` now runs `uv run pytest` so tests use the project virtualenv (fixes `ModuleNotFoundError: loguru` when `pytest` was not the venv binary).
 
 ## [0.2.2](https://github.com/metagit-ai/metagit-cli/compare/v0.2.1...v0.2.2) (2026-05-06)

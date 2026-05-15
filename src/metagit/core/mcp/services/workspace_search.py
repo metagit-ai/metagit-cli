@@ -94,7 +94,8 @@ class WorkspaceSearchService:
             else:
                 hits = self._search_fallback(
                     root=root,
-                    query=search_query,
+                    query=query,
+                    preset=preset,
                     max_results=max_results - len(results),
                 )
             results.extend(hits)
@@ -218,10 +219,14 @@ class WorkspaceSearchService:
         self,
         root: Path,
         query: str,
+        preset: Optional[str],
         max_results: int,
     ) -> list[dict[str, Any]]:
         """Fallback scanner when ripgrep is unavailable."""
-        terms = [term.lower() for term in query.lower().split() if term]
+        raw_terms = [term for term in self._terms(query=query, preset=preset) if term]
+        terms = [term.lower() for term in raw_terms]
+        if not terms:
+            terms = [t.lower() for t in query.split() if t]
         if not terms:
             return []
         results: list[dict[str, Any]] = []

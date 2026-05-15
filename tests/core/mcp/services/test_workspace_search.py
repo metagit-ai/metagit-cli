@@ -4,6 +4,7 @@ Unit tests for metagit.core.mcp.services.workspace_search
 """
 
 from pathlib import Path
+from unittest.mock import patch
 
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 
@@ -54,6 +55,25 @@ def test_filter_repo_paths_supports_project_repo_selector() -> None:
     ]
     paths = service.filter_repo_paths(rows, repos=["alpha/repo-one"])
     assert paths == ["/tmp/alpha/repo-one"]
+
+
+@patch("metagit.core.mcp.services.workspace_search.shutil.which", return_value=None)
+def test_workspace_search_terraform_preset_fallback_without_rg(
+    _mock_which: object,
+    tmp_path: Path,
+) -> None:
+    repo_path = tmp_path / "repo-1"
+    repo_path.mkdir()
+    tf_file = repo_path / "main.tf"
+    tf_file.write_text('module "x" {}\n', encoding="utf-8")
+    service = WorkspaceSearchService()
+    results = service.search(
+        query="module",
+        repo_paths=[str(repo_path)],
+        preset="terraform",
+        max_results=10,
+    )
+    assert len(results) >= 1
 
 
 def test_workspace_search_includes_context_when_rg_available(tmp_path: Path) -> None:
