@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-05-12
+last_updated: 2026-05-15
 ---
 
 # Session Bootstrap
@@ -31,7 +31,8 @@ Then read this file fully before doing anything else in this session.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
 - MCP runtime with state-aware gating, tool/resource handlers (including **`metagit_repo_search`** for managed-repo lookup), protocol-framed stdio loop, and runtime tests.
 - Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api`, and guarded repo inspect/sync flows.
-- Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows.
+- Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows, including `metagit-projects` for OpenClaw/Hermes workspace project lifecycle (check-before-create, register in `.metagit.yml`).
+- `docs/skills.md` documents global install, `metagit skills install`, and bundled skill overview.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
 - Docs build path resolves CLI imports correctly in CI by including interactive prompt runtime dependency.
 - A semantic-release workflow now computes and pushes tags from conventional commits on `main`, and tag pushes drive PyPI/TestPyPI publish workflows.

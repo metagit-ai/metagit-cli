@@ -14,6 +14,27 @@ This tool works well for scenarios like:
 
 Metagit is designed for developers, SREs, and AI agents who work across connected repositories. It tracks the dependencies and project relationships that are easy to miss when you only look at one repo at a time.
 
+## Quick start
+
+Install or upgrade the CLI globally with [uv](https://docs.astral.sh/uv/):
+
+```bash
+uv tool install metagit-cli
+uv tool install -U metagit-cli   # upgrade later
+metagit version
+```
+
+> Use the PyPI package name **`metagit-cli`**. The `metagit` package on PyPI is a different project.
+
+Install bundled agent skills (OpenClaw, Hermes, Claude Code, and others):
+
+```bash
+metagit skills list
+metagit skills install --scope user --target openclaw --target hermes
+```
+
+Use `--scope project` when installing into a specific umbrella repository checkout. See [Skills](docs/skills.md) for targets, MCP install, and the project-management skill for agents.
+
 ## Audience
 
 This tool targets:
@@ -97,21 +118,7 @@ In this mode, Metagit helps answer questions like:
 
 ## Install
 
-### Global CLI install (recommended)
-
-Use `uv tool` to install Metagit globally:
-
-```bash
-uv tool install metagit-cli
-```
-
-> **WARNING** Use `metagit-cli` as the package name on PyPI. The `metagit` package name belongs to a different project!
-
-Upgrade later with:
-
-```bash
-uv tool install -U metagit-cli
-```
+Global install and skill setup are covered in [Quick start](#quick-start) above.
 
 ### Local first-run
 
@@ -125,7 +132,7 @@ That creates `.metagit.yml` and updates `.gitignore`.
 
 ## Skills
 
-Metagit includes local skills under `skills/` you can clone into your skills folders for various agents.
+Bundled skills ship with the package and install via `metagit skills install` (see [docs/skills.md](docs/skills.md)). For development in this repository, `skills/` is the source tree; run `task skills:sync` to mirror into `.cursor/skills/`.
 
 ## Documentation
 

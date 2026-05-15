@@ -48,6 +48,9 @@ class InstallResult(BaseModel):
     applied: bool
     path: str
     details: str
+    dry_run: bool = Field(
+        default=False, description="True when no changes were written"
+    )
 
 
 TARGET_PATHS: Dict[str, TargetPaths] = {
@@ -105,6 +108,20 @@ def skill_markdown(skill_name: str) -> Optional[str]:
     return skill_file.read_text(encoding="utf-8")
 
 
+def resolve_skill_names(skill_names: Optional[List[str]]) -> List[str]:
+    """Validate and resolve bundled skill names for install."""
+    bundled = list_bundled_skills()
+    if not skill_names:
+        return bundled
+    unknown = sorted({name for name in skill_names if name not in bundled})
+    if unknown:
+        available = ", ".join(bundled) if bundled else "(none)"
+        raise ValueError(
+            f"Unknown skill(s): {', '.join(unknown)}. Available: {available}"
+        )
+    return list(dict.fromkeys(skill_names))
+
+
 def resolve_targets(
     mode: InstallMode,
     scope: InstallScope,
@@ -141,9 +158,25 @@ def autodetect_targets(mode: InstallMode, scope: InstallScope) -> List[str]:
     return resolved
 
 
+def _install_details_label(
+    installed_names: List[str],
+    *,
+    dry_run: bool,
+) -> str:
+    """Build a human-readable install summary line."""
+    verb = "Would install" if dry_run else "Installed"
+    if len(installed_names) == 1:
+        return f"{verb} skill '{installed_names[0]}'"
+    names = ", ".join(installed_names)
+    return f"{verb} {len(installed_names)} skills: {names}"
+
+
 def install_skills_for_targets(
     targets: List[str],
     scope: InstallScope,
+    skill_names: Optional[List[str]] = None,
+    *,
+    dry_run: bool = False,
 ) -> List[InstallResult]:
     """Install bundled skills for selected targets."""
     source_root = bundled_skills_root()
@@ -159,6 +192,18 @@ def install_skills_for_targets(
                 details="Bundled skills directory not found",
             )
         ]
+    selected_skills = resolve_skill_names(skill_names)
+    if not selected_skills:
+        return [
+            InstallResult(
+                target="all",
+                mode="skills",
+                scope=scope,
+                applied=False,
+                path=str(source_root),
+                details="No bundled skills available to install",
+            )
+        ]
     for target in targets:
         target_paths = TARGET_PATHS[target]
         destination = _expand_target_path(
@@ -166,24 +211,30 @@ def install_skills_for_targets(
             if scope == "project"
             else target_paths.user_skills_path
         )
-        destination.mkdir(parents=True, exist_ok=True)
-        copied_count = 0
-        for source_skill in source_root.iterdir():
+        if not dry_run:
+            destination.mkdir(parents=True, exist_ok=True)
+        installed_names: List[str] = []
+        for skill_name in selected_skills:
+            source_skill = source_root / skill_name
             if not source_skill.is_dir():
                 continue
-            dest_skill = destination / source_skill.name
+            dest_skill = destination / skill_name
+            if dry_run:
+                installed_names.append(skill_name)
+                continue
             if dest_skill.exists():
                 shutil.rmtree(dest_skill)
             shutil.copytree(source_skill, dest_skill)
-            copied_count += 1
+            installed_names.append(skill_name)
         results.append(
             InstallResult(
                 target=target,
                 mode="skills",
                 scope=scope,
-                applied=True,
+                applied=bool(installed_names),
                 path=str(destination),
-                details=f"Installed {copied_count} skills",
+                details=_install_details_label(installed_names, dry_run=dry_run),
+                dry_run=dry_run,
             )
         )
     return results
