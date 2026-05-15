@@ -1,35 +1,63 @@
-# Metagit Skills (source tree)
+# Metagit skills
 
-Agent skills live under `skills/<name>/SKILL.md`. The same content is bundled in `src/metagit/data/skills/` for PyPI installs.
+Metagit ships agent **skills** (`skills/metagit-*/SKILL.md`): short playbooks for when and how to use the CLI and MCP. All bundled skills use a `metagit-` prefix.
 
-## End users
-
-Install globally and deploy skills with the CLI (see [docs/skills.md](../docs/skills.md)):
+## Install the CLI
 
 ```bash
-uv tool install -U metagit-cli
-metagit skills install --scope user --target openclaw --target hermes
+uv tool install metagit-cli
+uv tool install -U metagit-cli   # upgrade
+metagit version
 ```
 
-## Developers in this repository
+> PyPI package name: **`metagit-cli`** (not `metagit`).
+
+## Install skills
+
+```bash
+metagit skills list
+metagit skills show metagit-projects
+metagit skills install
+metagit skills install --scope user --target openclaw --target hermes
+metagit skills install --skill metagit-projects --target openclaw
+metagit skills install --skill metagit-projects --target openclaw --dry-run
+```
+
+Use `--skill` (repeatable) to install one or more bundled skills instead of the full set. Omit `--skill` to install every bundled skill. Add `--dry-run` to preview targets and paths without writing files.
+
+Optional MCP registration:
+
+```bash
+metagit mcp install --scope user --target openclaw --target hermes
+```
+
+Other targets: `opencode`, `claude_code`, `github_copilot`.
+
+## Skill catalog
+
+| Skill | Use when |
+|-------|----------|
+| `metagit-projects` | Starting work; check for existing projects/repos before new folders |
+| `metagit-workspace-scope` | Session start; workspace and sync context |
+| `metagit-control-center` | Ongoing multi-repo coordination |
+| `metagit-workspace-sync` | Guarded fetch/pull/clone |
+| `metagit-config-refresh` | `.metagit.yml` missing or stale |
+| `metagit-bootstrap` | Generate or refine config with discovery/MCP |
+| `metagit-gating` | MCP workspace gate status |
+| `metagit-upstream-scan` | Search other managed repos for causes |
+| `metagit-upstream-triage` | Rank upstream blockers |
+| `metagit-repo-impact` | Plan cross-repo changes |
+| `metagit-multi-repo` | Implement across several repos |
+| `metagit-gitnexus` | GitNexus index and graph workflows |
+| `metagit-release-audit` | Pre-push / release readiness |
+
+For workspace vs project vs repo definitions, see [Terminology](terminology.md).
+
+## Source development
 
 ```bash
 task skills:validate
-task skills:sync    # mirror into .cursor/skills/
+task skills:sync    # mirrors into .cursor/skills/
 ```
 
-When adding or changing a skill, update both `skills/` and `src/metagit/data/skills/`.
-
-## Included skills
-
-- `ongoing-project-management` — reuse or register workspace projects/repos before creating folders
-- `discovering-workspace-scope` — session start scope discovery
-- `metagit-control-center` — multi-repo control center
-- `syncing-workspace-repositories` — guarded sync workflows
-- `refreshing-project-config` — `.metagit.yml` bootstrap and refresh
-- `triaging-upstream-blockers` / `metagit-upstream-discovery` — cross-repo blockers
-- `planning-repo-impact` / `coordinating-multi-repo-implementation` — multi-repo implementation
-- `running-gitnexus-analysis` — GitNexus indexing
-- `auditing-release-readiness` — pre-push QA
-
-Open each `SKILL.md` for full workflows.
+Update both `skills/` and `src/metagit/data/skills/` when changing bundled skills.

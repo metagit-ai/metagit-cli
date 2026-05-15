@@ -11,6 +11,7 @@ from metagit.core.skills import (
     SUPPORTED_TARGETS,
     install_skills_for_targets,
     list_bundled_skills,
+    resolve_skill_names,
     resolve_targets,
     skill_markdown,
 )
@@ -84,12 +85,26 @@ def skills_show(ctx: click.Context, skill_name: str | None) -> None:
     type=click.Choice(SUPPORTED_TARGETS),
     help="Disable one or more auto-detected targets.",
 )
+@click.option(
+    "--skill",
+    "skills",
+    multiple=True,
+    help="Install only this bundled skill (repeatable). Omit to install all.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Show what would be installed without writing files.",
+)
 @click.pass_context
 def skills_install(
     ctx: click.Context,
     scope: str,
     targets: List[str],
     disable_targets: List[str],
+    skills: List[str],
+    dry_run: bool,
 ) -> None:
     """Install bundled skills into supported agent targets."""
     logger = ctx.obj["logger"]
@@ -104,9 +119,24 @@ def skills_install(
             "No targets selected. Use --target to choose targets explicitly."
         )
         return
-    results = install_skills_for_targets(targets=selected_targets, scope=scope)
+    try:
+        selected_skills = resolve_skill_names(list(skills) if skills else None)
+    except ValueError as exc:
+        message = str(exc)
+        logger.error(message)
+        logger.echo(message)
+        ctx.abort()
+    results = install_skills_for_targets(
+        targets=selected_targets,
+        scope=scope,
+        skill_names=selected_skills if skills else None,
+        dry_run=dry_run,
+    )
     for result in results:
-        if result.applied:
-            logger.success(f"[{result.target}] {result.details} -> {result.path}")
+        line = f"[{result.target}] {result.details} -> {result.path}"
+        if result.dry_run:
+            logger.echo(f"(dry run) {line}")
+        elif result.applied:
+            logger.success(line)
         else:
-            logger.warning(f"[{result.target}] {result.details} -> {result.path}")
+            logger.warning(line)

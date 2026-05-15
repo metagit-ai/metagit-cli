@@ -3,7 +3,14 @@
 Unit tests for skills installer helpers.
 """
 
-from metagit.core.skills.installer import autodetect_targets, resolve_targets
+import pytest
+
+from metagit.core.skills.installer import (
+    autodetect_targets,
+    install_skills_for_targets,
+    resolve_skill_names,
+    resolve_targets,
+)
 
 
 def test_resolve_targets_respects_disable() -> None:
@@ -23,3 +30,42 @@ def test_autodetect_targets_project_scope(monkeypatch, tmp_path) -> None:
     monkeypatch.chdir(project_root)
     detected = autodetect_targets(mode="skills", scope="project")
     assert "opencode" in detected
+
+
+def test_resolve_skill_names_rejects_unknown() -> None:
+    with pytest.raises(ValueError, match="Unknown skill"):
+        resolve_skill_names(["not-a-real-skill"])
+
+
+def test_install_skills_for_targets_single_skill(monkeypatch, tmp_path) -> None:
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    (project_root / ".opencode").mkdir()
+    monkeypatch.chdir(project_root)
+    results = install_skills_for_targets(
+        targets=["opencode"],
+        scope="project",
+        skill_names=["metagit-gitnexus"],
+    )
+    destination = project_root / ".opencode" / "skills"
+    assert results[0].applied is True
+    assert "metagit-gitnexus" in results[0].details
+    installed = [p.name for p in destination.iterdir() if p.is_dir()]
+    assert installed == ["metagit-gitnexus"]
+
+
+def test_install_skills_dry_run_writes_nothing(monkeypatch, tmp_path) -> None:
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    (project_root / ".opencode").mkdir()
+    monkeypatch.chdir(project_root)
+    results = install_skills_for_targets(
+        targets=["opencode"],
+        scope="project",
+        skill_names=["metagit-gitnexus"],
+        dry_run=True,
+    )
+    destination = project_root / ".opencode" / "skills"
+    assert results[0].dry_run is True
+    assert results[0].details.startswith("Would install")
+    assert not destination.exists()
