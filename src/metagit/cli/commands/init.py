@@ -10,6 +10,7 @@ and update the .gitignore file to include the workspace path.
 
 import os
 from pathlib import Path
+from typing import Optional, Tuple
 
 import click
 from git import Repo
@@ -18,6 +19,25 @@ from metagit.core.appconfig import AppConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.utils.yaml_class import yaml
+
+
+def _resolve_project_metadata(directory: Path) -> Tuple[str, Optional[str]]:
+    """
+    Resolve project name and optional remote URL from a directory.
+
+    Works inside a Git repository or any ordinary folder.
+    """
+    name = directory.name
+    url: Optional[str] = None
+    try:
+        git_repo = Repo(directory)
+        name = Path(git_repo.working_dir).name
+        if git_repo.remotes:
+            remote_url = git_repo.remotes[0].url
+            url = remote_url if remote_url else None
+    except Exception:
+        pass
+    return name, url
 
 
 @click.command("init")
@@ -58,13 +78,7 @@ def init(ctx: click.Context, kind: str, force: bool, skip_gitignore: bool) -> No
             "⚠️ .metagit.yml already exists, metagit_yml_path (Use --force to overwrite)"
         )
     else:
-        try:
-            git_repo = Repo(Path.cwd())
-            name = Path(git_repo.working_dir).name
-        except Exception:
-            name = Path.cwd().name
-        url = git_repo.remote().url or None
-        # Create default .metagit.yml content
+        name, url = _resolve_project_metadata(current_dir)
         try:
             config_file = MetagitConfig(
                 name=name, description="unknown", url=url, kind=kind

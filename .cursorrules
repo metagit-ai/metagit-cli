@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to ROUTER.md for full context.
-last_updated: [YYYY-MM-DD]
+last_updated: 2026-05-15
 ---
 
 # [Project Name]
@@ -33,6 +33,12 @@ last_updated: [YYYY-MM-DD]
 
 ## After Every Task
 After completing any task: update `.mex/ROUTER.md` project state and any `.mex/` files that are now out of date. If no pattern existed for the task you just completed, create one in `.mex/patterns/`.
+
+**Before you tell the user the work is done** — if this conversation introduced or edited project files under this repo — run **`task qa:prepush`** from the repository root (`scripts/prepush-gate.py` via `scripts/prepush-gate.zsh`). Fix failures and re-run until green. Only skip when the task was strictly read-only (no writes) or the user explicitly waived the QA gate in this thread.
+
+## Commands (minimum)
+- QA gate before hand-off / “work complete”: `task qa:prepush` (format, lint, tests, integration tests; optional `gitleaks` when installed)
+- Full unit tests only: `task test`
 
 ## Navigation
 At the start of every session, read `.mex/ROUTER.md` before doing anything else.

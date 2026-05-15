@@ -1,11 +1,11 @@
 ---
 name: metagit-release-audit
-description: Audit local release readiness by running formatting, linting, tests, and security checks with concise failure-focused output. Use before push, release, or hand-off.
+description: Mandatory before calling work complete when the session changed repo files. Runs format, lint, tests, integration tests, and optional security via task qa:prepush. Use before push, release, or hand-off.
 ---
 
 # Auditing Release Readiness
 
-Use this skill at the end of a coding session.
+Use this skill **whenever** your session added or edited tracked files in this repository and you are about to hand off or say the task is done—not only "release" workflows. Read-only Q&A with no writes can skip it.
 
 ## Workflow
 

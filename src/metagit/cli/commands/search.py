@@ -51,6 +51,18 @@ def _parse_tag_filters(tag_values: tuple[str, ...]) -> dict[str, str] | None:
     multiple=True,
     help="Filter by tag (repeatable), e.g. --tag domain=terraform-module",
 )
+@click.option(
+    "--status",
+    "status_values",
+    multiple=True,
+    help="Filter by repo status (repeatable), e.g. --status synced",
+)
+@click.option(
+    "--sort",
+    default="score",
+    type=click.Choice(["score", "project", "name"], case_sensitive=False),
+    show_default=True,
+)
 @click.option("--limit", default=10, type=int, show_default=True)
 @click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print matches as JSON"
@@ -70,6 +82,8 @@ def search(
     exact: bool,
     synced_only: bool,
     tag_values: tuple[str, ...],
+    status_values: tuple[str, ...],
+    sort: str,
     limit: int,
     as_json: bool,
     path_only: bool,
@@ -84,6 +98,7 @@ def search(
     workspace_root = str(Path(definition_path).resolve().parent)
     tag_filters = _parse_tag_filters(tag_values)
     service = ManagedRepoSearchService()
+    status_filter = list(status_values) if status_values else None
     result = service.search(
         config=config,
         workspace_root=workspace_root,
@@ -92,6 +107,8 @@ def search(
         exact=exact,
         synced_only=synced_only,
         tags=tag_filters,
+        status=status_filter,
+        sort=sort,
         limit=limit,
     )
     if as_json:
@@ -106,6 +123,8 @@ def search(
             exact=exact,
             synced_only=synced_only,
             tags=tag_filters,
+            status=status_filter,
+            sort=sort,
         )
         if resolved.error:
             raise click.ClickException(resolved.error.message)

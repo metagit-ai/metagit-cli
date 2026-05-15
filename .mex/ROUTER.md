@@ -29,14 +29,14 @@ Then read this file fully before doing anything else in this session.
 **Working:**
 - Core CLI command surface (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search` / `find`, `api serve` for local JSON, `project repo prune` for sync-folder cleanup) with shared app config + logger bootstrapping.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
-- MCP runtime with state-aware gating, tool/resource handlers (including **`metagit_repo_search`** for managed-repo lookup), protocol-framed stdio loop, and runtime tests.
+- MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply), resources for health/context, protocol-framed stdio loop, and runtime tests.
 - Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api`, and guarded repo inspect/sync flows.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows, including `metagit-projects` for OpenClaw/Hermes workspace project lifecycle (check-before-create, register in `.metagit.yml`).
 - `docs/skills.md` documents global install, `metagit skills install`, and bundled skill overview.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
 - Docs build path resolves CLI imports correctly in CI by including interactive prompt runtime dependency.
 - A semantic-release workflow now computes and pushes tags from conventional commits on `main`, and tag pushes drive PyPI/TestPyPI publish workflows.
-- Cross-agent token-optimized pre-push gate is available via `scripts/prepush-gate.py` (with `scripts/prepush-gate.zsh` wrapper) and is expected during session closeout.
+- **`task qa:prepush`** (via `scripts/prepush-gate.py` / `prepush-gate.zsh`) is mandatory in the behavioural contract whenever a session modifies tracked files — not optional “session closeout only.”
 - Provider source sync is available via `metagit project source sync` for GitHub org/user and GitLab group recursive discovery with discover/additive/reconcile modes.
 - Fuzzy finder repo selection UX now shows result counters, keeps full scrollable match sets, respects project `.gitignore` entries during filesystem candidate discovery, and provides richer repo metadata in preview.
 - New `skills` CLI command (`list`, `show`, `install`) plus `mcp install` now support auto-detected agent targets across project/user scopes, with bundled package skills deployed from `src/metagit/data/skills`.
@@ -79,7 +79,7 @@ For every task, follow this loop:
    - If a pattern exists but you deviated from it or discovered a new gotcha, update it with what you learned.
    - If any `context/` file is now out of date because of this work, update it surgically — do not rewrite entire files.
    - Update the "Current Project State" section above if the work was significant.
-6. **SESSION CLOSEOUT** — Run `task skills:sync generate:schema` and then `task qa:prepush` before ending the session. If either fails, fix issues and re-run until green (or document blockers explicitly).
+6. **QA GATE (mandatory for any delivered work)** — If you changed or added tracked project files in this conversation, run `task qa:prepush` from the repo root before reporting the task as finished. Fix failures and re-run until green. Also run `task skills:sync generate:schema` when bundled skills/schemas need to stay mirrored (see conventions). Omit the QA gate only for strictly read‑only exploration (no file writes) or when the user explicitly waived it in this thread. Document any intentional blockers plainly.
 
 ## Commit Message Semantics
 - Use `fix:` by default (patch-level intent).
