@@ -29,6 +29,7 @@ This mirrors `skills/*` into `.cursor/skills/*` for local agent discovery.
 
 The project ships practical metagit-focused skills under `skills/`, including:
 
+- ongoing project and workspace management (OpenClaw / Hermes)
 - workspace scope discovery
 - workspace sync workflows
 - upstream blocker triage

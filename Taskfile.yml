@@ -265,3 +265,10 @@ tasks:
     desc: Update GitHub Actions in workflows
     cmds:
       - npx actions-up -y
+
+  skills:validate:
+    desc: Validate every SKILL.md under skills/ (frontmatter, naming, required fields)
+    cmds:
+      - |
+        uv pip install -e ".[dev]"
+        uv run python scripts/validate_skills.py

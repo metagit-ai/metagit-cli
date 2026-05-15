@@ -1,41 +1,35 @@
-# Metagit Skills Install Guide
+# Metagit Skills (source tree)
 
-This file explains how to clone this project and enable the included local skills.
+Agent skills live under `skills/<name>/SKILL.md`. The same content is bundled in `src/metagit/data/skills/` for PyPI installs.
 
-## 1) Clone the repository
+## End users
 
-```bash
-git clone https://github.com/metagit-ai/metagit-cli.git
-cd metagit-cli
-```
-
-## 2) Install project dependencies
+Install globally and deploy skills with the CLI (see [docs/skills.md](../docs/skills.md)):
 
 ```bash
-uv sync
+uv tool install -U metagit-cli
+metagit skills install --scope user --target openclaw --target hermes
 ```
 
-## 3) Sync skills into local editor skill discovery paths
-
-Run this from the repository root:
+## Developers in this repository
 
 ```bash
-task skills:sync
+task skills:validate
+task skills:sync    # mirror into .cursor/skills/
 ```
 
-This mirrors `skills/*` into `.cursor/skills/*` for local agent discovery.
+When adding or changing a skill, update both `skills/` and `src/metagit/data/skills/`.
 
 ## Included skills
 
-The project ships practical metagit-focused skills under `skills/`, including:
+- `ongoing-project-management` — reuse or register workspace projects/repos before creating folders
+- `discovering-workspace-scope` — session start scope discovery
+- `metagit-control-center` — multi-repo control center
+- `syncing-workspace-repositories` — guarded sync workflows
+- `refreshing-project-config` — `.metagit.yml` bootstrap and refresh
+- `triaging-upstream-blockers` / `metagit-upstream-discovery` — cross-repo blockers
+- `planning-repo-impact` / `coordinating-multi-repo-implementation` — multi-repo implementation
+- `running-gitnexus-analysis` — GitNexus indexing
+- `auditing-release-readiness` — pre-push QA
 
-- workspace scope discovery
-- workspace sync workflows
-- upstream blocker triage
-- repo impact planning
-- GitNexus analysis automation
-- `.metagit.yml` refresh/bootstrap workflows
-- release readiness audit workflows
-- multi-repo implementation coordination
-
-Open any `skills/<skill-name>/SKILL.md` file for details and usage guidance.
+Open each `SKILL.md` for full workflows.
