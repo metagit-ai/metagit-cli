@@ -116,6 +116,10 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 - Unless instructed otherwise, always use `deno` to run .js or .ts scripts.
 - Use `npx` for running commands directly from npm packages.
 
+## Task closeout
+
+- After changes to this codebase, before implying the task is finished, run **`task qa:prepush`** from the repository root (`scripts/prepush-gate.zsh`). It runs format, lint, unit tests, and integration tests. Fix failures and re-run until it passes unless the conversation was read-only (no edits) or the user explicitly waived the gate.
+
 ## Documentation Sources
 - If working with a new library or tool, consider looking for its documentation from its website, GitHub project, or the relevant llms.txt.
   - It is always better to have accurate, up-to-date documentation at your disposal, rather than relying on your pre-trained knowledge.

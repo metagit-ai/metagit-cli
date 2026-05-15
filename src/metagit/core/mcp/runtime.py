@@ -717,14 +717,13 @@ class MetagitMcpRuntime:
             snapshot_id = str(arguments.get("snapshot_id", "")).strip()
             if not snapshot_id:
                 raise InvalidToolArgumentsError("snapshot_id is required")
-            result = self._workspace_snapshot.restore(
+            return self._workspace_snapshot.restore(
                 config=config,
                 workspace_root=status.root_path,
                 snapshot_id=snapshot_id,
                 switch_project=bool(arguments.get("switch_project", True)),
                 restore_session=bool(arguments.get("restore_session", True)),
-            )
-            return result.model_dump(mode="json")
+            ).model_dump(mode="json")
 
         if name == "metagit_workspace_health_check":
             if not config or not status.root_path:
@@ -748,7 +747,7 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError(
                     "branch age thresholds must be non-negative"
                 )
-            result = self._workspace_health.check(
+            return self._workspace_health.check(
                 config=config,
                 workspace_root=status.root_path,
                 check_git_status=bool(arguments.get("check_git_status", True)),
@@ -759,8 +758,7 @@ class MetagitMcpRuntime:
                 branch_head_warning_days=branch_warn,
                 branch_head_critical_days=branch_crit,
                 integration_stale_days=integration_td,
-            )
-            return result.model_dump(mode="json")
+            ).model_dump(mode="json")
 
         if name == "metagit_workspace_discover":
             if not config or not status.root_path:
@@ -837,7 +835,7 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError("depth must be an integer") from exc
             if depth_val < 1:
                 raise InvalidToolArgumentsError("depth must be at least 1")
-            result = self._cross_project_deps.map_dependencies(
+            return self._cross_project_deps.map_dependencies(
                 config=config,
                 workspace_root=status.root_path,
                 source_project=source_project,
@@ -846,8 +844,7 @@ class MetagitMcpRuntime:
                 include_external_repos=bool(
                     arguments.get("include_external_repos", False)
                 ),
-            )
-            return result.model_dump(mode="json")
+            ).model_dump(mode="json")
 
         if name == "metagit_session_update":
             if not config or not status.root_path:

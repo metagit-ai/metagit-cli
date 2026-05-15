@@ -76,16 +76,16 @@ class WorkspaceHealthService:
             )
             inspected = inspect_repo_state(repo_path=repo_path) if inspect_git else {}
             gn_status = gitnexus_map.get(repo_path) if check_gitnexus else None
+            head_raw = inspected.get("head_commit_age_days")
             head_age_days = (
-                float(inspected["head_commit_age_days"])
-                if isinstance(inspected.get("head_commit_age_days"), (int, float))
-                else None
+                float(head_raw) if isinstance(head_raw, (int, float)) else None
             )
+            merge_raw = inspected.get("merge_base_age_days")
             merge_age_days = (
-                float(inspected["merge_base_age_days"])
-                if isinstance(inspected.get("merge_base_age_days"), (int, float))
-                else None
+                float(merge_raw) if isinstance(merge_raw, (int, float)) else None
             )
+            ahead_raw = inspected.get("ahead")
+            behind_raw = inspected.get("behind")
             repo_rows.append(
                 RepoHealthRow(
                     project_name=str(row.get("project_name", "")),
@@ -100,11 +100,11 @@ class WorkspaceHealthService:
                     dirty=bool(inspected.get("dirty"))
                     if check_git_status and inspected.get("dirty") is not None
                     else None,
-                    ahead=int(inspected["ahead"])
-                    if check_git_status and isinstance(inspected.get("ahead"), int)
+                    ahead=int(ahead_raw)
+                    if check_git_status and isinstance(ahead_raw, int)
                     else None,
-                    behind=int(inspected["behind"])
-                    if check_git_status and isinstance(inspected.get("behind"), int)
+                    behind=int(behind_raw)
+                    if check_git_status and isinstance(behind_raw, int)
                     else None,
                     gitnexus_status=gn_status,
                     head_commit_age_days=head_age_days
