@@ -74,6 +74,8 @@ class WorkspaceSearchService:
         glob_paths = list(paths or [])
         if intent and intent in self._intent_globs:
             glob_paths = list(dict.fromkeys(glob_paths + self._intent_globs[intent]))
+        if preset and preset in self._intent_globs:
+            glob_paths = list(dict.fromkeys(glob_paths + self._intent_globs[preset]))
         exclude_globs = list(dict.fromkeys((exclude or []) + self._default_exclude))
         search_query = self._compose_query(query=query, preset=preset)
         results: list[dict[str, Any]] = []
@@ -81,6 +83,10 @@ class WorkspaceSearchService:
             root = Path(repo_path).expanduser().resolve()
             if not root.exists() or not root.is_dir():
                 continue
+            remaining = max_results - len(results)
+            if remaining < 1:
+                break
+            hits: list[dict[str, Any]] = []
             if shutil.which("rg"):
                 hits = self._search_with_rg(
                     root=root,
@@ -89,14 +95,21 @@ class WorkspaceSearchService:
                     exclude_globs=exclude_globs,
                     context_lines=context_lines,
                     include_paths=include_paths,
-                    max_results=max_results - len(results),
+                    max_results=remaining,
                 )
+                if not hits and (preset is not None or intent is not None):
+                    hits = self._search_fallback(
+                        root=root,
+                        query=query,
+                        preset=preset,
+                        max_results=remaining,
+                    )
             else:
                 hits = self._search_fallback(
                     root=root,
                     query=query,
                     preset=preset,
-                    max_results=max_results - len(results),
+                    max_results=remaining,
                 )
             results.extend(hits)
             if len(results) >= max_results:

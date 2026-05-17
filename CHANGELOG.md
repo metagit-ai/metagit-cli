@@ -20,7 +20,8 @@
 
 ### Fixed
 
-- Workspace search fallback without `rg` now matches preset-expanded terms (e.g. `preset=terraform`) instead of treating the composed `|` pattern as one literal string; fixes empty results in CI when ripgrep is not installed.
+- Workspace search: preset names that map to intent globs (e.g. `terraform`) now pass `**/*.tf` include globs to ripgrep; if ripgrep returns no hits while a `preset` or `intent` is set, the term-based filesystem fallback runs so Ubuntu/CI still gets matches when `rg` is installed but misbehaves or misparses.
+- Workspace search fallback without `rg` matches preset-expanded terms (e.g. `preset=terraform`) instead of treating the composed `|` pattern as one literal string; fixes empty results when ripgrep is not installed.
 - `task test` now runs `uv run pytest` so tests use the project virtualenv (fixes `ModuleNotFoundError: loguru` when `pytest` was not the venv binary).
 
 ## [0.2.2](https://github.com/metagit-ai/metagit-cli/compare/v0.2.1...v0.2.2) (2026-05-06)
