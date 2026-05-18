@@ -10,6 +10,7 @@ from metagit.core.config.models import MetagitConfig, Variable, VariableKind
 from metagit.core.mcp.services.repo_git_stats import inspect_repo_state
 from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.workspace.agent_instructions import AgentInstructionsResolver
 from metagit.core.workspace.context_models import (
     ProjectContextBundle,
     ProjectContextEnv,
@@ -33,8 +34,10 @@ class ProjectContextService:
     def __init__(
         self,
         index_service: Optional[WorkspaceIndexService] = None,
+        instructions_resolver: Optional[AgentInstructionsResolver] = None,
     ) -> None:
         self._index = index_service or WorkspaceIndexService()
+        self._instructions = instructions_resolver or AgentInstructionsResolver()
 
     def switch(
         self,
@@ -131,7 +134,7 @@ class ProjectContextService:
 
         repo_contexts: list[ProjectRepoContext] = []
         for row in inspect_rows:
-            repo_contexts.append(self._build_repo_context(row=row))
+            repo_contexts.append(self._build_repo_context(row=row, project=project))
 
         session_state = ProjectContextSession(restored=False)
         if restore_session:
@@ -167,13 +170,41 @@ class ProjectContextService:
             primary_repo=primary_repo,
             recent_repos=session_state.recent_repos,
         )
+        focus_repo_entry = None
+        focus_repo_name: Optional[str] = None
+        if primary_repo:
+            focus_row = self._match_repo_target(rows=project_rows, target=primary_repo)
+            if focus_row:
+                focus_repo_name = str(focus_row.get("repo_name", "")) or None
+                focus_repo_entry = self._instructions.find_repo(
+                    project,
+                    repo_name=focus_repo_name,
+                    repo_path=str(focus_row.get("repo_path", "")),
+                )
+        elif suggested:
+            focus_row = self._match_repo_target(rows=project_rows, target=suggested)
+            if focus_row:
+                focus_repo_name = str(focus_row.get("repo_name", "")) or None
+                focus_repo_entry = self._instructions.find_repo(
+                    project,
+                    repo_name=focus_repo_name,
+                    repo_path=suggested,
+                )
+        instructions = self._instructions.resolve(
+            config,
+            project=project,
+            repo=focus_repo_entry,
+        )
 
         return ProjectContextBundle(
             ok=True,
             project_name=project_name,
             workspace_root=workspace_root,
             project_description=project.description,
-            agent_prompt=project.agent_prompt,
+            agent_instructions=project.agent_instructions,
+            instruction_layers=instructions.layers,
+            effective_agent_instructions=instructions.effective,
+            focus_repo_name=focus_repo_name,
             repos=repo_contexts,
             env=env_bundle,
             session=session_state,
@@ -241,9 +272,19 @@ class ProjectContextService:
                 return project
         return None
 
-    def _build_repo_context(self, row: dict[str, Any]) -> ProjectRepoContext:
+    def _build_repo_context(
+        self,
+        row: dict[str, Any],
+        project: WorkspaceProject,
+    ) -> ProjectRepoContext:
         """Build repo context with optional git inspect."""
         exists = bool(row.get("exists"))
+        repo_name = str(row.get("repo_name", ""))
+        repo_entry = self._instructions.find_repo(
+            project,
+            repo_name=repo_name,
+            repo_path=str(row.get("repo_path", "")),
+        )
         branch: Optional[str] = None
         dirty: Optional[bool] = None
         inspect_error: Optional[str] = None
@@ -259,13 +300,14 @@ class ProjectContextService:
             else:
                 inspect_error = str(inspected.get("error", "inspect failed"))
         return ProjectRepoContext(
-            repo_name=str(row.get("repo_name", "")),
+            repo_name=repo_name,
             repo_path=str(row.get("repo_path", "")),
             configured_path=row.get("configured_path"),
             exists=exists,
             branch=branch,
             dirty=dirty,
             tags=dict(row.get("tags") or {}),
+            agent_instructions=repo_entry.agent_instructions if repo_entry else None,
             inspect_error=inspect_error,
         )
 

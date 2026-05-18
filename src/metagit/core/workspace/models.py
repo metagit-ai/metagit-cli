@@ -5,7 +5,7 @@ Pydantic models for .metagit.yml workspace configuration.
 
 from typing import Any, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator
 
 from metagit.core.project.models import ProjectPath
 
@@ -17,8 +17,10 @@ class WorkspaceProject(BaseModel):
     description: Optional[str] = Field(
         None, description="Human-readable description of this workspace project"
     )
-    agent_prompt: Optional[str] = Field(
-        None, description="Optional prompt text for agents working in this project"
+    agent_instructions: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
+        description="Optional instructions for agents working in this workspace project",
     )
     repos: List[ProjectPath] = Field(..., description="Repository list")
 
@@ -49,8 +51,10 @@ class Workspace(BaseModel):
     description: Optional[str] = Field(
         None, description="Human-readable description of this workspace"
     )
-    agent_prompt: Optional[str] = Field(
-        None, description="Optional prompt text for agents working in this workspace"
+    agent_instructions: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
+        description="Optional instructions for agents working in this workspace",
     )
     projects: List[WorkspaceProject] = Field(..., description="Workspace projects")
 

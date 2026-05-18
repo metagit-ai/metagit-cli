@@ -30,6 +30,8 @@ from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
+from metagit.core.workspace.catalog_models import CatalogError
+from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.mcp.services.workspace_template import WorkspaceTemplateService
 from metagit.core.mcp.tool_registry import ToolRegistry
@@ -58,6 +60,7 @@ class MetagitMcpRuntime:
         self._workspace_sync = WorkspaceSyncService()
         self._cross_project_deps = CrossProjectDependencyService()
         self._workspace_health = WorkspaceHealthService()
+        self._workspace_catalog = WorkspaceCatalogService()
         self._workspace_template = WorkspaceTemplateService()
         self._managed_repo_search = ManagedRepoSearchService()
         self._hints_service = UpstreamHintService()
@@ -299,6 +302,57 @@ class MetagitMcpRuntime:
                         "type": "object",
                         "additionalProperties": {"type": "string"},
                     },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_list": {"type": "object", "properties": {}},
+            "metagit_workspace_projects_list": {"type": "object", "properties": {}},
+            "metagit_workspace_project_add": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                    "agent_instructions": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_project_remove": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {"name": {"type": "string"}},
+                "additionalProperties": False,
+            },
+            "metagit_workspace_repos_list": {
+                "type": "object",
+                "properties": {"project_name": {"type": "string"}},
+                "additionalProperties": False,
+            },
+            "metagit_workspace_repo_add": {
+                "type": "object",
+                "required": ["project_name", "name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "name": {"type": "string"},
+                    "description": {"type": "string"},
+                    "kind": {"type": "string"},
+                    "path": {"type": "string"},
+                    "url": {"type": "string"},
+                    "sync": {"type": "boolean"},
+                    "agent_instructions": {"type": "string"},
+                    "tags": {
+                        "type": "object",
+                        "additionalProperties": {"type": "string"},
+                    },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_repo_remove": {
+                "type": "object",
+                "required": ["project_name", "name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "name": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -846,6 +900,90 @@ class MetagitMcpRuntime:
                 ),
             ).model_dump(mode="json")
 
+        if name == "metagit_workspace_list":
+            config_path, workspace_root = self._catalog_paths(
+                status=status, config=config
+            )
+            return self._workspace_catalog.list_workspace(
+                config=config,
+                config_path=config_path,
+                workspace_root=workspace_root,
+            ).model_dump(mode="json")
+
+        if name == "metagit_workspace_projects_list":
+            config_path, workspace_root = self._catalog_paths(
+                status=status, config=config
+            )
+            _ = (config_path, workspace_root)
+            return self._workspace_catalog.list_projects(config=config).model_dump(
+                mode="json"
+            )
+
+        if name == "metagit_workspace_project_add":
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            project_name = str(arguments.get("name", "")).strip()
+            return self._workspace_catalog.add_project(
+                config=config,
+                config_path=config_path,
+                name=project_name,
+                description=arguments.get("description"),
+                agent_instructions=arguments.get("agent_instructions"),
+            ).model_dump(mode="json")
+
+        if name == "metagit_workspace_project_remove":
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            return self._workspace_catalog.remove_project(
+                config=config,
+                config_path=config_path,
+                name=str(arguments.get("name", "")).strip(),
+            ).model_dump(mode="json")
+
+        if name == "metagit_workspace_repos_list":
+            config_path, workspace_root = self._catalog_paths(
+                status=status, config=config
+            )
+            _ = config_path
+            project_filter = arguments.get("project_name")
+            return self._workspace_catalog.list_repos(
+                config=config,
+                workspace_root=workspace_root,
+                project_name=str(project_filter).strip()
+                if isinstance(project_filter, str) and project_filter.strip()
+                else None,
+            ).model_dump(mode="json")
+
+        if name == "metagit_workspace_repo_add":
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            built = self._workspace_catalog.build_repo_from_fields(
+                name=str(arguments.get("name", "")),
+                description=arguments.get("description"),
+                kind=arguments.get("kind"),
+                path=arguments.get("path"),
+                url=arguments.get("url"),
+                sync=arguments.get("sync"),
+                agent_instructions=arguments.get("agent_instructions"),
+                tags=arguments.get("tags")
+                if isinstance(arguments.get("tags"), dict)
+                else None,
+            )
+            if isinstance(built, CatalogError):
+                return {"ok": False, "error": built.model_dump(mode="json")}
+            return self._workspace_catalog.add_repo(
+                config=config,
+                config_path=config_path,
+                project_name=str(arguments.get("project_name", "")).strip(),
+                repo=built,
+            ).model_dump(mode="json")
+
+        if name == "metagit_workspace_repo_remove":
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            return self._workspace_catalog.remove_repo(
+                config=config,
+                config_path=config_path,
+                project_name=str(arguments.get("project_name", "")).strip(),
+                repo_name=str(arguments.get("name", "")).strip(),
+            ).model_dump(mode="json")
+
         if name == "metagit_session_update":
             if not config or not status.root_path:
                 raise InvalidToolArgumentsError(
@@ -931,6 +1069,14 @@ class MetagitMcpRuntime:
         return self._index_service.build_index(
             config=config, workspace_root=status.root_path
         )
+
+    def _catalog_paths(self, status: WorkspaceStatus, config: Any) -> tuple[str, str]:
+        if not config or not status.root_path:
+            raise InvalidToolArgumentsError(
+                "catalog operations require an active workspace"
+            )
+        config_path = str(Path(status.root_path) / ".metagit.yml")
+        return config_path, status.root_path
 
     def _error_response(
         self,

@@ -4,6 +4,9 @@
 
 ### Added
 
+- Workspace catalog CRUD with JSON output: CLI (`metagit workspace list|project|repo`, `metagit project list --all`, `project add|remove`, `project repo list|remove`, `--json` on catalog commands), MCP tools (`metagit_workspace_list`, `metagit_workspace_projects_list`, `metagit_workspace_project_add|remove`, `metagit_workspace_repos_list`, `metagit_workspace_repo_add|remove`), and HTTP API v2 (`/v2/workspace`, `/v2/projects`, `/v2/repos`). Manifest-only repo/project removal; use `project repo prune` to delete unmanaged directories on disk.
+- Docs: [Hermes agents and organization-wide IaC](docs/hermes-iac-workspace-guide.md) — illustrated controller/subagent workflow, manifest examples, and MCP tool map for platform IaC estates.
+- Layered `agent_instructions` on `.metagit.yml` (file, workspace, project, repo/path); legacy `agent_prompt` accepted on load. `AgentInstructionsResolver` composes stacks for MCP project context (`instruction_layers`, `effective_agent_instructions`, per-repo `agent_instructions`).
 - MCP `metagit_workspace_semantic_search` runs GitNexus `query` per managed repo (requires registry + index) for vector-ranked process results.
 - MCP `metagit_workspace_health_check` includes branch age (`head_commit_age_days`, `merge_base_age_days`) when `check_stale_branches` is enabled, with thresholds `branch_head_warning_days` / `branch_head_critical_days` / `integration_stale_days` and summary counters for stale HEAD and integration drift.
 - MCP Phase 3 workspace intelligence: `metagit_workspace_health_check`, `metagit_workspace_discover`, and `metagit_project_template_apply` (dry-run by default), plus resources `metagit://workspace/health` and `metagit://workspace/context`.

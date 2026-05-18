@@ -13,6 +13,7 @@ nav:
   - 'CLI Reference': 'cli_reference.md'
   - 'Features':
     - 'Repository Detection': 'repository_detection.md'
+    - 'Hermes & org IaC guide': 'hermes-iac-workspace-guide.md'
     - 'Skills': 'skills.md'
 markdown_extensions:
   - mkdocs-click

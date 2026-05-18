@@ -7,7 +7,14 @@ import re
 from enum import Enum
 from typing import Any, List, Optional, Union
 
-from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    Field,
+    HttpUrl,
+    field_serializer,
+    field_validator,
+)
 from pydantic_core import core_schema
 
 
@@ -96,6 +103,13 @@ class ProjectPath(BaseModel):
     protected: Optional[bool] = Field(
         False,
         description="If true, reconcile mode must not remove this repository automatically",
+    )
+    agent_instructions: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
+        description=(
+            "Optional instructions for subagents operating in this repo or path"
+        ),
     )
 
     @field_validator("language_version", mode="before")

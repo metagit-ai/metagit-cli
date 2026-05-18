@@ -13,7 +13,14 @@ from pathlib import Path
 from typing import Any, List, Optional, Union
 
 import yaml
-from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    Field,
+    HttpUrl,
+    field_serializer,
+    field_validator,
+)
 
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.project.models import GitUrl, ProjectKind, ProjectPath
@@ -614,8 +621,10 @@ class Project(BaseModel):
     description: Optional[str] = Field(
         None, description="Human-readable description of this project"
     )
-    agent_prompt: Optional[str] = Field(
-        None, description="Optional prompt text for agents working on this project"
+    agent_instructions: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
+        description="Optional instructions for agents working on this project",
     )
     type: ProjectType = Field(..., description="Project type")
     domain: ProjectDomain = Field(..., description="Project domain")
@@ -726,8 +735,13 @@ class MetagitConfig(BaseModel):
     description: Optional[str] = Field(
         default="No description", description="Project description"
     )
-    agent_prompt: Optional[str] = Field(
-        None, description="Optional prompt text for agents working on this project"
+    agent_instructions: Optional[str] = Field(
+        None,
+        validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
+        description=(
+            "Optional instructions for controller agents; applies with or without "
+            "a workspace block"
+        ),
     )
     url: Optional[Union[HttpUrl, GitUrl]] = Field(None, description="Project URL")
     kind: Optional[ProjectKind] = Field(

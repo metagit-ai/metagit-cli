@@ -825,6 +825,19 @@
           "default": false,
           "description": "If true, reconcile mode must not remove this repository automatically",
           "title": "Protected"
+        },
+        "agent_instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional instructions for subagents operating in this repo or path",
+          "title": "Agent Instructions"
         }
       },
       "required": [
@@ -996,7 +1009,7 @@
           "description": "Human-readable description of this workspace",
           "title": "Description"
         },
-        "agent_prompt": {
+        "agent_instructions": {
           "anyOf": [
             {
               "type": "string"
@@ -1006,8 +1019,8 @@
             }
           ],
           "default": null,
-          "description": "Optional prompt text for agents working in this workspace",
-          "title": "Agent Prompt"
+          "description": "Optional instructions for agents working in this workspace",
+          "title": "Agent Instructions"
         },
         "projects": {
           "description": "Workspace projects",
@@ -1046,7 +1059,7 @@
           "description": "Human-readable description of this workspace project",
           "title": "Description"
         },
-        "agent_prompt": {
+        "agent_instructions": {
           "anyOf": [
             {
               "type": "string"
@@ -1056,8 +1069,8 @@
             }
           ],
           "default": null,
-          "description": "Optional prompt text for agents working in this project",
-          "title": "Agent Prompt"
+          "description": "Optional instructions for agents working in this workspace project",
+          "title": "Agent Instructions"
         },
         "repos": {
           "description": "Repository list",
@@ -1097,7 +1110,7 @@
       "description": "Project description",
       "title": "Description"
     },
-    "agent_prompt": {
+    "agent_instructions": {
       "anyOf": [
         {
           "type": "string"
@@ -1107,8 +1120,8 @@
         }
       ],
       "default": null,
-      "description": "Optional prompt text for agents working on this project",
-      "title": "Agent Prompt"
+      "description": "Optional instructions for controller agents; applies with or without a workspace block",
+      "title": "Agent Instructions"
     },
     "url": {
       "anyOf": [

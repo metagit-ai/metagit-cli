@@ -31,6 +31,13 @@ class ToolRegistry:
         "metagit_cross_project_dependencies",
         "metagit_workspace_health_check",
         "metagit_workspace_discover",
+        "metagit_workspace_list",
+        "metagit_workspace_projects_list",
+        "metagit_workspace_project_add",
+        "metagit_workspace_project_remove",
+        "metagit_workspace_repos_list",
+        "metagit_workspace_repo_add",
+        "metagit_workspace_repo_remove",
         "metagit_project_template_apply",
     ]
 

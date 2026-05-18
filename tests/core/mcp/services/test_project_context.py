@@ -32,7 +32,7 @@ def _write_multi_project_workspace(tmp_path: Path) -> str:
         "workspace:",
         "  projects:",
         "    - name: alpha",
-        "      agent_prompt: Focus on alpha services",
+        "      agent_instructions: Focus on alpha services",
         "      repos:",
         "        - name: repo-one",
         "          path: alpha/repo-one",
@@ -70,7 +70,9 @@ def test_switch_sets_active_project_and_returns_repos(tmp_path: Path) -> None:
 
   assert bundle.ok is True
   assert bundle.project_name == "alpha"
-  assert bundle.agent_prompt == "Focus on alpha services"
+  assert bundle.agent_instructions == "Focus on alpha services"
+  assert any(layer.layer == "project" for layer in bundle.instruction_layers)
+  assert "Focus on alpha services" in bundle.effective_agent_instructions
   assert len(bundle.repos) == 1
   assert bundle.repos[0].repo_name == "repo-one"
   assert bundle.repos[0].branch is not None

@@ -9,6 +9,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from metagit.core.workspace.agent_instructions import AgentInstructionLayer
+
 _ENV_KEY_PATTERN = re.compile(r"^[A-Z][A-Z0-9_]{0,63}$")
 _SECRET_VALUE_PATTERNS = (
     re.compile(r"AKIA[0-9A-Z]{16}"),
@@ -92,6 +94,7 @@ class ProjectRepoContext(BaseModel):
     branch: Optional[str] = None
     dirty: Optional[bool] = None
     tags: dict[str, str] = Field(default_factory=dict)
+    agent_instructions: Optional[str] = None
     inspect_error: Optional[str] = None
 
 
@@ -119,7 +122,10 @@ class ProjectContextBundle(BaseModel):
     project_name: str = ""
     workspace_root: str = ""
     project_description: Optional[str] = None
-    agent_prompt: Optional[str] = None
+    agent_instructions: Optional[str] = None
+    instruction_layers: list[AgentInstructionLayer] = Field(default_factory=list)
+    effective_agent_instructions: str = ""
+    focus_repo_name: Optional[str] = None
     repos: list[ProjectRepoContext] = Field(default_factory=list)
     env: ProjectContextEnv = Field(default_factory=ProjectContextEnv)
     session: ProjectContextSession = Field(default_factory=ProjectContextSession)

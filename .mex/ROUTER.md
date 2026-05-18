@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-05-15
+last_updated: 2026-05-16
 ---
 
 # Session Bootstrap
@@ -27,7 +27,8 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
-- Core CLI command surface (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search` / `find`, `api serve` for local JSON, `project repo prune` for sync-folder cleanup) with shared app config + logger bootstrapping.
+- Core CLI command surface (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search` / `find`, `api serve` for local JSON v1 search + **v2 catalog CRUD**, `project repo prune` for sync-folder cleanup) with shared app config + logger bootstrapping.
+- **Workspace catalog** (`WorkspaceCatalogService`): list/add/remove projects and repos in `.metagit.yml` via CLI (`--json`), MCP (`metagit_workspace_*` catalog tools), and HTTP `/v2/*`.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
 - MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply), resources for health/context, protocol-framed stdio loop, and runtime tests.
 - Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api`, and guarded repo inspect/sync flows.

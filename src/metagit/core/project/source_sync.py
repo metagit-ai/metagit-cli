@@ -122,7 +122,7 @@ class SourceSyncService:
         return WorkspaceProject(
             name=project.name,
             description=project.description,
-            agent_prompt=project.agent_prompt,
+            agent_instructions=project.agent_instructions,
             repos=repos,
         )
 
