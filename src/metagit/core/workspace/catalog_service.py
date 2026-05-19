@@ -1,0 +1,424 @@
+#!/usr/bin/env python
+"""
+List and mutate workspace projects and repositories in `.metagit.yml`.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Optional
+
+from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.config.models import MetagitConfig
+from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.workspace.catalog_models import (
+    CatalogError,
+    CatalogMutationResult,
+    CatalogResult,
+    ProjectListEntry,
+    RepoListEntry,
+    WorkspaceSummary,
+)
+from metagit.core.workspace.models import Workspace, WorkspaceProject
+
+
+class WorkspaceCatalogService:
+    """CRUD-style catalog operations for workspace manifests."""
+
+    def __init__(
+        self,
+        index_service: Optional[WorkspaceIndexService] = None,
+    ) -> None:
+        self._index = index_service or WorkspaceIndexService()
+
+    def list_workspace(
+        self,
+        config: MetagitConfig,
+        config_path: str,
+        workspace_root: str,
+        *,
+        include_index: bool = True,
+    ) -> CatalogResult:
+        """Return workspace summary, projects, and optional index rows."""
+        summary = self._workspace_summary(
+            config=config,
+            config_path=config_path,
+            workspace_root=workspace_root,
+        )
+        projects = self.list_projects(config=config).data or {}
+        payload: dict[str, Any] = {
+            "summary": summary.model_dump(mode="json"),
+            "projects": projects.get("projects", []),
+        }
+        if include_index:
+            payload["repos_index"] = self._index.build_index(
+                config=config,
+                workspace_root=workspace_root,
+            )
+        return CatalogResult(ok=True, data=payload)
+
+    def list_projects(self, config: MetagitConfig) -> CatalogResult:
+        """List workspace projects defined in the manifest."""
+        if not config.workspace:
+            return CatalogResult(
+                ok=True,
+                data={"projects": [], "project_count": 0},
+            )
+        entries = [
+            ProjectListEntry(
+                name=project.name,
+                description=project.description,
+                agent_instructions=project.agent_instructions,
+                repo_count=len(project.repos),
+            ).model_dump(mode="json")
+            for project in config.workspace.projects
+        ]
+        return CatalogResult(
+            ok=True,
+            data={"projects": entries, "project_count": len(entries)},
+        )
+
+    def list_repos(
+        self,
+        config: MetagitConfig,
+        workspace_root: str,
+        *,
+        project_name: Optional[str] = None,
+        include_status: bool = True,
+    ) -> CatalogResult:
+        """List configured repositories, optionally scoped to one project."""
+        if not config.workspace:
+            return CatalogResult(ok=True, data={"repos": [], "repo_count": 0})
+        index_rows: list[dict[str, Any]] = []
+        if include_status:
+            index_rows = self._index.build_index(
+                config=config,
+                workspace_root=workspace_root,
+            )
+        index_by_key = {
+            (row["project_name"], row["repo_name"]): row for row in index_rows
+        }
+        repos: list[dict[str, Any]] = []
+        for project in config.workspace.projects:
+            if project_name and project.name != project_name:
+                continue
+            for repo in project.repos:
+                row = index_by_key.get((project.name, repo.name), {})
+                entry = RepoListEntry(
+                    project_name=project.name,
+                    repo=repo,
+                    configured_path=repo.path,
+                    repo_path=row.get("repo_path"),
+                    exists=row.get("exists"),
+                    status=row.get("status"),
+                )
+                repos.append(entry.model_dump(mode="json"))
+        return CatalogResult(
+            ok=True,
+            data={"repos": repos, "repo_count": len(repos)},
+        )
+
+    def add_project(
+        self,
+        config: MetagitConfig,
+        config_path: str,
+        *,
+        name: str,
+        description: Optional[str] = None,
+        agent_instructions: Optional[str] = None,
+    ) -> CatalogMutationResult:
+        """Add a workspace project (group) to the manifest."""
+        trimmed = name.strip()
+        if not trimmed:
+            return self._mutation_error(
+                entity="project",
+                operation="add",
+                kind="invalid_name",
+                message="project name is required",
+            )
+        if not config.workspace:
+            config.workspace = Workspace(projects=[])
+        for project in config.workspace.projects:
+            if project.name == trimmed:
+                return self._mutation_error(
+                    entity="project",
+                    operation="add",
+                    kind="already_exists",
+                    message=f"project '{trimmed}' already exists",
+                    project_name=trimmed,
+                )
+        config.workspace.projects.append(
+            WorkspaceProject(
+                name=trimmed,
+                description=description,
+                agent_instructions=agent_instructions,
+                repos=[],
+            )
+        )
+        save_err = self._save(config=config, config_path=config_path)
+        if save_err:
+            return self._mutation_error(
+                entity="project",
+                operation="add",
+                kind="save_failed",
+                message=str(save_err),
+                project_name=trimmed,
+            )
+        return CatalogMutationResult(
+            ok=True,
+            entity="project",
+            operation="add",
+            project_name=trimmed,
+            config_path=config_path,
+        )
+
+    def remove_project(
+        self,
+        config: MetagitConfig,
+        config_path: str,
+        *,
+        name: str,
+    ) -> CatalogMutationResult:
+        """Remove a workspace project from the manifest (repos are removed with it)."""
+        trimmed = name.strip()
+        if not config.workspace:
+            return self._mutation_error(
+                entity="project",
+                operation="remove",
+                kind="not_found",
+                message=f"project '{trimmed}' not found",
+                project_name=trimmed,
+            )
+        before = len(config.workspace.projects)
+        config.workspace.projects = [
+            project for project in config.workspace.projects if project.name != trimmed
+        ]
+        if len(config.workspace.projects) == before:
+            return self._mutation_error(
+                entity="project",
+                operation="remove",
+                kind="not_found",
+                message=f"project '{trimmed}' not found",
+                project_name=trimmed,
+            )
+        save_err = self._save(config=config, config_path=config_path)
+        if save_err:
+            return self._mutation_error(
+                entity="project",
+                operation="remove",
+                kind="save_failed",
+                message=str(save_err),
+                project_name=trimmed,
+            )
+        return CatalogMutationResult(
+            ok=True,
+            entity="project",
+            operation="remove",
+            project_name=trimmed,
+            config_path=config_path,
+        )
+
+    def add_repo(
+        self,
+        config: MetagitConfig,
+        config_path: str,
+        *,
+        project_name: str,
+        repo: ProjectPath,
+    ) -> CatalogMutationResult:
+        """Add a repository entry under a workspace project."""
+        project = self._find_project(config=config, project_name=project_name)
+        if project is None:
+            return self._mutation_error(
+                entity="repo",
+                operation="add",
+                kind="project_not_found",
+                message=f"project '{project_name}' not found",
+                project_name=project_name,
+            )
+        for existing in project.repos:
+            if existing.name == repo.name:
+                return self._mutation_error(
+                    entity="repo",
+                    operation="add",
+                    kind="already_exists",
+                    message=(
+                        f"repo '{repo.name}' already exists in project '{project_name}'"
+                    ),
+                    project_name=project_name,
+                    repo_name=repo.name,
+                )
+        if repo.path is None and repo.url is None:
+            return self._mutation_error(
+                entity="repo",
+                operation="add",
+                kind="invalid_repo",
+                message="repo requires at least path or url",
+                project_name=project_name,
+                repo_name=repo.name,
+            )
+        project.repos.append(repo)
+        save_err = self._save(config=config, config_path=config_path)
+        if save_err:
+            return self._mutation_error(
+                entity="repo",
+                operation="add",
+                kind="save_failed",
+                message=str(save_err),
+                project_name=project_name,
+                repo_name=repo.name,
+            )
+        return CatalogMutationResult(
+            ok=True,
+            entity="repo",
+            operation="add",
+            project_name=project_name,
+            repo_name=repo.name,
+            config_path=config_path,
+        )
+
+    def remove_repo(
+        self,
+        config: MetagitConfig,
+        config_path: str,
+        *,
+        project_name: str,
+        repo_name: str,
+    ) -> CatalogMutationResult:
+        """Remove a repository entry from a workspace project (manifest only)."""
+        project = self._find_project(config=config, project_name=project_name)
+        if project is None:
+            return self._mutation_error(
+                entity="repo",
+                operation="remove",
+                kind="project_not_found",
+                message=f"project '{project_name}' not found",
+                project_name=project_name,
+                repo_name=repo_name,
+            )
+        before = len(project.repos)
+        project.repos = [item for item in project.repos if item.name != repo_name]
+        if len(project.repos) == before:
+            return self._mutation_error(
+                entity="repo",
+                operation="remove",
+                kind="not_found",
+                message=(f"repo '{repo_name}' not found in project '{project_name}'"),
+                project_name=project_name,
+                repo_name=repo_name,
+            )
+        save_err = self._save(config=config, config_path=config_path)
+        if save_err:
+            return self._mutation_error(
+                entity="repo",
+                operation="remove",
+                kind="save_failed",
+                message=str(save_err),
+                project_name=project_name,
+                repo_name=repo_name,
+            )
+        return CatalogMutationResult(
+            ok=True,
+            entity="repo",
+            operation="remove",
+            project_name=project_name,
+            repo_name=repo_name,
+            config_path=config_path,
+        )
+
+    def build_repo_from_fields(
+        self,
+        *,
+        name: str,
+        description: Optional[str] = None,
+        kind: Optional[str] = None,
+        path: Optional[str] = None,
+        url: Optional[str] = None,
+        sync: Optional[bool] = None,
+        agent_instructions: Optional[str] = None,
+        tags: Optional[dict[str, str]] = None,
+    ) -> ProjectPath | CatalogError:
+        """Construct a ProjectPath from API/MCP/CLI fields."""
+        trimmed_name = name.strip()
+        if not trimmed_name:
+            return CatalogError(kind="invalid_name", message="repo name is required")
+        kind_val: ProjectKind | None = None
+        if kind:
+            try:
+                kind_val = ProjectKind(kind)
+            except ValueError:
+                return CatalogError(
+                    kind="invalid_kind",
+                    message=f"invalid project kind: {kind}",
+                )
+        return ProjectPath(
+            name=trimmed_name,
+            description=description,
+            kind=kind_val,
+            path=path,
+            url=url,
+            sync=sync,
+            agent_instructions=agent_instructions,
+            tags=tags or {},
+        )
+
+    def _workspace_summary(
+        self,
+        config: MetagitConfig,
+        config_path: str,
+        workspace_root: str,
+    ) -> WorkspaceSummary:
+        project_count = len(config.workspace.projects) if config.workspace else 0
+        repo_count = 0
+        if config.workspace:
+            repo_count = sum(
+                len(project.repos) for project in config.workspace.projects
+            )
+        return WorkspaceSummary(
+            definition_path=str(Path(config_path).resolve()),
+            workspace_root=str(Path(workspace_root).resolve()),
+            file_name=config.name,
+            file_description=config.description,
+            file_agent_instructions=config.agent_instructions,
+            workspace=config.workspace,
+            project_count=project_count,
+            repo_count=repo_count,
+        )
+
+    def _find_project(
+        self, config: MetagitConfig, project_name: str
+    ) -> Optional[WorkspaceProject]:
+        if not config.workspace:
+            return None
+        for project in config.workspace.projects:
+            if project.name == project_name:
+                return project
+        return None
+
+    def _save(self, config: MetagitConfig, config_path: str) -> Optional[Exception]:
+        manager = MetagitConfigManager(metagit_config=config)
+        result = manager.save_config(config, Path(config_path))
+        if isinstance(result, Exception):
+            return result
+        return None
+
+    def _mutation_error(
+        self,
+        *,
+        entity: str,
+        operation: str,
+        kind: str,
+        message: str,
+        project_name: str = "",
+        repo_name: Optional[str] = None,
+    ) -> CatalogMutationResult:
+        return CatalogMutationResult(
+            ok=False,
+            error=CatalogError(kind=kind, message=message),
+            entity="repo" if entity == "repo" else "project",
+            operation="remove" if operation == "remove" else "add",
+            project_name=project_name,
+            repo_name=repo_name,
+            config_path="",
+        )

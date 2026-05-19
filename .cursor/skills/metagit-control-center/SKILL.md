@@ -26,6 +26,8 @@ Wrapper behavior:
 ### 1) Session Initialization
 - Validate active workspace gate.
 - Read `metagit://workspace/config` and `metagit://workspace/repos/status`.
+- Call `metagit_project_context_switch` when the objective is tied to a workspace project.
+- Run `metagit_workspace_health_check` or read `metagit://workspace/health` for maintenance signals.
 - Identify stale repos and unresolved blockers from prior activity.
 
 ### 2) Active Task Support
@@ -39,6 +41,9 @@ Wrapper behavior:
 - Track sync outcomes in operations log resource.
 
 ### 4) Operational Memory
+- Before switching projects: `metagit_session_update` (notes + recent repos), optional `metagit_workspace_state_snapshot`.
+- After returning: `metagit_workspace_state_restore` when a snapshot was taken (metadata only; git tree is unchanged).
+
 Maintain bounded local records of:
 - sync actions
 - issue signatures searched

@@ -74,6 +74,41 @@ def test_search_can_filter_by_tag(tmp_path: Path) -> None:
     assert [match.repo_name for match in result.matches] == ["abacus-module"]
 
 
+def test_search_filters_by_status_and_has_url(tmp_path: Path) -> None:
+    service = ManagedRepoSearchService()
+    missing_repo = tmp_path / "workspace" / "platform" / "missing-app"
+    missing_repo.mkdir(parents=True)
+    config = _config(tmp_path)
+    config.workspace.projects[0].repos.append(
+        ProjectPath(
+            name="missing-app",
+            path="platform/missing-app",
+            sync=True,
+        )
+    )
+    result = service.search(
+        config=config,
+        workspace_root=str(tmp_path / "workspace"),
+        query="*",
+        status=["configured_missing"],
+        has_url=False,
+        sort="name",
+    )
+    assert [match.repo_name for match in result.matches] == ["missing-app"]
+
+
+def test_search_sorts_by_project_name(tmp_path: Path) -> None:
+    service = ManagedRepoSearchService()
+    result = service.search(
+        config=_config(tmp_path),
+        workspace_root=str(tmp_path / "workspace"),
+        query="abacus",
+        sort="project",
+    )
+    project_names = [match.project_name for match in result.matches]
+    assert project_names == sorted(project_names)
+
+
 def test_resolve_one_returns_ambiguous_match(tmp_path: Path) -> None:
     service = ManagedRepoSearchService()
     resolved = service.resolve_one(

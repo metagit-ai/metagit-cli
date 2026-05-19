@@ -15,7 +15,7 @@ edges:
     condition: when selecting libraries/tools for a change
   - target: patterns/INDEX.md
     condition: when implementing task-specific workflows and verify/debug sequences
-last_updated: 2026-05-05
+last_updated: 2026-05-15
 ---
 
 # Conventions
@@ -63,7 +63,7 @@ Before presenting any code:
 - [ ] Lint/format checks pass via project commands (`task lint`, and format if needed).
 - [ ] Mutating operations remain explicitly guarded (especially MCP sync/tool paths).
 - [ ] Run `task skills:sync generate:schema` for session closeout sync/schema regeneration.
-- [ ] Run `task qa:prepush` for session closeout before push/hand-off.
+- [ ] **`task qa:prepush`** from repo root has passed — required before declaring work complete whenever this session modified project files; do not summarize success without evidence. Omit only if the session was read-only or the user explicitly waived the gate.
 
 ## Commit Semantics
 - Default to `fix:` commit prefixes (patch intent) for normal maintenance and safe behavior updates.

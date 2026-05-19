@@ -134,6 +134,10 @@ That creates `.metagit.yml` and updates `.gitignore`.
 
 Bundled skills ship with the package and install via `metagit skills install` (see [docs/skills.md](docs/skills.md)). For development in this repository, `skills/` is the source tree; run `task skills:sync` to mirror into `.cursor/skills/`.
 
+## Agent guides
+
+- [Hermes agents and organization-wide IaC](hermes-iac-workspace-guide.md) — illustrated workflow for using Metagit as a control plane across Terraform, policy, and module repositories (controller + subagents, layered `agent_instructions`, MCP tools).
+
 ## Documentation
 
 For installation guidance, detailed usage, including full CLI command surface, local MCP runtime setup, API-oriented flows, and advanced examples, use the documentation site:

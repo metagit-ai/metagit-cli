@@ -8,11 +8,14 @@ from typing import Optional
 
 import click
 
+from metagit.cli.json_output import emit_json, exit_on_catalog_mutation
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager
 from metagit.core.project.models import ProjectKind, ProjectPath
 from metagit.core.utils.common import open_editor
+from metagit.core.workspace.catalog_models import CatalogMutationResult
+from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.utils.logging import UnifiedLogger
 
 
@@ -58,6 +61,57 @@ def repo_select(ctx: click.Context) -> None:
         logger.info(f"Opened {selected_repo} in {app_config.editor}")
 
 
+@repo.command("list")
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def repo_list(ctx: click.Context, as_json: bool) -> None:
+    """List repositories for the current workspace project."""
+    project: str = ctx.obj["project"]
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    app_config: AppConfig = ctx.obj["config"]
+    if project == "local":
+        raise click.UsageError("The local project is not supported for this command")
+    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    result = WorkspaceCatalogService().list_repos(
+        local_config,
+        workspace_root,
+        project_name=project,
+    )
+    if as_json:
+        emit_json(result)
+        return
+    for row in (result.data or {}).get("repos", []):
+        repo_row = row.get("repo", {})
+        click.echo(
+            f"{repo_row.get('name')} path={row.get('configured_path')} "
+            f"status={row.get('status') or 'unknown'}"
+        )
+
+
+@repo.command("remove")
+@click.option("--name", "-n", required=True, help="Repository name")
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def repo_remove(ctx: click.Context, name: str, as_json: bool) -> None:
+    """Remove a repository from the manifest (does not delete files)."""
+    project: str = ctx.obj["project"]
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    config_path: str = ctx.obj["config_path"]
+    if project == "local":
+        raise click.UsageError("The local project is not supported for this command")
+    result = WorkspaceCatalogService().remove_repo(
+        local_config,
+        config_path,
+        project_name=project,
+        repo_name=name,
+    )
+    exit_on_catalog_mutation(result, as_json=as_json)
+
+
 @repo.command("add")
 @click.option("--name", "-n", help="Repository name")
 @click.option("--description", "-d", help="Repository description")
@@ -81,6 +135,9 @@ def repo_select(ctx: click.Context) -> None:
     is_flag=True,
     help="Use interactive prompts instead of command line parameters",
 )
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
 @click.pass_context
 def repo_add(
     ctx: click.Context,
@@ -96,6 +153,7 @@ def repo_add(
     package_manager: Optional[str],
     frameworks: tuple[str, ...],
     prompt: bool,
+    as_json: bool,
 ) -> None:
     """Add a repository to the current project"""
     logger: UnifiedLogger = ctx.obj["logger"]
@@ -114,12 +172,27 @@ def repo_add(
         logger.warning(f"Failed to initialize ProjectManager: {e}")
         ctx.abort()
 
+    catalog = WorkspaceCatalogService()
     try:
         if not name or prompt:
             result = project_manager.add(
                 config_path, project, None, metagit_config=local_config
             )
-        elif name:
+            if isinstance(result, Exception):
+                raise result
+            if as_json:
+                emit_json(
+                    CatalogMutationResult(
+                        ok=True,
+                        entity="repo",
+                        operation="add",
+                        project_name=project,
+                        repo_name=result.name,
+                        config_path=str(Path(config_path).resolve()),
+                    )
+                )
+                return
+        else:
             repo_data = {
                 "name": name,
                 "description": description,
@@ -133,29 +206,31 @@ def repo_add(
                 "package_manager": package_manager,
                 "frameworks": list(frameworks) if frameworks else None,
             }
-
-            # Remove None values
             repo_data = {k: v for k, v in repo_data.items() if v is not None}
-
-            # Create ProjectPath object
             project_path = ProjectPath(**repo_data)
-
-            # Add repository to project
+            if as_json:
+                mutation = catalog.add_repo(
+                    local_config,
+                    config_path,
+                    project_name=project,
+                    repo=project_path,
+                )
+                exit_on_catalog_mutation(mutation, as_json=True)
+                return
             result = project_manager.add(
                 config_path, project, project_path, local_config
             )
 
         if isinstance(result, Exception):
-            raise Exception(f"Failed to add repository to project '{project}'")
+            raise result
 
-        else:
-            repo_name = result.name if result.name else "repository"
-            logger.info(
-                f"Successfully added repository '{repo_name}' to project '{project}'"
-            )
-            logger.info(
-                f"You can now use `metagit repo sync --project {project}` to sync the repository"
-            )
+        repo_name = result.name if result.name else "repository"
+        logger.info(
+            f"Successfully added repository '{repo_name}' to project '{project}'"
+        )
+        logger.info(
+            f"You can now use `metagit repo sync --project {project}` to sync the repository"
+        )
 
     except Exception as e:
         logger.warning(f"Failed to add repository: {e}")

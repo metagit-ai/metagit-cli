@@ -8,6 +8,7 @@ import click
 import yaml
 
 from metagit.cli.commands.project_repo import repo, repo_select
+from metagit.cli.json_output import emit_json, exit_on_catalog_mutation
 from metagit.cli.commands.project_source import source
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
@@ -15,6 +16,7 @@ from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager
 from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.utils.logging import UnifiedLogger
+from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.models import WorkspaceProject
 
 
@@ -58,12 +60,32 @@ project.add_command(source)
 
 
 @project.command("list")
+@click.option(
+    "--all",
+    "list_all",
+    is_flag=True,
+    default=False,
+    help="List all workspace projects (catalog view) instead of one project YAML",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
 @click.pass_context
-def project_list(ctx: click.Context) -> None:
-    """List the current project configuration in YAML format"""
+def project_list(ctx: click.Context, list_all: bool, as_json: bool) -> None:
+    """List project configuration (YAML, JSON, or all projects)."""
     logger: UnifiedLogger = ctx.obj["logger"]
     project: str = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
+
+    if list_all:
+        service = WorkspaceCatalogService()
+        if as_json:
+            emit_json(service.list_projects(local_config))
+            return
+        result = service.list_projects(local_config)
+        for entry in (result.data or {}).get("projects", []):
+            logger.echo(f"{entry.get('name')} ({entry.get('repo_count', 0)} repos)")
+        return
 
     try:
         # Handle special "local" project case
@@ -103,13 +125,61 @@ def project_list(ctx: click.Context) -> None:
 
             project_dict = workspace_project.model_dump(exclude_none=True)
 
-        # Convert the entire WorkspaceProject to YAML and display
+        if as_json:
+            emit_json(project_dict)
+            return
         yaml_output = yaml.dump(project_dict, default_flow_style=False, sort_keys=False)
         logger.echo(yaml_output)
 
     except Exception as e:
         logger.error(f"Failed to list project: {e}")
         ctx.abort()
+
+
+@project.command("add")
+@click.argument("name")
+@click.option("--description", default=None)
+@click.option("--agent-instructions", default=None)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def project_add(
+    ctx: click.Context,
+    name: str,
+    description: str | None,
+    agent_instructions: str | None,
+    as_json: bool,
+) -> None:
+    """Add a workspace project to the manifest."""
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    config_path: str = ctx.obj["config_path"]
+    result = WorkspaceCatalogService().add_project(
+        local_config,
+        config_path,
+        name=name,
+        description=description,
+        agent_instructions=agent_instructions,
+    )
+    exit_on_catalog_mutation(result, as_json=as_json)
+
+
+@project.command("remove")
+@click.argument("name")
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def project_remove(ctx: click.Context, name: str, as_json: bool) -> None:
+    """Remove a workspace project from the manifest."""
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    config_path: str = ctx.obj["config_path"]
+    result = WorkspaceCatalogService().remove_project(
+        local_config,
+        config_path,
+        name=name,
+    )
+    exit_on_catalog_mutation(result, as_json=as_json)
 
 
 @project.command("select")

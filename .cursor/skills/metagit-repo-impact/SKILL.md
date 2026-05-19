@@ -17,7 +17,10 @@ Use this skill before risky or cross-repo modifications.
 ## Commands
 
 - `metagit workspace select --project <name>`
-- `npx gitnexus query --help` (for dependency/flow exploration commands available in your environment)
+- MCP `metagit_cross_project_dependencies` with `source_project` and `dependency_types` before large cross-project edits
+- MCP `metagit_project_context_switch` to bound scope to one workspace project
+- `npx gitnexus analyze` on affected repos when `graph_status` is `stale` or `missing`
+- `npx gitnexus query` / `gitnexus impact` for symbol-level analysis after indexes are fresh
 
 ## Output Contract
 

@@ -13,6 +13,10 @@ This project is indexed by GitNexus as **metagit-cli** (3672 symbols, 5447 relat
 - When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
 - When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
 
+## Repo quality gate
+
+- **`task qa:prepush`** from the repo root must run successfully before you report implementation work as complete whenever this session modified files in the tree (see `scripts/prepush-gate.py`). Fix failures and re-run. Skip only when the session made no edits or the user waived the gate in this thread.
+
 ## Never Do
 
 - NEVER edit a function, class, or method without first running `gitnexus_impact` on it.

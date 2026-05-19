@@ -1,0 +1,5 @@
+# Agent workspace conventions
+
+- Read `.metagit.yml` before making cross-repository changes.
+- Use `metagit_project_context_switch` to scope work to one workspace project.
+- Run `metagit_workspace_health_check` when the workspace feels out of date.
