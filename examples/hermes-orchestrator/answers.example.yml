@@ -1,0 +1,9 @@
+# Example answers for non-interactive init:
+#   metagit init --template hermes-orchestrator --answers-file examples/hermes-orchestrator/answers.example.yml --no-prompt
+name: hermes-control-plane
+description: Umbrella workspace for a Hermes controller agent.
+url: ""
+portfolio_repo_name: example-api
+portfolio_repo_url: https://github.com/example-org/example-api.git
+local_site_name: example-site
+local_site_path: ~/Sites/example-site

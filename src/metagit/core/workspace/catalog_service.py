@@ -12,6 +12,7 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.workspace.workspace_dedupe import find_duplicate_identities
 from metagit.core.workspace.catalog_models import (
     CatalogError,
     CatalogMutationResult,
@@ -255,6 +256,20 @@ class WorkspaceCatalogService:
                 operation="add",
                 kind="invalid_repo",
                 message="repo requires at least path or url",
+                project_name=project_name,
+                repo_name=repo.name,
+            )
+        duplicates = find_duplicate_identities(config, repo)
+        if duplicates:
+            locations = ", ".join(f"{proj}/{name}" for proj, name in duplicates)
+            return self._mutation_error(
+                entity="repo",
+                operation="add",
+                kind="duplicate_identity",
+                message=(
+                    f"repo identity already registered as {locations}; "
+                    "reuse that entry or enable workspace dedupe before adding again"
+                ),
                 project_name=project_name,
                 repo_name=repo.name,
             )

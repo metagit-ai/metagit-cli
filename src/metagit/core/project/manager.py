@@ -7,14 +7,20 @@ import concurrent.futures
 import os
 import shutil
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 import git
 from tqdm import tqdm
 
+from metagit.core.appconfig.models import (
+    AppConfig,
+    WorkspaceDedupeConfig,
+    WorkspaceDedupeScope,
+)
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
+from metagit.core.workspace import workspace_dedupe
 from metagit.core.utils.common import create_vscode_workspace
 from metagit.core.utils.fuzzyfinder import (
     FuzzyFinder,
@@ -27,22 +33,43 @@ from metagit.core.utils.userprompt import UserPrompt
 from metagit.core.workspace.models import WorkspaceProject
 
 
+def project_manager_from_app(
+    app_config: AppConfig,
+    logger: UnifiedLogger,
+) -> "ProjectManager":
+    """Construct a ProjectManager using workspace path and dedupe settings."""
+    dedupe = app_config.workspace.dedupe
+    return ProjectManager(
+        app_config.workspace.path,
+        logger,
+        dedupe=dedupe if dedupe.enabled else None,
+    )
+
+
 class ProjectManager:
     """
     Manager class for handling projects within a workspace.
     """
 
-    def __init__(self, workspace_path: Union[str, Path], logger: UnifiedLogger) -> None:
+    def __init__(
+        self,
+        workspace_path: Union[str, Path],
+        logger: UnifiedLogger,
+        *,
+        dedupe: Optional[WorkspaceDedupeConfig] = None,
+    ) -> None:
         """
         Initialize the ProjectManager.
 
         Args:
             workspace_path: The root path of the workspace.
             logger: The logger instance for output.
+            dedupe: When enabled, sync uses a canonical directory and project symlinks.
         """
-        self.workspace_path = Path(workspace_path)
+        self.workspace_path = Path(workspace_path).expanduser().resolve()
         self.logger = logger
         self.logger.set_level("INFO")
+        self._dedupe = dedupe if dedupe is not None and dedupe.enabled else None
 
     def add(
         self,
@@ -108,6 +135,17 @@ class ProjectManager:
                         f"Repository '{repo.name}' already exists in project '{project_name}'"
                     )
 
+            duplicates = workspace_dedupe.find_duplicate_identities(
+                metagit_config,
+                repo,
+            )
+            if duplicates:
+                locations = ", ".join(f"{proj}/{name}" for proj, name in duplicates)
+                raise ValueError(
+                    "Repo identity already registered as "
+                    f"{locations}; reuse that entry or enable workspace dedupe"
+                )
+
             # Add the repository to the project
             target_project.repos.append(repo)
 
@@ -144,7 +182,13 @@ class ProjectManager:
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_to_repo = {
-                executor.submit(self._sync_repo, repo, project_dir, i): repo
+                executor.submit(
+                    self._sync_repo,
+                    repo,
+                    project_dir,
+                    i,
+                    project_name=project.name,
+                ): repo
                 for i, repo in enumerate(project.repos)
             }
             for future in concurrent.futures.as_completed(future_to_repo):
@@ -204,20 +248,139 @@ class ProjectManager:
         except Exception as e:
             return e
 
-    def _sync_repo(self, repo: ProjectPath, project_dir: str, position: int) -> None:
+    def _sync_repo(
+        self,
+        repo: ProjectPath,
+        project_dir: str,
+        position: int,
+        *,
+        project_name: str,
+    ) -> None:
         """
         Sync a single repository.
 
         This method is called by the thread pool executor.
         """
-        target_path = os.path.join(project_dir, repo.name)
+        mount_path = os.path.join(project_dir, repo.name)
+        if (
+            self._dedupe is not None
+            and self._dedupe.scope == WorkspaceDedupeScope.WORKSPACE
+        ):
+            self._sync_repo_deduped(
+                repo=repo,
+                project_name=project_name,
+                mount_path=mount_path,
+                position=position,
+            )
+            return
 
         if repo.path:
-            self._sync_local(repo, target_path, position)
+            self._sync_local(repo, mount_path, position)
         elif repo.url:
-            self._sync_remote(repo, target_path, position)
+            self._sync_remote(repo, mount_path, position)
         else:
             tqdm.write(f"Skipping {repo.name}: No local path or remote URL provided.")
+
+    def _sync_repo_deduped(
+        self,
+        *,
+        repo: ProjectPath,
+        project_name: str,
+        mount_path: str,
+        position: int,
+    ) -> None:
+        """Sync using canonical storage and a per-project symlink mount."""
+        if self._dedupe is None:
+            return
+        identity = workspace_dedupe.build_repo_identity(repo)
+        if identity is None:
+            tqdm.write(f"Skipping {repo.name}: No local path or remote URL provided.")
+            return
+
+        canonical = workspace_dedupe.canonical_path(
+            self.workspace_path,
+            self._dedupe,
+            identity.repo_key,
+        )
+        mount = Path(mount_path)
+
+        if repo.path:
+            self._sync_local_canonical(
+                repo=repo,
+                source_path=Path(repo.path).expanduser().resolve(),
+                canonical=canonical,
+                mount=mount,
+                position=position,
+            )
+            return
+
+        self._sync_remote_canonical(
+            repo=repo,
+            canonical=canonical,
+            mount=mount,
+            position=position,
+        )
+
+    def _sync_local_canonical(
+        self,
+        *,
+        repo: ProjectPath,
+        source_path: Path,
+        canonical: Path,
+        mount: Path,
+        position: int,
+    ) -> None:
+        """Place source under canonical (symlink) and mount project symlink."""
+        if not source_path.exists():
+            tqdm.write(f"Source path for {repo.name} does not exist: {source_path}")
+            return
+
+        desc = f"  ✅   🔗 {repo.name}"
+        if not canonical.exists():
+            canonical.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                os.symlink(
+                    source_path,
+                    canonical,
+                    target_is_directory=source_path.is_dir(),
+                )
+            except OSError as exc:
+                tqdm.write(f"Failed to create canonical link for {repo.name}: {exc}")
+                return
+
+        changed, error = workspace_dedupe.ensure_symlink(mount, canonical)
+        if error:
+            tqdm.write(f"Failed to mount {repo.name}: {error}")
+            return
+        bar_format = (
+            "{l_bar}Symlinked{r_bar}" if changed else "{l_bar} 🟠 Already exists{r_bar}"
+        )
+        with tqdm(total=1, desc=desc, position=position, bar_format=bar_format) as pbar:
+            pbar.update(1)
+
+    def _sync_remote_canonical(
+        self,
+        *,
+        repo: ProjectPath,
+        canonical: Path,
+        mount: Path,
+        position: int,
+    ) -> None:
+        """Clone into canonical when missing, then symlink the project mount."""
+        if not canonical.exists():
+            self._sync_remote(repo, str(canonical), position)
+        if not canonical.exists():
+            return
+        changed, error = workspace_dedupe.ensure_symlink(mount, canonical)
+        if error:
+            tqdm.write(f"Failed to mount {repo.name}: {error}")
+            return
+        desc = f"  🔗 {repo.name}"
+        bar_format = (
+            "{l_bar}Mounted{r_bar}" if changed else "{l_bar} 🟠 Already exists{r_bar}"
+        )
+        with tqdm(total=1, desc=desc, position=position, bar_format=bar_format) as pbar:
+            pbar.update(1)
 
     def _sync_local(self, repo: ProjectPath, target_path: str, position: int) -> None:
         """Handle syncing of a local repository via symlink."""
@@ -227,7 +390,8 @@ class ProjectManager:
             return
 
         desc = f"  ✅   🔗 {repo.name}"
-        if os.path.exists(target_path) or os.path.islink(target_path):
+        mount = Path(target_path)
+        if mount.exists() or mount.is_symlink():
             desc = f"  🔗 {repo.name}"
             with tqdm(
                 total=1,
@@ -238,17 +402,17 @@ class ProjectManager:
                 pbar.update(1)
             return
 
-        try:
-            os.symlink(source_path, target_path)
-            with tqdm(
-                total=1,
-                desc=desc,
-                position=position,
-                bar_format="{l_bar}Symlinked{r_bar}",
-            ) as pbar:
-                pbar.update(1)
-        except OSError as e:
-            tqdm.write(f"Failed to create symbolic link for {repo.name}: {e}")
+        changed, error = workspace_dedupe.ensure_symlink(mount, source_path)
+        if error:
+            tqdm.write(f"Failed to create symbolic link for {repo.name}: {error}")
+            return
+        with tqdm(
+            total=1,
+            desc=desc,
+            position=position,
+            bar_format="{l_bar}Symlinked{r_bar}",
+        ) as pbar:
+            pbar.update(1)
 
     def _sync_remote(self, repo: ProjectPath, target_path: str, position: int) -> None:
         """Handle syncing of a remote repository via git clone."""

@@ -4,13 +4,15 @@ Config subcommand
 
 import json
 import os
+from pathlib import Path
 from typing import Union
 
 import click
 
+from metagit.cli.json_output import emit_json
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
-from metagit.core.utils.yaml_class import yaml
+from metagit.core.config.yaml_display import dump_config_dict
 
 
 @click.group(name="config", invoke_without_command=True)
@@ -47,9 +49,18 @@ def config(ctx: click.Context, config_path: str) -> None:
 
 
 @config.command("show")
+@click.option(
+    "--normalized",
+    is_flag=True,
+    default=False,
+    help="Re-serialize from the loaded model (readable YAML, not the file on disk)",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
 @click.pass_context
-def config_show(ctx: click.Context) -> None:
-    """Show metagit configuration"""
+def config_show(ctx: click.Context, normalized: bool, as_json: bool) -> None:
+    """Show metagit configuration (source file by default)."""
     logger = ctx.obj["logger"]
     try:
         config_path = ctx.obj["config_path"]
@@ -58,14 +69,22 @@ def config_show(ctx: click.Context) -> None:
         if isinstance(config_result, Exception):
             raise config_result
 
-        yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005
-        output = yaml.dump(
-            config_result.model_dump(exclude_unset=True, exclude_none=True),
-            default_flow_style=False,
-            sort_keys=False,
-            indent=2,
+        if as_json:
+            emit_json(config_result.model_dump(mode="json", exclude_none=True))
+            return
+
+        path = Path(config_path)
+        if not normalized and path.is_file():
+            raw = path.read_text(encoding="utf-8")
+            click.echo(raw, nl=raw.endswith("\n"))
+            return
+
+        output = dump_config_dict(
+            config_result.model_dump(mode="json", exclude_none=True)
         )
-        logger.echo(output)
+        click.echo(output, nl=False)
+        if not output.endswith("\n"):
+            click.echo()
     except Exception as e:
         logger.error(f"Failed to load metagit configuration file: {e}")
         logger.debug(f"Error: {e}")
@@ -391,6 +410,59 @@ def config_info(ctx: click.Context) -> None:
         logger.echo(
             "Create a new config file with 'metagit config create' or 'metagit init'"
         )
+
+
+@config.command("example")
+@click.option(
+    "--output",
+    "output_path",
+    help="Write exemplar YAML to this path (default: stdout)",
+    default=None,
+)
+@click.option(
+    "--include-workspace/--no-include-workspace",
+    default=True,
+    help="Include the workspace block in the generated exemplar",
+)
+@click.option(
+    "--comment-style",
+    type=click.Choice(["line", "none"], case_sensitive=False),
+    default="line",
+    help="Emit Field descriptions as YAML comments (line) or plain YAML only",
+)
+@click.pass_context
+def config_example(
+    ctx: click.Context,
+    output_path: str | None,
+    include_workspace: bool,
+    comment_style: str,
+) -> None:
+    """
+    Generate a non-production YAML exemplar with optional field descriptions.
+
+    Merges src/metagit/data/config-example-overrides.yml when present.
+    """
+    from metagit.core.config.example_generator import (
+        ConfigExampleGenerator,
+        load_example_overrides,
+    )
+
+    logger = ctx.obj["logger"]
+    try:
+        generator = ConfigExampleGenerator(overrides=load_example_overrides())
+        rendered = generator.render_yaml(
+            include_workspace=include_workspace,
+            comment_style=comment_style,
+        )
+        if output_path:
+            with open(output_path, "w", encoding="utf-8") as handle:
+                handle.write(rendered)
+            logger.success(f"Config exemplar written to {output_path}")
+            return
+        click.echo(rendered, nl=False)
+    except Exception as exc:
+        logger.error(f"Failed to generate config exemplar: {exc}")
+        ctx.abort()
 
 
 @config.command("schema")

@@ -72,7 +72,7 @@ def test_appconfig_defaults():
 def test_appconfig_load_and_save(tmp_path):
     # Create a config file
     config_path = os.path.join(tmp_path, "testconfig.yaml")
-    data = {"config": AppConfig().model_dump()}
+    data = {"config": AppConfig().model_dump(mode="json")}
     print(f"config_path: {config_path}")
 
     with open(config_path, "w") as f:

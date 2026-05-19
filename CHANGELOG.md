@@ -19,6 +19,7 @@
 
 ### Changed
 
+- `metagit config show` prints the source `.metagit.yml` by default (preserves your formatting); use `--normalized` for a readable model round-trip (`|` blocks, Unicode not escaped) or `--json` for agents.
 - Removed redundant `config.version` from application config; use `metagit version` for the installed package. Legacy `version` keys in YAML are ignored on load. `api_version` remains for a future remote API contract (default empty; `METAGIT_API_VERSION` still applies).
 
 ### Fixed

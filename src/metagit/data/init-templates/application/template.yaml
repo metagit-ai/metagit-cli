@@ -1,0 +1,18 @@
+id: application
+label: Application (single repo)
+description: Minimal .metagit.yml for one application repository.
+kind: application
+prompts:
+  - name: name
+    label: Project name
+    default_from: directory_name
+  - name: description
+    label: Short description
+    default: Application project managed by metagit.
+  - name: url
+    label: Git remote URL (optional)
+    default_from: git_remote_url
+    required: false
+files:
+  - template: .metagit.yml.tpl
+    output: .metagit.yml

@@ -1,0 +1,10 @@
+# Hermes orchestrator (workspace coordinator)
+
+This directory received the `hermes-orchestrator` workspace template.
+
+1. Copy or merge `examples/hermes-orchestrator/.metagit.yml` into your umbrella coordinator repository.
+2. Run `metagit config validate` on the manifest.
+3. Register real repos with `metagit project repo add` or MCP catalog tools.
+4. Point Hermes MCP at the coordinator root: `metagit mcp serve --root <path>`.
+
+Controller agents should follow root `agent_instructions` in `.metagit.yml`, not this file alone.

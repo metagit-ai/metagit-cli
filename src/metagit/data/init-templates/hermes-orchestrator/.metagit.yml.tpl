@@ -1,0 +1,78 @@
+name: {{ name }}
+description: |
+  {{ description }}
+kind: umbrella
+url: {{ url }}
+agent_instructions: |
+  You are the Hermes controller for this workspace: the DevOps and project-management
+  entrypoint for the operator. You do not improvise workspace layout.
+
+  Session start (every time):
+  1. metagit_workspace_status — confirm gate is active and note workspace root.
+  2. metagit_workspace_health_check — surface missing clones, broken mounts, duplicate URLs.
+  3. Read metagit://workspace/config when you need the full manifest.
+
+  New or continued work:
+  - Search before create: metagit_repo_search / `metagit search` for names, URLs, tags.
+  - Reuse existing workspace.projects[] and repos[] entries; never clone into ad-hoc folders.
+  - Register changes in .metagit.yml (catalog tools or validated YAML), then metagit config validate.
+  - metagit_project_context_switch to focus one project; pass effective_agent_instructions to subagents.
+  - Stay controller for cross-project objectives; delegate single-repo implementation to subagents.
+  - metagit_workspace_sync: fetch by default; pull/clone only with explicit operator approval.
+  - metagit_session_update before switching projects or ending the session.
+
+  Documentation duty:
+  - Every repo or path must have a clear description in this manifest.
+  - Record build, deploy, and publish steps in per-repo agent_instructions when non-obvious.
+  - When paths, URLs, or ownership change, update .metagit.yml before claiming work is done.
+
+workspace:
+  description: |
+    Portfolio registry: git-backed services plus local-only publish paths. Metagit is the
+    source of truth for what exists on disk under the configured workspace.path.
+  agent_instructions: |
+    Validate after manifest edits (`metagit config validate`). Prefer metagit catalog and
+    MCP tools over hand-editing repo lists without validation. Enable workspace.dedupe in
+    app config when the same remote URL appears in multiple projects.
+  projects:
+    - name: portfolio
+      description: Git-backed applications and shared services under active development.
+      agent_instructions: |
+        Git operations are allowed per repo policy. Launch subagents with repo-scoped
+        effective_agent_instructions for implementation; you coordinate sequencing and PRs.
+      repos:
+        - name: {{ portfolio_repo_name }}
+          description: Sample HTTP API service (replace with your repository).
+          url: {{ portfolio_repo_url }}
+          sync: true
+          kind: service
+          tags:
+            tier: application
+          agent_instructions: |
+            Run unit tests and lint before opening PRs. Note breaking API changes in PR text.
+
+    - name: local
+      description: |
+        Local-only paths (no git remotes). Used to build and publish static web apps and
+        personal sites for the operator.
+      agent_instructions: |
+        Repos here use `path`, not `url`. Do not git clone or pull. Sync creates symlinks
+        into the workspace. Document publish targets in each repo's agent_instructions.
+      repos:
+        - name: {{ local_site_name }}
+          description: Sample static site published from a folder on disk.
+          path: {{ local_site_path }}
+          sync: true
+          kind: website
+          tags:
+            publish: static
+          agent_instructions: |
+            Build: npm run build (or project README). Publish: copy dist/ to the host named
+            in README. Update `path` in .metagit.yml if the site directory moves.
+
+    - name: platform
+      description: Optional shared infrastructure (Terraform, modules, policy). See docs/hermes-iac-workspace-guide.md.
+      agent_instructions: |
+        Treat IaC changes as high blast-radius. Use metagit_cross_project_dependencies and
+        GitNexus before module version bumps. Subagents run plan-only unless operator approves apply.
+      repos: []

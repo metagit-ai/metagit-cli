@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+from enum import Enum
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -13,11 +14,51 @@ success_blurb: str = "Success! ✅"
 failure_blurb: str = "Failed! ❌"
 
 
+class WorkspaceDedupeScope(str, Enum):
+    """Where repository deduplication is applied."""
+
+    WORKSPACE = "workspace"
+    GLOBAL = "global"
+
+
+class WorkspaceDedupeStrategy(str, Enum):
+    """How duplicate repository identities share disk layout."""
+
+    SYMLINK = "symlink"
+
+
+class WorkspaceDedupeConfig(BaseModel):
+    """Deduplicate synced repos within a workspace via a canonical directory."""
+
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    enabled: bool = Field(
+        default=False,
+        description="When true, clone once under canonical_dir and symlink per project",
+    )
+    scope: WorkspaceDedupeScope = Field(
+        default=WorkspaceDedupeScope.WORKSPACE,
+        description="Dedupe scope (v1 implements workspace only)",
+    )
+    strategy: WorkspaceDedupeStrategy = Field(
+        default=WorkspaceDedupeStrategy.SYMLINK,
+        description="How project mounts reference canonical checkouts",
+    )
+    canonical_dir: str = Field(
+        default="_canonical",
+        description="Directory under workspace.path holding canonical checkouts",
+    )
+
+
 class WorkspaceConfig(BaseModel):
     """Model for workspace configuration in AppConfig."""
 
     path: str = Field(default="./.metagit", description="Workspace path")
     default_project: str = Field(default="default", description="Default project")
+    dedupe: WorkspaceDedupeConfig = Field(
+        default_factory=WorkspaceDedupeConfig,
+        description="Optional workspace-scoped repository deduplication settings",
+    )
     ui_show_preview: Optional[bool] = Field(
         default=True, description="Show preview in fuzzy finder console UI"
     )
@@ -267,6 +308,10 @@ class AppConfig(BaseModel):
         if os.getenv("METAGIT_WORKSPACE_DEFAULT_PROJECT"):
             config.workspace.default_project = os.getenv(
                 "METAGIT_WORKSPACE_DEFAULT_PROJECT"
+            )
+        if os.getenv("METAGIT_WORKSPACE_DEDUPE_ENABLED"):
+            config.workspace.dedupe.enabled = (
+                os.getenv("METAGIT_WORKSPACE_DEDUPE_ENABLED", "").lower() == "true"
             )
 
         # GitHub provider configuration

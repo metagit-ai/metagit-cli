@@ -801,6 +801,14 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError(
                     "branch age thresholds must be non-negative"
                 )
+            from metagit.core.appconfig.models import AppConfig
+
+            loaded_app = AppConfig.load()
+            dedupe_cfg = (
+                loaded_app.workspace.dedupe
+                if not isinstance(loaded_app, Exception)
+                else None
+            )
             return self._workspace_health.check(
                 config=config,
                 workspace_root=status.root_path,
@@ -812,6 +820,7 @@ class MetagitMcpRuntime:
                 branch_head_warning_days=branch_warn,
                 branch_head_critical_days=branch_crit,
                 integration_stale_days=integration_td,
+                dedupe=dedupe_cfg,
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_discover":

@@ -11,11 +11,12 @@ import click
 from metagit.cli.json_output import emit_json, exit_on_catalog_mutation
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.models import MetagitConfig
-from metagit.core.project.manager import ProjectManager
+from metagit.core.project.manager import project_manager_from_app
 from metagit.core.project.models import ProjectKind, ProjectPath
 from metagit.core.utils.common import open_editor
 from metagit.core.workspace.catalog_models import CatalogMutationResult
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace import workspace_dedupe
 from metagit.core.utils.logging import UnifiedLogger
 
 
@@ -36,10 +37,7 @@ def repo_select(ctx: click.Context) -> None:
     local_config: MetagitConfig = ctx.obj["local_config"]
     project = ctx.obj["project"]
     app_config: AppConfig = ctx.obj["config"]
-    project_manager = ProjectManager(
-        app_config.workspace.path,
-        logger,
-    )
+    project_manager = project_manager_from_app(app_config, logger)
     selected_repo = project_manager.select_repo(
         local_config,
         project,
@@ -167,7 +165,7 @@ def repo_add(
 
     try:
         # Initialize ProjectManager and MetagitConfigManager
-        project_manager = ProjectManager(app_config.workspace.path, logger)
+        project_manager = project_manager_from_app(app_config, logger)
     except Exception as e:
         logger.warning(f"Failed to initialize ProjectManager: {e}")
         ctx.abort()
@@ -280,7 +278,7 @@ def repo_prune(
         ctx.abort()
 
     try:
-        project_manager = ProjectManager(app_config.workspace.path, logger)
+        project_manager = project_manager_from_app(app_config, logger)
     except Exception as exc:
         logger.warning(f"Failed to initialize ProjectManager: {exc}")
         ctx.abort()
@@ -300,6 +298,23 @@ def repo_prune(
         project,
         ignore_hidden=ignore_hidden,
     )
+    if app_config.workspace.dedupe.enabled:
+        references = workspace_dedupe.list_canonical_references(
+            local_config,
+            workspace_root,
+            app_config.workspace.dedupe,
+        )
+        orphans = workspace_dedupe.list_orphan_canonical_dirs(
+            workspace_root,
+            app_config.workspace.dedupe,
+            references,
+        )
+        if orphans:
+            click.echo("Orphan canonical directories (not referenced in .metagit.yml):")
+            for orphan in orphans:
+                click.echo(f"  - {orphan}")
+        else:
+            click.echo("No orphan canonical directories under _canonical/.")
     if not candidates:
         click.echo("No unmanaged sync directories found under the project sync folder.")
         return

@@ -1,0 +1,34 @@
+id: hermes-orchestrator
+label: Hermes orchestrator
+description: |
+  DevOps / project-management controller workspace with portfolio, local path,
+  and platform projects plus AGENTS.md for the coordinator repo.
+kind: umbrella
+prompts:
+  - name: name
+    label: Workspace / manifest name
+    default: hermes-control-plane
+  - name: description
+    label: Manifest description
+    default: Umbrella workspace for a Hermes controller agent.
+  - name: url
+    label: Coordinator git URL (optional)
+    default_from: git_remote_url
+    required: false
+  - name: portfolio_repo_name
+    label: Example portfolio repo entry name
+    default: example-api
+  - name: portfolio_repo_url
+    label: Example portfolio git URL
+    default: https://github.com/example-org/example-api.git
+  - name: local_site_name
+    label: Local site entry name (non-git)
+    default: example-site
+  - name: local_site_path
+    label: Local site filesystem path
+    default: ~/Sites/example-site
+files:
+  - template: .metagit.yml.tpl
+    output: .metagit.yml
+  - template: AGENTS.md.tpl
+    output: AGENTS.md

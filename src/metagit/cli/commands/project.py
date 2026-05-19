@@ -13,7 +13,7 @@ from metagit.cli.commands.project_source import source
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
-from metagit.core.project.manager import ProjectManager
+from metagit.core.project.manager import ProjectManager, project_manager_from_app
 from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
@@ -198,7 +198,7 @@ def project_sync(ctx: click.Context) -> None:
     app_config: AppConfig = ctx.obj["config"]
     project: str = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
-    project_manager: ProjectManager = ProjectManager(app_config.workspace.path, logger)
+    project_manager: ProjectManager = project_manager_from_app(app_config, logger)
 
     try:
         # Handle special "local" project case
