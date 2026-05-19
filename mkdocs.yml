@@ -14,6 +14,8 @@ nav:
   - 'Features':
     - 'Repository Detection': 'repository_detection.md'
     - 'Hermes & org IaC guide': 'hermes-iac-workspace-guide.md'
+    - 'Hermes orchestrator workspace': 'hermes-orchestrator-workspace.md'
+    - 'Configuration exemplar': 'reference/metagit-config.md'
     - 'Skills': 'skills.md'
 markdown_extensions:
   - mkdocs-click

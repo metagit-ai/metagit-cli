@@ -5,9 +5,12 @@ Workspace integrity and maintenance health checks.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Optional
 
+from metagit.core.appconfig.models import WorkspaceDedupeConfig
 from metagit.core.config.models import MetagitConfig
+from metagit.core.workspace import workspace_dedupe
 from metagit.core.mcp.gate import WorkspaceGate
 from metagit.core.mcp.services.gitnexus_registry import GitNexusRegistryAdapter
 from metagit.core.mcp.services.repo_git_stats import inspect_repo_state
@@ -45,6 +48,7 @@ class WorkspaceHealthService:
         branch_head_warning_days: float = 180.0,
         branch_head_critical_days: float = 365.0,
         integration_stale_days: float = 90.0,
+        dedupe: WorkspaceDedupeConfig | None = None,
     ) -> WorkspaceHealthResult:
         """Run selected health checks across workspace repositories."""
         gate_status = self._gate.evaluate(root_path=workspace_root)
@@ -256,7 +260,16 @@ class WorkspaceHealthService:
                 ),
             )
 
-        recommendations.extend(self._duplicate_url_warnings(rows=rows))
+        recommendations.extend(self._duplicate_url_warnings(rows=rows, dedupe=dedupe))
+        recommendations.extend(self._broken_mount_warnings(rows=rows))
+        if dedupe is not None and dedupe.enabled:
+            recommendations.extend(
+                self._orphan_canonical_warnings(
+                    config=config,
+                    workspace_root=workspace_root,
+                    dedupe=dedupe,
+                )
+            )
         summary = {
             "repos_total": len(repo_rows),
             "repos_missing": missing_count,
@@ -278,7 +291,9 @@ class WorkspaceHealthService:
         )
 
     def _duplicate_url_warnings(
-        self, rows: list[dict[str, Any]]
+        self,
+        rows: list[dict[str, Any]],
+        dedupe: WorkspaceDedupeConfig | None = None,
     ) -> list[HealthRecommendation]:
         """Warn when multiple repos share the same configured URL."""
         by_url: dict[str, list[dict[str, Any]]] = {}
@@ -294,11 +309,77 @@ class WorkspaceHealthService:
             names = ", ".join(
                 f"{item['project_name']}/{item['repo_name']}" for item in grouped
             )
+            action = "review_config"
+            message = f"Multiple repos share URL {url}: {names}"
+            if dedupe is not None and dedupe.enabled:
+                action = "resync_canonical"
+                message = (
+                    f"{message}. Dedupe is enabled; run project sync to refresh mounts."
+                )
+            elif dedupe is not None and not dedupe.enabled:
+                message = (
+                    f"{message}. Consider enabling workspace.dedupe in app config."
+                )
             warnings.append(
                 HealthRecommendation(
                     severity="info",
-                    action="review_config",
-                    message=f"Multiple repos share URL {url}: {names}",
+                    action=action,
+                    message=message,
+                )
+            )
+        return warnings
+
+    def _broken_mount_warnings(
+        self, rows: list[dict[str, Any]]
+    ) -> list[HealthRecommendation]:
+        """Recommend repair when a configured repo path is a broken symlink."""
+        warnings: list[HealthRecommendation] = []
+        for row in rows:
+            repo_path = Path(str(row.get("repo_path", "")))
+            if not repo_path.is_symlink():
+                continue
+            if repo_path.exists():
+                continue
+            warnings.append(
+                HealthRecommendation(
+                    severity="warning",
+                    action="repair_mount",
+                    message=(
+                        f"Broken symlink for {row['project_name']}/{row['repo_name']} "
+                        f"at {repo_path}; run project sync to repair."
+                    ),
+                )
+            )
+        return warnings
+
+    def _orphan_canonical_warnings(
+        self,
+        *,
+        config: MetagitConfig,
+        workspace_root: str,
+        dedupe: WorkspaceDedupeConfig,
+    ) -> list[HealthRecommendation]:
+        """Warn about canonical directories not referenced in the manifest."""
+        references = workspace_dedupe.list_canonical_references(
+            config=config,
+            workspace_path=Path(workspace_root).expanduser().resolve(),
+            dedupe=dedupe,
+        )
+        orphans = workspace_dedupe.list_orphan_canonical_dirs(
+            Path(workspace_root).expanduser().resolve(),
+            dedupe,
+            references,
+        )
+        warnings: list[HealthRecommendation] = []
+        for orphan in orphans:
+            warnings.append(
+                HealthRecommendation(
+                    severity="info",
+                    action="prune_canonical",
+                    message=(
+                        f"Canonical directory has no manifest references: {orphan}. "
+                        "Remove manually or run project repo prune after dropping entries."
+                    ),
                 )
             )
         return warnings

@@ -1,0 +1,18 @@
+id: umbrella
+label: Umbrella workspace
+description: Coordinator manifest with an empty default workspace project.
+kind: umbrella
+prompts:
+  - name: name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: description
+    label: Short description
+    default: Umbrella workspace coordinating multiple repositories.
+  - name: url
+    label: Coordinator git URL (optional)
+    default_from: git_remote_url
+    required: false
+files:
+  - template: .metagit.yml.tpl
+    output: .metagit.yml

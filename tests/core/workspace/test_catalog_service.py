@@ -89,3 +89,39 @@ def test_add_and_remove_repo(tmp_path: Path) -> None:
         repo_name="svc-b",
     )
     assert removed.ok
+
+
+def test_add_repo_rejects_duplicate_identity(tmp_path: Path) -> None:
+    from metagit.core.project.models import ProjectPath
+    from metagit.core.workspace.catalog_models import CatalogError
+
+    config, config_path = _write_manifest(
+        tmp_path,
+        [
+            {
+                "name": "alpha",
+                "repos": [
+                    {
+                        "name": "svc",
+                        "url": "https://github.com/example/svc.git",
+                    }
+                ],
+            },
+            {"name": "beta", "repos": []},
+        ],
+    )
+    service = WorkspaceCatalogService()
+    built = service.build_repo_from_fields(
+        name="svc-copy",
+        url="https://github.com/example/svc.git",
+    )
+    assert not isinstance(built, CatalogError)
+    result = service.add_repo(
+        config,
+        config_path,
+        project_name="beta",
+        repo=built,
+    )
+    assert not result.ok
+    assert result.error is not None
+    assert result.error.kind == "duplicate_identity"
