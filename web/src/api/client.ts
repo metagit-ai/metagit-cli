@@ -119,14 +119,80 @@ export function patchAppconfig(
   })
 }
 
-export function getWorkspace(): Promise<Record<string, unknown>> {
-  return requestJson<Record<string, unknown>>('/v2/workspace')
+export interface CatalogEnvelope<T> {
+  ok: boolean
+  error?: { kind: string; message: string } | null
+  data?: T
+}
+
+export interface WorkspaceProjectEntry {
+  name: string
+  description?: string | null
+  agent_instructions?: string | null
+  dedupe_enabled?: boolean | null
+  repo_count: number
+}
+
+export interface WorkspaceRepoIndexRow {
+  project_name: string
+  repo_name: string
+  configured_path: string | null
+  repo_path: string
+  exists: boolean
+  is_git_repo: boolean
+  status: 'synced' | 'configured_missing' | string
+  url?: string | null
+  sync?: boolean
+  tags?: Record<string, string>
+}
+
+export interface WorkspaceData {
+  summary: Record<string, unknown>
+  projects: WorkspaceProjectEntry[]
+  repos_index: WorkspaceRepoIndexRow[]
+}
+
+export interface HealthRecommendation {
+  severity: 'info' | 'warning' | 'critical'
+  action: string
+  message: string
+  project_name?: string | null
+  repo_name?: string | null
+  repo_path?: string | null
+}
+
+export interface RepoHealthRow {
+  project_name: string
+  repo_name: string
+  repo_path: string
+  status: string
+  exists: boolean
+  is_git_repo: boolean
+  branch?: string | null
+  dirty?: boolean | null
+}
+
+export interface WorkspaceHealthResult {
+  ok: boolean
+  workspace_root: string
+  summary: Record<string, number>
+  repos: RepoHealthRow[]
+  recommendations: HealthRecommendation[]
+}
+
+export interface PruneCandidate {
+  path: string
+  name: string
+}
+
+export function getWorkspace(): Promise<CatalogEnvelope<WorkspaceData>> {
+  return requestJson<CatalogEnvelope<WorkspaceData>>('/v2/workspace')
 }
 
 export function postHealth(
   body: Record<string, unknown> = {},
-): Promise<Record<string, unknown>> {
-  return requestJson<Record<string, unknown>>('/v3/ops/health', {
+): Promise<WorkspaceHealthResult> {
+  return requestJson<WorkspaceHealthResult>('/v3/ops/health', {
     method: 'POST',
     body: JSON.stringify(body),
   })
@@ -143,19 +209,37 @@ export function getSyncJob(id: string): Promise<SyncJobStatus> {
   return requestJson<SyncJobStatus>(`/v3/ops/sync/${id}`)
 }
 
-export function postPrunePreview(
-  body: Record<string, unknown> = {},
-): Promise<Record<string, unknown>> {
-  return requestJson<Record<string, unknown>>('/v3/ops/prune/preview', {
+export interface PrunePreviewResponse {
+  ok: boolean
+  candidates: PruneCandidate[]
+}
+
+export interface PruneExecuteResponse {
+  ok: boolean
+  dry_run: boolean
+  force: boolean
+  removed: string[]
+  paths?: string[]
+  errors?: Array<{ path: string; message: string }>
+}
+
+export function postPrunePreview(body: {
+  project: string
+  include_hidden?: boolean
+}): Promise<PrunePreviewResponse> {
+  return requestJson<PrunePreviewResponse>('/v3/ops/prune/preview', {
     method: 'POST',
     body: JSON.stringify(body),
   })
 }
 
-export function postPrune(
-  body: Record<string, unknown> = {},
-): Promise<Record<string, unknown>> {
-  return requestJson<Record<string, unknown>>('/v3/ops/prune', {
+export function postPrune(body: {
+  project: string
+  paths: string[]
+  dry_run?: boolean
+  force?: boolean
+}): Promise<PruneExecuteResponse> {
+  return requestJson<PruneExecuteResponse>('/v3/ops/prune', {
     method: 'POST',
     body: JSON.stringify(body),
   })
