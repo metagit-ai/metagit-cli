@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Local HTTP server for the metagit web UI (config routes first)."""
+"""Local HTTP server for the metagit web UI."""
 
 from __future__ import annotations
 
@@ -10,7 +10,19 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.web.config_handler import ConfigWebHandler
+from metagit.core.web.ops_handler import OpsWebHandler
+
+
+def _resolve_workspace_root(root: str, workspace_path: str) -> str:
+    """Resolve workspace sync root from appconfig path (relative to manifest root)."""
+    path = Path(workspace_path).expanduser()
+    if not path.is_absolute():
+        path = (Path(root) / path).resolve()
+    else:
+        path = path.resolve()
+    return str(path)
 
 
 def build_web_server(
@@ -20,12 +32,28 @@ def build_web_server(
     host: str = "127.0.0.1",
     port: int = 8787,
 ) -> ThreadingHTTPServer:
-    """Build a threading HTTP server for web UI config routes."""
+    """Build a threading HTTP server for web UI routes."""
     root_resolved = str(Path(root).resolve())
     config_path = os.path.join(root_resolved, ".metagit.yml")
+    appconfig_resolved = str(Path(appconfig_path).resolve())
+    app_config = load_appconfig(appconfig_resolved)
+    if isinstance(app_config, Exception):
+        raise ValueError(f"Failed to load app config: {app_config}")
+    if app_config.workspace is None:
+        raise ValueError("app config missing workspace section")
+    workspace_root = _resolve_workspace_root(
+        root_resolved,
+        str(app_config.workspace.path),
+    )
     config_handler = ConfigWebHandler(
         metagit_config_path=config_path,
-        appconfig_path=str(Path(appconfig_path).resolve()),
+        appconfig_path=appconfig_resolved,
+    )
+    ops_handler = OpsWebHandler(
+        root=root_resolved,
+        config_path=config_path,
+        appconfig_path=appconfig_resolved,
+        workspace_root=workspace_root,
     )
 
     class ReusableThreadingHTTPServer(ThreadingHTTPServer):
@@ -46,9 +74,26 @@ def build_web_server(
 
         def _dispatch(self, method: str) -> None:
             parsed = urlparse(self.path)
+            events_job_id = ops_handler.sync_events_job_id(method, parsed.path)
+            if events_job_id is not None:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("Connection", "keep-alive")
+                self.end_headers()
+                ops_handler.stream_sync_events(events_job_id, self.wfile)
+                return
             length = int(self.headers.get("Content-Length", "0") or "0")
             body = self.rfile.read(length) if length > 0 else b""
             if config_handler.handle(
+                method,
+                parsed.path,
+                parsed.query,
+                body,
+                self._json,
+            ):
+                return
+            if ops_handler.handle(
                 method,
                 parsed.path,
                 parsed.query,
