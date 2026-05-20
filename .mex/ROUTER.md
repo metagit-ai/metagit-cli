@@ -45,7 +45,7 @@ Then read this file fully before doing anything else in this session.
 - Fuzzy finder repo selection UX now shows result counters, keeps full scrollable match sets, respects project `.gitignore` entries during filesystem candidate discovery, and provides richer repo metadata in preview.
 - New `skills` CLI command (`list`, `show`, `install`) plus `mcp install` now support auto-detected agent targets across project/user scopes, with bundled package skills deployed from `src/metagit/data/skills`.
 - Focused `graphify` runs on subtrees produce `graphify-out/` HTML/report artifacts quickly enough to use for local command-surface exploration without analyzing the entire repository.
-- **Workspace dedupe (workspace scope):** `workspace.dedupe` in app config; canonical store under `{workspace.path}/_canonical/` with per-project symlink mounts when enabled.
+- **Workspace dedupe:** `workspace.dedupe` in app config (default enabled); optional per-project `workspace.projects[].dedupe.enabled` in `.metagit.yml` overrides the flag for sync/layout under that project only.
 - **`metagit config example`:** generates `docs/reference/metagit-config.full-example.yml` (via `task generate:schema`) with field-description comments.
 - **Hermes orchestrator template:** `hermes-orchestrator` under `src/metagit/data/templates/`, example manifest at `examples/hermes-orchestrator/.metagit.yml`, guide at `docs/hermes-orchestrator-workspace.md`.
 - **`metagit init`:** bundled init templates (`application`, `umbrella`, `hermes-orchestrator`) with copier-style `{{ var }}` rendering, `--answers-file`, `--no-prompt`, all `ProjectKind` values via `--minimal`.

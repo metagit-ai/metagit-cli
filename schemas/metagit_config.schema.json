@@ -578,6 +578,27 @@
       "title": "Pipeline",
       "type": "object"
     },
+    "ProjectDedupeOverride": {
+      "additionalProperties": false,
+      "description": "Per-project override of app-config ``workspace.dedupe``.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When set, overrides workspace.dedupe.enabled from metagit.config.yaml for sync and layout under this project only",
+          "title": "Enabled"
+        }
+      },
+      "title": "ProjectDedupeOverride",
+      "type": "object"
+    },
     "ProjectKind": {
       "description": "Enumeration of project kinds.",
       "enum": [
@@ -1071,6 +1092,18 @@
           "default": null,
           "description": "Optional instructions for agents working in this workspace project",
           "title": "Agent Instructions"
+        },
+        "dedupe": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProjectDedupeOverride"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional override of app-config workspace.dedupe for this project (currently supports enabled only)"
         },
         "repos": {
           "description": "Repository list",
