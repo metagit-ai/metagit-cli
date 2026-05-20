@@ -49,7 +49,7 @@ Then read this file fully before doing anything else in this session.
 - **`metagit config example`:** generates `docs/reference/metagit-config.full-example.yml` (via `task generate:schema`) with field-description comments.
 - **Hermes orchestrator template:** `hermes-orchestrator` under `src/metagit/data/templates/`, example manifest at `examples/hermes-orchestrator/.metagit.yml`, guide at `docs/hermes-orchestrator-workspace.md`.
 - **`metagit init`:** bundled init templates (`application`, `umbrella`, `hermes-orchestrator`) with copier-style `{{ var }}` rendering, `--answers-file`, `--no-prompt`, all `ProjectKind` values via `--minimal`.
-- **`metagit web serve` groundwork:** Pydantic request/response models for the local web UI API live in `src/metagit/core/web/models.py` (`ConfigTreeResponse`, sync job shapes, config patch types).
+- **`metagit web serve` groundwork:** Pydantic request/response models for the local web UI API live in `src/metagit/core/web/models.py` (`ConfigTreeResponse`, sync job shapes, config patch types). Thread-safe in-memory sync job tracking + SSE event buffers live in `src/metagit/core/web/job_store.py` (`SyncJobStore`).
 
 **Not yet built:**
 - **`metagit web serve`:** localhost HTTP server and UI wiring (models only; no routes yet).
