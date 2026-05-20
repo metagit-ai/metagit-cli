@@ -133,3 +133,65 @@ def test_sensitive_token_unchanged_after_masked_set() -> None:
 
     assert errors == []
     assert updated.providers.github.api_token == "ghp_abcdefghijklmnop"
+
+
+def test_type_label_shows_model_name() -> None:
+    service = SchemaTreeService()
+    config = MetagitConfig.model_validate(
+        {
+            "name": "demo",
+            "kind": "application",
+            "workspace": {"projects": []},
+        }
+    )
+    root = service.build_tree(config, MetagitConfig)
+    workspace_node = service.find_node(root, "workspace")
+
+    assert workspace_node is not None
+    assert workspace_node.type == "object"
+    assert workspace_node.type_label == "Workspace"
+
+
+def test_enable_optional_list_defaults_empty() -> None:
+    service = SchemaTreeService()
+    config = MetagitConfig.model_validate({"name": "demo", "kind": "application"})
+    updated, errors = service.apply_operations(
+        config,
+        MetagitConfig,
+        [ConfigOperation(op=ConfigOpKind.ENABLE, path="artifacts")],
+    )
+
+    assert errors == []
+    assert updated.artifacts == []
+
+
+def test_append_and_remove_list_items() -> None:
+    service = SchemaTreeService()
+    config = MetagitConfig.model_validate({"name": "demo", "kind": "application"})
+    enabled, _ = service.apply_operations(
+        config,
+        MetagitConfig,
+        [ConfigOperation(op=ConfigOpKind.ENABLE, path="artifacts")],
+    )
+    appended, errors = service.apply_operations(
+        enabled,
+        MetagitConfig,
+        [ConfigOperation(op=ConfigOpKind.APPEND, path="artifacts")],
+    )
+    assert errors == []
+    assert len(appended.artifacts) == 1
+
+    root = service.build_tree(appended, MetagitConfig)
+    artifacts_node = service.find_node(root, "artifacts")
+    assert artifacts_node is not None
+    assert artifacts_node.type_label == "Artifact[]"
+    assert artifacts_node.can_append is True
+    assert artifacts_node.item_count == 1
+
+    removed, errors = service.apply_operations(
+        appended,
+        MetagitConfig,
+        [ConfigOperation(op=ConfigOpKind.REMOVE, path="artifacts[0]")],
+    )
+    assert errors == []
+    assert removed.artifacts == []

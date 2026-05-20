@@ -20,6 +20,14 @@ function isOptionalToggleable(node: SchemaFieldNode): boolean {
   return !node.required && node.path !== ''
 }
 
+function displayType(node: SchemaFieldNode): string {
+  return node.type_label ?? node.type
+}
+
+function isListItemNode(node: SchemaFieldNode): boolean {
+  return /^\[\d+\]$/.test(node.key)
+}
+
 export default function SchemaTree({
   target,
   selectedPath,
@@ -34,7 +42,7 @@ export default function SchemaTree({
     queryFn: () => fetchConfigTree(target),
   })
 
-  const toggleMutation = useMutation({
+  const mutation = useMutation({
     mutationFn: (op: ConfigOperation) => patchConfigTree(target, [op], false),
     onSuccess: (response, op) => {
       queryClient.setQueryData(queryKey, response)
@@ -44,12 +52,26 @@ export default function SchemaTree({
 
   const handleToggle = useCallback(
     (node: SchemaFieldNode, checked: boolean) => {
-      toggleMutation.mutate({
+      mutation.mutate({
         op: checked ? 'enable' : 'disable',
         path: node.path,
       })
     },
-    [toggleMutation],
+    [mutation],
+  )
+
+  const handleAppend = useCallback(
+    (node: SchemaFieldNode) => {
+      mutation.mutate({ op: 'append', path: node.path })
+    },
+    [mutation],
+  )
+
+  const handleRemove = useCallback(
+    (node: SchemaFieldNode) => {
+      mutation.mutate({ op: 'remove', path: node.path })
+    },
+    [mutation],
   )
 
   if (isLoading) {
@@ -75,7 +97,9 @@ export default function SchemaTree({
         selectedPath={selectedPath}
         onSelect={onSelect}
         onToggle={handleToggle}
-        togglePending={toggleMutation.isPending}
+        onAppend={handleAppend}
+        onRemove={handleRemove}
+        mutationPending={mutation.isPending}
       />
     </ul>
   )
@@ -86,7 +110,9 @@ interface TreeNodesProps {
   selectedPath: string | null
   onSelect: (node: SchemaFieldNode) => void
   onToggle: (node: SchemaFieldNode, checked: boolean) => void
-  togglePending: boolean
+  onAppend: (node: SchemaFieldNode) => void
+  onRemove: (node: SchemaFieldNode) => void
+  mutationPending: boolean
 }
 
 function TreeNodes({
@@ -94,7 +120,9 @@ function TreeNodes({
   selectedPath,
   onSelect,
   onToggle,
-  togglePending,
+  onAppend,
+  onRemove,
+  mutationPending,
 }: TreeNodesProps) {
   return (
     <>
@@ -105,7 +133,9 @@ function TreeNodes({
           selectedPath={selectedPath}
           onSelect={onSelect}
           onToggle={onToggle}
-          togglePending={togglePending}
+          onAppend={onAppend}
+          onRemove={onRemove}
+          mutationPending={mutationPending}
         />
       ))}
     </>
@@ -117,7 +147,9 @@ interface TreeNodeProps {
   selectedPath: string | null
   onSelect: (node: SchemaFieldNode) => void
   onToggle: (node: SchemaFieldNode, checked: boolean) => void
-  togglePending: boolean
+  onAppend: (node: SchemaFieldNode) => void
+  onRemove: (node: SchemaFieldNode) => void
+  mutationPending: boolean
 }
 
 function TreeNode({
@@ -125,12 +157,16 @@ function TreeNode({
   selectedPath,
   onSelect,
   onToggle,
-  togglePending,
+  onAppend,
+  onRemove,
+  mutationPending,
 }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(true)
   const hasChildren = (node.children?.length ?? 0) > 0
   const showToggle = isOptionalToggleable(node)
   const isSelected = selectedPath === node.path
+  const isArray = node.type === 'array'
+  const isListItem = isListItemNode(node)
   const rowClass = [
     styles.row,
     isSelected ? styles.rowSelected : '',
@@ -158,7 +194,7 @@ function TreeNode({
             type="checkbox"
             className={styles.checkbox}
             checked={node.enabled ?? false}
-            disabled={togglePending}
+            disabled={mutationPending}
             aria-label={`${node.enabled ? 'Disable' : 'Enable'} ${node.key}`}
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => {
@@ -171,9 +207,44 @@ function TreeNode({
         )}
         <span className={styles.label}>
           <span className={styles.key}>{node.key}</span>
-          <span className={styles.type}>{node.type}</span>
+          <span className={styles.type}>{displayType(node)}</span>
           {node.required ? <span className={styles.required}>required</span> : null}
+          {isArray && node.enabled ? (
+            <span className={styles.count}>
+              {node.item_count ?? 0} item{(node.item_count ?? 0) === 1 ? '' : 's'}
+            </span>
+          ) : null}
         </span>
+        {node.can_append ? (
+          <button
+            type="button"
+            className={styles.listBtn}
+            title="Add item"
+            aria-label={`Add ${displayType(node)} item`}
+            disabled={mutationPending}
+            onClick={(event) => {
+              event.stopPropagation()
+              onAppend(node)
+            }}
+          >
+            +
+          </button>
+        ) : null}
+        {isListItem ? (
+          <button
+            type="button"
+            className={`${styles.listBtn} ${styles.listBtnDanger}`}
+            title="Remove item"
+            aria-label={`Remove ${node.path}`}
+            disabled={mutationPending}
+            onClick={(event) => {
+              event.stopPropagation()
+              onRemove(node)
+            }}
+          >
+            ×
+          </button>
+        ) : null}
         {hasChildren ? (
           <button
             type="button"
@@ -195,7 +266,9 @@ function TreeNode({
             selectedPath={selectedPath}
             onSelect={onSelect}
             onToggle={onToggle}
-            togglePending={togglePending}
+            onAppend={onAppend}
+            onRemove={onRemove}
+            mutationPending={mutationPending}
           />
         </ul>
       ) : null}

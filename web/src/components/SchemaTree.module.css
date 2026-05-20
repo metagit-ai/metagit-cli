@@ -97,3 +97,34 @@
   border-color: var(--color-border-strong);
   color: var(--color-text);
 }
+
+.listBtn {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-muted);
+  color: var(--color-accent);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.listBtn:hover {
+  border-color: var(--color-accent);
+}
+
+.listBtnDanger {
+  color: var(--color-danger);
+}
+
+.listBtnDanger:hover {
+  border-color: var(--color-danger);
+}
+
+.count {
+  font-size: 0.7rem;
+  color: var(--color-text-subtle);
+}

@@ -28,14 +28,28 @@
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(16rem, 1fr) minmax(18rem, 1.1fr);
+  grid-template-columns: minmax(14rem, 0.9fr) minmax(16rem, 1fr) minmax(16rem, 1fr);
   gap: 1.25rem;
   align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .layout {
+    grid-template-columns: minmax(14rem, 1fr) minmax(16rem, 1.1fr);
+  }
+
+  .layout > :last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr;
+  }
+
+  .layout > :last-child {
+    grid-column: auto;
   }
 }
 

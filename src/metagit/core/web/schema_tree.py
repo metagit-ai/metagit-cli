@@ -10,6 +10,7 @@ from typing import Any, Union, get_args, get_origin
 from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
 
+from metagit.core.config.example_generator import ConfigExampleGenerator
 from metagit.core.web.models import ConfigOpKind, ConfigOperation, SchemaFieldNode
 
 _PATH_SEGMENT_RE = re.compile(r"([^.\[\]]+)|\[(\d+|\*)\]")
@@ -19,6 +20,9 @@ class SchemaTreeService:
     """Walk Pydantic models into editable schema trees and apply config operations."""
 
     SENSITIVE_KEYS = frozenset({"api_token", "token", "password", "secret"})
+
+    def __init__(self) -> None:
+        self._example_generator = ConfigExampleGenerator()
 
     def build_tree(
         self,
@@ -33,6 +37,7 @@ class SchemaTreeService:
             path="",
             key="root",
             type="object",
+            type_label=model_class.__name__,
             enabled=True,
             editable=False,
             children=self._build_children(
@@ -66,6 +71,10 @@ class SchemaTreeService:
                 self._enable_at_path(data, model_class, operation.path)
             elif operation.op == ConfigOpKind.SET:
                 self._set_at_path(data, operation.path, operation.value)
+            elif operation.op == ConfigOpKind.APPEND:
+                self._append_at_path(data, model_class, operation.path)
+            elif operation.op == ConfigOpKind.REMOVE:
+                self._remove_at_path(data, model_class, operation.path)
         return self._validate(model_class, data, original=instance)
 
     def _build_children(
@@ -85,6 +94,7 @@ class SchemaTreeService:
             enabled = self._field_enabled(field_info, value, field_dump)
             annotation = self._unwrap_optional(field_info.annotation)
             node_type = self._type_name(annotation)
+            type_label = self._type_label(annotation)
             sensitive = self._is_sensitive(field_name)
             display_value = self._display_value(
                 value,
@@ -93,10 +103,12 @@ class SchemaTreeService:
             )
             default_value = self._default_for_field(field_info, annotation)
             enum_options = self._enum_options(annotation) if node_type == "enum" else []
+            list_meta = self._list_node_meta(annotation, field_dump, enabled)
             node = SchemaFieldNode(
                 path=child_path,
                 key=field_name,
                 type=node_type,
+                type_label=type_label,
                 description=field_info.description,
                 required=field_info.is_required(),
                 enabled=enabled,
@@ -105,6 +117,8 @@ class SchemaTreeService:
                 default_value=default_value,
                 value=display_value if node_type not in {"object", "array"} else None,
                 enum_options=enum_options,
+                item_count=list_meta.get("item_count"),
+                can_append=list_meta.get("can_append", False),
                 children=[],
             )
             node.children = self._build_field_children(
@@ -152,14 +166,34 @@ class SchemaTreeService:
         if origin is list:
             args = get_args(annotation)
             item_annotation = args[0] if args else Any
-            if not isinstance(item_annotation, type) or not issubclass(
-                item_annotation, BaseModel
-            ):
-                return []
-            item_type = item_annotation
+            item_unwrapped = self._unwrap_optional(item_annotation)
+            is_model = isinstance(item_unwrapped, type) and issubclass(
+                item_unwrapped,
+                BaseModel,
+            )
+            items = value if isinstance(value, list) else []
+            if not is_model:
+                if not items:
+                    return []
+                scalar_label = self._type_label(item_unwrapped)
+                return [
+                    SchemaFieldNode(
+                        path=self._join_path(parent_path, f"[{index}]"),
+                        key=f"[{index}]",
+                        type=self._type_name(item_unwrapped),
+                        type_label=scalar_label,
+                        enabled=True,
+                        editable=True,
+                        value=item,
+                        children=[],
+                    )
+                    for index, item in enumerate(items)
+                ]
+            item_type = item_unwrapped
             items = value if isinstance(value, list) else []
             if items:
                 children: list[SchemaFieldNode] = []
+                item_label = self._type_label(item_type)
                 for index, item in enumerate(items):
                     item_dump = (
                         field_dump[index]
@@ -172,6 +206,7 @@ class SchemaTreeService:
                             path=item_path,
                             key=f"[{index}]",
                             type="object",
+                            type_label=item_label,
                             enabled=True,
                             editable=True,
                             children=self._build_children(
@@ -184,23 +219,7 @@ class SchemaTreeService:
                         )
                     )
                 return children
-            template_path = self._join_path(parent_path, "[*]")
-            return [
-                SchemaFieldNode(
-                    path=template_path,
-                    key="[*]",
-                    type="object",
-                    enabled=False,
-                    editable=False,
-                    children=self._build_children(
-                        item_type.model_construct(),
-                        item_type,
-                        {},
-                        parent_path=template_path,
-                        mask_secrets=mask_secrets,
-                    ),
-                )
-            ]
+            return []
         return []
 
     def _field_enabled(
@@ -222,12 +241,20 @@ class SchemaTreeService:
         path: str,
     ) -> None:
         segments = self._parse_path(path)
-        parent, leaf = self._navigate_parent(data, model_class, segments)
-        field_info = model_class.model_fields[leaf]
+        parent, model_at_parent, leaf = self._navigate_parent(
+            data,
+            model_class,
+            segments,
+        )
+        if isinstance(leaf, int):
+            if isinstance(parent, list):
+                parent.pop(leaf)
+            return
+        field_info = model_at_parent.model_fields[str(leaf)]
         if self._accepts_none(field_info.annotation):
-            parent[leaf] = None
+            parent[str(leaf)] = None
         else:
-            parent.pop(leaf, None)
+            parent.pop(str(leaf), None)
 
     def _enable_at_path(
         self,
@@ -236,23 +263,70 @@ class SchemaTreeService:
         path: str,
     ) -> None:
         segments = self._parse_path(path)
-        parent, leaf = self._navigate_parent(data, model_class, segments)
-        field_info = model_class.model_fields[leaf]
+        parent, model_at_parent, leaf = self._navigate_parent(
+            data,
+            model_class,
+            segments,
+        )
+        field_info = model_at_parent.model_fields[str(leaf)]
         annotation = self._unwrap_optional(field_info.annotation)
-        parent[leaf] = self._default_for_field(field_info, annotation)
+        parent[str(leaf)] = self._default_for_field(field_info, annotation)
+
+    def _append_at_path(
+        self,
+        data: dict[str, Any],
+        model_class: type[BaseModel],
+        path: str,
+    ) -> None:
+        segments = self._parse_path(path)
+        parent, model_at_parent, leaf = self._navigate_parent(
+            data,
+            model_class,
+            segments,
+        )
+        field_name = str(leaf)
+        field_info = model_at_parent.model_fields[field_name]
+        annotation = self._unwrap_optional(field_info.annotation)
+        if get_origin(annotation) is not list:
+            raise KeyError(f"{path} is not a list field")
+        current = parent.get(field_name)
+        if current is None:
+            current = []
+            parent[field_name] = current
+        current.append(self._default_list_item(annotation))
+
+    def _remove_at_path(
+        self,
+        data: dict[str, Any],
+        model_class: type[BaseModel],
+        path: str,
+    ) -> None:
+        segments = self._parse_path(path)
+        if not segments or not isinstance(segments[-1], int):
+            raise KeyError(f"{path} must end with a list index")
+        parent, _, leaf = self._navigate_parent(data, model_class, segments)
+        if not isinstance(parent, list) or not isinstance(leaf, int):
+            raise KeyError(f"{path} is not a list item")
+        parent.pop(leaf)
 
     def _set_at_path(self, data: dict[str, Any], path: str, value: Any) -> None:
         segments = self._parse_path(path)
         parent: Any = data
-        for segment in segments[:-1]:
+        for index, segment in enumerate(segments[:-1]):
             if isinstance(segment, int):
                 if not isinstance(parent, list):
                     raise KeyError(path)
                 parent = parent[segment]
-            else:
+                continue
+            next_segment = segments[index + 1]
+            if isinstance(next_segment, int):
                 if segment not in parent:
-                    parent[segment] = {} if not isinstance(segments[-1], int) else []
-                parent = parent[segment]
+                    parent[segment] = []
+                parent = parent[segment][next_segment]
+                continue
+            if segment not in parent:
+                parent[segment] = {} if not isinstance(segments[-1], int) else []
+            parent = parent[segment]
         leaf = segments[-1]
         if isinstance(leaf, str) and self._is_sensitive(leaf):
             if isinstance(value, str) and (value.startswith("***") or value == ""):
@@ -267,36 +341,40 @@ class SchemaTreeService:
         data: dict[str, Any],
         model_class: type[BaseModel],
         segments: list[str | int],
-    ) -> tuple[Any, str | int]:
+    ) -> tuple[Any, type[BaseModel], str | int]:
+        """Return parent container, model class at leaf field, and leaf key/index."""
         parent: Any = data
         current_class: type[BaseModel] = model_class
-        for segment in segments[:-1]:
+        index = 0
+        while index < len(segments) - 1:
+            segment = segments[index]
             if isinstance(segment, int):
-                origin = get_origin(current_class.model_fields)
-                _ = origin
-                field_name = self._list_field_name(current_class)
-                items = parent[field_name]
-                parent = items[segment]
-                current_class = self._list_item_type(
-                    current_class.model_fields[field_name].annotation
-                )
-            else:
+                if not isinstance(parent, list):
+                    raise KeyError("invalid list index in path")
                 parent = parent[segment]
-                field_info = current_class.model_fields[segment]
-                annotation = self._unwrap_optional(field_info.annotation)
-                origin = get_origin(annotation)
-                if origin is list:
-                    current_class = self._list_item_type(annotation)
-                elif isinstance(annotation, type) and issubclass(annotation, BaseModel):
-                    current_class = annotation
-        return parent, segments[-1]
-
-    def _list_field_name(self, model_class: type[BaseModel]) -> str:
-        for field_name, field_info in model_class.model_fields.items():
+                index += 1
+                continue
+            field_info = current_class.model_fields[segment]
             annotation = self._unwrap_optional(field_info.annotation)
-            if get_origin(annotation) is list:
-                return field_name
-        raise KeyError("list field not found")
+            next_segment = segments[index + 1]
+            if isinstance(next_segment, int) and get_origin(annotation) is list:
+                if index == len(segments) - 2:
+                    parent = parent[segment]
+                    current_class = self._list_item_type(annotation)
+                    index += 1
+                else:
+                    parent = parent[segment][next_segment]
+                    current_class = self._list_item_type(annotation)
+                    index += 2
+                continue
+            parent = parent[segment]
+            if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                current_class = annotation
+            index += 1
+        leaf = segments[-1]
+        if isinstance(leaf, int):
+            return parent, current_class, leaf
+        return parent, current_class, leaf
 
     def _validate(
         self,
@@ -405,6 +483,62 @@ class SchemaTreeService:
                 return "object"
         return "unknown"
 
+    def _type_label(self, annotation: Any) -> str:
+        if annotation is None:
+            return "unknown"
+        annotation = self._unwrap_optional(annotation)
+        origin = get_origin(annotation)
+        if origin is list:
+            args = get_args(annotation)
+            inner = args[0] if args else Any
+            inner_label = self._type_label(inner)
+            return f"{inner_label}[]"
+        if isinstance(annotation, type):
+            if issubclass(annotation, Enum):
+                return annotation.__name__
+            if issubclass(annotation, BaseModel):
+                return annotation.__name__
+            if issubclass(annotation, bool):
+                return "boolean"
+            if issubclass(annotation, int):
+                return "integer"
+            if issubclass(annotation, float):
+                return "number"
+            if issubclass(annotation, str):
+                return "string"
+        return "unknown"
+
+    def _list_node_meta(
+        self,
+        annotation: Any,
+        field_dump: Any,
+        enabled: bool,
+    ) -> dict[str, Any]:
+        annotation = self._unwrap_optional(annotation)
+        if get_origin(annotation) is not list:
+            return {}
+        count = len(field_dump) if isinstance(field_dump, list) else 0
+        return {"item_count": count, "can_append": enabled}
+
+    def _default_list_item(self, annotation: Any) -> Any:
+        annotation = self._unwrap_optional(annotation)
+        args = get_args(annotation) if get_origin(annotation) is list else (annotation,)
+        item = args[0] if args else Any
+        item = self._unwrap_optional(item)
+        if isinstance(item, type) and issubclass(item, BaseModel):
+            return self._default_model_dict(item)
+        if isinstance(item, type) and issubclass(item, Enum):
+            return next(iter(item)).value
+        if item is bool:
+            return False
+        if item is int:
+            return 0
+        if item is float:
+            return 0.0
+        if item is str:
+            return ""
+        return None
+
     def _is_sensitive(self, key: str) -> bool:
         return key in self.SENSITIVE_KEYS or key.endswith("_token")
 
@@ -427,6 +561,8 @@ class SchemaTreeService:
             if default is not None:
                 return default
         annotation = self._unwrap_optional(annotation)
+        if get_origin(annotation) is list:
+            return []
         if isinstance(annotation, type) and issubclass(annotation, Enum):
             return next(iter(annotation))
         if annotation is bool:
@@ -438,8 +574,12 @@ class SchemaTreeService:
         if annotation is str:
             return ""
         if isinstance(annotation, type) and issubclass(annotation, BaseModel):
-            return annotation.model_construct().model_dump(mode="python")
+            return self._default_model_dict(annotation)
         return None
+
+    def _default_model_dict(self, model_class: type[BaseModel]) -> dict[str, Any]:
+        """Build a valid sample dict for a nested model."""
+        return self._example_generator._sample_model(model_class)
 
     def _accepts_none(self, annotation: Any) -> bool:
         origin = get_origin(annotation)

@@ -172,3 +172,44 @@ def test_patch_metagit_save_true_invalid_op_returns_422_and_does_not_write(
     assert "kind: application" in on_disk
   finally:
     thread.join(timeout=0.1)
+
+
+def test_get_metagit_preview_normalized(tmp_path: Path) -> None:
+  thread, base = _start_server(tmp_path)
+  try:
+    payload = json.loads(
+      urllib.request.urlopen(
+        f"{base}/v3/config/metagit/preview?style=normalized",
+        timeout=5,
+      ).read().decode("utf-8")
+    )
+    assert payload["ok"] is True
+    assert payload["target"] == "metagit"
+    assert "name: workspace" in payload["yaml"]
+    assert payload["draft"] is False
+  finally:
+    thread.join(timeout=0.1)
+
+
+def test_post_metagit_preview_draft_operations(tmp_path: Path) -> None:
+  thread, base = _start_server(tmp_path)
+  try:
+    body = json.dumps(
+      {
+        "style": "normalized",
+        "operations": [{"op": "set", "path": "name", "value": "draft-name"}],
+      }
+    ).encode("utf-8")
+    req = urllib.request.Request(
+      f"{base}/v3/config/metagit/preview",
+      data=body,
+      method="POST",
+      headers={"Content-Type": "application/json"},
+    )
+    payload = json.loads(urllib.request.urlopen(req, timeout=5).read().decode("utf-8"))
+    assert payload["draft"] is True
+    assert "name: draft-name" in payload["yaml"]
+    on_disk = (tmp_path / ".metagit.yml").read_text(encoding="utf-8")
+    assert "name: workspace" in on_disk
+  finally:
+    thread.join(timeout=0.1)

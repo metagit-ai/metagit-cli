@@ -11,6 +11,8 @@ class ConfigOpKind(str, Enum):
     ENABLE = "enable"
     DISABLE = "disable"
     SET = "set"
+    APPEND = "append"
+    REMOVE = "remove"
 
 
 class ConfigOperation(BaseModel):
@@ -28,6 +30,7 @@ class SchemaFieldNode(BaseModel):
     path: str
     key: str
     type: str
+    type_label: str | None = None
     description: str | None = None
     required: bool = False
     enabled: bool = False
@@ -36,6 +39,8 @@ class SchemaFieldNode(BaseModel):
     default_value: Any | None = None
     value: Any | None = None
     enum_options: list[str] = Field(default_factory=list)
+    item_count: int | None = None
+    can_append: bool = False
     children: list["SchemaFieldNode"] = Field(default_factory=list)
 
 
@@ -46,6 +51,21 @@ class ConfigTreeResponse(BaseModel):
     tree: SchemaFieldNode
     validation_errors: list[dict[str, str]] = Field(default_factory=list)
     saved: bool = False
+
+
+class ConfigPreviewRequest(BaseModel):
+    style: Literal["normalized", "minimal", "disk"] = "normalized"
+    operations: list[ConfigOperation] = Field(default_factory=list)
+
+
+class ConfigPreviewResponse(BaseModel):
+    ok: bool
+    target: Literal["metagit", "appconfig"]
+    config_path: str
+    style: Literal["normalized", "minimal", "disk"]
+    yaml: str
+    draft: bool = False
+    validation_errors: list[dict[str, str]] = Field(default_factory=list)
 
 
 class SyncJobRequest(BaseModel):

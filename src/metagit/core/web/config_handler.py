@@ -15,7 +15,18 @@ from metagit.core.appconfig import save_config as save_appconfig
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
-from metagit.core.web.models import ConfigPatchRequest, ConfigTreeResponse
+from metagit.core.web.config_preview import (
+    PreviewStyle,
+    read_disk_text,
+    render_appconfig_yaml,
+    render_metagit_yaml,
+)
+from metagit.core.web.models import (
+    ConfigPatchRequest,
+    ConfigPreviewRequest,
+    ConfigPreviewResponse,
+    ConfigTreeResponse,
+)
 from metagit.core.web.schema_tree import SchemaTreeService
 
 JsonResponder = Callable[[int, dict[str, Any]], None]
@@ -46,7 +57,6 @@ class ConfigWebHandler:
         respond: JsonResponder,
     ) -> bool:
         """Dispatch config routes; return True when handled."""
-        _ = query
         parsed_path = urlparse(path).path
 
         if method == "GET" and parsed_path == "/v3/config/metagit/tree":
@@ -67,6 +77,22 @@ class ConfigWebHandler:
 
         if method == "POST" and parsed_path == "/v3/config/validate":
             self._validate_configs(body, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/config/metagit/preview":
+            self._preview_metagit(query, b"", respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/config/appconfig/preview":
+            self._preview_appconfig(query, b"", respond)
+            return True
+
+        if method == "POST" and parsed_path == "/v3/config/metagit/preview":
+            self._preview_metagit(query, body, respond)
+            return True
+
+        if method == "POST" and parsed_path == "/v3/config/appconfig/preview":
+            self._preview_appconfig(query, body, respond)
             return True
 
         return False
@@ -284,6 +310,162 @@ class ConfigWebHandler:
                 for err in exc.errors()
             ]
         return []
+
+    def _preview_metagit(
+        self,
+        query: str,
+        body: bytes,
+        respond: JsonResponder,
+    ) -> None:
+        request = self._parse_preview_request(query, body, respond)
+        if request is None:
+            return
+        if request.style == "disk" and request.operations:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_preview",
+                        "message": "disk preview cannot include draft operations",
+                    },
+                },
+            )
+            return
+        loaded = self._load_metagit(respond)
+        if loaded is None:
+            return
+        config = loaded
+        validation_errors: list[dict[str, str]] = []
+        draft = bool(request.operations)
+        if draft:
+            config, validation_errors = self._schema.apply_operations(
+                loaded,
+                MetagitConfig,
+                request.operations,
+            )
+        if request.style == "disk":
+            yaml_text = read_disk_text(self._metagit_config_path)
+        else:
+            yaml_text = render_metagit_yaml(config, style=request.style)
+        response = ConfigPreviewResponse(
+            ok=len(validation_errors) == 0,
+            target="metagit",
+            config_path=self._metagit_config_path,
+            style=request.style,
+            yaml=yaml_text,
+            draft=draft,
+            validation_errors=validation_errors,
+        )
+        respond(200, response.model_dump(mode="json"))
+
+    def _preview_appconfig(
+        self,
+        query: str,
+        body: bytes,
+        respond: JsonResponder,
+    ) -> None:
+        request = self._parse_preview_request(query, body, respond)
+        if request is None:
+            return
+        if request.style == "disk" and request.operations:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_preview",
+                        "message": "disk preview cannot include draft operations",
+                    },
+                },
+            )
+            return
+        loaded = self._load_appconfig(respond)
+        if loaded is None:
+            return
+        config = loaded
+        validation_errors: list[dict[str, str]] = []
+        draft = bool(request.operations)
+        if draft:
+            config, validation_errors = self._schema.apply_operations(
+                loaded,
+                AppConfig,
+                request.operations,
+            )
+        if request.style == "disk":
+            yaml_text = read_disk_text(self._appconfig_path)
+        else:
+            yaml_text = render_appconfig_yaml(
+                config,
+                config_path=self._appconfig_path,
+                style=request.style,
+                mask_secrets=True,
+            )
+        response = ConfigPreviewResponse(
+            ok=len(validation_errors) == 0,
+            target="appconfig",
+            config_path=self._appconfig_path,
+            style=request.style,
+            yaml=yaml_text,
+            draft=draft,
+            validation_errors=validation_errors,
+        )
+        respond(200, response.model_dump(mode="json"))
+
+    def _parse_preview_request(
+        self,
+        query: str,
+        body: bytes,
+        respond: JsonResponder,
+    ) -> ConfigPreviewRequest | None:
+        from urllib.parse import parse_qs
+
+        params = parse_qs(query, keep_blank_values=True)
+        style_raw = (params.get("style") or ["normalized"])[0]
+        if style_raw not in {"normalized", "minimal", "disk"}:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_style",
+                        "message": "style must be normalized, minimal, or disk",
+                    },
+                },
+            )
+            return None
+        style: PreviewStyle = style_raw
+        if not body:
+            return ConfigPreviewRequest(style=style, operations=[])
+        payload = self._parse_body(body, respond, required=False)
+        if payload is None:
+            return None
+        try:
+            parsed = ConfigPreviewRequest.model_validate(
+                {"style": payload.get("style", style), **payload}
+            )
+        except ValidationError as exc:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {"kind": "invalid_body", "message": str(exc)},
+                },
+            )
+            return None
+        if parsed.style not in {"normalized", "minimal", "disk"}:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_style",
+                        "message": "style must be normalized, minimal, or disk",
+                    },
+                },
+            )
+            return None
+        return parsed
 
     def _tree_response(
         self,

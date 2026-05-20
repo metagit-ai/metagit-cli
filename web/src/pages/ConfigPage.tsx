@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 import type { ConfigOperation, SchemaFieldNode } from '../api/client'
+import ConfigPreview from '../components/ConfigPreview'
 import FieldEditor from '../components/FieldEditor'
 import SchemaTree from '../components/SchemaTree'
 import {
@@ -97,6 +98,7 @@ export default function ConfigPage({ target, title }: ConfigPageProps) {
           pendingOps={pendingOps}
           onPendingChange={setPendingOps}
         />
+        <ConfigPreview target={target} pendingOps={pendingOps} />
       </div>
     </section>
   )

@@ -52,6 +52,18 @@ Browse to the printed URL (default root is `/`).
 
 These screens share TanStack Query data loading and theme styling with the shell.
 
+Each config editor includes a **YAML preview** panel with three render modes:
+
+| Mode | Meaning |
+|------|---------|
+| **Normalized** | Full config from the validated Pydantic model (same serializer as `metagit config show --normalized`). |
+| **Minimal** | Non-default fields only (`exclude_defaults`), useful for seeing what differs from schema defaults. |
+| **On disk** | Raw file contents as stored on disk (no draft overlay). |
+
+When you **Apply** edits without saving, pending operations are merged into the preview and a **Draft** badge appears. Validation errors from draft operations surface above the YAML block. App-config previews redact sensitive tokens (`***` + last four characters).
+
+API: `POST /v3/config/metagit/preview` and `POST /v3/config/appconfig/preview` with `{ "style": "normalized", "operations": [...] }`.
+
 ### Workspace Console
 
 The **Workspace Console** is **Workspace** in the chrome (`/workspace`): catalog-level context (projects/repos index, search/filter) plus the **workspace operations** side panel (health/prune/sync style actions routed through `/v3/ops`). This is meant for situational awareness and lightweight maintenance; destructive actions remain gated as in the CLI and API.

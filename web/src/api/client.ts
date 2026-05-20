@@ -1,4 +1,4 @@
-export type ConfigOpKind = 'enable' | 'disable' | 'set'
+export type ConfigOpKind = 'enable' | 'disable' | 'set' | 'append' | 'remove'
 
 export interface ConfigOperation {
   op: ConfigOpKind
@@ -10,6 +10,7 @@ export interface SchemaFieldNode {
   path: string
   key: string
   type: string
+  type_label?: string | null
   description?: string | null
   required?: boolean
   enabled?: boolean
@@ -18,6 +19,8 @@ export interface SchemaFieldNode {
   default_value?: unknown
   value?: unknown
   enum_options?: string[]
+  item_count?: number | null
+  can_append?: boolean
   children?: SchemaFieldNode[]
 }
 
@@ -28,6 +31,18 @@ export interface ConfigTreeResponse {
   tree: SchemaFieldNode
   validation_errors: Array<Record<string, string>>
   saved?: boolean
+}
+
+export type ConfigPreviewStyle = 'normalized' | 'minimal' | 'disk'
+
+export interface ConfigPreviewResponse {
+  ok: boolean
+  target: 'metagit' | 'appconfig'
+  config_path: string
+  style: ConfigPreviewStyle
+  yaml: string
+  draft?: boolean
+  validation_errors: Array<{ path?: string; message?: string }>
 }
 
 export interface SyncJobRequest {
@@ -116,6 +131,17 @@ export function patchAppconfig(
   return requestJson<ConfigTreeResponse>('/v3/config/appconfig', {
     method: 'PATCH',
     body: JSON.stringify({ operations: ops, save }),
+  })
+}
+
+export function postConfigPreview(
+  target: 'metagit' | 'appconfig',
+  style: ConfigPreviewStyle,
+  operations: ConfigOperation[],
+): Promise<ConfigPreviewResponse> {
+  return requestJson<ConfigPreviewResponse>(`/v3/config/${target}/preview`, {
+    method: 'POST',
+    body: JSON.stringify({ style, operations }),
   })
 }
 

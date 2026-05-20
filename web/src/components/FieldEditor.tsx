@@ -131,6 +131,20 @@ export default function FieldEditor({
     },
   })
 
+  const enumOptions = useMemo(() => {
+    if (!node) {
+      return []
+    }
+    const options = new Set<string>(node.enum_options ?? [])
+    if (node.value != null) {
+      options.add(String(node.value))
+    }
+    if (node.default_value != null) {
+      options.add(String(node.default_value))
+    }
+    return [...options]
+  }, [node])
+
   if (!node) {
     return (
       <div className={styles.panel}>
@@ -141,7 +155,9 @@ export default function FieldEditor({
 
   const isScalar = scalarTypes().has(node.type)
   const isComplex = node.type === 'object' || node.type === 'array'
-  const editable = node.editable !== false && node.enabled !== false && !isComplex
+  const isArray = node.type === 'array'
+  const typeLabel = node.type_label ?? node.type
+  const editable = node.editable !== false && node.enabled !== false && !isComplex && !isArray
 
   const queueSetOp = (save: boolean) => {
     if (!node.path || !isScalar) {
@@ -191,24 +207,13 @@ export default function FieldEditor({
     void queryClient.invalidateQueries({ queryKey })
   }
 
-  const enumOptions = useMemo(() => {
-    const options = new Set<string>(node.enum_options ?? [])
-    if (node.value != null) {
-      options.add(String(node.value))
-    }
-    if (node.default_value != null) {
-      options.add(String(node.default_value))
-    }
-    return [...options]
-  }, [node])
-
   return (
     <div className={styles.panel}>
       <header className={styles.header}>
         <h3 className={styles.title}>{node.key}</h3>
         <p className={styles.path}>{node.path || '(root)'}</p>
         <div className={styles.meta}>
-          <span className={styles.badge}>{node.type}</span>
+          <span className={styles.badge}>{typeLabel}</span>
           {node.required ? <span className={styles.badge}>required</span> : null}
           {node.sensitive ? <span className={styles.badge}>sensitive</span> : null}
         </div>
@@ -218,7 +223,15 @@ export default function FieldEditor({
         <p className={styles.description}>{node.description}</p>
       ) : null}
 
-      {isComplex ? (
+      {isArray && node.enabled ? (
+        <p className={styles.hint}>
+          List of {typeLabel}. Use <strong>+</strong> in the schema tree to add items
+          and <strong>×</strong> on each row to remove. Currently{' '}
+          {node.item_count ?? 0} item{(node.item_count ?? 0) === 1 ? '' : 's'}.
+        </p>
+      ) : null}
+
+      {node.type === 'object' ? (
         <p className={styles.hint}>Edit via tree — expand nested fields in the schema tree.</p>
       ) : null}
 
@@ -290,7 +303,7 @@ export default function FieldEditor({
         </div>
       ) : null}
 
-      {!editable && !isComplex ? (
+      {!editable && !isComplex && !isArray ? (
         <p className={styles.hint}>
           This field is not editable (disabled or read-only).
         </p>

@@ -3,7 +3,10 @@ import {
   getMetagitConfigTree,
   patchAppconfig,
   patchMetagitConfig,
+  postConfigPreview,
   type ConfigOperation,
+  type ConfigPreviewResponse,
+  type ConfigPreviewStyle,
   type ConfigTreeResponse,
 } from '../api/client'
 
@@ -24,4 +27,12 @@ export function patchConfigTree(
   return target === 'metagit'
     ? patchMetagitConfig(ops, save)
     : patchAppconfig(ops, save)
+}
+
+export function fetchConfigPreview(
+  target: ConfigTarget,
+  style: ConfigPreviewStyle,
+  operations: ConfigOperation[],
+): Promise<ConfigPreviewResponse> {
+  return postConfigPreview(target, style, operations)
 }
