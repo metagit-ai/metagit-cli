@@ -274,3 +274,22 @@ tasks:
       - |
         uv pip install -e ".[dev]"
         uv run python scripts/validate_skills.py
+
+  web:install:
+    desc: Install web UI dependencies
+    dir: web
+    cmds:
+      - npm ci || npm install
+
+  web:build:
+    desc: Build web UI into package data
+    deps: [web:install]
+    dir: web
+    cmds:
+      - npm run build
+
+  web:dev:
+    desc: Run Vite dev server
+    dir: web
+    cmds:
+      - npm run dev

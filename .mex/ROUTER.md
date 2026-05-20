@@ -53,9 +53,10 @@ Then read this file fully before doing anything else in this session.
 - **`metagit web serve` config HTTP:** `build_web_server` in `src/metagit/core/web/server.py` exposes v3 config tree/patch/validate routes via `ConfigWebHandler` (`metagit` + `appconfig` targets, `SchemaTreeService` mutations).
 - **`metagit web serve` ops HTTP:** `OpsWebHandler` (`src/metagit/core/web/ops_handler.py`) — POST health/prune/sync, GET sync job status, SSE sync events; wired in `build_web_server` with workspace root from appconfig.
 - **`metagit web serve` static + full server:** `StaticWebHandler` serves packaged SPA from `src/metagit/data/web/`; `build_web_server` dispatches static, v2 catalog/layout, v3 config/ops; CLI `metagit web serve` (`src/metagit/cli/commands/web.py`).
+- **Metagit Web UI scaffold:** Vite + React + TypeScript in `web/` (build output → `src/metagit/data/web/`); typed API client, router shell, Taskfile `web:*` tasks.
 
 **Not yet built:**
-- **`metagit web serve`:** Production SPA UI beyond placeholder `index.html`.
+- **`metagit web serve`:** Feature-complete SPA (workspace catalog, config editors, ops panels) beyond the current layout shell.
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
 - End-to-end enterprise mode features described in README (continuous org-wide code mining).
 - Matured sampling execution path with robust timeout/retry/error telemetry across diverse MCP hosts.
