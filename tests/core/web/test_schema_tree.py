@@ -93,3 +93,43 @@ def test_appconfig_sensitive_field_masked_in_tree() -> None:
     assert token_node is not None
     assert token_node.sensitive is True
     assert token_node.value == "***mnop"
+
+
+def test_apply_operations_returns_original_instance_on_validation_error() -> None:
+    service = SchemaTreeService()
+    config = MetagitConfig.model_validate({"name": "demo", "kind": "application"})
+    updated, errors = service.apply_operations(
+        config,
+        MetagitConfig,
+        [ConfigOperation(op=ConfigOpKind.SET, path="kind", value="not-a-valid-kind")],
+    )
+
+    assert errors != []
+    assert updated is config
+    assert updated.name == "demo"
+    assert updated.kind == "application"
+
+
+def test_sensitive_token_unchanged_after_masked_set() -> None:
+    service = SchemaTreeService()
+    raw = {
+        "workspace": {"path": "./sync"},
+        "providers": {
+            "github": {"enabled": True, "api_token": "ghp_abcdefghijklmnop"},
+        },
+    }
+    config = AppConfig(**raw)
+    updated, errors = service.apply_operations(
+        config,
+        AppConfig,
+        [
+            ConfigOperation(
+                op=ConfigOpKind.SET,
+                path="providers.github.api_token",
+                value="***mnop",
+            )
+        ],
+    )
+
+    assert errors == []
+    assert updated.providers.github.api_token == "ghp_abcdefghijklmnop"

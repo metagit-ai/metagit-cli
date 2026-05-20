@@ -137,6 +137,18 @@ class ConfigWebHandler:
         )
         saved = False
         if patch.save:
+            if validation_errors:
+                response = self._tree_response(
+                    target="metagit",
+                    config_path=self._metagit_config_path,
+                    config=updated,
+                    model_class=MetagitConfig,
+                    validation_errors=validation_errors,
+                    saved=False,
+                    mask_secrets=False,
+                )
+                respond(422, response.model_dump(mode="json"))
+                return
             manager = MetagitConfigManager(self._metagit_config_path)
             save_result = manager.save_config(updated)
             if isinstance(save_result, Exception):
@@ -170,6 +182,18 @@ class ConfigWebHandler:
         )
         saved = False
         if patch.save:
+            if validation_errors:
+                response = self._tree_response(
+                    target="appconfig",
+                    config_path=self._appconfig_path,
+                    config=updated,
+                    model_class=AppConfig,
+                    validation_errors=validation_errors,
+                    saved=False,
+                    mask_secrets=True,
+                )
+                respond(422, response.model_dump(mode="json"))
+                return
             save_result = save_appconfig(self._appconfig_path, updated)
             if isinstance(save_result, Exception):
                 respond(

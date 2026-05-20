@@ -29,7 +29,25 @@ function formatValidationErrors(
   }))
 }
 
+function isMaskedSensitiveValue(node: SchemaFieldNode): boolean {
+  return (
+    node.sensitive === true &&
+    typeof node.value === 'string' &&
+    node.value.startsWith('***')
+  )
+}
+
+function shouldSkipSensitiveSet(node: SchemaFieldNode, draft: string): boolean {
+  if (!node.sensitive) {
+    return false
+  }
+  return draft.trim() === ''
+}
+
 function normalizeDraftValue(node: SchemaFieldNode): unknown {
+  if (isMaskedSensitiveValue(node)) {
+    return ''
+  }
   if (node.value !== undefined && node.value !== null) {
     return node.value
   }
@@ -129,6 +147,12 @@ export default function FieldEditor({
     if (!node.path || !isScalar) {
       return
     }
+    if (shouldSkipSensitiveSet(node, draft)) {
+      if (save && pendingOps.length > 0) {
+        applyMutation.mutate({ ops: pendingOps, save: true })
+      }
+      return
+    }
     const value = parseDraftValue(node, draft)
     const op: ConfigOperation = { op: 'set', path: node.path, value }
     const nextPending = [
@@ -148,7 +172,7 @@ export default function FieldEditor({
       return
     }
     const ops = [...pendingOps]
-    if (dirty && node?.path && isScalar) {
+    if (dirty && node?.path && isScalar && !shouldSkipSensitiveSet(node, draft)) {
       const value = parseDraftValue(node, draft)
       const setOp: ConfigOperation = { op: 'set', path: node.path, value }
       const index = ops.findIndex((item) => item.path === node.path)
@@ -256,6 +280,7 @@ export default function FieldEditor({
             className={styles.input}
             type={node.type === 'string' || node.sensitive ? 'text' : 'number'}
             value={draft}
+            placeholder={node.sensitive ? '••••••••' : undefined}
             disabled={applyMutation.isPending}
             onChange={(event) => {
               setDraft(event.target.value)

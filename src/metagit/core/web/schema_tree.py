@@ -66,7 +66,7 @@ class SchemaTreeService:
                 self._enable_at_path(data, model_class, operation.path)
             elif operation.op == ConfigOpKind.SET:
                 self._set_at_path(data, operation.path, operation.value)
-        return self._validate(model_class, data)
+        return self._validate(model_class, data, original=instance)
 
     def _build_children(
         self,
@@ -254,6 +254,9 @@ class SchemaTreeService:
                     parent[segment] = {} if not isinstance(segments[-1], int) else []
                 parent = parent[segment]
         leaf = segments[-1]
+        if isinstance(leaf, str) and self._is_sensitive(leaf):
+            if isinstance(value, str) and (value.startswith("***") or value == ""):
+                return
         if isinstance(leaf, int):
             parent[leaf] = value
         else:
@@ -299,6 +302,8 @@ class SchemaTreeService:
         self,
         model_class: type[BaseModel],
         data: dict[str, Any],
+        *,
+        original: BaseModel,
     ) -> tuple[BaseModel, list[dict[str, str]]]:
         try:
             return model_class.model_validate(data), []
@@ -310,7 +315,7 @@ class SchemaTreeService:
                 }
                 for err in exc.errors()
             ]
-            return model_class.model_construct(), errors
+            return original, errors
 
     def _format_error_path(self, loc: tuple[Any, ...]) -> str:
         parts: list[str] = []
