@@ -10,9 +10,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from metagit.core.api.catalog_handler import CatalogApiHandler
+from metagit.core.api.layout_handler import LayoutApiHandler
 from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.web.config_handler import ConfigWebHandler
 from metagit.core.web.ops_handler import OpsWebHandler
+from metagit.core.web.static_handler import StaticWebHandler
 
 
 def _resolve_workspace_root(root: str, workspace_path: str) -> str:
@@ -45,6 +48,15 @@ def build_web_server(
         root_resolved,
         str(app_config.workspace.path),
     )
+    static_handler = StaticWebHandler()
+    catalog_handler = CatalogApiHandler(
+        workspace_root=workspace_root,
+        config_path=config_path,
+    )
+    layout_handler = LayoutApiHandler(
+        definition_root=root_resolved,
+        config_path=config_path,
+    )
     config_handler = ConfigWebHandler(
         metagit_config_path=config_path,
         appconfig_path=appconfig_resolved,
@@ -72,6 +84,9 @@ def build_web_server(
         def do_POST(self) -> None:
             self._dispatch("POST")
 
+        def do_DELETE(self) -> None:
+            self._dispatch("DELETE")
+
         def _dispatch(self, method: str) -> None:
             parsed = urlparse(self.path)
             events_job_id = ops_handler.sync_events_job_id(method, parsed.path)
@@ -83,8 +98,69 @@ def build_web_server(
                 self.end_headers()
                 ops_handler.stream_sync_events(events_job_id, self.wfile)
                 return
+
             length = int(self.headers.get("Content-Length", "0") or "0")
             body = self.rfile.read(length) if length > 0 else b""
+
+            if method == "GET":
+                if static_handler.handle(method, parsed.path, self):
+                    return
+                if catalog_handler.handle(
+                    method,
+                    parsed.path,
+                    parsed.query,
+                    body,
+                    self._json,
+                ):
+                    return
+                if layout_handler.handle(
+                    method,
+                    parsed.path,
+                    parsed.query,
+                    body,
+                    self._json,
+                ):
+                    return
+                if config_handler.handle(
+                    method,
+                    parsed.path,
+                    parsed.query,
+                    body,
+                    self._json,
+                ):
+                    return
+                if ops_handler.handle(
+                    method,
+                    parsed.path,
+                    parsed.query,
+                    body,
+                    self._json,
+                ):
+                    return
+                if StaticWebHandler.is_api_path(parsed.path):
+                    self._json(
+                        404,
+                        {"error": {"kind": "not_found", "message": "Unknown endpoint"}},
+                    )
+                    return
+                return
+
+            if layout_handler.handle(
+                method,
+                parsed.path,
+                parsed.query,
+                body,
+                self._json,
+            ):
+                return
+            if catalog_handler.handle(
+                method,
+                parsed.path,
+                parsed.query,
+                body,
+                self._json,
+            ):
+                return
             if config_handler.handle(
                 method,
                 parsed.path,
@@ -100,6 +176,12 @@ def build_web_server(
                 body,
                 self._json,
             ):
+                return
+            if StaticWebHandler.is_api_path(parsed.path):
+                self._json(
+                    404,
+                    {"error": {"kind": "not_found", "message": "Unknown endpoint"}},
+                )
                 return
             self._json(
                 404,

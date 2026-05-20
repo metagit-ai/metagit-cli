@@ -34,6 +34,7 @@ from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
 from metagit.cli.commands.search import search
 from metagit.cli.commands.skills import skills
+from metagit.cli.commands.web import web
 from metagit.cli.commands.workspace import workspace
 from metagit.core.appconfig import load_config, resolve_agent_mode
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
@@ -138,6 +139,7 @@ cli.add_command(skills)
 cli.add_command(init)
 cli.add_command(mcp)
 cli.add_command(api)
+cli.add_command(web)
 cli.add_command(search)
 cli.add_command(search, name="find")
 cli.add_command(prompt)
