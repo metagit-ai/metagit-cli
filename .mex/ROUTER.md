@@ -55,9 +55,10 @@ Then read this file fully before doing anything else in this session.
 - **`metagit web serve` static + full server:** `StaticWebHandler` serves packaged SPA from `src/metagit/data/web/`; `build_web_server` dispatches static, v2 catalog/layout, v3 config/ops; CLI `metagit web serve` (`src/metagit/cli/commands/web.py`).
 - **Metagit Web UI scaffold:** Vite + React + TypeScript in `web/` (build output → `src/metagit/data/web/`); typed API client, router shell, Taskfile `web:*` tasks.
 - **Metagit Web Config Studio:** schema tree + field editor for `/config/metagit` and `/config/appconfig` (TanStack Query PATCH flow, theme toggle, `enum_options` on schema nodes).
+- **Metagit Web:** local `metagit web serve` + packaged SPA (**Config Studio** on `/config/*`, **Workspace Console** on `/workspace`) with `task web:dev` / `task web:build` workflow documented in [`docs/reference/metagit-web.md`](../docs/reference/metagit-web.md).
 
 **Not yet built:**
-- **`metagit web serve`:** Feature-complete SPA (workspace catalog, ops panels) beyond config studio and layout shell.
+- **Metagit Web hardened/exposed deployments:** intentional v1 localhost-only framing; authentication and safe non-local binds are future scope.
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
 - End-to-end enterprise mode features described in README (continuous org-wide code mining).
 - Matured sampling execution path with robust timeout/retry/error telemetry across diverse MCP hosts.

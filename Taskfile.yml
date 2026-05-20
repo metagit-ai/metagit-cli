@@ -282,7 +282,7 @@ tasks:
       - npm ci || npm install
 
   web:build:
-    desc: Build web UI into package data
+    desc: Build web UI into package data (not part of qa:prepush — run explicitly when changing web/)
     deps: [web:install]
     dir: web
     cmds:
