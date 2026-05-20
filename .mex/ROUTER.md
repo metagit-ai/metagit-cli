@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-05-19
+last_updated: 2026-05-20
 ---
 
 # Session Bootstrap
@@ -49,8 +49,16 @@ Then read this file fully before doing anything else in this session.
 - **`metagit config example`:** generates `docs/reference/metagit-config.full-example.yml` (via `task generate:schema`) with field-description comments.
 - **Hermes orchestrator template:** `hermes-orchestrator` under `src/metagit/data/templates/`, example manifest at `examples/hermes-orchestrator/.metagit.yml`, guide at `docs/hermes-orchestrator-workspace.md`.
 - **`metagit init`:** bundled init templates (`application`, `umbrella`, `hermes-orchestrator`) with copier-style `{{ var }}` rendering, `--answers-file`, `--no-prompt`, all `ProjectKind` values via `--minimal`.
+- **`metagit web serve` groundwork:** Pydantic request/response models for the local web UI API live in `src/metagit/core/web/models.py` (`ConfigTreeResponse`, sync job shapes, config patch types). Thread-safe in-memory sync job tracking + SSE event buffers live in `src/metagit/core/web/job_store.py` (`SyncJobStore`).
+- **`metagit web serve` config HTTP:** `build_web_server` in `src/metagit/core/web/server.py` exposes v3 config tree/patch/validate routes via `ConfigWebHandler` (`metagit` + `appconfig` targets, `SchemaTreeService` mutations). PATCH with `save=true` returns HTTP 422 and skips disk write when validation fails; masked sensitive tokens are preserved on noop set.
+- **`metagit web serve` ops HTTP:** `OpsWebHandler` (`src/metagit/core/web/ops_handler.py`) — POST health/prune/sync, GET sync job status, SSE sync events; wired in `build_web_server` with workspace root from appconfig.
+- **`metagit web serve` static + full server:** `StaticWebHandler` serves packaged SPA from `src/metagit/data/web/`; `build_web_server` dispatches static, v2 catalog/layout, v3 config/ops; CLI `metagit web serve` (`src/metagit/cli/commands/web.py`).
+- **Metagit Web UI scaffold:** Vite + React + TypeScript in `web/` (build output → `src/metagit/data/web/`); typed API client, router shell, Taskfile `web:*` tasks.
+- **Metagit Web Config Studio:** schema tree + field editor for `/config/metagit` and `/config/appconfig` (TanStack Query PATCH flow, theme toggle, `enum_options` on schema nodes).
+- **Metagit Web:** local `metagit web serve` + packaged SPA (**Config Studio** on `/config/*`, **Workspace Console** on `/workspace`) with `task web:dev` / `task web:build` workflow documented in [`docs/reference/metagit-web.md`](../docs/reference/metagit-web.md).
 
 **Not yet built:**
+- **Metagit Web hardened/exposed deployments:** intentional v1 localhost-only framing; authentication and safe non-local binds are future scope.
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
 - End-to-end enterprise mode features described in README (continuous org-wide code mining).
 - Matured sampling execution path with robust timeout/retry/error telemetry across diverse MCP hosts.

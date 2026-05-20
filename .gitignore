@@ -31,3 +31,4 @@ site
 .gitnexus
 graphify-*
 docs/superpowers
+web/node_modules
