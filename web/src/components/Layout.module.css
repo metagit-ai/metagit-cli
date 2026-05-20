@@ -1,0 +1,82 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition-theme);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  transition: var(--transition-theme);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.navLink {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-md);
+  transition: var(--transition-theme);
+}
+
+.navLink:hover {
+  color: var(--color-text);
+  background: var(--color-tree-hover);
+}
+
+.navLinkActive {
+  color: var(--color-text);
+  background: var(--color-accent-soft);
+}
+
+.themeToggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: var(--transition-theme);
+}
+
+.themeToggle:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-tree-hover);
+}
+
+.themeIcon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.main {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 80rem;
+  width: 100%;
+  margin: 0 auto;
+}

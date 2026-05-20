@@ -17,6 +17,7 @@ export interface SchemaFieldNode {
   sensitive?: boolean
   default_value?: unknown
   value?: unknown
+  enum_options?: string[]
   children?: SchemaFieldNode[]
 }
 

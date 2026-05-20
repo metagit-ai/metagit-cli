@@ -35,6 +35,7 @@ class SchemaFieldNode(BaseModel):
     sensitive: bool = False
     default_value: Any | None = None
     value: Any | None = None
+    enum_options: list[str] = Field(default_factory=list)
     children: list["SchemaFieldNode"] = Field(default_factory=list)
 
 

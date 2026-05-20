@@ -1,0 +1,99 @@
+.tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nested {
+  margin-left: 1rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--color-border);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-theme);
+}
+
+.row:hover {
+  background: var(--color-tree-hover);
+}
+
+.rowSelected {
+  background: var(--color-tree-selected);
+}
+
+.rowDisabled {
+  opacity: 0.5;
+}
+
+.checkbox {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-accent);
+}
+
+.checkboxPlaceholder {
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.key {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.type {
+  font-size: 0.75rem;
+  color: var(--color-text-subtle);
+  font-family: var(--font-mono);
+}
+
+.required {
+  font-size: 0.65rem;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.state {
+  margin: 1rem 0;
+  color: var(--color-text-muted);
+}
+
+.error {
+  color: var(--color-danger);
+}
+
+.expandBtn {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-muted);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.expandBtn:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}

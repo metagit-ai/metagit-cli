@@ -92,6 +92,7 @@ class SchemaTreeService:
                 mask_secrets=mask_secrets,
             )
             default_value = self._default_for_field(field_info, annotation)
+            enum_options = self._enum_options(annotation) if node_type == "enum" else []
             node = SchemaFieldNode(
                 path=child_path,
                 key=field_name,
@@ -103,6 +104,7 @@ class SchemaTreeService:
                 sensitive=sensitive,
                 default_value=default_value,
                 value=display_value if node_type not in {"object", "array"} else None,
+                enum_options=enum_options,
                 children=[],
             )
             node.children = self._build_field_children(
@@ -370,6 +372,12 @@ class SchemaTreeService:
             return item
         raise TypeError("list item is not a BaseModel")
 
+    def _enum_options(self, annotation: Any) -> list[str]:
+        annotation = self._unwrap_optional(annotation)
+        if isinstance(annotation, type) and issubclass(annotation, Enum):
+            return [str(member.value) for member in annotation]
+        return []
+
     def _type_name(self, annotation: Any) -> str:
         if annotation is None:
             return "unknown"
@@ -378,6 +386,8 @@ class SchemaTreeService:
         if origin is list:
             return "array"
         if isinstance(annotation, type):
+            if issubclass(annotation, Enum):
+                return "enum"
             if issubclass(annotation, bool):
                 return "boolean"
             if issubclass(annotation, int):
@@ -386,8 +396,6 @@ class SchemaTreeService:
                 return "number"
             if issubclass(annotation, str):
                 return "string"
-            if issubclass(annotation, Enum):
-                return "enum"
             if issubclass(annotation, BaseModel):
                 return "object"
         return "unknown"

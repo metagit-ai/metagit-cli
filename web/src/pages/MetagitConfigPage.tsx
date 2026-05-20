@@ -1,8 +1,5 @@
+import ConfigPage from './ConfigPage'
+
 export default function MetagitConfigPage() {
-  return (
-    <section>
-      <h2>Metagit config</h2>
-      <p>Schema-driven metagit configuration editor will live here.</p>
-    </section>
-  )
+  return <ConfigPage target="metagit" title="Metagit config" />
 }

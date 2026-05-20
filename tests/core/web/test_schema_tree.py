@@ -19,6 +19,18 @@ def test_build_metagit_tree_marks_present_fields() -> None:
     assert name_node.enabled is True
     assert kind_node is not None
     assert kind_node.enabled is True
+    assert kind_node.type == "enum"
+    assert "application" in kind_node.enum_options
+
+
+def test_enum_field_exposes_all_options() -> None:
+    service = SchemaTreeService()
+    config = MetagitConfig.model_validate({"name": "demo", "kind": "application"})
+    root = service.build_tree(config, MetagitConfig)
+    kind_node = service.find_node(root, "kind")
+
+    assert kind_node is not None
+    assert len(kind_node.enum_options) >= 3
 
 
 def test_disable_optional_field_removes_key() -> None:
