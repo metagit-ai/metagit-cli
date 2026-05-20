@@ -4,6 +4,22 @@
 
 ### Added
 
+- Per-project `dedupe.enabled` override on `workspace.projects[]` in `.metagit.yml` (overrides app-config `workspace.dedupe.enabled` for sync and layout under that project).
+- `metagit prompt` kind `repo-enrich` (repo scope): CLI workflow to discover repo metadata (`metagit detect`, `project source sync`) and merge into the workspace manifest entry.
+- Bundled skill `metagit-cli`: CLI-only shortcuts for agents, including every `metagit prompt` kind and common catalog/detect/sync commands (no MCP or HTTP API).
+- `metagit prompt` command group: `list`, `workspace`, `project`, and `repo` subcommands emit built-in operational prompts or composed manifest `agent_instructions` (`--kind`, `--json`, `--text-only`).
+- Top-level `agent_mode` in app config (default false), overridable via `METAGIT_AGENT_MODE`; disables interactive UIs (fuzzy finder, prompts, editor, prune confirms) across CLI when enabled.
+- `metagit appconfig show` prints the full active configuration with `--format yaml|json|minimal-yaml` (includes `workspace.dedupe` and effective `agent_mode`).
+
+### Changed
+
+- `workspace.dedupe.enabled` defaults to **true** so duplicate remote URLs share a canonical checkout with per-project symlink mounts unless explicitly disabled.
+- `load_config()` applies environment variable overrides (same as `AppConfig.load()`), including `METAGIT_AGENT_MODE` and `METAGIT_WORKSPACE_DEDUPE_ENABLED`.
+- `metagit config show` prints the source `.metagit.yml` by default (preserves your formatting); use `--normalized` for a readable model round-trip (`|` blocks, Unicode not escaped) or `--json` for agents.
+
+### Added
+
+- Workspace layout rename/move: rename projects and repos (manifest + sync folders), move repos across projects; CLI (`workspace project rename`, `workspace repo rename|move`), MCP (`metagit_workspace_project_rename`, `metagit_workspace_repo_rename`, `metagit_workspace_repo_move`), HTTP v2 (`POST /v2/projects/{name}/rename`, `/v2/repos/.../rename|move`). Supports `--dry-run`, `--manifest-only`, dedupe symlink mounts, and session file migration on project rename. See `docs/reference/workspace-layout-api.md`.
 - Workspace catalog CRUD with JSON output: CLI (`metagit workspace list|project|repo`, `metagit project list --all`, `project add|remove`, `project repo list|remove`, `--json` on catalog commands), MCP tools (`metagit_workspace_list`, `metagit_workspace_projects_list`, `metagit_workspace_project_add|remove`, `metagit_workspace_repos_list`, `metagit_workspace_repo_add|remove`), and HTTP API v2 (`/v2/workspace`, `/v2/projects`, `/v2/repos`). Manifest-only repo/project removal; use `project repo prune` to delete unmanaged directories on disk.
 - Docs: [Hermes agents and organization-wide IaC](docs/hermes-iac-workspace-guide.md) — illustrated controller/subagent workflow, manifest examples, and MCP tool map for platform IaC estates.
 - Layered `agent_instructions` on `.metagit.yml` (file, workspace, project, repo/path); legacy `agent_prompt` accepted on load. `AgentInstructionsResolver` composes stacks for MCP project context (`instruction_layers`, `effective_agent_instructions`, per-repo `agent_instructions`).
@@ -19,7 +35,6 @@
 
 ### Changed
 
-- `metagit config show` prints the source `.metagit.yml` by default (preserves your formatting); use `--normalized` for a readable model round-trip (`|` blocks, Unicode not escaped) or `--json` for agents.
 - Removed redundant `config.version` from application config; use `metagit version` for the installed package. Legacy `version` keys in YAML are ignored on load. `api_version` remains for a future remote API contract (default empty; `METAGIT_API_VERSION` still applies).
 
 ### Fixed

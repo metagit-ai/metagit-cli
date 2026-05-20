@@ -16,6 +16,7 @@ nav:
     - 'Hermes & org IaC guide': 'hermes-iac-workspace-guide.md'
     - 'Hermes orchestrator workspace': 'hermes-orchestrator-workspace.md'
     - 'Configuration exemplar': 'reference/metagit-config.md'
+    - 'Workspace layout API': 'reference/workspace-layout-api.md'
     - 'Skills': 'skills.md'
 markdown_extensions:
   - mkdocs-click

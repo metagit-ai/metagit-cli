@@ -1,5 +1,6 @@
 config:
   description: "Configuration for metagit CLI"
+  agent_mode: false
   # Reserved for future use
   api_url: ""
   # Reserved for future use
@@ -24,6 +25,9 @@ config:
     path: ./.metagit
     default_project: default
     ui_ignore_hidden: true
+    dedupe:
+      enabled: true
+      canonical_dir: _canonical
 
   profiles:
     # Profiles are used to define multiple configurations for different organizations

@@ -432,6 +432,11 @@ def detect_repository(
         if not save:
             click.echo(result)
         else:
+            if ctx.obj.get("agent_mode"):
+                raise click.UsageError(
+                    "Interactive save confirmation is disabled in agent mode; "
+                    "remove the existing config file first or omit --save"
+                )
             if os.path.exists(config_path) and not click.confirm(
                 f"Configuration file at '{config_path}' already exists. Do you want to overwrite it?"
             ):

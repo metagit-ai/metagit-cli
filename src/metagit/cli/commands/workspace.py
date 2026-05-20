@@ -8,7 +8,11 @@ from pathlib import Path
 import click
 
 from metagit.cli.commands.project_repo import repo_select
-from metagit.cli.json_output import emit_json, exit_on_catalog_mutation
+from metagit.cli.json_output import (
+    emit_json,
+    exit_on_catalog_mutation,
+    exit_on_layout_mutation,
+)
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
@@ -16,6 +20,8 @@ from metagit.core.project.models import ProjectKind
 from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
+from metagit.core.workspace.layout_service import WorkspaceLayoutService
 
 
 def _catalog_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str]:
@@ -24,6 +30,12 @@ def _catalog_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str]:
     app_config: AppConfig = ctx.obj["config"]
     workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
     return local_config, config_path, workspace_root
+
+
+def _layout_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str, AppConfig]:
+    local_config, config_path, workspace_root = _catalog_ctx(ctx)
+    app_config: AppConfig = ctx.obj["config"]
+    return local_config, config_path, workspace_root, app_config
 
 
 @click.group(name="workspace", invoke_without_command=True)
@@ -156,6 +168,64 @@ def workspace_project_remove(ctx: click.Context, name: str, as_json: bool) -> No
     exit_on_catalog_mutation(result, as_json=as_json)
 
 
+@workspace_project.command("rename")
+@click.argument("from_name")
+@click.argument("to_name")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Show planned manifest and disk steps without applying",
+)
+@click.option(
+    "--manifest-only",
+    is_flag=True,
+    default=False,
+    help="Update .metagit.yml only; do not rename sync folders",
+)
+@click.option(
+    "--no-update-sessions",
+    is_flag=True,
+    default=False,
+    help="Do not migrate .metagit/sessions project files",
+)
+@click.option("--force", is_flag=True, default=False, help="Overwrite existing targets")
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def workspace_project_rename(
+    ctx: click.Context,
+    from_name: str,
+    to_name: str,
+    dry_run: bool,
+    manifest_only: bool,
+    no_update_sessions: bool,
+    force: bool,
+    as_json: bool,
+) -> None:
+    """Rename a workspace project (manifest and sync folder when present)."""
+    local_config, config_path, workspace_root, app_config = _layout_ctx(ctx)
+    dedupe = resolve_dedupe_for_layout(
+        app_config.workspace.dedupe,
+        local_config,
+        from_name,
+    )
+    result = WorkspaceLayoutService().rename_project(
+        local_config,
+        config_path,
+        workspace_root,
+        from_name=from_name,
+        to_name=to_name,
+        dedupe=dedupe,
+        dry_run=dry_run,
+        move_disk=not manifest_only,
+        update_sessions=not no_update_sessions,
+        force=force,
+    )
+    exit_on_layout_mutation(result, as_json=as_json)
+
+
 @workspace.group("repo")
 @click.pass_context
 def workspace_repo(_ctx: click.Context) -> None:
@@ -262,6 +332,106 @@ def workspace_repo_remove(
         repo_name=name,
     )
     exit_on_catalog_mutation(result, as_json=as_json)
+
+
+@workspace_repo.command("rename")
+@click.option("--project", "-p", required=True, help="Workspace project name")
+@click.argument("from_name")
+@click.argument("to_name")
+@click.option("--dry-run", is_flag=True, default=False)
+@click.option(
+    "--manifest-only",
+    is_flag=True,
+    default=False,
+    help="Update manifest only; do not rename sync mount",
+)
+@click.option("--force", is_flag=True, default=False)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def workspace_repo_rename(
+    ctx: click.Context,
+    project: str,
+    from_name: str,
+    to_name: str,
+    dry_run: bool,
+    manifest_only: bool,
+    force: bool,
+    as_json: bool,
+) -> None:
+    """Rename a repository entry and its sync mount when present."""
+    local_config, config_path, workspace_root, app_config = _layout_ctx(ctx)
+    dedupe = resolve_dedupe_for_layout(
+        app_config.workspace.dedupe,
+        local_config,
+        project,
+    )
+    result = WorkspaceLayoutService().rename_repo(
+        local_config,
+        config_path,
+        workspace_root,
+        project_name=project,
+        from_name=from_name,
+        to_name=to_name,
+        dedupe=dedupe,
+        dry_run=dry_run,
+        move_disk=not manifest_only,
+        force=force,
+    )
+    exit_on_layout_mutation(result, as_json=as_json)
+
+
+@workspace_repo.command("move")
+@click.option("--project", "-p", "from_project", required=True, help="Source project")
+@click.option("--name", "-n", "repo_name", required=True, help="Repository name")
+@click.option(
+    "--to-project",
+    required=True,
+    help="Target workspace project",
+)
+@click.option("--dry-run", is_flag=True, default=False)
+@click.option(
+    "--manifest-only",
+    is_flag=True,
+    default=False,
+    help="Update manifest only; do not move sync mount",
+)
+@click.option("--force", is_flag=True, default=False)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def workspace_repo_move(
+    ctx: click.Context,
+    from_project: str,
+    repo_name: str,
+    to_project: str,
+    dry_run: bool,
+    manifest_only: bool,
+    force: bool,
+    as_json: bool,
+) -> None:
+    """Move a repository entry to another workspace project."""
+    local_config, config_path, workspace_root, app_config = _layout_ctx(ctx)
+    dedupe = resolve_dedupe_for_layout(
+        app_config.workspace.dedupe,
+        local_config,
+        to_project,
+    )
+    result = WorkspaceLayoutService().move_repo(
+        local_config,
+        config_path,
+        workspace_root,
+        repo_name=repo_name,
+        from_project=from_project,
+        to_project=to_project,
+        dedupe=dedupe,
+        dry_run=dry_run,
+        move_disk=not manifest_only,
+        force=force,
+    )
+    exit_on_layout_mutation(result, as_json=as_json)
 
 
 @workspace.command("select")

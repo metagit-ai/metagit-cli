@@ -108,6 +108,25 @@ class SessionStore:
         self.save_project_session(session=session)
         return session
 
+    def rename_project_session(self, from_name: str, to_name: str) -> bool:
+        """
+        Rename a per-project session file when a workspace project is renamed.
+
+        Returns True when a session file was migrated.
+        """
+        old_path = self._project_session_path(project_name=from_name)
+        new_path = self._project_session_path(project_name=to_name)
+        if not old_path.is_file():
+            return False
+        self.ensure_dirs()
+        if new_path.exists():
+            new_path.unlink()
+        old_path.rename(new_path)
+        session = self.get_project_session(project_name=to_name)
+        session.project_name = to_name
+        self.save_project_session(session=session)
+        return True
+
     def link_snapshot(self, snapshot_id: str, project_name: Optional[str]) -> None:
         """Record snapshot id on workspace and optional project session."""
         meta = self.get_workspace_meta()

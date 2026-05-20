@@ -6,7 +6,17 @@ from typing import Union
 
 import yaml as base_yaml
 
+from metagit.core.appconfig.agent_mode import resolve_agent_mode
 from metagit.core.appconfig.models import AppConfig
+
+__all__ = [
+    "AppConfig",
+    "get_config",
+    "load_config",
+    "resolve_agent_mode",
+    "save_config",
+    "set_config",
+]
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.utils.yaml_class import yaml
 
@@ -23,8 +33,8 @@ def load_config(config_path: str) -> Union[AppConfig, Exception]:
         with config_file.open("r") as file:
             config_data = yaml.safe_load(file)
 
-        # Validate and convert to Pydantic model
-        return AppConfig(**config_data["config"])
+        config = AppConfig(**config_data["config"])
+        return AppConfig._override_from_environment(config)
     except Exception as e:
         return e
 

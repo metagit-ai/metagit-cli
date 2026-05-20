@@ -2,6 +2,7 @@
 
 Installed via `metagit skills install`. All names use the `metagit-` prefix.
 
+- `metagit-cli` — CLI-only agent shortcuts (prompts, catalog, detect, sync; no MCP/API)
 - `metagit-projects` — workspace project lifecycle
 - `metagit-workspace-scope` — scope discovery
 - `metagit-control-center` — multi-repo control center

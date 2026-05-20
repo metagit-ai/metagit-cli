@@ -5,7 +5,7 @@ Pydantic models for workspace catalog list and mutation results.
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.models import Workspace
@@ -45,6 +45,13 @@ class ProjectListEntry(BaseModel):
     name: str
     description: Optional[str] = None
     agent_instructions: Optional[str] = None
+    dedupe_enabled: Optional[bool] = Field(
+        default=None,
+        description=(
+            "When set in the manifest, overrides app-config workspace.dedupe.enabled "
+            "for this project"
+        ),
+    )
     repo_count: int = 0
 
 

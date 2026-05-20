@@ -32,6 +32,8 @@ from metagit.core.mcp.services.cross_project_dependencies import (
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace.layout_context import resolve_sync_context
+from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.mcp.services.workspace_template import WorkspaceTemplateService
 from metagit.core.mcp.tool_registry import ToolRegistry
@@ -61,6 +63,7 @@ class MetagitMcpRuntime:
         self._cross_project_deps = CrossProjectDependencyService()
         self._workspace_health = WorkspaceHealthService()
         self._workspace_catalog = WorkspaceCatalogService()
+        self._workspace_layout = WorkspaceLayoutService()
         self._workspace_template = WorkspaceTemplateService()
         self._managed_repo_search = ManagedRepoSearchService()
         self._hints_service = UpstreamHintService()
@@ -353,6 +356,45 @@ class MetagitMcpRuntime:
                 "properties": {
                     "project_name": {"type": "string"},
                     "name": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_project_rename": {
+                "type": "object",
+                "required": ["from_name", "to_name"],
+                "properties": {
+                    "from_name": {"type": "string"},
+                    "to_name": {"type": "string"},
+                    "dry_run": {"type": "boolean"},
+                    "move_disk": {"type": "boolean"},
+                    "update_sessions": {"type": "boolean"},
+                    "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_repo_rename": {
+                "type": "object",
+                "required": ["project_name", "from_name", "to_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "from_name": {"type": "string"},
+                    "to_name": {"type": "string"},
+                    "dry_run": {"type": "boolean"},
+                    "move_disk": {"type": "boolean"},
+                    "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_workspace_repo_move": {
+                "type": "object",
+                "required": ["repo_name", "from_project", "to_project"],
+                "properties": {
+                    "repo_name": {"type": "string"},
+                    "from_project": {"type": "string"},
+                    "to_project": {"type": "string"},
+                    "dry_run": {"type": "boolean"},
+                    "move_disk": {"type": "boolean"},
+                    "force": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -991,6 +1033,57 @@ class MetagitMcpRuntime:
                 config_path=config_path,
                 project_name=str(arguments.get("project_name", "")).strip(),
                 repo_name=str(arguments.get("name", "")).strip(),
+            ).model_dump(mode="json")
+
+        if name in {
+            "metagit_workspace_project_rename",
+            "metagit_workspace_repo_rename",
+            "metagit_workspace_repo_move",
+        }:
+            config_path, definition_root = self._catalog_paths(
+                status=status, config=config
+            )
+            sync_root, dedupe = resolve_sync_context(definition_root)
+            dry_run = bool(arguments.get("dry_run", False))
+            move_disk = bool(arguments.get("move_disk", True))
+            force = bool(arguments.get("force", False))
+            if name == "metagit_workspace_project_rename":
+                return self._workspace_layout.rename_project(
+                    config=config,
+                    config_path=config_path,
+                    workspace_path=sync_root,
+                    from_name=str(arguments.get("from_name", "")).strip(),
+                    to_name=str(arguments.get("to_name", "")).strip(),
+                    dedupe=dedupe,
+                    dry_run=dry_run,
+                    move_disk=move_disk,
+                    update_sessions=bool(arguments.get("update_sessions", True)),
+                    force=force,
+                ).model_dump(mode="json")
+            if name == "metagit_workspace_repo_rename":
+                return self._workspace_layout.rename_repo(
+                    config=config,
+                    config_path=config_path,
+                    workspace_path=sync_root,
+                    project_name=str(arguments.get("project_name", "")).strip(),
+                    from_name=str(arguments.get("from_name", "")).strip(),
+                    to_name=str(arguments.get("to_name", "")).strip(),
+                    dedupe=dedupe,
+                    dry_run=dry_run,
+                    move_disk=move_disk,
+                    force=force,
+                ).model_dump(mode="json")
+            return self._workspace_layout.move_repo(
+                config=config,
+                config_path=config_path,
+                workspace_path=sync_root,
+                repo_name=str(arguments.get("repo_name", "")).strip(),
+                from_project=str(arguments.get("from_project", "")).strip(),
+                to_project=str(arguments.get("to_project", "")).strip(),
+                dedupe=dedupe,
+                dry_run=dry_run,
+                move_disk=move_disk,
+                force=force,
             ).model_dump(mode="json")
 
         if name == "metagit_session_update":
