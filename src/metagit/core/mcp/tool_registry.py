@@ -38,6 +38,9 @@ class ToolRegistry:
         "metagit_workspace_repos_list",
         "metagit_workspace_repo_add",
         "metagit_workspace_repo_remove",
+        "metagit_workspace_project_rename",
+        "metagit_workspace_repo_rename",
+        "metagit_workspace_repo_move",
         "metagit_project_template_apply",
     ]
 

@@ -29,6 +29,9 @@ Then read this file fully before doing anything else in this session.
 **Working:**
 - Core CLI command surface (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search` / `find`, `api serve` for local JSON v1 search + **v2 catalog CRUD**, `project repo prune` for sync-folder cleanup) with shared app config + logger bootstrapping.
 - **Workspace catalog** (`WorkspaceCatalogService`): list/add/remove projects and repos in `.metagit.yml` via CLI (`--json`), MCP (`metagit_workspace_*` catalog tools), and HTTP `/v2/*`.
+- **`metagit prompt`**: scoped prompt emission (`workspace` / `project` / `repo`) for agents — manifest instructions plus operational templates (session-start, catalog-edit, sync-safe, **repo-enrich**, etc.). Bundled **`metagit-cli`** skill documents CLI-only shortcuts (all prompt kinds; no MCP/API).
+- **`agent_mode`** / **`METAGIT_AGENT_MODE`**: disables interactive CLI (fuzzy finder, prompts, editor); `metagit appconfig show --format json` exposes full config including `workspace.dedupe` (default **enabled**).
+- **Workspace layout** (`WorkspaceLayoutService`): rename/move projects and repos (manifest + sync folders, dedupe-aware, session migration); CLI, MCP, HTTP v2 — see `docs/reference/workspace-layout-api.md`.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
 - MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply), resources for health/context, protocol-framed stdio loop, and runtime tests.
 - Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api`, and guarded repo inspect/sync flows.
@@ -42,7 +45,7 @@ Then read this file fully before doing anything else in this session.
 - Fuzzy finder repo selection UX now shows result counters, keeps full scrollable match sets, respects project `.gitignore` entries during filesystem candidate discovery, and provides richer repo metadata in preview.
 - New `skills` CLI command (`list`, `show`, `install`) plus `mcp install` now support auto-detected agent targets across project/user scopes, with bundled package skills deployed from `src/metagit/data/skills`.
 - Focused `graphify` runs on subtrees produce `graphify-out/` HTML/report artifacts quickly enough to use for local command-surface exploration without analyzing the entire repository.
-- **Workspace dedupe (workspace scope):** `workspace.dedupe` in app config; canonical store under `{workspace.path}/_canonical/` with per-project symlink mounts when enabled.
+- **Workspace dedupe:** `workspace.dedupe` in app config (default enabled); optional per-project `workspace.projects[].dedupe.enabled` in `.metagit.yml` overrides the flag for sync/layout under that project only.
 - **`metagit config example`:** generates `docs/reference/metagit-config.full-example.yml` (via `task generate:schema`) with field-description comments.
 - **Hermes orchestrator template:** `hermes-orchestrator` under `src/metagit/data/templates/`, example manifest at `examples/hermes-orchestrator/.metagit.yml`, guide at `docs/hermes-orchestrator-workspace.md`.
 - **`metagit init`:** bundled init templates (`application`, `umbrella`, `hermes-orchestrator`) with copier-style `{{ var }}` rendering, `--answers-file`, `--no-prompt`, all `ProjectKind` values via `--minimal`.

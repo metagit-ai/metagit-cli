@@ -8,7 +8,11 @@ from typing import Optional
 
 import click
 
-from metagit.cli.json_output import emit_json, exit_on_catalog_mutation
+from metagit.cli.json_output import (
+    emit_json,
+    exit_on_catalog_mutation,
+    exit_on_layout_mutation,
+)
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import project_manager_from_app
@@ -16,7 +20,12 @@ from metagit.core.project.models import ProjectKind, ProjectPath
 from metagit.core.utils.common import open_editor
 from metagit.core.workspace.catalog_models import CatalogMutationResult
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace import workspace_dedupe
+from metagit.core.workspace.dedupe_resolver import (
+    resolve_dedupe_for_layout,
+    resolve_effective_dedupe_for_project,
+)
 from metagit.core.utils.logging import UnifiedLogger
 
 
@@ -37,13 +46,20 @@ def repo_select(ctx: click.Context) -> None:
     local_config: MetagitConfig = ctx.obj["local_config"]
     project = ctx.obj["project"]
     app_config: AppConfig = ctx.obj["config"]
-    project_manager = project_manager_from_app(app_config, logger)
+    project_manager = project_manager_from_app(
+        app_config,
+        logger,
+        metagit_config=local_config,
+        project_name=project,
+    )
+    agent_mode = bool(ctx.obj.get("agent_mode", False))
     selected_repo = project_manager.select_repo(
         local_config,
         project,
         show_preview=app_config.workspace.ui_show_preview,
         menu_length=app_config.workspace.ui_menu_length,
         ignore_hidden=app_config.workspace.ui_ignore_hidden,
+        agent_mode=agent_mode,
     )
     if isinstance(selected_repo, Exception):
         logger.error(f"Failed to select project repo: {selected_repo}")
@@ -52,11 +68,12 @@ def repo_select(ctx: click.Context) -> None:
         logger.info("No repo selected")
         ctx.abort()
     logger.info(f"Selected repo: {selected_repo}")
-    editor_result = open_editor(app_config.editor, selected_repo)
-    if isinstance(editor_result, Exception):
-        logger.error(f"Failed to open editor: {editor_result}")
-    else:
-        logger.info(f"Opened {selected_repo} in {app_config.editor}")
+    if not agent_mode:
+        editor_result = open_editor(app_config.editor, selected_repo)
+        if isinstance(editor_result, Exception):
+            logger.error(f"Failed to open editor: {editor_result}")
+        else:
+            logger.info(f"Opened {selected_repo} in {app_config.editor}")
 
 
 @repo.command("list")
@@ -108,6 +125,98 @@ def repo_remove(ctx: click.Context, name: str, as_json: bool) -> None:
         repo_name=name,
     )
     exit_on_catalog_mutation(result, as_json=as_json)
+
+
+@repo.command("rename")
+@click.option(
+    "--name", "-n", "from_name", required=True, help="Current repository name"
+)
+@click.argument("to_name")
+@click.option("--dry-run", is_flag=True, default=False)
+@click.option("--manifest-only", is_flag=True, default=False)
+@click.option("--force", is_flag=True, default=False)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def repo_rename(
+    ctx: click.Context,
+    from_name: str,
+    to_name: str,
+    dry_run: bool,
+    manifest_only: bool,
+    force: bool,
+    as_json: bool,
+) -> None:
+    """Rename a repository in the current project."""
+    project: str = ctx.obj["project"]
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    config_path: str = ctx.obj["config_path"]
+    app_config: AppConfig = ctx.obj["config"]
+    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    dedupe = resolve_dedupe_for_layout(
+        app_config.workspace.dedupe,
+        local_config,
+        project,
+    )
+    result = WorkspaceLayoutService().rename_repo(
+        local_config,
+        config_path,
+        workspace_root,
+        project_name=project,
+        from_name=from_name,
+        to_name=to_name,
+        dedupe=dedupe,
+        dry_run=dry_run,
+        move_disk=not manifest_only,
+        force=force,
+    )
+    exit_on_layout_mutation(result, as_json=as_json)
+
+
+@repo.command("move")
+@click.option("--name", "-n", "repo_name", required=True, help="Repository name")
+@click.option("--to-project", required=True, help="Target workspace project")
+@click.option("--dry-run", is_flag=True, default=False)
+@click.option("--manifest-only", is_flag=True, default=False)
+@click.option("--force", is_flag=True, default=False)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def repo_move(
+    ctx: click.Context,
+    repo_name: str,
+    to_project: str,
+    dry_run: bool,
+    manifest_only: bool,
+    force: bool,
+    as_json: bool,
+) -> None:
+    """Move a repository to another workspace project."""
+    project: str = ctx.obj["project"]
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    config_path: str = ctx.obj["config_path"]
+    app_config: AppConfig = ctx.obj["config"]
+    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    dedupe = resolve_dedupe_for_layout(
+        app_config.workspace.dedupe,
+        local_config,
+        to_project,
+    )
+    result = WorkspaceLayoutService().move_repo(
+        local_config,
+        config_path,
+        workspace_root,
+        repo_name=repo_name,
+        from_project=project,
+        to_project=to_project,
+        dedupe=dedupe,
+        dry_run=dry_run,
+        move_disk=not manifest_only,
+        force=force,
+    )
+    exit_on_layout_mutation(result, as_json=as_json)
 
 
 @repo.command("add")
@@ -165,16 +274,31 @@ def repo_add(
 
     try:
         # Initialize ProjectManager and MetagitConfigManager
-        project_manager = project_manager_from_app(app_config, logger)
+        project_manager = project_manager_from_app(
+            app_config,
+            logger,
+            metagit_config=local_config,
+            project_name=project,
+        )
     except Exception as e:
         logger.warning(f"Failed to initialize ProjectManager: {e}")
         ctx.abort()
 
     catalog = WorkspaceCatalogService()
     try:
+        agent_mode = bool(ctx.obj.get("agent_mode", False))
+        if (not name or prompt) and agent_mode:
+            raise click.UsageError(
+                "Interactive repo add is disabled in agent mode; "
+                "pass --name and --path or --url, or use workspace repo add --json"
+            )
         if not name or prompt:
             result = project_manager.add(
-                config_path, project, None, metagit_config=local_config
+                config_path,
+                project,
+                None,
+                metagit_config=local_config,
+                agent_mode=agent_mode,
             )
             if isinstance(result, Exception):
                 raise result
@@ -216,7 +340,11 @@ def repo_add(
                 exit_on_catalog_mutation(mutation, as_json=True)
                 return
             result = project_manager.add(
-                config_path, project, project_path, local_config
+                config_path,
+                project,
+                project_path,
+                local_config,
+                agent_mode=agent_mode,
             )
 
         if isinstance(result, Exception):
@@ -278,7 +406,12 @@ def repo_prune(
         ctx.abort()
 
     try:
-        project_manager = project_manager_from_app(app_config, logger)
+        project_manager = project_manager_from_app(
+            app_config,
+            logger,
+            metagit_config=local_config,
+            project_name=project,
+        )
     except Exception as exc:
         logger.warning(f"Failed to initialize ProjectManager: {exc}")
         ctx.abort()
@@ -298,15 +431,20 @@ def repo_prune(
         project,
         ignore_hidden=ignore_hidden,
     )
-    if app_config.workspace.dedupe.enabled:
+    dedupe = resolve_effective_dedupe_for_project(
+        app_config.workspace.dedupe,
+        local_config,
+        project,
+    )
+    if dedupe is not None:
         references = workspace_dedupe.list_canonical_references(
             local_config,
             workspace_root,
-            app_config.workspace.dedupe,
+            dedupe,
         )
         orphans = workspace_dedupe.list_orphan_canonical_dirs(
             workspace_root,
-            app_config.workspace.dedupe,
+            dedupe,
             references,
         )
         if orphans:
@@ -328,6 +466,11 @@ def repo_prune(
     if dry_run:
         click.echo("Dry run: no changes made.")
         return
+
+    if ctx.obj.get("agent_mode") and not force:
+        raise click.UsageError(
+            "Interactive prune prompts are disabled in agent mode; use --force or --dry-run"
+        )
 
     removed = 0
     for path in candidates:

@@ -1,5 +1,6 @@
 config:
   description: Configuration for metagit CLI
+  agent_mode: false
   editor: code
   api_url: ''
   api_version: ''
@@ -17,6 +18,9 @@ config:
   workspace:
     path: ./.metagit
     default_project: default
+    dedupe:
+      enabled: true
+      canonical_dir: _canonical
     ui_show_preview: true
     ui_menu_length: 20
     ui_ignore_hidden: true

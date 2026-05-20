@@ -24,8 +24,11 @@ workspace:
             Run tests before opening PRs; keep tags updated in this manifest.
     - name: local
       description: Local-only paths for static sites (no git remotes).
+      dedupe:
+        enabled: false
       agent_instructions: |
         Do not git clone or pull repos in this project; paths are symlinks to user dirs.
+        Dedupe is disabled for this project (overrides workspace.dedupe in metagit.config.yaml).
       repos:
         - name: example-site
           description: Sample static site published from a local folder.

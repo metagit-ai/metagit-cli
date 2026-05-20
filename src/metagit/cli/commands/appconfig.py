@@ -12,7 +12,9 @@ import yaml as base_yaml
 from pydantic import ValidationError
 
 from metagit import DATA_PATH, DEFAULT_CONFIG, __version__
+from metagit.cli.json_output import emit_json
 from metagit.core.appconfig import get_config, load_config, save_config, set_config
+from metagit.core.appconfig.display import render_appconfig_show
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
@@ -41,30 +43,42 @@ def appconfig_info(ctx: click.Context) -> None:
 
 
 @appconfig.command("show")
+@click.option(
+    "--format",
+    "-f",
+    "output_format",
+    type=click.Choice(["yaml", "json", "minimal-yaml"], case_sensitive=False),
+    default="yaml",
+    show_default=True,
+    help="Output format (yaml=full active config, json=agents, minimal-yaml=non-default only)",
+)
 @click.pass_context
-def appconfig_show(ctx: click.Context) -> None:
-    """Show current configuration"""
+def appconfig_show(ctx: click.Context, output_format: str) -> None:
+    """Show the full active application configuration."""
+    logger = ctx.obj["logger"]
     try:
-        config = ctx.obj["config"].model_dump(
-            exclude_none=True, exclude_defaults=True, mode="json"
-        )
+        config: AppConfig = ctx.obj["config"]
+        config_path: str = ctx.obj["config_path"]
+        minimal = output_format == "minimal-yaml"
+        if output_format == "json":
+            from metagit.core.appconfig.display import build_appconfig_payload
 
-        config_as_dict = {
-            "config": config,
-        }
-        logger = ctx.obj["logger"]
-
-        base_yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005
-        output = base_yaml.dump(
-            config_as_dict,
-            default_flow_style=False,
-            sort_keys=False,
-            indent=2,
-            line_break=True,
+            emit_json(
+                build_appconfig_payload(
+                    config,
+                    config_path=config_path,
+                    minimal=minimal,
+                )
+            )
+            return
+        rendered = render_appconfig_show(
+            config,
+            config_path=config_path,
+            output_format="yaml",
+            minimal=minimal,
         )
-        logger.echo(output)
+        click.echo(rendered, nl=False)
     except Exception as e:
-        logger = ctx.obj.get("logger")
         if logger:
             logger.error(f"Failed to show appconfig: {e}")
         else:

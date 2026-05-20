@@ -30,11 +30,12 @@ from metagit.cli.commands.detect import detect
 from metagit.cli.commands.init import init
 from metagit.cli.commands.mcp import mcp
 from metagit.cli.commands.project import project
+from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
 from metagit.cli.commands.search import search
 from metagit.cli.commands.skills import skills
 from metagit.cli.commands.workspace import workspace
-from metagit.core.appconfig import load_config
+from metagit.core.appconfig import load_config, resolve_agent_mode
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 CONTEXT_SETTINGS: dict = {
@@ -92,6 +93,7 @@ def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
         ctx.obj = {
             "config_path": config,
             "config": cfg,
+            "agent_mode": resolve_agent_mode(cfg),
             "logger": logger,
             "verbose": verbose,
             "debug": debug,
@@ -138,6 +140,7 @@ cli.add_command(mcp)
 cli.add_command(api)
 cli.add_command(search)
 cli.add_command(search, name="find")
+cli.add_command(prompt)
 
 
 def main() -> None:

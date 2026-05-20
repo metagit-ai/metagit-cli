@@ -33,7 +33,7 @@ class WorkspaceDedupeConfig(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     enabled: bool = Field(
-        default=False,
+        default=True,
         description="When true, clone once under canonical_dir and symlink per project",
     )
     scope: WorkspaceDedupeScope = Field(
@@ -197,6 +197,13 @@ class AppConfig(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
+    agent_mode: bool = Field(
+        default=False,
+        description=(
+            "When true, disable interactive UIs (fuzzy finder, prompts, editor). "
+            "Overridden by METAGIT_AGENT_MODE when set."
+        ),
+    )
     description: str = "Metagit configuration"
     editor: str = Field(default="code", description="The editor to use for the CLI")
     # Reserved for future use
@@ -280,6 +287,14 @@ class AppConfig(BaseModel):
         Returns:
             Updated AppConfig
         """
+        if os.getenv("METAGIT_AGENT_MODE") is not None:
+            config.agent_mode = os.getenv("METAGIT_AGENT_MODE", "").strip().lower() in {
+                "true",
+                "1",
+                "yes",
+                "on",
+            }
+
         # LLM configuration
         if os.getenv("METAGIT_LLM_ENABLED"):
             config.llm.enabled = os.getenv("METAGIT_LLM_ENABLED").lower() == "true"

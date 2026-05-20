@@ -43,3 +43,37 @@ def exit_on_catalog_mutation(
             click.echo(f"{entity} {operation}: {name}")
     if not bool(getattr(result, "ok", True)):
         raise SystemExit(1)
+
+
+def exit_on_layout_mutation(
+    result: BaseModel,
+    *,
+    as_json: bool,
+) -> None:
+    """Emit layout mutation result; show plan summary on dry-run."""
+    if as_json:
+        emit_json(result)
+    else:
+        ok = bool(getattr(result, "ok", True))
+        error = getattr(result, "error", None)
+        data = getattr(result, "data", None) or {}
+        if not ok and error is not None:
+            click.echo(f"Error ({error.kind}): {error.message}", err=True)
+        elif ok:
+            operation = getattr(result, "operation", "updated")
+            entity = getattr(result, "entity", "entity")
+            name = getattr(result, "repo_name", None) or getattr(
+                result, "project_name", ""
+            )
+            if data.get("dry_run"):
+                click.echo(f"dry-run {entity} {operation}: {name}")
+                for step in data.get("disk_steps", []):
+                    click.echo(
+                        f"  {step.get('action')}: {step.get('source')} -> {step.get('target')}"
+                    )
+            else:
+                click.echo(f"{entity} {operation}: {name}")
+                for warning in data.get("warnings", []):
+                    click.echo(f"  warning: {warning}")
+    if not bool(getattr(result, "ok", True)):
+        raise SystemExit(1)

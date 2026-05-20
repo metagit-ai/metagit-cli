@@ -217,7 +217,15 @@ def init(
     manifest = service.registry.load_manifest(template_id)
     use_bundled = manifest is not None and not minimal
 
+    agent_mode = bool(ctx.obj.get("agent_mode", False))
+    if agent_mode:
+        no_prompt = True
+
     if (target_path / ".metagit.yml").exists() and force and not dry_run:
+        if agent_mode:
+            raise click.UsageError(
+                "Overwrite confirmation is disabled in agent mode; remove .metagit.yml first or use a new directory"
+            )
         if not click.confirm("Overwrite existing .metagit.yml?"):
             ctx.abort()
 

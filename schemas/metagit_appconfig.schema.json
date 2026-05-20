@@ -218,6 +218,10 @@
           "title": "Default Project",
           "type": "string"
         },
+        "dedupe": {
+          "$ref": "#/$defs/WorkspaceDedupeConfig",
+          "description": "Optional workspace-scoped repository deduplication settings"
+        },
         "ui_show_preview": {
           "anyOf": [
             {
@@ -266,10 +270,63 @@
       },
       "title": "WorkspaceConfig",
       "type": "object"
+    },
+    "WorkspaceDedupeConfig": {
+      "additionalProperties": false,
+      "description": "Deduplicate synced repos within a workspace via a canonical directory.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "When true, clone once under canonical_dir and symlink per project",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "scope": {
+          "$ref": "#/$defs/WorkspaceDedupeScope",
+          "default": "workspace",
+          "description": "Dedupe scope (v1 implements workspace only)"
+        },
+        "strategy": {
+          "$ref": "#/$defs/WorkspaceDedupeStrategy",
+          "default": "symlink",
+          "description": "How project mounts reference canonical checkouts"
+        },
+        "canonical_dir": {
+          "default": "_canonical",
+          "description": "Directory under workspace.path holding canonical checkouts",
+          "title": "Canonical Dir",
+          "type": "string"
+        }
+      },
+      "title": "WorkspaceDedupeConfig",
+      "type": "object"
+    },
+    "WorkspaceDedupeScope": {
+      "description": "Where repository deduplication is applied.",
+      "enum": [
+        "workspace",
+        "global"
+      ],
+      "title": "WorkspaceDedupeScope",
+      "type": "string"
+    },
+    "WorkspaceDedupeStrategy": {
+      "description": "How duplicate repository identities share disk layout.",
+      "enum": [
+        "symlink"
+      ],
+      "title": "WorkspaceDedupeStrategy",
+      "type": "string"
     }
   },
   "description": "Application-level settings (not the Metagit package release version \u2014 use `metagit version`).",
   "properties": {
+    "agent_mode": {
+      "default": false,
+      "description": "When true, disable interactive UIs (fuzzy finder, prompts, editor). Overridden by METAGIT_AGENT_MODE when set.",
+      "title": "Agent Mode",
+      "type": "boolean"
+    },
     "description": {
       "default": "Metagit configuration",
       "title": "Description",
@@ -334,6 +391,12 @@
       "default": {
         "path": "./.metagit",
         "default_project": "default",
+        "dedupe": {
+          "canonical_dir": "_canonical",
+          "enabled": true,
+          "scope": "workspace",
+          "strategy": "symlink"
+        },
         "ui_show_preview": true,
         "ui_menu_length": 10,
         "ui_preview_height": 3,

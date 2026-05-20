@@ -3,12 +3,17 @@ Project subcommand
 """
 
 import sys
+from pathlib import Path
 
 import click
 import yaml
 
 from metagit.cli.commands.project_repo import repo, repo_select
-from metagit.cli.json_output import emit_json, exit_on_catalog_mutation
+from metagit.cli.json_output import (
+    emit_json,
+    exit_on_catalog_mutation,
+    exit_on_layout_mutation,
+)
 from metagit.cli.commands.project_source import source
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
@@ -17,6 +22,8 @@ from metagit.core.project.manager import ProjectManager, project_manager_from_ap
 from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
+from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace.models import WorkspaceProject
 
 
@@ -182,6 +189,49 @@ def project_remove(ctx: click.Context, name: str, as_json: bool) -> None:
     exit_on_catalog_mutation(result, as_json=as_json)
 
 
+@project.command("rename")
+@click.argument("from_name")
+@click.argument("to_name")
+@click.option("--dry-run", is_flag=True, default=False)
+@click.option("--manifest-only", is_flag=True, default=False)
+@click.option("--force", is_flag=True, default=False)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def project_rename(
+    ctx: click.Context,
+    from_name: str,
+    to_name: str,
+    dry_run: bool,
+    manifest_only: bool,
+    force: bool,
+    as_json: bool,
+) -> None:
+    """Rename a workspace project (alias for workspace project rename)."""
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    config_path: str = ctx.obj["config_path"]
+    app_config: AppConfig = ctx.obj["config"]
+    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    dedupe = resolve_dedupe_for_layout(
+        app_config.workspace.dedupe,
+        local_config,
+        from_name,
+    )
+    result = WorkspaceLayoutService().rename_project(
+        local_config,
+        config_path,
+        workspace_root,
+        from_name=from_name,
+        to_name=to_name,
+        dedupe=dedupe,
+        dry_run=dry_run,
+        move_disk=not manifest_only,
+        force=force,
+    )
+    exit_on_layout_mutation(result, as_json=as_json)
+
+
 @project.command("select")
 @click.pass_context
 def project_select(ctx: click.Context) -> None:
@@ -198,7 +248,12 @@ def project_sync(ctx: click.Context) -> None:
     app_config: AppConfig = ctx.obj["config"]
     project: str = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
-    project_manager: ProjectManager = project_manager_from_app(app_config, logger)
+    project_manager: ProjectManager = project_manager_from_app(
+        app_config,
+        logger,
+        metagit_config=local_config,
+        project_name=project,
+    )
 
     try:
         # Handle special "local" project case

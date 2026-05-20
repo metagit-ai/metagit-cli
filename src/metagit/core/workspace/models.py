@@ -10,6 +10,23 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator
 from metagit.core.project.models import ProjectPath
 
 
+class ProjectDedupeOverride(BaseModel):
+    """Per-project override of app-config ``workspace.dedupe``."""
+
+    enabled: Optional[bool] = Field(
+        default=None,
+        description=(
+            "When set, overrides workspace.dedupe.enabled from metagit.config.yaml "
+            "for sync and layout under this project only"
+        ),
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
 class WorkspaceProject(BaseModel):
     """Model for workspace project."""
 
@@ -21,6 +38,13 @@ class WorkspaceProject(BaseModel):
         None,
         validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
         description="Optional instructions for agents working in this workspace project",
+    )
+    dedupe: Optional[ProjectDedupeOverride] = Field(
+        default=None,
+        description=(
+            "Optional override of app-config workspace.dedupe for this project "
+            "(currently supports enabled only)"
+        ),
     )
     repos: List[ProjectPath] = Field(..., description="Repository list")
 

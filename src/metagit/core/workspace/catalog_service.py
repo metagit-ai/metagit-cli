@@ -71,6 +71,9 @@ class WorkspaceCatalogService:
                 name=project.name,
                 description=project.description,
                 agent_instructions=project.agent_instructions,
+                dedupe_enabled=(
+                    project.dedupe.enabled if project.dedupe is not None else None
+                ),
                 repo_count=len(project.repos),
             ).model_dump(mode="json")
             for project in config.workspace.projects

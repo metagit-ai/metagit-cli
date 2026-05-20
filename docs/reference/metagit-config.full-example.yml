@@ -339,8 +339,12 @@ workspace:
       # Human-readable description of this workspace project
       description: Local-only paths for static sites (no git remotes).
 ...
+      # Optional override of app-config workspace.dedupe for this project (currently supports enabled only)
+      dedupe:
+        # When set, overrides workspace.dedupe.enabled from metagit.config.yaml for sync and layout under this project only
+        enabled: false
       # Optional instructions for agents working in this workspace project
-      agent_instructions: Do not git clone or pull repos in this project; paths are symlinks to user dirs.\n
+      agent_instructions: Do not git clone or pull repos in this project; paths are symlinks to user dirs.\nDedupe is disabled for this project (overrides workspace.dedupe in metagit.config.yaml).\n
       # Repository list
       repos:
         -

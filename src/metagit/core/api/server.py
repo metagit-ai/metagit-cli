@@ -11,6 +11,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from metagit.core.api.catalog_handler import CatalogApiHandler
+from metagit.core.api.layout_handler import LayoutApiHandler
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.project.search_service import ManagedRepoSearchService
 
@@ -47,6 +48,10 @@ def build_server(root: str, host: str, port: int) -> ThreadingHTTPServer:
     service = ManagedRepoSearchService()
     catalog = CatalogApiHandler(
         workspace_root=root_resolved,
+        config_path=config_path,
+    )
+    layout = LayoutApiHandler(
+        definition_root=root_resolved,
         config_path=config_path,
     )
 
@@ -154,6 +159,8 @@ def build_server(root: str, host: str, port: int) -> ThreadingHTTPServer:
             parsed = urlparse(self.path)
             length = int(self.headers.get("Content-Length", "0") or "0")
             body = self.rfile.read(length) if length > 0 else b""
+            if layout.handle("POST", parsed.path, parsed.query, body, self._json):
+                return
             if catalog.handle("POST", parsed.path, parsed.query, body, self._json):
                 return
             self._json(

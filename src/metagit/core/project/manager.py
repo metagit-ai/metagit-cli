@@ -30,19 +30,27 @@ from metagit.core.utils.fuzzyfinder import (
 from metagit.core.utils.files import parse_gitignore, should_ignore_path
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.utils.userprompt import UserPrompt
+from metagit.core.workspace.dedupe_resolver import resolve_effective_dedupe
+from metagit.core.workspace.layout_resolver import find_project
 from metagit.core.workspace.models import WorkspaceProject
 
 
 def project_manager_from_app(
     app_config: AppConfig,
     logger: UnifiedLogger,
+    *,
+    metagit_config: Optional[MetagitConfig] = None,
+    project_name: Optional[str] = None,
 ) -> "ProjectManager":
-    """Construct a ProjectManager using workspace path and dedupe settings."""
-    dedupe = app_config.workspace.dedupe
+    """Construct a ProjectManager using workspace path and effective dedupe settings."""
+    project: Optional[WorkspaceProject] = None
+    if metagit_config is not None and project_name:
+        project = find_project(metagit_config, project_name)
+    dedupe = resolve_effective_dedupe(app_config.workspace.dedupe, project)
     return ProjectManager(
         app_config.workspace.path,
         logger,
-        dedupe=dedupe if dedupe.enabled else None,
+        dedupe=dedupe,
     )
 
 
@@ -77,6 +85,8 @@ class ProjectManager:
         project_name: str,
         repo: Union[ProjectPath, None],
         metagit_config: MetagitConfig,
+        *,
+        agent_mode: bool = False,
     ) -> Union[ProjectPath, Exception]:
         """
         Add a repository to a specific project in the configuration.
@@ -110,7 +120,11 @@ class ProjectManager:
                     f"Project '{project_name}' not found in workspace configuration"
                 )
 
-            # If repo is None, prompt for ProjectPath data
+            if repo is None and agent_mode:
+                return ValueError(
+                    "Interactive repo add is disabled in agent mode; "
+                    "pass --name/--path/--url or use catalog/MCP tools"
+                )
             if repo is None:
                 self.logger.debug(
                     "No repository data provided. Prompting for information..."
@@ -530,10 +544,16 @@ class ProjectManager:
         show_preview: bool = False,
         menu_length: int = 10,
         ignore_hidden: bool = True,
+        agent_mode: bool = False,
     ) -> ProjectPath:
         """
         Select a repository from a synced project.
         """
+        if agent_mode:
+            return ValueError(
+                "Interactive repo selection is disabled in agent mode; "
+                "use `metagit project repo list --json` or specify a repo in commands"
+            )
         project_path: str = os.path.join(self.workspace_path, project)
         if project == "local":
             workspace_project = metagit_config.local_workspace_project

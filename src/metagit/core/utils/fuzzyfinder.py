@@ -214,7 +214,12 @@ class FuzzyFinderApp(App):
         border: solid $primary;
     }
     
+    .fuzzy-finder-split {
+        height: 1fr;
+    }
+
     .fuzzy-finder-results {
+        width: 35%;
         border: solid $primary;
         scrollbar-gutter: stable;
         overflow-y: auto;
@@ -222,10 +227,10 @@ class FuzzyFinderApp(App):
     }
     
     .fuzzy-finder-preview {
-        dock: right;
-        width: 40%;
+        width: 65%;
         border: solid $primary;
         overflow-y: auto;
+        height: 1fr;
     }
     
     .highlighted {
@@ -276,8 +281,7 @@ class FuzzyFinderApp(App):
             )
 
             if self.config.enable_preview:
-                # Split layout with results and preview
-                with Horizontal():
+                with Horizontal(classes="fuzzy-finder-split"):
                     yield ListView(id="results_list", classes="fuzzy-finder-results")
                     yield Static("", id="preview_pane", classes="fuzzy-finder-preview")
             else:

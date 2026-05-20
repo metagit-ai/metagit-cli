@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from metagit.core.config import models
 from metagit.core.project.models import ProjectPath
+from metagit.core.workspace.models import ProjectDedupeOverride
 
 
 def test_license_kind_enum():
@@ -174,6 +175,17 @@ def test_workspace_description_and_agent_instructions():
     assert ws.projects[0].description == "Core services"
     assert ws.projects[0].agent_instructions == "Use typed APIs."
     assert repo.agent_instructions == "Stay in src/api."
+
+
+def test_workspace_project_dedupe_override() -> None:
+    """Workspace projects accept optional dedupe.enabled override."""
+    project = models.WorkspaceProject(
+        name="local",
+        dedupe=ProjectDedupeOverride(enabled=False),
+        repos=[ProjectPath(name="site", path="~/Sites/site")],
+    )
+    assert project.dedupe is not None
+    assert project.dedupe.enabled is False
 
 
 class TestMetagitConfig:

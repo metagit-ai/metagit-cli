@@ -37,6 +37,7 @@ Other targets: `opencode`, `claude_code`, `github_copilot`.
 
 | Skill | Use when |
 |-------|----------|
+| `metagit-cli` | CLI-only agent workflows: all `metagit prompt` kinds, catalog, detect, sync, layout (no MCP/API) |
 | `metagit-projects` | Starting work; check for existing projects/repos before new folders |
 | `metagit-workspace-scope` | Session start; workspace and sync context |
 | `metagit-control-center` | Ongoing multi-repo coordination |
