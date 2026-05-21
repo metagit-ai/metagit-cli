@@ -97,3 +97,17 @@ graph:
 ```
 
 These edges are merged into cross-project dependency maps (`type: manual`) and available via `MetagitConfig.graph_export_payload()` for GitNexus-style exports. Request dependency type `manual` when calling `metagit_cross_project_dependencies` to focus on manifest-declared edges.
+
+### Export to GitNexus (Cypher)
+
+Export manual relationships (and optional structure/documentation nodes) as Cypher for `gitnexus_cypher` MCP tool calls:
+
+```bash
+metagit config graph export -c .metagit.yml --format json
+metagit config graph export -c .metagit.yml --format cypher --output workspace-graph.cypher
+metagit config graph export -c .metagit.yml --format tool-calls --manual-only
+```
+
+The exporter creates overlay tables `MetagitEntity` and `MetagitLink` (run `schema_statements` once per target GitNexus index), then `MERGE`/`CREATE` workspace nodes and manual edges. MCP: `metagit_export_workspace_graph_cypher`.
+
+Pass `--gitnexus-repo <name>` when the umbrella workspace is indexed under a different GitNexus repo name than the manifest `name` field.

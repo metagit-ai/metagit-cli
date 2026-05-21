@@ -18,6 +18,7 @@ from metagit.cli.config_patch_ops import (
 from metagit.cli.json_output import emit_json
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
+from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
 
@@ -630,6 +631,126 @@ def config_patch(
         logger.error(f"Failed to patch config: {result}")
         ctx.abort()
     emit_patch_result(result, as_json=as_json, logger=logger)
+
+
+@config.group("graph")
+@click.pass_context
+def config_graph(ctx: click.Context) -> None:
+    """Export workspace graph data for GitNexus / Cypher ingest."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@config_graph.command("export")
+@click.option(
+    "--workspace-root",
+    default=None,
+    help="Workspace root (default: appconfig workspace.path)",
+)
+@click.option(
+    "--gitnexus-repo",
+    default=None,
+    help="Target GitNexus repo name for tool_calls (default: manifest name)",
+)
+@click.option(
+    "--include-structure/--no-include-structure",
+    default=True,
+    help="Include project/repo nodes and contains edges",
+)
+@click.option(
+    "--include-documentation/--no-include-documentation",
+    default=False,
+    help="Include documentation nodes and documents edges",
+)
+@click.option(
+    "--manual-only",
+    is_flag=True,
+    default=False,
+    help="Only export graph.relationships (still ensures endpoint nodes)",
+)
+@click.option(
+    "--with-schema/--no-with-schema",
+    default=True,
+    help="Emit CREATE NODE/REL TABLE statements first",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["cypher", "json", "tool-calls"], case_sensitive=False),
+    default="json",
+    show_default=True,
+    help="Output: full JSON bundle, tool-calls array, or raw Cypher lines",
+)
+@click.option("--output", "output_path", default=None, help="Write output to file")
+@click.pass_context
+def config_graph_export(
+    ctx: click.Context,
+    workspace_root: str | None,
+    gitnexus_repo: str | None,
+    include_structure: bool,
+    include_documentation: bool,
+    manual_only: bool,
+    with_schema: bool,
+    output_format: str,
+    output_path: str | None,
+) -> None:
+    """
+    Export manual graph.relationships as GitNexus-ingestible Cypher.
+
+    Emits MERGE/CREATE statements for MetagitEntity / MetagitLink overlay tables and
+    matching gitnexus_cypher MCP tool_calls. Run schema statements once per target index.
+    """
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    app_config = ctx.obj.get("config")
+    if app_config is None:
+        logger.error("App config missing from CLI context")
+        ctx.abort()
+
+    try:
+        manager = MetagitConfigManager(config_path=config_path)
+        loaded = manager.load_config()
+        if isinstance(loaded, Exception):
+            raise loaded
+        root = workspace_root or str(
+            Path(app_config.workspace.path).expanduser().resolve()
+        )
+        result = GraphCypherExportService().export(
+            loaded,
+            root,
+            gitnexus_repo=gitnexus_repo,
+            include_structure=include_structure,
+            include_documentation=include_documentation,
+            manual_only=manual_only,
+            with_schema=with_schema,
+        )
+    except Exception as exc:
+        logger.error(f"Failed to export graph Cypher: {exc}")
+        ctx.abort()
+
+    if output_format == "cypher":
+        lines = [*result.schema_statements, *result.statements]
+        rendered = "\n".join(lines) + ("\n" if lines else "")
+    elif output_format == "tool-calls":
+        rendered = json.dumps(
+            [item.model_dump(mode="json") for item in result.tool_calls],
+            indent=2,
+        )
+    else:
+        rendered = json.dumps(result.model_dump(mode="json"), indent=2)
+
+    if output_path:
+        Path(output_path).write_text(rendered, encoding="utf-8")
+        logger.success(f"Graph Cypher export written to {output_path}")
+        if result.warnings:
+            for warning in result.warnings:
+                logger.warning(warning)
+        return
+
+    click.echo(rendered, nl=rendered.endswith("\n"))
+    if result.warnings:
+        for warning in result.warnings:
+            logger.warning(warning)
 
 
 @config.command("schema")

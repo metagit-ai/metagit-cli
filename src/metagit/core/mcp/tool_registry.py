@@ -29,6 +29,7 @@ class ToolRegistry:
         "metagit_workspace_state_restore",
         "metagit_session_update",
         "metagit_cross_project_dependencies",
+        "metagit_export_workspace_graph_cypher",
         "metagit_workspace_health_check",
         "metagit_workspace_discover",
         "metagit_workspace_list",

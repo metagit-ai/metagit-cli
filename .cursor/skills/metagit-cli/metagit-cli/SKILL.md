@@ -20,107 +20,6 @@ Global flags (most commands):
 
 ---
 
-## Manifest editing fast map (`.metagit.yml`)
-
-Use this table first when changing a workspace manifest from the CLI. Prefer **catalog commands** for projects/repos; use **`config patch`** for everything else in the schema (documentation, graph, dedupe overrides, nested fields).
-
-| Task | Command |
-|------|---------|
-| **Inspect** manifest on disk | `metagit config show -c .metagit.yml` |
-| **Inspect** normalized model | `metagit config show -c .metagit.yml --normalized` |
-| **Inspect** as JSON (agents) | `metagit config show -c .metagit.yml --json` |
-| **Browse** fields / paths | `metagit config tree -c .metagit.yml` or `… --json` |
-| **Validate** after edits | `metagit config validate -c .metagit.yml` |
-| **Dry-run** schema change | `metagit config preview -c .metagit.yml --file ops.json` |
-| **Apply** schema change | `metagit config patch -c .metagit.yml --file ops.json --save` |
-| **Set one field** | `metagit config patch -c .metagit.yml --op set --path <path> --value <v> --save` |
-| **Enable** optional block | `metagit config patch … --op enable --path <path> --save` |
-| **Add list item** | `metagit config patch … --op append --path <list.path> --save` then `set` on `[index].field` |
-| **Remove list item** | `metagit config patch … --op remove --path <list.path>[index] --save` |
-
-### Catalog shortcuts (projects & repos)
-
-| Task | Command |
-|------|---------|
-| List projects | `metagit workspace project list -c .metagit.yml --json` |
-| List repos (all / one project) | `metagit workspace repo list -c .metagit.yml --json` / `… --project <p> --json` |
-| Add project | `metagit workspace project add -c .metagit.yml --name <p> --json` |
-| Remove project | `metagit workspace project remove -c .metagit.yml --name <p> --json` |
-| Rename project (dry-run) | `metagit workspace project rename -c .metagit.yml --name <old> --new-name <new> --dry-run --json` |
-| Add repo | `metagit workspace repo add -c .metagit.yml --project <p> --name <r> --url <url> --json` |
-| Remove repo (manifest only) | `metagit workspace repo remove -c .metagit.yml --project <p> --name <r> --json` |
-| Rename / move repo (dry-run) | `metagit workspace repo rename …` / `metagit workspace repo move … --dry-run --json` |
-| Search before adding | `metagit search "<name>" -c .metagit.yml --json` |
-
-Active project context (optional): `metagit project repo add --name <r> --url <url>` after `metagit project select`.
-
-### Schema patch examples (`ops.json`)
-
-Paths use dot/bracket notation (same as web Config Studio). `--value` accepts JSON for objects.
-
-```json
-{
-  "operations": [
-    { "op": "set", "path": "name", "value": "my-workspace" },
-    { "op": "enable", "path": "documentation" },
-    { "op": "append", "path": "documentation" },
-    { "op": "set", "path": "documentation[0]", "value": { "kind": "markdown", "path": "AGENTS.md" } },
-    { "op": "enable", "path": "graph" },
-    { "op": "append", "path": "graph.relationships" },
-    {
-      "op": "set",
-      "path": "graph.relationships[0]",
-      "value": {
-        "id": "api-depends-infra",
-        "from": { "project": "platform", "repo": "api" },
-        "to": { "project": "infra", "repo": "terraform" },
-        "type": "depends_on"
-      }
-    },
-    { "op": "set", "path": "workspace.projects[0].dedupe.enabled", "value": false }
-  ]
-}
-```
-
-```bash
-metagit config preview -c .metagit.yml --file ops.json
-metagit config patch -c .metagit.yml --file ops.json --save
-metagit config validate -c .metagit.yml
-```
-
-### App config vs manifest
-
-| File | Scope | Edit via |
-|------|-------|----------|
-| `.metagit.yml` | Workspace manifest (projects, repos, docs, graph) | `metagit config …` + `metagit workspace …` |
-| `metagit.config.yaml` | Tooling (paths, dedupe default, providers, profiles) | `metagit appconfig …` |
-
-```bash
-metagit appconfig show --format minimal-yaml
-metagit appconfig patch --op set --path workspace.dedupe.enabled --value false --save
-metagit config providers --show
-```
-
-### After every manifest edit
-
-1. `metagit config validate -c .metagit.yml`
-2. `metagit workspace list -c .metagit.yml --json` (sanity-check catalog)
-3. If repos changed on disk: `metagit project sync` or `metagit project sync --hydrate`
-
-### Export manual graph to GitNexus (Cypher)
-
-| Task | Command |
-|------|---------|
-| Full export bundle (JSON) | `metagit config graph export -c .metagit.yml --json` |
-| Raw Cypher script | `metagit config graph export -c .metagit.yml --format cypher -o graph.cypher` |
-| MCP tool_calls only | `metagit config graph export -c .metagit.yml --format tool-calls` |
-| Manual edges only | `metagit config graph export -c .metagit.yml --manual-only --format tool-calls` |
-| MCP from agent | `metagit_export_workspace_graph_cypher` |
-
-Ingest workflow: run `schema_statements` once via `gitnexus_cypher`, then each statement in `tool_calls` (or pipe `--format cypher`). Overlay tables: `MetagitEntity`, `MetagitLink`.
-
----
-
 ## Prompt commands (all kinds)
 
 List built-in prompt kinds:
@@ -258,7 +157,6 @@ metagit project remove --name <name> --json
 metagit project rename --name <old> --new-name <new> --dry-run --json
 metagit project select
 metagit project sync
-metagit project sync --hydrate   # symlink mounts → full directory copies (per-file progress)
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>
@@ -311,20 +209,14 @@ metagit project repo select
 
 ---
 
-## Config and appconfig (reference)
-
-See **Manifest editing fast map** above for day-to-day manifest work. Additional commands:
+## Config and appconfig
 
 ```bash
-metagit config info -c .metagit.yml
+metagit appconfig validate
+metagit appconfig get workspace.path
 metagit config example
 metagit config schema
-metagit appconfig validate
-metagit appconfig get --name config.workspace.path
-metagit appconfig tree --json
-metagit appconfig preview --file ops.json
-metagit appconfig patch --file ops.json --save
-metagit config providers --show
+metagit config providers
 ```
 
 ---
