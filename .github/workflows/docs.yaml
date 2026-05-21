@@ -34,8 +34,17 @@ jobs:
           uv venv
           uv pip install --system -e ".[docs]"
 
+      - name: Generate schema artifacts for docs
+        run: |
+          uv run metagit config schema --output-path ./schemas/metagit_config.schema.json
+          uv run metagit appconfig schema --output-path ./schemas/metagit_appconfig.schema.json
+          mkdir -p docs/reference/schemas
+          cp ./schemas/metagit_config.schema.json docs/reference/schemas/metagit_config.schema.json
+          cp ./schemas/metagit_appconfig.schema.json docs/reference/schemas/metagit_appconfig.schema.json
+          uv run metagit config example --output docs/reference/metagit-config.full-example.yml
+
       - name: Build docs
-        run: mkdocs build
+        run: mkdocs build --strict
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
