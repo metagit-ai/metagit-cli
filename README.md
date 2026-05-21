@@ -33,7 +33,7 @@ metagit skills list
 metagit skills install --scope user --target openclaw --target hermes
 ```
 
-Use `--scope project` when installing into a specific umbrella repository checkout. See [Skills](skills.md) for targets, MCP install, and the project-management skill for agents.
+Use `--scope project` when installing into a specific umbrella repository checkout. See [Skills](docs/skills.md) for targets, MCP install, and the project-management skill for agents.
 
 ## Audience
 
@@ -132,7 +132,7 @@ That creates `.metagit.yml` and updates `.gitignore`.
 
 ## Skills
 
-Bundled skills ship with the package and install via `metagit skills install` (see [skills.md](skills.md)). For development in this repository, `skills/` is the source tree; run `task skills:sync` to mirror into `.cursor/skills/`.
+Bundled skills ship with the package and install via `metagit skills install` (see [docs/skills.md](docs/skills.md)). For development in this repository, `skills/` is the source tree; run `task skills:sync` to mirror into `.cursor/skills/`.
 
 ## Agent guides
 
