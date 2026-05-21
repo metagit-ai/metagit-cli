@@ -312,21 +312,32 @@ class SchemaTreeService:
     def _set_at_path(self, data: dict[str, Any], path: str, value: Any) -> None:
         segments = self._parse_path(path)
         parent: Any = data
-        for index, segment in enumerate(segments[:-1]):
+        index = 0
+        while index < len(segments) - 1:
+            segment = segments[index]
+            next_segment = segments[index + 1]
             if isinstance(segment, int):
                 if not isinstance(parent, list):
                     raise KeyError(path)
                 parent = parent[segment]
+                index += 1
                 continue
-            next_segment = segments[index + 1]
             if isinstance(next_segment, int):
                 if segment not in parent:
                     parent[segment] = []
-                parent = parent[segment][next_segment]
+                bucket = parent[segment]
+                if not isinstance(bucket, list) or next_segment >= len(bucket):
+                    raise KeyError(path)
+                if index == len(segments) - 2:
+                    parent = bucket
+                    break
+                parent = bucket[next_segment]
+                index += 2
                 continue
             if segment not in parent:
-                parent[segment] = {} if not isinstance(segments[-1], int) else []
+                parent[segment] = {}
             parent = parent[segment]
+            index += 1
         leaf = segments[-1]
         if isinstance(leaf, str) and self._is_sensitive(leaf):
             if isinstance(value, str) and (value.startswith("***") or value == ""):

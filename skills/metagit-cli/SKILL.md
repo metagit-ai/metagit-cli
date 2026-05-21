@@ -218,6 +218,11 @@ metagit appconfig get workspace.path
 metagit config example
 metagit config schema
 metagit config providers
+# Schema-tree edits (same ops as web Config Studio)
+metagit config tree --json
+metagit config preview --file ops.json
+metagit config patch --file ops.json --save
+metagit appconfig patch --op set --path workspace.dedupe.enabled --value false --save
 ```
 
 ---

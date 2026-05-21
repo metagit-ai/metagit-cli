@@ -9,9 +9,16 @@ from typing import Union
 
 import click
 
+from metagit.cli.config_patch_ops import (
+    emit_patch_result,
+    emit_preview_result,
+    emit_tree_result,
+    resolve_operations,
+)
 from metagit.cli.json_output import emit_json
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
+from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
 
 
@@ -463,6 +470,166 @@ def config_example(
     except Exception as exc:
         logger.error(f"Failed to generate config exemplar: {exc}")
         ctx.abort()
+
+
+@config.command("tree")
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def config_tree(ctx: click.Context, as_json: bool) -> None:
+    """Show schema-backed field tree for .metagit.yml (same model as web Config Studio)."""
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    result = ConfigPatchService().build_tree("metagit", config_path)
+    if isinstance(result, Exception):
+        logger.error(f"Failed to build config tree: {result}")
+        ctx.abort()
+    emit_tree_result(result, as_json=as_json)
+
+
+@config.command("preview")
+@click.option(
+    "--style",
+    type=click.Choice(["normalized", "minimal", "disk"], case_sensitive=False),
+    default="normalized",
+    show_default=True,
+    help="YAML preview style",
+)
+@click.option(
+    "--file",
+    "operations_file",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="JSON file with operations array or {operations, save}",
+)
+@click.option(
+    "--op",
+    type=click.Choice(["enable", "disable", "set", "append", "remove"]),
+    default=None,
+    help="Single operation kind (use with --path)",
+)
+@click.option("--path", default=None, help="Field path for a single operation")
+@click.option("--value", default=None, help="Value for set (JSON or scalar)")
+@click.option(
+    "--output",
+    "output_path",
+    default=None,
+    help="Write preview YAML to this path instead of stdout",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def config_preview(
+    ctx: click.Context,
+    style: str,
+    operations_file: str | None,
+    op: str | None,
+    path: str | None,
+    value: str | None,
+    output_path: str | None,
+    as_json: bool,
+) -> None:
+    """Preview .metagit.yml after applying draft operations (no save)."""
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    operations = (
+        resolve_operations(
+            operations_file=operations_file,
+            op=op,
+            path=path,
+            value=value,
+        )
+        if operations_file or op
+        else []
+    )
+    result = ConfigPatchService().preview(
+        "metagit",
+        config_path,
+        operations,
+        style=style,
+    )
+    if isinstance(result, Exception):
+        logger.error(f"Failed to preview config: {result}")
+        ctx.abort()
+    emit_preview_result(
+        result,
+        as_json=as_json,
+        logger=logger,
+        output_path=output_path,
+    )
+
+
+@config.command("patch")
+@click.option(
+    "--file",
+    "operations_file",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="JSON file with operations array or {operations, save}",
+)
+@click.option(
+    "--op",
+    type=click.Choice(["enable", "disable", "set", "append", "remove"]),
+    default=None,
+    help="Single operation kind (use with --path)",
+)
+@click.option("--path", default=None, help="Field path for a single operation")
+@click.option("--value", default=None, help="Value for set (JSON or scalar)")
+@click.option(
+    "--save",
+    is_flag=True,
+    default=False,
+    help="Write changes to disk when validation passes",
+)
+@click.option(
+    "--tree",
+    "include_tree",
+    is_flag=True,
+    default=False,
+    help="Include updated schema tree in JSON output",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def config_patch(
+    ctx: click.Context,
+    operations_file: str | None,
+    op: str | None,
+    path: str | None,
+    value: str | None,
+    save: bool,
+    include_tree: bool,
+    as_json: bool,
+) -> None:
+    """
+    Apply schema operations to .metagit.yml (enable/disable/set/append/remove).
+
+    Same operation model as the web Config Studio PATCH API. Example operations file:
+
+    {"operations": [{"op": "set", "path": "name", "value": "my-workspace"}]}
+    """
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    operations = resolve_operations(
+        operations_file=operations_file,
+        op=op,
+        path=path,
+        value=value,
+    )
+    result = ConfigPatchService().patch(
+        "metagit",
+        config_path,
+        operations,
+        save=save,
+        include_tree=include_tree or as_json,
+    )
+    if isinstance(result, Exception):
+        logger.error(f"Failed to patch config: {result}")
+        ctx.abort()
+    emit_patch_result(result, as_json=as_json, logger=logger)
 
 
 @config.command("schema")

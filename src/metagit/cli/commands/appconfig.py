@@ -12,10 +12,17 @@ import yaml as base_yaml
 from pydantic import ValidationError
 
 from metagit import DATA_PATH, DEFAULT_CONFIG, __version__
+from metagit.cli.config_patch_ops import (
+    emit_patch_result,
+    emit_preview_result,
+    emit_tree_result,
+    resolve_operations,
+)
 from metagit.cli.json_output import emit_json
 from metagit.core.appconfig import get_config, load_config, save_config, set_config
 from metagit.core.appconfig.display import render_appconfig_show
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 
@@ -216,6 +223,165 @@ def appconfig_set(ctx: click.Context, name: str, value: str) -> None:
         else:
             click.echo(f"An error occurred: {e}", err=True)
         ctx.abort()
+
+
+@appconfig.command("tree")
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def appconfig_tree(ctx: click.Context, as_json: bool) -> None:
+    """Show schema-backed field tree for metagit.config.yaml."""
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    result = ConfigPatchService().build_tree("appconfig", config_path)
+    if isinstance(result, Exception):
+        logger.error(f"Failed to build appconfig tree: {result}")
+        ctx.abort()
+    emit_tree_result(result, as_json=as_json)
+
+
+@appconfig.command("preview")
+@click.option(
+    "--style",
+    type=click.Choice(["normalized", "minimal", "disk"], case_sensitive=False),
+    default="normalized",
+    show_default=True,
+    help="YAML preview style",
+)
+@click.option(
+    "--file",
+    "operations_file",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="JSON file with operations array or {operations, save}",
+)
+@click.option(
+    "--op",
+    type=click.Choice(["enable", "disable", "set", "append", "remove"]),
+    default=None,
+    help="Single operation kind (use with --path)",
+)
+@click.option("--path", default=None, help="Field path for a single operation")
+@click.option("--value", default=None, help="Value for set (JSON or scalar)")
+@click.option(
+    "--output",
+    "output_path",
+    default=None,
+    help="Write preview YAML to this path instead of stdout",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def appconfig_preview(
+    ctx: click.Context,
+    style: str,
+    operations_file: str | None,
+    op: str | None,
+    path: str | None,
+    value: str | None,
+    output_path: str | None,
+    as_json: bool,
+) -> None:
+    """Preview app config after draft operations (secrets redacted in output)."""
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    operations = (
+        resolve_operations(
+            operations_file=operations_file,
+            op=op,
+            path=path,
+            value=value,
+        )
+        if operations_file or op
+        else []
+    )
+    result = ConfigPatchService().preview(
+        "appconfig",
+        config_path,
+        operations,
+        style=style,
+    )
+    if isinstance(result, Exception):
+        logger.error(f"Failed to preview appconfig: {result}")
+        ctx.abort()
+    emit_preview_result(
+        result,
+        as_json=as_json,
+        logger=logger,
+        output_path=output_path,
+    )
+
+
+@appconfig.command("patch")
+@click.option(
+    "--file",
+    "operations_file",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="JSON file with operations array or {operations, save}",
+)
+@click.option(
+    "--op",
+    type=click.Choice(["enable", "disable", "set", "append", "remove"]),
+    default=None,
+    help="Single operation kind (use with --path)",
+)
+@click.option("--path", default=None, help="Field path for a single operation")
+@click.option("--value", default=None, help="Value for set (JSON or scalar)")
+@click.option(
+    "--save",
+    is_flag=True,
+    default=False,
+    help="Write changes to disk when validation passes",
+)
+@click.option(
+    "--tree",
+    "include_tree",
+    is_flag=True,
+    default=False,
+    help="Include updated schema tree in JSON output",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def appconfig_patch(
+    ctx: click.Context,
+    operations_file: str | None,
+    op: str | None,
+    path: str | None,
+    value: str | None,
+    save: bool,
+    include_tree: bool,
+    as_json: bool,
+) -> None:
+    """
+    Apply schema operations to metagit.config.yaml (enable/disable/set/append/remove).
+
+    Paths use AppConfig field names (e.g. workspace.dedupe.enabled), not the config: wrapper.
+    """
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    operations = resolve_operations(
+        operations_file=operations_file,
+        op=op,
+        path=path,
+        value=value,
+    )
+    result = ConfigPatchService().patch(
+        "appconfig",
+        config_path,
+        operations,
+        save=save,
+        include_tree=include_tree or as_json,
+        mask_secrets=True,
+    )
+    if isinstance(result, Exception):
+        logger.error(f"Failed to patch appconfig: {result}")
+        ctx.abort()
+    emit_patch_result(result, as_json=as_json, logger=logger)
 
 
 @appconfig.command("schema")

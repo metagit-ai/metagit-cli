@@ -36,6 +36,32 @@ JSON Schema for editors and CI:
 metagit config validate --config-path .metagit.yml
 ```
 
+## Schema-backed editing (CLI)
+
+The same operation model as the web Config Studio is available on the CLI:
+
+| Command | Purpose |
+|---------|---------|
+| `metagit config tree` | Browse fields, types, and paths |
+| `metagit config preview` | Apply draft ops and print YAML (no save) |
+| `metagit config patch --save` | Apply ops and write `.metagit.yml` when valid |
+| `metagit appconfig tree` | App config field tree |
+| `metagit appconfig preview` | Draft preview (secrets redacted) |
+| `metagit appconfig patch --save` | Apply ops to `metagit.config.yaml` |
+
+Operations: `enable`, `disable`, `set`, `append`, `remove`. Paths use dot/bracket notation
+(e.g. `workspace.projects[0].name`, `documentation[0].path`).
+
+```bash
+# Single field
+metagit config patch --op set --path name --value my-workspace --save
+
+# Batch from JSON (same shape as web PATCH body)
+metagit config patch --file ops.json --save
+```
+
+`ops.json` may be `{"operations": [...]}` or a bare array of operation objects.
+
 Do not deploy the generated exemplar verbatim; copy sections you need and replace placeholders.
 
 ## Documentation sources

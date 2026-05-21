@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 # Architecture Diagram Generator: Multi-Agent Git Project Graph
+# Requires: uv sync --group diagrams  (optional dependency group in pyproject.toml)
 from diagrams import Cluster, Diagram
 from diagrams.aws.compute import ECS
 from diagrams.aws.database import Neptune

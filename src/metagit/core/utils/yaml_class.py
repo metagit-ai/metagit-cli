@@ -82,7 +82,9 @@ class ExtLoader(yaml.Loader, metaclass=ExtLoaderMeta):
             extension = os.path.splitext(file_name)[1].lstrip(".")
             with open(file_name) as f:
                 if extension in ("yaml", "yml"):
-                    data = yaml.load(f, Loader=yaml.FullLoader)
+                    data = yaml.load(  # nosec B506 — trusted workspace includes; custom Loader tags
+                        f, Loader=yaml.FullLoader
+                    )
                 elif extension in ("json",):
                     data = json.load(f)
                 else:

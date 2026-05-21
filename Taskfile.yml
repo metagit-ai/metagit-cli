@@ -293,3 +293,30 @@ tasks:
     dir: web
     cmds:
       - npm run dev
+
+  security:deps:
+    desc: Frozen sync all extras and audit dependencies (pip-audit)
+    cmds:
+      - |
+        uv sync --frozen --all-extras
+        uv run pip-audit
+
+  security:bandit:
+    desc: Bandit SAST on src/
+    cmds:
+      - |
+        uv run bandit -r src -ll
+
+  security:gate:
+    desc: Fast security gate without lockfile sync (pip-audit + bandit)
+    cmds:
+      - |
+        uv run pip-audit
+        uv run bandit -r src -ll
+
+  security:scan:
+    desc: Full Python security scans (sync + pip-audit + bandit)
+    cmds:
+      - task: security:deps
+      - task: security:bandit
+  
