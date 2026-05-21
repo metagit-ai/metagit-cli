@@ -62,6 +62,15 @@ _CATALOG: list[PromptCatalogEntry] = [
         ),
         scopes=["repo"],
     ),
+    PromptCatalogEntry(
+        kind="context-pack",
+        title="Tiered context pack",
+        description=(
+            "Session-start tier-0 pack via CLI or MCP; escalate to tier 1 for "
+            "repos in active scope with token-aware budgeting."
+        ),
+        scopes=["workspace", "project", "repo"],
+    ),
 ]
 
 _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
@@ -73,6 +82,7 @@ _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
             "health-preflight",
             "sync-safe",
             "layout-change",
+            "context-pack",
         }
     ),
     "project": frozenset(
@@ -83,6 +93,7 @@ _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
             "sync-safe",
             "subagent-handoff",
             "layout-change",
+            "context-pack",
         }
     ),
     "repo": frozenset(
@@ -92,6 +103,7 @@ _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
             "subagent-handoff",
             "layout-change",
             "repo-enrich",
+            "context-pack",
         }
     ),
 }
@@ -161,6 +173,16 @@ def template_body(
 2. Confirm disk_steps in JSON before applying without --dry-run.
 3. `metagit config validate -c <definition>` after manifest updates.
 4. `metagit workspace list --json` after layout changes complete.""",
+        "context-pack": """## Tiered context pack (metagit)
+
+At **session start**, always load **tier 0** workspace orientation (minimal tokens):
+
+- **CLI:** `metagit context pack --tier 0 --json`
+- **MCP:** `metagit_context_pack` (tier 0)
+
+**Escalate to tier 1** for repositories in your **active scope** only—projects and repos you are actually changing or debugging in this task. Use tier 1 via `metagit context pack --tier 1 --json` or `metagit_context_pack` with tier 1 and repo/project scoping so deeper repo cards and maps apply where work is focused.
+
+**Token budgeting:** default to tier 0; add tier 1 only when needed. Avoid loading full tier-1 packs for every repo in the manifest—stay within the model context window.""",
         "repo-enrich": """Review this repository and enrich its workspace manifest entry using metagit CLI discovery only.
 
 ## 1. Baseline (manifest)
@@ -202,6 +224,7 @@ Use `METAGIT_AGENT_MODE=true` for non-interactive runs; never use `detect reposi
         "catalog-edit",
         "health-preflight",
         "subagent-handoff",
+        "context-pack",
     }:
         body += f"\n\nFocused project: {project_label}."
     if scope == "repo":
@@ -218,5 +241,10 @@ Use `METAGIT_AGENT_MODE=true` for non-interactive runs; never use `detect reposi
             body += (
                 f"\n\nTarget repo: {project_label}/{repo_label}. "
                 "Emit merged YAML for the repos[] entry when done."
+            )
+        elif kind == "context-pack":
+            body += (
+                f"\n\nActive-scope focus: {project_label}/{repo_label}. "
+                "Use tier 1 for this repo when it is in scope; otherwise stay on tier 0."
             )
     return body.strip()

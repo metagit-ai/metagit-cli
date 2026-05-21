@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-05-20
+last_updated: 2026-05-21
 ---
 
 # Session Bootstrap
@@ -29,11 +29,11 @@ Then read this file fully before doing anything else in this session.
 **Working:**
 - Core CLI command surface (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search` / `find`, `api serve` for local JSON v1 search + **v2 catalog CRUD**, `project repo prune` for sync-folder cleanup) with shared app config + logger bootstrapping.
 - **Workspace catalog** (`WorkspaceCatalogService`): list/add/remove projects and repos in `.metagit.yml` via CLI (`--json`), MCP (`metagit_workspace_*` catalog tools), and HTTP `/v2/*`.
-- **`metagit prompt`**: scoped prompt emission (`workspace` / `project` / `repo`) for agents — manifest instructions plus operational templates (session-start, catalog-edit, sync-safe, **repo-enrich**, etc.). Bundled **`metagit-cli`** skill documents CLI-only shortcuts (all prompt kinds; no MCP/API).
+- **`metagit prompt`**: scoped prompt emission (`workspace` / `project` / `repo`) for agents — manifest instructions plus operational templates (session-start, catalog-edit, sync-safe, **repo-enrich**, **context-pack** tier-0/tier-1 guidance, etc.). Bundled **`metagit-cli`** skill documents CLI-only shortcuts (all prompt kinds; no MCP/API).
 - **`agent_mode`** / **`METAGIT_AGENT_MODE`**: disables interactive CLI (fuzzy finder, prompts, editor); `metagit appconfig show --format json` exposes full config including `workspace.dedupe` (default **disabled**).
 - **Workspace layout** (`WorkspaceLayoutService`): rename/move projects and repos (manifest + sync folders, dedupe-aware, session migration); CLI, MCP, HTTP v2 — see `docs/reference/workspace-layout-api.md`.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
-- MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply), resources for health/context, protocol-framed stdio loop, and runtime tests.
+- MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply, **context packs** `metagit_context_pack` / `metagit_repo_card`), resources for health/context, protocol-framed stdio loop, and runtime tests.
 - Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api`, and guarded repo inspect/sync flows.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows, including `metagit-projects` for OpenClaw/Hermes workspace project lifecycle (check-before-create, register in `.metagit.yml`).
 - `docs/skills.md` documents global install, `metagit skills install`, and bundled skill overview.
@@ -53,9 +53,13 @@ Then read this file fully before doing anything else in this session.
 - **`metagit web serve` config HTTP:** `build_web_server` in `src/metagit/core/web/server.py` exposes v3 config tree/patch/validate routes via `ConfigWebHandler` (`metagit` + `appconfig` targets, `SchemaTreeService` mutations). PATCH with `save=true` returns HTTP 422 and skips disk write when validation fails; masked sensitive tokens are preserved on noop set.
 - **`metagit web serve` ops HTTP:** `OpsWebHandler` (`src/metagit/core/web/ops_handler.py`) — POST health/prune/sync, GET sync job status, SSE sync events; wired in `build_web_server` with workspace root from appconfig.
 - **`metagit web serve` static + full server:** `StaticWebHandler` serves packaged SPA from `src/metagit/data/web/`; `build_web_server` dispatches static, v2 catalog/layout, v3 config/ops; CLI `metagit web serve` (`src/metagit/cli/commands/web.py`).
+- **Context packs (tier 1 repo cards):** `RepoCardService` (`src/metagit/core/context/repo_card_service.py`) merges workspace index rows, `inspect_repo_state`, manifest fields, stack root hints (`_stack_hints`), layered agent instruction excerpts (`AgentInstructionsResolver`), and `_health_flags` (`missing_clone`, `dirty`, `behind_remote`, `stale_head_30d`). Tests under `tests/core/context/test_repo_card_service.py`.
 - **Metagit Web UI scaffold:** Vite + React + TypeScript in `web/` (build output → `src/metagit/data/web/`); typed API client, router shell, Taskfile `web:*` tasks.
 - **Metagit Web Config Studio:** schema tree + field editor for `/config/metagit` and `/config/appconfig` (TanStack Query PATCH flow, theme toggle, `enum_options` on schema nodes).
 - **Metagit Web:** local `metagit web serve` + packaged SPA (**Config Studio** on `/config/*`, **Workspace Console** on `/workspace`) with `task web:dev` / `task web:build` workflow documented in [`docs/reference/metagit-web.md`](../docs/reference/metagit-web.md).
+- **Context packs — T0 map:** pydantic envelopes in `metagit.core.context.models` plus `WorkspaceMapService` (`workspace_map_service.py`) building `WorkspaceMapResult` from `WorkspaceCatalogService.list_workspace(..., include_index=True)` / `repos_index` rows mapped to `WorkspaceMapEntry`.
+- **Context packs CLI:** `metagit context pack --tier 0|1` (map or map+cards) and `metagit context repo-card --project … --repo …` in `src/metagit/cli/commands/context.py`, backed by `ContextPackService.pack` (`context_pack_service.py`); CLI tests in `tests/cli/commands/test_context.py`; service unit tests in `tests/core/context/test_context_pack_service.py`.
+- **Context packs MCP:** ACTIVE-state tools `metagit_context_pack` (required `tier` 0 or 1; optional `project_name`, `repo_name`) and `metagit_repo_card` (required `project_name`, `repo_name`), returning JSON via `model_dump(mode="json")`; coverage in `tests/core/mcp/test_runtime.py`.
 
 **Not yet built:**
 - **Metagit Web hardened/exposed deployments:** intentional v1 localhost-only framing; authentication and safe non-local binds are future scope.

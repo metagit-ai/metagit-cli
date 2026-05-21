@@ -7,7 +7,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional, cast
 
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.mcp.gate import WorkspaceGate
@@ -31,6 +31,8 @@ from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
+from metagit.core.context.context_pack_service import ContextPackService
+from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.layout_context import resolve_sync_context
@@ -64,6 +66,8 @@ class MetagitMcpRuntime:
         self._cross_project_deps = CrossProjectDependencyService()
         self._graph_cypher_export = GraphCypherExportService()
         self._workspace_health = WorkspaceHealthService()
+        self._context_pack = ContextPackService()
+        self._repo_card = RepoCardService()
         self._workspace_catalog = WorkspaceCatalogService()
         self._workspace_layout = WorkspaceLayoutService()
         self._workspace_template = WorkspaceTemplateService()
@@ -270,6 +274,25 @@ class MetagitMcpRuntime:
                     "branch_head_warning_days": {"type": "number", "minimum": 0},
                     "branch_head_critical_days": {"type": "number", "minimum": 0},
                     "integration_stale_days": {"type": "number", "minimum": 0},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_context_pack": {
+                "type": "object",
+                "required": ["tier"],
+                "properties": {
+                    "tier": {"type": "integer", "enum": [0, 1]},
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_repo_card": {
+                "type": "object",
+                "required": ["project_name", "repo_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -878,6 +901,68 @@ class MetagitMcpRuntime:
                 integration_stale_days=integration_td,
                 dedupe=dedupe_cfg,
             ).model_dump(mode="json")
+
+        if name == "metagit_context_pack":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "context pack requires an active workspace"
+                )
+            if "tier" not in arguments:
+                raise InvalidToolArgumentsError("tier is required")
+            tier_raw = arguments.get("tier")
+            try:
+                tier_val = int(tier_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError(
+                    "tier must be an integer",
+                ) from exc
+            if tier_val not in (0, 1):
+                raise InvalidToolArgumentsError("tier must be 0 or 1")
+            project_raw = arguments.get("project_name")
+            repo_raw = arguments.get("repo_name")
+            project_opt = (
+                str(project_raw).strip()
+                if isinstance(project_raw, str) and project_raw.strip()
+                else None
+            )
+            repo_opt = (
+                str(repo_raw).strip()
+                if isinstance(repo_raw, str) and repo_raw.strip()
+                else None
+            )
+            config_path = str(Path(status.root_path) / ".metagit.yml")
+            tier_literal = cast(Literal[0, 1], tier_val)
+            pack = self._context_pack.pack(
+                config=config,
+                config_path=config_path,
+                workspace_root=status.root_path,
+                tier=tier_literal,
+                project_name=project_opt,
+                repo_name=repo_opt,
+            )
+            return pack.model_dump(mode="json")
+
+        if name == "metagit_repo_card":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "repo card requires an active workspace"
+                )
+            proj_name = str(arguments.get("project_name", "")).strip()
+            rname = str(arguments.get("repo_name", "")).strip()
+            if not proj_name:
+                raise InvalidToolArgumentsError("project_name is required")
+            if not rname:
+                raise InvalidToolArgumentsError("repo_name is required")
+            try:
+                card = self._repo_card.build_one(
+                    config=config,
+                    workspace_root=status.root_path,
+                    project_name=proj_name,
+                    repo_name=rname,
+                )
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return card.model_dump(mode="json")
 
         if name == "metagit_workspace_discover":
             if not config or not status.root_path:

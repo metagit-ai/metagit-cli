@@ -35,6 +35,23 @@ def test_catalog_lists_instructions_kind() -> None:
     kinds = [entry.kind for entry in list_catalog()]
     assert "instructions" in kinds
     assert "session-start" in kinds
+    assert "context-pack" in kinds
+
+
+def test_emit_context_pack_workspace() -> None:
+    result = PromptService().emit(
+        _sample_config(),
+        kind="context-pack",
+        scope="workspace",
+        definition_path="/tmp/.metagit.yml",
+        workspace_root="/tmp/sync",
+        include_instructions=False,
+    )
+    assert result.ok
+    assert "metagit context pack --tier 0" in result.text
+    assert "metagit_context_pack" in result.text
+    assert "tier 1" in result.text.lower()
+    assert "token" in result.text.lower()
 
 
 def test_emit_instructions_workspace() -> None:
