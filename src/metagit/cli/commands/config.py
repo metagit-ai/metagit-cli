@@ -9,9 +9,17 @@ from typing import Union
 
 import click
 
+from metagit.cli.config_patch_ops import (
+    emit_patch_result,
+    emit_preview_result,
+    emit_tree_result,
+    resolve_operations,
+)
 from metagit.cli.json_output import emit_json
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
+from metagit.core.config.graph_cypher_export import GraphCypherExportService
+from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
 
 
@@ -463,6 +471,286 @@ def config_example(
     except Exception as exc:
         logger.error(f"Failed to generate config exemplar: {exc}")
         ctx.abort()
+
+
+@config.command("tree")
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def config_tree(ctx: click.Context, as_json: bool) -> None:
+    """Show schema-backed field tree for .metagit.yml (same model as web Config Studio)."""
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    result = ConfigPatchService().build_tree("metagit", config_path)
+    if isinstance(result, Exception):
+        logger.error(f"Failed to build config tree: {result}")
+        ctx.abort()
+    emit_tree_result(result, as_json=as_json)
+
+
+@config.command("preview")
+@click.option(
+    "--style",
+    type=click.Choice(["normalized", "minimal", "disk"], case_sensitive=False),
+    default="normalized",
+    show_default=True,
+    help="YAML preview style",
+)
+@click.option(
+    "--file",
+    "operations_file",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="JSON file with operations array or {operations, save}",
+)
+@click.option(
+    "--op",
+    type=click.Choice(["enable", "disable", "set", "append", "remove"]),
+    default=None,
+    help="Single operation kind (use with --path)",
+)
+@click.option("--path", default=None, help="Field path for a single operation")
+@click.option("--value", default=None, help="Value for set (JSON or scalar)")
+@click.option(
+    "--output",
+    "output_path",
+    default=None,
+    help="Write preview YAML to this path instead of stdout",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def config_preview(
+    ctx: click.Context,
+    style: str,
+    operations_file: str | None,
+    op: str | None,
+    path: str | None,
+    value: str | None,
+    output_path: str | None,
+    as_json: bool,
+) -> None:
+    """Preview .metagit.yml after applying draft operations (no save)."""
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    operations = (
+        resolve_operations(
+            operations_file=operations_file,
+            op=op,
+            path=path,
+            value=value,
+        )
+        if operations_file or op
+        else []
+    )
+    result = ConfigPatchService().preview(
+        "metagit",
+        config_path,
+        operations,
+        style=style,
+    )
+    if isinstance(result, Exception):
+        logger.error(f"Failed to preview config: {result}")
+        ctx.abort()
+    emit_preview_result(
+        result,
+        as_json=as_json,
+        logger=logger,
+        output_path=output_path,
+    )
+
+
+@config.command("patch")
+@click.option(
+    "--file",
+    "operations_file",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="JSON file with operations array or {operations, save}",
+)
+@click.option(
+    "--op",
+    type=click.Choice(["enable", "disable", "set", "append", "remove"]),
+    default=None,
+    help="Single operation kind (use with --path)",
+)
+@click.option("--path", default=None, help="Field path for a single operation")
+@click.option("--value", default=None, help="Value for set (JSON or scalar)")
+@click.option(
+    "--save",
+    is_flag=True,
+    default=False,
+    help="Write changes to disk when validation passes",
+)
+@click.option(
+    "--tree",
+    "include_tree",
+    is_flag=True,
+    default=False,
+    help="Include updated schema tree in JSON output",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def config_patch(
+    ctx: click.Context,
+    operations_file: str | None,
+    op: str | None,
+    path: str | None,
+    value: str | None,
+    save: bool,
+    include_tree: bool,
+    as_json: bool,
+) -> None:
+    """
+    Apply schema operations to .metagit.yml (enable/disable/set/append/remove).
+
+    Same operation model as the web Config Studio PATCH API. Example operations file:
+
+    {"operations": [{"op": "set", "path": "name", "value": "my-workspace"}]}
+    """
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    operations = resolve_operations(
+        operations_file=operations_file,
+        op=op,
+        path=path,
+        value=value,
+    )
+    result = ConfigPatchService().patch(
+        "metagit",
+        config_path,
+        operations,
+        save=save,
+        include_tree=include_tree or as_json,
+    )
+    if isinstance(result, Exception):
+        logger.error(f"Failed to patch config: {result}")
+        ctx.abort()
+    emit_patch_result(result, as_json=as_json, logger=logger)
+
+
+@config.group("graph")
+@click.pass_context
+def config_graph(ctx: click.Context) -> None:
+    """Export workspace graph data for GitNexus / Cypher ingest."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@config_graph.command("export")
+@click.option(
+    "--workspace-root",
+    default=None,
+    help="Workspace root (default: appconfig workspace.path)",
+)
+@click.option(
+    "--gitnexus-repo",
+    default=None,
+    help="Target GitNexus repo name for tool_calls (default: manifest name)",
+)
+@click.option(
+    "--include-structure/--no-include-structure",
+    default=True,
+    help="Include project/repo nodes and contains edges",
+)
+@click.option(
+    "--include-documentation/--no-include-documentation",
+    default=False,
+    help="Include documentation nodes and documents edges",
+)
+@click.option(
+    "--manual-only",
+    is_flag=True,
+    default=False,
+    help="Only export graph.relationships (still ensures endpoint nodes)",
+)
+@click.option(
+    "--with-schema/--no-with-schema",
+    default=True,
+    help="Emit CREATE NODE/REL TABLE statements first",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["cypher", "json", "tool-calls"], case_sensitive=False),
+    default="json",
+    show_default=True,
+    help="Output: full JSON bundle, tool-calls array, or raw Cypher lines",
+)
+@click.option("--output", "output_path", default=None, help="Write output to file")
+@click.pass_context
+def config_graph_export(
+    ctx: click.Context,
+    workspace_root: str | None,
+    gitnexus_repo: str | None,
+    include_structure: bool,
+    include_documentation: bool,
+    manual_only: bool,
+    with_schema: bool,
+    output_format: str,
+    output_path: str | None,
+) -> None:
+    """
+    Export manual graph.relationships as GitNexus-ingestible Cypher.
+
+    Emits MERGE/CREATE statements for MetagitEntity / MetagitLink overlay tables and
+    matching gitnexus_cypher MCP tool_calls. Run schema statements once per target index.
+    """
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    app_config = ctx.obj.get("config")
+    if app_config is None:
+        logger.error("App config missing from CLI context")
+        ctx.abort()
+
+    try:
+        manager = MetagitConfigManager(config_path=config_path)
+        loaded = manager.load_config()
+        if isinstance(loaded, Exception):
+            raise loaded
+        root = workspace_root or str(
+            Path(app_config.workspace.path).expanduser().resolve()
+        )
+        result = GraphCypherExportService().export(
+            loaded,
+            root,
+            gitnexus_repo=gitnexus_repo,
+            include_structure=include_structure,
+            include_documentation=include_documentation,
+            manual_only=manual_only,
+            with_schema=with_schema,
+        )
+    except Exception as exc:
+        logger.error(f"Failed to export graph Cypher: {exc}")
+        ctx.abort()
+
+    if output_format == "cypher":
+        lines = [*result.schema_statements, *result.statements]
+        rendered = "\n".join(lines) + ("\n" if lines else "")
+    elif output_format == "tool-calls":
+        rendered = json.dumps(
+            [item.model_dump(mode="json") for item in result.tool_calls],
+            indent=2,
+        )
+    else:
+        rendered = json.dumps(result.model_dump(mode="json"), indent=2)
+
+    if output_path:
+        Path(output_path).write_text(rendered, encoding="utf-8")
+        logger.success(f"Graph Cypher export written to {output_path}")
+        if result.warnings:
+            for warning in result.warnings:
+                logger.warning(warning)
+        return
+
+    click.echo(rendered, nl=rendered.endswith("\n"))
+    if result.warnings:
+        for warning in result.warnings:
+            logger.warning(warning)
 
 
 @config.command("schema")

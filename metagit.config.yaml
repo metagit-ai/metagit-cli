@@ -19,7 +19,7 @@ config:
     path: ./.metagit
     default_project: default
     dedupe:
-      enabled: true
+      enabled: false
       canonical_dir: _canonical
     ui_show_preview: true
     ui_menu_length: 20

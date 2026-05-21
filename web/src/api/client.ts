@@ -215,6 +215,48 @@ export function getWorkspace(): Promise<CatalogEnvelope<WorkspaceData>> {
   return requestJson<CatalogEnvelope<WorkspaceData>>('/v2/workspace')
 }
 
+export interface GraphViewNode {
+  id: string
+  label: string
+  kind: 'project' | 'repo'
+  project_name?: string | null
+  repo_name?: string | null
+}
+
+export interface GraphViewEdge {
+  id: string
+  from_id: string
+  to_id: string
+  type: string
+  label?: string | null
+  source: 'manual' | 'inferred' | 'structure'
+}
+
+export interface WorkspaceGraphView {
+  ok: boolean
+  nodes: GraphViewNode[]
+  edges: GraphViewEdge[]
+  manual_edge_count: number
+  inferred_edge_count: number
+  structure_edge_count: number
+}
+
+export function getWorkspaceGraph(options?: {
+  includeInferred?: boolean
+  includeStructure?: boolean
+}): Promise<WorkspaceGraphView> {
+  const params = new URLSearchParams()
+  if (options?.includeInferred === false) {
+    params.set('include_inferred', 'false')
+  }
+  if (options?.includeStructure === false) {
+    params.set('include_structure', 'false')
+  }
+  const query = params.toString()
+  const path = query ? `/v3/ops/graph?${query}` : '/v3/ops/graph'
+  return requestJson<WorkspaceGraphView>(path)
+}
+
 export function postHealth(
   body: Record<string, unknown> = {},
 ): Promise<WorkspaceHealthResult> {

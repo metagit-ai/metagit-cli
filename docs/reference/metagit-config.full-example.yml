@@ -14,9 +14,78 @@ url: https://github.com/example-org/hermes-control-plane.git
 ...
 # Project kind. This is used to determine the type of project and the best way to manage it.
 kind: umbrella
-# Documentation URLs or paths used by the project.
+# Documentation sources: bare strings (path or URL) or objects with kind, path/url, tags, and metadata for knowledge-graph ingestion
 documentation:
-  - example-value
+  -
+    # Source type (markdown, web, confluence, sharepoint, wiki, api, other)
+    kind: example-value
+...
+    # Repo-relative or absolute path to a documentation file
+    path: example-value
+...
+    # Remote documentation URL
+    url: https://example.com/org/repo
+...
+    # Human-readable title
+    title: example-value
+...
+    # Short summary for indexing and graph nodes
+    description: Example text for documentation; replace before production use.
+    # Flat metadata tags for filtering and graph edges
+    tags:
+      example: documentation
+    # Extensible key-value payload for downstream graph ingestors
+    metadata:
+      source: metagit-config-example
+...
+# Manual cross-repo relationships and graph metadata for exports and GitNexus-style dependency maps
+graph:
+  # Manually entered cross-repo or cross-project edges
+  relationships:
+    -
+      # Stable identifier for exports and graph merges
+      id: example-value
+...
+      # Relationship source
+      from_endpoint:
+        # Workspace project name
+        project: example-value
+...
+        # Repository name under the project
+        repo: example-value
+...
+        # Optional file or directory path within the repo
+        path: example-value
+...
+      # Relationship target
+      to:
+        # Workspace project name
+        project: example-value
+...
+        # Repository name under the project
+        repo: example-value
+...
+        # Optional file or directory path within the repo
+        path: example-value
+...
+      # Relationship type (depends_on, documents, consumes, owns, related, …)
+      type: example-value
+...
+      # Short label for graph UIs
+      label: example-value
+...
+      # Longer explanation for agents and exports
+      description: Example text for documentation; replace before production use.
+      # Flat tags for filtering graph exports
+      tags:
+        example: documentation
+      # Extensible payload for GitNexus or other graph ingestors
+      metadata:
+        source: metagit-config-example
+...
+  # Graph-level metadata for export pipelines
+  metadata:
+    source: metagit-config-example
 ...
 # License information
 license:

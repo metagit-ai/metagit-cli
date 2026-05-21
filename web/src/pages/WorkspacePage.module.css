@@ -130,3 +130,23 @@
   background: var(--color-danger-soft);
   border: 1px solid var(--color-danger);
 }
+
+.graphFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+}
+
+.checkLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.graphPanel {
+  min-width: 0;
+}

@@ -26,6 +26,7 @@ from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 from metagit.core.mcp.services.workspace_semantic_search import (
     WorkspaceSemanticSearchService,
 )
+from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
@@ -61,6 +62,7 @@ class MetagitMcpRuntime:
         self._semantic_search = WorkspaceSemanticSearchService()
         self._workspace_sync = WorkspaceSyncService()
         self._cross_project_deps = CrossProjectDependencyService()
+        self._graph_cypher_export = GraphCypherExportService()
         self._workspace_health = WorkspaceHealthService()
         self._workspace_catalog = WorkspaceCatalogService()
         self._workspace_layout = WorkspaceLayoutService()
@@ -237,11 +239,23 @@ class MetagitMcpRuntime:
                                 "shared_config",
                                 "url_match",
                                 "ref",
+                                "manual",
                             ],
                         },
                     },
                     "depth": {"type": "integer", "minimum": 1},
                     "include_external_repos": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_export_workspace_graph_cypher": {
+                "type": "object",
+                "properties": {
+                    "gitnexus_repo": {"type": "string"},
+                    "include_structure": {"type": "boolean"},
+                    "include_documentation": {"type": "boolean"},
+                    "manual_only": {"type": "boolean"},
+                    "with_schema": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -949,6 +963,29 @@ class MetagitMcpRuntime:
                 include_external_repos=bool(
                     arguments.get("include_external_repos", False)
                 ),
+            ).model_dump(mode="json")
+
+        if name == "metagit_export_workspace_graph_cypher":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "graph cypher export requires an active workspace"
+                )
+            gitnexus_repo = arguments.get("gitnexus_repo")
+            repo_name = (
+                str(gitnexus_repo).strip()
+                if isinstance(gitnexus_repo, str) and gitnexus_repo.strip()
+                else None
+            )
+            return self._graph_cypher_export.export(
+                config=config,
+                workspace_root=status.root_path,
+                gitnexus_repo=repo_name,
+                include_structure=bool(arguments.get("include_structure", True)),
+                include_documentation=bool(
+                    arguments.get("include_documentation", False)
+                ),
+                manual_only=bool(arguments.get("manual_only", False)),
+                with_schema=bool(arguments.get("with_schema", True)),
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_list":

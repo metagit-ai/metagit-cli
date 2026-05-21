@@ -7,6 +7,8 @@ This package provides Pydantic models and methods for parsing and validating
 """
 
 from .manager import MetagitConfigManager
+from .documentation_models import DocumentationSource, normalize_documentation_entries
+from .graph_models import GraphEndpoint, GraphRelationship, WorkspaceGraph
 from .models import (
     CICD,
     AlertingChannel,
@@ -91,4 +93,9 @@ __all__ = [
     "Component",
     "WorkspaceProject",
     "Workspace",
+    "DocumentationSource",
+    "normalize_documentation_entries",
+    "WorkspaceGraph",
+    "GraphEndpoint",
+    "GraphRelationship",
 ]

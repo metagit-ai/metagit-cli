@@ -276,7 +276,7 @@
       "description": "Deduplicate synced repos within a workspace via a canonical directory.",
       "properties": {
         "enabled": {
-          "default": true,
+          "default": false,
           "description": "When true, clone once under canonical_dir and symlink per project",
           "title": "Enabled",
           "type": "boolean"
@@ -393,7 +393,7 @@
         "default_project": "default",
         "dedupe": {
           "canonical_dir": "_canonical",
-          "enabled": true,
+          "enabled": false,
           "scope": "workspace",
           "strategy": "symlink"
         },

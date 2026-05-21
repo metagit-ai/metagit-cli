@@ -4,6 +4,8 @@
 
 ### Added
 
+- `.metagit.yml` **documentation** entries support rich objects (`kind`, `path`, `url`, `tags`, `metadata`) plus legacy bare strings; `documentation_graph_nodes()` exports ingest payloads.
+- Top-level **graph** block for manual cross-repo **relationships** (merged into cross-project dependency maps and `graph_export_payload()` for GitNexus-style exports).
 - Per-project `dedupe.enabled` override on `workspace.projects[]` in `.metagit.yml` (overrides app-config `workspace.dedupe.enabled` for sync and layout under that project).
 - `metagit prompt` kind `repo-enrich` (repo scope): CLI workflow to discover repo metadata (`metagit detect`, `project source sync`) and merge into the workspace manifest entry.
 - Bundled skill `metagit-cli`: CLI-only shortcuts for agents, including every `metagit prompt` kind and common catalog/detect/sync commands (no MCP or HTTP API).
@@ -11,9 +13,13 @@
 - Top-level `agent_mode` in app config (default false), overridable via `METAGIT_AGENT_MODE`; disables interactive UIs (fuzzy finder, prompts, editor, prune confirms) across CLI when enabled.
 - `metagit appconfig show` prints the full active configuration with `--format yaml|json|minimal-yaml` (includes `workspace.dedupe` and effective `agent_mode`).
 
+### Added
+
+- `metagit project sync --hydrate` materializes symlink mounts into full directory copies with per-file tqdm progress.
+
 ### Changed
 
-- `workspace.dedupe.enabled` defaults to **true** so duplicate remote URLs share a canonical checkout with per-project symlink mounts unless explicitly disabled.
+- `workspace.dedupe.enabled` defaults to **false** in app config; enable in `metagit.config.yaml` or per-project `dedupe.enabled` in `.metagit.yml` when canonical checkouts are desired.
 - `load_config()` applies environment variable overrides (same as `AppConfig.load()`), including `METAGIT_AGENT_MODE` and `METAGIT_WORKSPACE_DEDUPE_ENABLED`.
 - `metagit config show` prints the source `.metagit.yml` by default (preserves your formatting); use `--normalized` for a readable model round-trip (`|` blocks, Unicode not escaped) or `--json` for agents.
 

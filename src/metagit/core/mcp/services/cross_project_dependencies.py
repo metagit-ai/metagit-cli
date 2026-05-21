@@ -9,6 +9,7 @@ from collections import deque
 from typing import Any, Optional
 from urllib.parse import urlparse
 
+from metagit.core.config.graph_resolver import resolve_graph_endpoint_id
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.gitnexus_registry import GitNexusRegistryAdapter
 from metagit.core.mcp.services.import_hint_scanner import ImportHintScanner
@@ -25,7 +26,14 @@ from metagit.core.workspace.dependency_models import (
 class CrossProjectDependencyService:
     """Build a dependency graph across workspace projects."""
 
-    _valid_types = {"declared", "imports", "shared_config", "url_match", "ref"}
+    _valid_types = {
+        "declared",
+        "imports",
+        "shared_config",
+        "url_match",
+        "ref",
+        "manual",
+    }
 
     def __init__(
         self,
@@ -200,7 +208,55 @@ class CrossProjectDependencyService:
                 )
             )
 
+        edges.extend(
+            self._manual_graph_edges(
+                config=config,
+                rows=rows,
+                project_names=project_names,
+            )
+        )
+
         return self._dedupe_edges(edges=edges)
+
+    def _manual_graph_edges(
+        self,
+        config: MetagitConfig,
+        rows: list[dict[str, Any]],
+        project_names: set[str],
+    ) -> list[DependencyEdge]:
+        """Edges from top-level graph.relationships in .metagit.yml."""
+        if config.graph is None or not config.graph.relationships:
+            return []
+        edges: list[DependencyEdge] = []
+        for rel in config.graph.relationships:
+            from_id = resolve_graph_endpoint_id(
+                rel.from_endpoint,
+                rows=rows,
+                project_names=project_names,
+            )
+            to_id = resolve_graph_endpoint_id(
+                rel.to,
+                rows=rows,
+                project_names=project_names,
+            )
+            if not from_id or not to_id:
+                continue
+            evidence = ["manifest graph.relationships"]
+            if rel.id:
+                evidence.append(f"id={rel.id}")
+            if rel.label:
+                evidence.append(f"label={rel.label}")
+            if rel.description:
+                evidence.append(rel.description)
+            edges.append(
+                DependencyEdge(
+                    from_id=from_id,
+                    to_id=to_id,
+                    type="manual",
+                    evidence=evidence,
+                )
+            )
+        return edges
 
     def _declared_edges(
         self,
@@ -376,6 +432,13 @@ class CrossProjectDependencyService:
 
         visited = {source_id}
         queue: deque[tuple[str, int]] = deque([(source_id, 0)])
+        if source_id.startswith("project:"):
+            source_project = source_id.split(":", 1)[1]
+            for node in nodes:
+                if node.kind == "repo" and node.project_name == source_project:
+                    if node.id not in visited:
+                        visited.add(node.id)
+                        queue.append((node.id, 0))
         while queue:
             node_id, distance = queue.popleft()
             if distance >= depth:

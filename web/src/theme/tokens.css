@@ -36,6 +36,9 @@
   --color-focus: rgba(79, 70, 229, 0.35);
   --color-tree-hover: rgba(79, 70, 229, 0.08);
   --color-tree-selected: rgba(79, 70, 229, 0.16);
+  --graph-edge-manual: #7c3aed;
+  --graph-edge-inferred: #0ea5e9;
+  --graph-edge-structure: #94a3b8;
 }
 
 [data-theme='dark'] {
@@ -56,6 +59,9 @@
   --color-focus: rgba(129, 140, 248, 0.4);
   --color-tree-hover: rgba(129, 140, 248, 0.12);
   --color-tree-selected: rgba(129, 140, 248, 0.22);
+  --graph-edge-manual: #a78bfa;
+  --graph-edge-inferred: #38bdf8;
+  --graph-edge-structure: #64748b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -77,5 +83,8 @@
     --color-focus: rgba(129, 140, 248, 0.4);
     --color-tree-hover: rgba(129, 140, 248, 0.12);
     --color-tree-selected: rgba(129, 140, 248, 0.22);
+    --graph-edge-manual: #a78bfa;
+    --graph-edge-inferred: #38bdf8;
+    --graph-edge-structure: #64748b;
   }
 }

@@ -53,6 +53,42 @@ def test_build_index_synced_git_repo_with_tags_and_paths(tmp_path: Path) -> None
     assert row["sync"] is True
 
 
+def test_build_index_url_only_repo_uses_project_mount_path(tmp_path: Path) -> None:
+    workspace_root = tmp_path / ".metagit"
+    workspace_root.mkdir()
+    repo_dir = workspace_root / "platform" / "svc-auth"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+
+    config = MetagitConfig(
+        name="test",
+        kind="application",
+        workspace={
+            "projects": [
+                {
+                    "name": "platform",
+                    "repos": [
+                        {
+                            "name": "svc-auth",
+                            "url": "https://example.com/org/svc-auth.git",
+                            "sync": True,
+                        }
+                    ],
+                }
+            ]
+        },
+    )
+    service = WorkspaceIndexService()
+    rows = service.build_index(config=config, workspace_root=str(workspace_root))
+
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["configured_path"] is None
+    assert row["repo_path"] == str(repo_dir.resolve())
+    assert row["exists"] is True
+    assert row["status"] == "synced"
+
+
 def test_build_index_missing_path_is_configured_missing(tmp_path: Path) -> None:
     workspace_root = tmp_path / "workspace"
     workspace_root.mkdir()

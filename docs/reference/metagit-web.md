@@ -64,9 +64,34 @@ When you **Apply** edits without saving, pending operations are merged into the 
 
 API: `POST /v3/config/metagit/preview` and `POST /v3/config/appconfig/preview` with `{ "style": "normalized", "operations": [...] }`.
 
+CLI parity (same operation model):
+
+```bash
+metagit config tree
+metagit config preview --file ops.json
+metagit config patch --file ops.json --save
+metagit appconfig patch --op set --path workspace.dedupe.enabled --value false --save
+```
+
+See [metagit-config.md](metagit-config.md#schema-backed-editing-cli) for operation shapes and path examples.
+
 ### Workspace Console
 
 The **Workspace Console** is **Workspace** in the chrome (`/workspace`): catalog-level context (projects/repos index, search/filter) plus the **workspace operations** side panel (health/prune/sync style actions routed through `/v3/ops`). This is meant for situational awareness and lightweight maintenance; destructive actions remain gated as in the CLI and API.
+
+Use the **Repositories | Graph** toggle on the workspace toolbar:
+
+- **Repositories** — filterable table of projects and repos (synced / missing) with per-repo sync actions.
+- **Graph** — SVG diagram of workspace relationships: manual edges from `.metagit.yml` `graph.relationships`, optional inferred cross-project dependencies, and project → repo structure edges. Checkboxes control inferred and structure layers.
+
+Graph data is loaded from `GET /v3/ops/graph`:
+
+| Query param | Default | Meaning |
+|-------------|---------|---------|
+| `include_inferred` | `true` | Include edges inferred from cross-project dependency analysis. |
+| `include_structure` | `true` | Include project → repo containment edges. |
+
+Response shape: `{ ok, nodes[], edges[], manual_edge_count, inferred_edge_count, structure_edge_count }`. Each node has `id`, `label`, `kind` (`project` \| `repo`). Each edge has `from_id`, `to_id`, `type`, optional `label`, and `source` (`manual` \| `inferred` \| `structure`).
 
 ## Frontend development workflow
 

@@ -12,7 +12,7 @@ def test_appconfig_show_includes_dedupe_and_agent_mode() -> None:
     config = AppConfig()
     payload = build_appconfig_payload(config, config_path="/tmp/metagit.config.yaml")
     assert payload["agent_mode"] is False
-    assert payload["config"]["workspace"]["dedupe"]["enabled"] is True
+    assert payload["config"]["workspace"]["dedupe"]["enabled"] is False
 
 
 def test_metagit_agent_mode_env_overrides_config(monkeypatch) -> None:

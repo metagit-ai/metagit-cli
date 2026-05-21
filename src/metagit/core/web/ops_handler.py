@@ -9,6 +9,7 @@ import threading
 import time
 from pathlib import Path
 from typing import Any, BinaryIO, Callable
+from urllib.parse import parse_qs
 
 from pydantic import ValidationError
 
@@ -21,6 +22,7 @@ from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.project.manager import project_manager_from_app
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
+from metagit.core.web.graph_service import WorkspaceGraphService
 from metagit.core.web.job_store import SyncJobStore
 from metagit.core.web.models import SyncJobRequest
 
@@ -56,6 +58,7 @@ class OpsWebHandler:
         self._health = WorkspaceHealthService()
         self._index = WorkspaceIndexService()
         self._sync = WorkspaceSyncService()
+        self._graph = WorkspaceGraphService()
         self._logger = UnifiedLogger(
             LoggerConfig(log_level="ERROR", minimal_console=True)
         )
@@ -69,8 +72,11 @@ class OpsWebHandler:
         respond: JsonResponder,
     ) -> bool:
         """Dispatch JSON ops routes; return True when handled."""
-        _ = query
         parsed_path = path if path.startswith("/") else f"/{path}"
+
+        if method == "GET" and parsed_path == "/v3/ops/graph":
+            self._get_graph(query, respond)
+            return True
 
         if method == "POST" and parsed_path == "/v3/ops/health":
             self._post_health(body, respond)
@@ -133,6 +139,25 @@ class OpsWebHandler:
             dedupe=dedupe,
         )
         respond(200, result.model_dump(mode="json"))
+
+    def _get_graph(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        include_inferred = (
+            params.get("include_inferred", ["true"])[0].lower() != "false"
+        )
+        include_structure = (
+            params.get("include_structure", ["true"])[0].lower() != "false"
+        )
+        view = self._graph.build_view(
+            config,
+            self._workspace_root,
+            include_inferred=include_inferred,
+            include_structure=include_structure,
+        )
+        respond(200, view.model_dump(mode="json"))
 
     def _post_prune_preview(self, body: bytes, respond: JsonResponder) -> None:
         payload = self._parse_body(body, respond, required=True)

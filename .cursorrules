@@ -37,7 +37,7 @@ After completing any task: update `.mex/ROUTER.md` project state and any `.mex/`
 **Before you tell the user the work is done** — if this conversation introduced or edited project files under this repo — run **`task qa:prepush`** from the repository root (`scripts/prepush-gate.py` via `scripts/prepush-gate.zsh`). Fix failures and re-run until green. Only skip when the task was strictly read-only (no writes) or the user explicitly waived the QA gate in this thread.
 
 ## Commands (minimum)
-- QA gate before hand-off / “work complete”: `task qa:prepush` (format, lint, tests, integration tests; optional `gitleaks` when installed)
+- QA gate before hand-off / “work complete”: `task qa:prepush` (format, lint, tests, integration tests, context-aware pip-audit/bandit; optional `gitleaks` when installed)
 - Full unit tests only: `task test`
 
 ## Navigation

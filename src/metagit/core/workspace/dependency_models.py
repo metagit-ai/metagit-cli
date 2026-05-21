@@ -13,6 +13,7 @@ DependencyEdgeType = Literal[
     "shared_config",
     "url_match",
     "ref",
+    "manual",
 ]
 
 

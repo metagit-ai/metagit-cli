@@ -17,22 +17,22 @@ dependencies = [
     "logging>=0.4.9.6",
     "loguru>=0.7.3",
     "pydantic>=2.11.4",
-    "requests>=2.32.3",
+    "requests>=2.33.0",
     "click>=8.1.7",
     "dotenv>=0.9.9",
-    "gitpython>=3.1.44",
+    "gitpython>=3.1.50",
     "rich>=14.0.0",
     "pyyaml>=6.0.2",
     "pygithub>=2.6.1",
     "jsonschema>=4.24.0",
-    "python-dotenv>=1.1.0",
+    "python-dotenv>=1.2.2",
     "rapidfuzz>=3.13.0",
     "tqdm>=4.66.4",
     "types-tqdm>=4.67.0.20250516",
     "aiofiles>=23.2.1",
     "async>=0.6.2",
     "setuptools-scm>=8.3.1",
-    "litellm>=1.74.8",
+    "litellm>=1.83.7",
     "crewai>=0.95.0",
     "textual-dev>=1.7.0",
     "tomli>=2.2.1",
@@ -48,11 +48,11 @@ CI = "https://github.com/metagit-ai/metagit-cli/actions"
 
 [project.optional-dependencies]
 standard = []
-test = ["pytest", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio", "black"]
-dev = ["ruff", "black", "isort", "mypy"]
+test = ["pytest>=9.0.3", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio", "black>=26.3.1"]
+dev = ["ruff", "black>=26.3.1", "isort", "mypy"]
 docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc", "mkdocs-mermaid2-plugin", "mkdocs-material"]
 lint = ["ruff", "black", "isort", "mypy"]
-format = ["black", "isort"]
+format = ["black>=26.3.1", "isort"]
 typecheck = ["mypy"]
 
 [project.scripts]
@@ -65,12 +65,35 @@ ignore = ['W291', 'W292', 'W293', 'E501', 'SIM115']
 [tool.ruff]
 exclude = [".venv", "records", ".metagit", "examples", "docs", "tests"]
 
+[tool.uv]
+override-dependencies = [
+    "aiohttp>=3.13.4",
+    "cryptography>=46.0.7",
+    "filelock>=3.20.3",
+    "idna>=3.15",
+    "orjson>=3.11.5",
+    "pdfminer-six>=20251230",
+    "pillow>=12.2.0",
+    "protobuf>=6.33.5",
+    "pyasn1>=0.6.3",
+    "pygments>=2.20.0",
+    "pyjwt>=2.12.0",
+    "pymdown-extensions>=10.21.3",
+    "pynacl>=1.6.2",
+    "urllib3>=2.7.0",
+    "uv>=0.11.6",
+    "virtualenv>=20.36.1",
+]
+
 [dependency-groups]
 dev = [
-    "diagrams>=0.24.4",
     "mypy>=1.16.1",
     "ruff>=0.11.11",
+    "bandit",
+    "pip-audit",
 ]
+# docs/architecture-diagram.py only — not default sync (OSV false positive PYSEC-2024-270).
+diagrams = ["diagrams>=0.25.1"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

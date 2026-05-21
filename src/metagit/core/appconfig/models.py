@@ -33,7 +33,7 @@ class WorkspaceDedupeConfig(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     enabled: bool = Field(
-        default=True,
+        default=False,
         description="When true, clone once under canonical_dir and symlink per project",
     )
     scope: WorkspaceDedupeScope = Field(
@@ -127,7 +127,7 @@ class Profile(BaseModel):
                 values=[
                     "localhost",
                     "127.0.0.1",
-                    "0.0.0.0",
+                    "0.0.0.0",  # nosec B104 — domain boundary allowlist, not a bind address
                     "192.168.*",
                     "10.0.*",
                     "172.16.*",

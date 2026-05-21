@@ -21,6 +21,7 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
 from metagit.core.workspace import workspace_dedupe
+from metagit.core.workspace.hydrate import materialize_symlink_mount
 from metagit.core.utils.common import create_vscode_workspace
 from metagit.core.utils.fuzzyfinder import (
     FuzzyFinder,
@@ -179,13 +180,16 @@ class ProjectManager:
             )
             return e
 
-    def sync(self, project: WorkspaceProject) -> bool:
+    def sync(self, project: WorkspaceProject, *, hydrate: bool = False) -> bool:
         """
         Sync a workspace project concurrently.
 
         Iterates through each repository in the project and either creates a
         symbolic link for local paths or clones it if it's a remote repository.
         After syncing, creates a VS Code workspace file.
+
+        When ``hydrate`` is True, symlink mounts are replaced with full directory
+        copies (see ``hydrate_project``).
 
         Returns:
             bool: True if sync is successful, False otherwise.
@@ -213,6 +217,11 @@ class ProjectManager:
                     tqdm.write(f"{repo.name} generated an exception: {exc}")
                     return False
 
+        if hydrate:
+            hydrate_ok = self.hydrate_project(project)
+            if not hydrate_ok:
+                return False
+
         # Create VS Code workspace file after successful sync
         workspace_result = self._create_vscode_workspace(project, project_dir)
         if isinstance(workspace_result, Exception):
@@ -222,6 +231,40 @@ class ProjectManager:
         #     tqdm.write(f"Created VS Code workspace file: {workspace_result}")
 
         return True
+
+    def hydrate_project(self, project: WorkspaceProject) -> bool:
+        """
+        Materialize symlink mounts under a project into full directory copies.
+
+        Returns:
+            bool: True when all hydrate steps succeed or are skipped cleanly.
+        """
+        project_dir = self.workspace_path / project.name
+        if not project_dir.is_dir():
+            tqdm.write(f"Hydrate skipped: project folder missing: {project_dir}")
+            return False
+
+        tqdm.write(f"Hydrating {project.name} (symlink mounts → full copies)...")
+        ok = True
+        for index, repo in enumerate(project.repos):
+            mount = project_dir / repo.name
+            if not mount.exists() and not mount.is_symlink():
+                tqdm.write(f"  ⏭️  {repo.name}: mount missing (sync first)")
+                continue
+            if mount.is_dir() and not mount.is_symlink():
+                tqdm.write(f"  ✓  {repo.name}: already a directory")
+                continue
+            changed, error = materialize_symlink_mount(
+                mount,
+                position=index,
+                repo_label=repo.name,
+            )
+            if error:
+                tqdm.write(f"  ❌ {repo.name}: {error}")
+                ok = False
+            elif not changed:
+                tqdm.write(f"  ⏭️  {repo.name}: not a symlink")
+        return ok
 
     def _create_vscode_workspace(
         self, project: WorkspaceProject, project_dir: str

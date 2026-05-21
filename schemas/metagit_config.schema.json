@@ -295,6 +295,88 @@
       "title": "DeploymentStrategy",
       "type": "string"
     },
+    "DocumentationSource": {
+      "additionalProperties": false,
+      "description": "One documentation source for agents and knowledge-graph ingestion.",
+      "properties": {
+        "kind": {
+          "description": "Source type (markdown, web, confluence, sharepoint, wiki, api, other)",
+          "title": "Kind",
+          "type": "string"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repo-relative or absolute path to a documentation file",
+          "title": "Path"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Remote documentation URL",
+          "title": "Url"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human-readable title",
+          "title": "Title"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short summary for indexing and graph nodes",
+          "title": "Description"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags for filtering and graph edges",
+          "title": "Tags",
+          "type": "object"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible key-value payload for downstream graph ingestors",
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "DocumentationSource",
+      "type": "object"
+    },
     "Environment": {
       "additionalProperties": false,
       "description": "Model for deployment environment.",
@@ -325,6 +407,132 @@
         "name"
       ],
       "title": "Environment",
+      "type": "object"
+    },
+    "GraphEndpoint": {
+      "additionalProperties": false,
+      "description": "Endpoint for a manual cross-repo relationship.",
+      "properties": {
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Workspace project name",
+          "title": "Project"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repository name under the project",
+          "title": "Repo"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional file or directory path within the repo",
+          "title": "Path"
+        }
+      },
+      "title": "GraphEndpoint",
+      "type": "object"
+    },
+    "GraphRelationship": {
+      "additionalProperties": false,
+      "description": "Manually declared edge between workspace projects or repos.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Stable identifier for exports and graph merges",
+          "title": "Id"
+        },
+        "from": {
+          "$ref": "#/$defs/GraphEndpoint",
+          "description": "Relationship source"
+        },
+        "to": {
+          "$ref": "#/$defs/GraphEndpoint",
+          "description": "Relationship target"
+        },
+        "type": {
+          "default": "depends_on",
+          "description": "Relationship type (depends_on, documents, consumes, owns, related, \u2026)",
+          "title": "Type",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short label for graph UIs",
+          "title": "Label"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Longer explanation for agents and exports",
+          "title": "Description"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat tags for filtering graph exports",
+          "title": "Tags",
+          "type": "object"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible payload for GitNexus or other graph ingestors",
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "title": "GraphRelationship",
       "type": "object"
     },
     "Hosting": {
@@ -1058,6 +1266,28 @@
       "title": "Workspace",
       "type": "object"
     },
+    "WorkspaceGraph": {
+      "additionalProperties": false,
+      "description": "Top-level manual graph data on a .metagit.yml manifest.",
+      "properties": {
+        "relationships": {
+          "description": "Manually entered cross-repo or cross-project edges",
+          "items": {
+            "$ref": "#/$defs/GraphRelationship"
+          },
+          "title": "Relationships",
+          "type": "array"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Graph-level metadata for export pipelines",
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "title": "WorkspaceGraph",
+      "type": "object"
+    },
     "WorkspaceProject": {
       "additionalProperties": false,
       "description": "Model for workspace project.",
@@ -1191,7 +1421,7 @@
       "anyOf": [
         {
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/DocumentationSource"
           },
           "type": "array"
         },
@@ -1200,8 +1430,20 @@
         }
       ],
       "default": null,
-      "description": "Documentation URLs or paths used by the project.",
+      "description": "Documentation sources: bare strings (path or URL) or objects with kind, path/url, tags, and metadata for knowledge-graph ingestion",
       "title": "Documentation"
+    },
+    "graph": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkspaceGraph"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Manual cross-repo relationships and graph metadata for exports and GitNexus-style dependency maps"
     },
     "license": {
       "anyOf": [
