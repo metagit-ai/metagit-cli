@@ -37,3 +37,37 @@ metagit config validate --config-path .metagit.yml
 ```
 
 Do not deploy the generated exemplar verbatim; copy sections you need and replace placeholders.
+
+## Documentation sources
+
+The top-level `documentation` list accepts **bare strings** or **objects**:
+
+- A string without `http(s)://` is treated as `kind: markdown` with `path` set to that string.
+- A URL string becomes `kind: web`.
+- Objects support `kind`, `path`, `url`, `title`, `description`, `tags` (list or map), and `metadata` (map) for knowledge-graph ingestion.
+
+Use `MetagitConfig.documentation_graph_nodes()` (or export from your tooling) to emit normalized node payloads.
+
+## Manual graph relationships
+
+The optional top-level `graph` block declares cross-repo edges that are not inferred from imports or URLs:
+
+```yaml
+graph:
+  metadata:
+    source: manual
+  relationships:
+    - id: platform-api-uses-infra-tf
+      from:
+        project: platform
+        repo: api
+      to:
+        project: infra
+        repo: terraform-modules
+      type: depends_on
+      label: API stack depends on shared modules
+      tags:
+        layer: platform
+```
+
+These edges are merged into cross-project dependency maps (`type: manual`) and available via `MetagitConfig.graph_export_payload()` for GitNexus-style exports. Request dependency type `manual` when calling `metagit_cross_project_dependencies` to focus on manifest-declared edges.

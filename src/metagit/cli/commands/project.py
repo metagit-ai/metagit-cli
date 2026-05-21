@@ -241,8 +241,14 @@ def project_select(ctx: click.Context) -> None:
 
 
 @project.command("sync")
+@click.option(
+    "--hydrate",
+    is_flag=True,
+    default=False,
+    help="After sync, replace symlink mounts with full directory copies",
+)
 @click.pass_context
-def project_sync(ctx: click.Context) -> None:
+def project_sync(ctx: click.Context, hydrate: bool) -> None:
     """Sync project within workspace"""
     logger = ctx.obj["logger"]
     app_config: AppConfig = ctx.obj["config"]
@@ -289,7 +295,7 @@ def project_sync(ctx: click.Context) -> None:
                 )
                 ctx.abort()
 
-        sync_result: bool = project_manager.sync(workspace_project)
+        sync_result: bool = project_manager.sync(workspace_project, hydrate=hydrate)
         if sync_result:
             logger.success(f"Project {project} synced successfully")
             exit(0)

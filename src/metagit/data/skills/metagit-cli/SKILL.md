@@ -157,6 +157,7 @@ metagit project remove --name <name> --json
 metagit project rename --name <old> --new-name <new> --dry-run --json
 metagit project select
 metagit project sync
+metagit project sync --hydrate   # symlink mounts → full directory copies (per-file progress)
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>

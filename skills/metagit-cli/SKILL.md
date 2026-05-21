@@ -110,6 +110,17 @@ metagit workspace repo list --project <project> --json
 
 ## Workspace and catalog
 
+Per-project dedupe override in `.metagit.yml` (overrides `workspace.dedupe.enabled` in `metagit.config.yaml` for that project only):
+
+```yaml
+workspace:
+  projects:
+    - name: local
+      dedupe:
+        enabled: false
+      repos: []
+```
+
 ```bash
 metagit appconfig show --format json
 metagit config info -c .metagit.yml
@@ -146,6 +157,7 @@ metagit project remove --name <name> --json
 metagit project rename --name <old> --new-name <new> --dry-run --json
 metagit project select
 metagit project sync
+metagit project sync --hydrate   # symlink mounts → full directory copies (per-file progress)
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>

@@ -24,6 +24,11 @@ from pydantic import (
 
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.project.models import GitUrl, ProjectKind, ProjectPath
+from metagit.core.config.documentation_models import (
+    DocumentationSource,
+    normalize_documentation_entries,
+)
+from metagit.core.config.graph_models import WorkspaceGraph
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -748,8 +753,19 @@ class MetagitConfig(BaseModel):
         default=ProjectKind.APPLICATION,
         description="Project kind. This is used to determine the type of project and the best way to manage it.",
     )
-    documentation: Optional[List[str]] = Field(
-        None, description="Documentation URLs or paths used by the project."
+    documentation: Optional[List[DocumentationSource]] = Field(
+        None,
+        description=(
+            "Documentation sources: bare strings (path or URL) or objects with "
+            "kind, path/url, tags, and metadata for knowledge-graph ingestion"
+        ),
+    )
+    graph: Optional[WorkspaceGraph] = Field(
+        None,
+        description=(
+            "Manual cross-repo relationships and graph metadata for exports "
+            "and GitNexus-style dependency maps"
+        ),
     )
     license: Optional[License] = Field(None, description="License information")
     maintainers: Optional[List[Maintainer]] = Field(
@@ -805,12 +821,47 @@ class MetagitConfig(BaseModel):
         description="Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. The internal workspace name is reservice",
     )
 
+    @field_validator("documentation", mode="before")
+    @classmethod
+    def _coerce_documentation(cls, value: object) -> object:
+        """Accept strings or dicts in YAML documentation lists."""
+        return normalize_documentation_entries(value)
+
     @field_serializer("url")
     def serialize_url(
         self, url: Optional[Union[HttpUrl, str]], _info: Any
     ) -> Optional[str]:
         """Serialize URL to string."""
         return str(url) if url else None
+
+    def documentation_graph_nodes(self) -> list[dict[str, Any]]:
+        """Export documentation entries for knowledge-graph ingestors."""
+        if not self.documentation:
+            return []
+        return [entry.graph_node_payload() for entry in self.documentation]
+
+    def graph_export_payload(self) -> dict[str, Any]:
+        """Export manual graph relationships and metadata for external tools."""
+        if self.graph is None:
+            return {"relationships": [], "metadata": {}}
+        relationships = []
+        for rel in self.graph.relationships:
+            relationships.append(
+                {
+                    "id": rel.id,
+                    "from": rel.from_endpoint.model_dump(mode="json", by_alias=True),
+                    "to": rel.to.model_dump(mode="json"),
+                    "type": rel.type,
+                    "label": rel.label,
+                    "description": rel.description,
+                    "tags": dict(rel.tags),
+                    "metadata": dict(rel.metadata),
+                }
+            )
+        return {
+            "relationships": relationships,
+            "metadata": dict(self.graph.metadata),
+        }
 
     @property
     def local_workspace_project(self) -> WorkspaceProject:

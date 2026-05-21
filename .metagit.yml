@@ -1,93 +1,115 @@
+documentation:
+  # Strings are allowed and will be treated as a markdown file in the root of the project
+  - README.md
+  - CHANGELOG.md
+  - CONTRIBUTING.md
+  - CODE_OF_CONDUCT.md
+  - SECURITY.md
+  # URLs are allowed and will be treated as a web page.
+  - https://metagit-ai.github.io/metagit-cli/
+  # All of these are duplicates of the strings above, but they are here to demonstrate 
+  # the different types of documentation that can be used.
+  - kind: markdown
+    path: README.md
+  - kind: markdown
+    path: CHANGELOG.md
+  - kind: markdown
+    path: CONTRIBUTING.md
+  - kind: markdown
+    path: CODE_OF_CONDUCT.md
+  - kind: markdown
+    path: SECURITY.md
+  - kind: web
+    url: https://metagit-ai.github.io/metagit-cli/
+  # Explicitly defined documentation types.
+  - kind: confluence
+    url: https://confluence.example.com/display/METAGIT/Metagit+Documentation
+    tags:
+      - playbook
+      - tutorial
+  - kind: sharepoint
+    url: https://sharepoint.example.com/display/METAGIT/Metagit+DevOps
+    tags:
+      - devops
+  - kind: web
+    url: https://hub.docker.com/_/python
+    tags:
+      - docker
+      - python
+
 artifacts:
-- definition: pyproject.toml
-  location: dist/
-  type: python_package
-  version_strategy: semver
-- definition: Dockerfile
-  location: .
-  type: docker
-  version_strategy: semver
+  - definition: pyproject.toml
+    location: dist/
+    type: python_package
+    version_strategy: semver
+  - definition: Dockerfile
+    location: .
+    type: docker
+    version_strategy: semver
+
 branch_strategy: trunk
+
 cicd:
   pipelines:
-  - name: Lint and Test
-    ref: .github/workflows/lint-and-test.yaml
-    variables: []
-  - name: Docs
-    ref: .github/workflows/docs.yaml
-    variables: []
-  - name: PR and Push
-    ref: .github/workflows/pr-and-push.yaml
-    variables: []
-  - name: Publish CLI
-    ref: .github/workflows/publish-cli.yaml
-    variables: []
+    - name: Lint and Test
+      ref: .github/workflows/lint-and-test.yaml
+      variables: []
+    - name: Docs
+      ref: .github/workflows/docs.yaml
+      variables: []
+    - name: PR and Push
+      ref: .github/workflows/pr-and-push.yaml
+      variables: []
+    - name: Publish CLI
+      ref: .github/workflows/publish-cli.yaml
+      variables: []
   platform: GitHub
 dependencies:
-- description: Ubuntu is a Linux distribution based on Debian and composed mostly
-    of free and open-source software.
-  kind: docker_image
-  name: ubuntu_latest
-  ref: ./.github/workflows/lint-and-test.yaml
-- kind: docker_image
-  name: python:3.12-slim
-  ref: ./Dockerfile
-  url: https://hub.docker.com/_/python
-description: 'Metagit is situational awareness for developers and agents. It can make
+  - description:
+      Ubuntu is a Linux distribution based on Debian and composed mostly
+      of free and open-source software.
+    kind: docker_image
+    name: ubuntu_latest
+    ref: ./.github/workflows/lint-and-test.yaml
+  - kind: docker_image
+    name: python:3.12-slim
+    ref: ./Dockerfile
+    url: https://hub.docker.com/_/python
+description:
+  Metagit is situational awareness for developers and agents. It can make
   a sprawling multi-repo project feel more like a monorepo or be used as a standalone
-  tool to provide concise information on the project''s used languages/frameworks,
+  tool to provide concise information on the project's used languages/frameworks,
   artifacts, upstream dependencies, and more.
-
-  '
 license:
-  file: LICENSE
+  file: LICENSE.md
   kind: BSD-3-Clause
 maintainers:
-- email: zloeber@gmail.com
-  name: Zachary Loeber
-  role: Contributor
+  - email: zloeber@gmail.com
+    name: Zachary Loeber
+    role: Contributor
 name: metagit-cli
-observability:
-  dashboards:
-  - name: OpenSearch Dashboards
-    tool: OpenSearch
-    url: http://localhost:5601/
-  logging_provider: elk
-  monitoring_providers:
-  - grafana
+observability: {}
+  # dashboards:
+  #   - name: OpenSearch Dashboards
+  #     tool: OpenSearch
+  #     url: http://localhost:5601/
+  # logging_provider: elk
+  # monitoring_providers:
+  #   - grafana
 paths:
-- description: The main project path
-  frameworks:
-  - CrewAI
-  - Click
-  kind: application
-  language: python
-  language_version: '3.12'
-  name: metagit
-  package_manager: uv
-  path: ./metagit
+  - description: The main project path
+    kind: application
+    language: python
+    language_version: "3.13"
+    name: metagit
+    package_manager: uv
+    frameworks:
+      - CrewAI
+      - Click
+    path: ./metagit
 taskers:
-- kind: Taskfile
+  - kind: Taskfile
 workspace:
-  projects:
-  - description: 'Default project for repositories that don''t fit into other projects.
-      Includes most IaC deployments.
-
-      '
-    name: default
-    repos:
-    - branches:
-      - main
-      - france
-      description: 'VoIP infrastructure for the organization.
-
-        '
-      name: voip-infrastructure
-      url: git@gitlab.com:myorg/aws/voip-infrastructure.git
-    - branches:
-      - main
-      description: 'AWS account infrastructure for the organization.
-
-        '
-      name: aws-account-infrastructure
-      url: git@gitlab.com:myorg/aws/aws-account-infrastructure.git
+  projects: []
+    # - name: default
+    #   description: Default project for repositories that don't fit into other projects. Includes most IaC deployments.

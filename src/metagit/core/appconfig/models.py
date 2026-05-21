@@ -33,7 +33,7 @@ class WorkspaceDedupeConfig(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     enabled: bool = Field(
-        default=True,
+        default=False,
         description="When true, clone once under canonical_dir and symlink per project",
     )
     scope: WorkspaceDedupeScope = Field(

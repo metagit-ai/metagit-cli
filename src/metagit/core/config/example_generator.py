@@ -251,6 +251,8 @@ class ConfigExampleGenerator:
             return "uv"
         if lowered in {"tags"}:
             return {"example": "documentation"}
+        if lowered in {"metadata"}:
+            return {"source": "metagit-config-example"}
         if lowered in {"sync"}:
             return True
         if lowered in {"protected", "archived", "template", "has_ci", "has_tests"}:
