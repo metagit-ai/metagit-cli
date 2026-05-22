@@ -20,7 +20,7 @@ metagit init --target ./hermes-control-plane --create --template hermes-orchestr
   --no-prompt
 ```
 
-   Or copy [examples/hermes-orchestrator/.metagit.yml](../examples/hermes-orchestrator/.metagit.yml)
+   Or copy [examples/hermes-orchestrator/.metagit.yml](https://github.com/metagit-ai/metagit-cli/blob/main/examples/hermes-orchestrator/.metagit.yml)
    manually and adjust projects, repos, and instructions.
 
 3. Enable workspace dedupe in app config when the same URL appears in multiple projects:
