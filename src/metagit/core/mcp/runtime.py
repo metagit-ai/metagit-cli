@@ -31,10 +31,14 @@ from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
+from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
+from metagit.core.context.models import ApprovalStatus, Objective
+from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace.context_models import utc_now_iso
 from metagit.core.workspace.layout_context import resolve_sync_context
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
@@ -281,9 +285,74 @@ class MetagitMcpRuntime:
                 "type": "object",
                 "required": ["tier"],
                 "properties": {
-                    "tier": {"type": "integer", "enum": [0, 1]},
+                    "tier": {"type": "integer", "enum": [0, 1, 2]},
                     "project_name": {"type": "string"},
                     "repo_name": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_objective_list": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
+            "metagit_objective_upsert": {
+                "type": "object",
+                "required": ["id", "title"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "title": {"type": "string"},
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "in_progress",
+                            "done",
+                            "cancelled",
+                        ],
+                    },
+                    "repos": {"type": "array", "items": {"type": "string"}},
+                    "acceptance": {"type": "string"},
+                    "human_notes": {"type": "string"},
+                    "agent_notes": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_approval_request": {
+                "type": "object",
+                "required": ["action", "payload"],
+                "properties": {
+                    "action": {"type": "string"},
+                    "payload": {"type": "object"},
+                    "requested_by": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_approval_list": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "denied",
+                            "all",
+                        ],
+                    },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_approval_resolve": {
+                "type": "object",
+                "required": ["approval_id", "decision"],
+                "properties": {
+                    "approval_id": {"type": "string"},
+                    "decision": {
+                        "type": "string",
+                        "enum": ["approved", "denied"],
+                    },
+                    "note": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -916,8 +985,8 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError(
                     "tier must be an integer",
                 ) from exc
-            if tier_val not in (0, 1):
-                raise InvalidToolArgumentsError("tier must be 0 or 1")
+            if tier_val not in (0, 1, 2):
+                raise InvalidToolArgumentsError("tier must be 0, 1, or 2")
             project_raw = arguments.get("project_name")
             repo_raw = arguments.get("repo_name")
             project_opt = (
@@ -931,7 +1000,7 @@ class MetagitMcpRuntime:
                 else None
             )
             config_path = str(Path(status.root_path) / ".metagit.yml")
-            tier_literal = cast(Literal[0, 1], tier_val)
+            tier_literal = cast(Literal[0, 1, 2], tier_val)
             pack = self._context_pack.pack(
                 config=config,
                 config_path=config_path,
@@ -941,6 +1010,166 @@ class MetagitMcpRuntime:
                 repo_name=repo_opt,
             )
             return pack.model_dump(mode="json")
+
+        if name == "metagit_objective_list":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "objective list requires an active workspace",
+                )
+            svc = ObjectiveService(workspace_root=status.root_path)
+            return svc.list().model_dump(mode="json")
+
+        if name == "metagit_objective_upsert":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "objective upsert requires an active workspace",
+                )
+            obj_id = str(arguments.get("id", "")).strip()
+            title_raw = arguments.get("title")
+            title = str(title_raw).strip() if isinstance(title_raw, str) else ""
+            if not obj_id:
+                raise InvalidToolArgumentsError("id is required")
+            if not title:
+                raise InvalidToolArgumentsError("title is required")
+            status_raw = arguments.get("status")
+            if status_raw is None:
+                status_val: Literal["pending", "in_progress", "done", "cancelled"] = (
+                    "pending"
+                )
+            else:
+                sv = str(status_raw).strip()
+                if sv not in (
+                    "pending",
+                    "in_progress",
+                    "done",
+                    "cancelled",
+                ):
+                    raise InvalidToolArgumentsError("invalid objective status")
+                status_val = cast(
+                    Literal["pending", "in_progress", "done", "cancelled"],
+                    sv,
+                )
+            raw_repos = arguments.get("repos")
+            repos: list[str] = []
+            if isinstance(raw_repos, list):
+                repos = [str(r) for r in raw_repos]
+            acceptance_raw = arguments.get("acceptance")
+            human_notes_raw = arguments.get("human_notes")
+            agent_notes_raw = arguments.get("agent_notes")
+            acceptance_fin = (
+                str(acceptance_raw).strip()
+                if isinstance(acceptance_raw, str) and acceptance_raw.strip()
+                else None
+            )
+            human_notes_fin = (
+                str(human_notes_raw).strip()
+                if isinstance(human_notes_raw, str) and human_notes_raw.strip()
+                else None
+            )
+            agent_notes_fin = (
+                str(agent_notes_raw).strip()
+                if isinstance(agent_notes_raw, str) and agent_notes_raw.strip()
+                else None
+            )
+            now = utc_now_iso()
+            objective = Objective(
+                id=obj_id,
+                title=title,
+                status=status_val,
+                repos=repos,
+                acceptance=acceptance_fin,
+                human_notes=human_notes_fin,
+                agent_notes=agent_notes_fin,
+                created_at=now,
+                updated_at=now,
+            )
+            svc = ObjectiveService(workspace_root=status.root_path)
+            saved = svc.upsert(objective)
+            return saved.model_dump(mode="json")
+
+        if name == "metagit_approval_request":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "approval request requires an active workspace",
+                )
+            action = str(arguments.get("action", "")).strip()
+            if not action:
+                raise InvalidToolArgumentsError("action is required")
+            payload = arguments.get("payload")
+            if payload is None or not isinstance(payload, dict):
+                raise InvalidToolArgumentsError("payload object is required")
+            requested_raw = arguments.get("requested_by")
+            requested_by = (
+                str(requested_raw).strip()
+                if isinstance(requested_raw, str)
+                else "agent"
+            )
+            if not requested_by:
+                requested_by = "agent"
+            req = ApprovalService(workspace_root=status.root_path).request(
+                action=action,
+                payload=payload,
+                requested_by=requested_by,
+            )
+            return req.model_dump(mode="json")
+
+        if name == "metagit_approval_list":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "approval list requires an active workspace",
+                )
+            raw_af = arguments.get("status")
+            svc = ApprovalService(workspace_root=status.root_path)
+            if raw_af is None:
+                return svc.list(status="pending").model_dump(mode="json")
+            sf = str(raw_af).strip().lower()
+            if sf in ("", "pending"):
+                return svc.list(status="pending").model_dump(mode="json")
+            if sf == "all":
+                return svc.list(status=None).model_dump(mode="json")
+            if sf in ("approved", "denied"):
+                return svc.list(
+                    status=cast(ApprovalStatus, sf),
+                ).model_dump(mode="json")
+            raise InvalidToolArgumentsError(
+                "status must be pending, approved, denied, or all",
+            )
+
+        if name == "metagit_approval_resolve":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "approval resolve requires an active workspace",
+                )
+            appr_id_raw = arguments.get("approval_id")
+            appr_id = str(appr_id_raw).strip() if isinstance(appr_id_raw, str) else ""
+            decision_raw = arguments.get("decision")
+            decision_val = (
+                str(decision_raw).strip().lower()
+                if isinstance(decision_raw, str)
+                else ""
+            )
+            if not appr_id:
+                raise InvalidToolArgumentsError("approval_id is required")
+            if decision_val not in ("approved", "denied"):
+                raise InvalidToolArgumentsError(
+                    "decision must be approved or denied",
+                )
+            decision_typed = cast(
+                Literal["approved", "denied"],
+                decision_val,
+            )
+            note_raw = arguments.get("note")
+            note_opt = str(note_raw) if isinstance(note_raw, str) else None
+            svc = ApprovalService(workspace_root=status.root_path)
+            try:
+                row = svc.resolve(
+                    request_id=appr_id,
+                    decision=decision_typed,
+                    note=note_opt,
+                )
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return row.model_dump(mode="json")
 
         if name == "metagit_repo_card":
             if not config or not status.root_path:

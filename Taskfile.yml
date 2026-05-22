@@ -263,6 +263,25 @@ tasks:
       - |
         repomix --style=markdown --output=docs/repomix.md --compress
 
+  repomix:profile:
+    desc: Run repomix with a token-budgeted context profile (PROFILE=bugfix-local)
+    vars:
+      PROFILE: '{{.PROFILE | default "bugfix-local"}}'
+      PROJECT: '{{.PROJECT | default ""}}'
+      REPO: '{{.REPO | default ""}}'
+      OUTPUT: '{{.OUTPUT | default ""}}'
+    cmds:
+      - |
+        if [[ -z "{{.PROJECT}}" || -z "{{.REPO}}" ]]; then
+          echo "Usage: task repomix:profile PROFILE=bugfix-local PROJECT=myproj REPO=myrepo [OUTPUT=/tmp/out.md]"
+          exit 1
+        fi
+        ARGS=(context repomix --profile "{{.PROFILE}}" --project "{{.PROJECT}}" --repo "{{.REPO}}")
+        if [[ -n "{{.OUTPUT}}" ]]; then
+          ARGS+=(--output "{{.OUTPUT}}")
+        fi
+        uv run metagit "${ARGS[@]}"
+
   update:github:actions:
     desc: Update GitHub Actions in workflows
     cmds:

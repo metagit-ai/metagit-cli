@@ -82,3 +82,28 @@ class SyncJobStatus(BaseModel):
     summary: dict[str, Any] = Field(default_factory=dict)
     results: list[dict[str, Any]] = Field(default_factory=list)
     error: str | None = None
+
+
+class ObjectiveUpsertRequest(BaseModel):
+    """Objective fields accepted on POST `/v3/ops/objectives` (timestamps from server)."""
+
+    id: str
+    title: str
+    status: Literal["pending", "in_progress", "done", "cancelled"] = "pending"
+    repos: list[str] = Field(default_factory=list)
+    acceptance: str | None = None
+    human_notes: str | None = None
+    agent_notes: str | None = None
+
+
+class ObjectiveStatusPatchRequest(BaseModel):
+    """Minimal patch for PATCH `/v3/ops/objectives/{id}`."""
+
+    status: Literal["done", "cancelled"]
+
+
+class ApprovalResolveRequest(BaseModel):
+    """Body for POST `/v3/ops/approvals/{id}/resolve`."""
+
+    decision: Literal["approved", "denied"]
+    note: str | None = None

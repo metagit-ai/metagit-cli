@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-05-21
+last_updated: 2026-05-22
 ---
 
 # Session Bootstrap
@@ -51,17 +51,22 @@ Then read this file fully before doing anything else in this session.
 - **`metagit init`:** bundled init templates (`application`, `umbrella`, `hermes-orchestrator`) with copier-style `{{ var }}` rendering, `--answers-file`, `--no-prompt`, all `ProjectKind` values via `--minimal`.
 - **`metagit web serve` groundwork:** Pydantic request/response models for the local web UI API live in `src/metagit/core/web/models.py` (`ConfigTreeResponse`, sync job shapes, config patch types). Thread-safe in-memory sync job tracking + SSE event buffers live in `src/metagit/core/web/job_store.py` (`SyncJobStore`).
 - **`metagit web serve` config HTTP:** `build_web_server` in `src/metagit/core/web/server.py` exposes v3 config tree/patch/validate routes via `ConfigWebHandler` (`metagit` + `appconfig` targets, `SchemaTreeService` mutations). PATCH with `save=true` returns HTTP 422 and skips disk write when validation fails; masked sensitive tokens are preserved on noop set.
-- **`metagit web serve` ops HTTP:** `OpsWebHandler` (`src/metagit/core/web/ops_handler.py`) — POST health/prune/sync, GET sync job status, SSE sync events; wired in `build_web_server` with workspace root from appconfig.
+- **`metagit web serve` ops HTTP:** `OpsWebHandler` (`src/metagit/core/web/ops_handler.py`) — POST health/prune/sync, GET `/v3/ops/objectives`, POST upsert objectives, PATCH status, GET `/v3/ops/approvals`, POST resolve approvals, GET sync job status, SSE sync events; wired in `build_web_server` with workspace root from appconfig.
 - **`metagit web serve` static + full server:** `StaticWebHandler` serves packaged SPA from `src/metagit/data/web/`; `build_web_server` dispatches static, v2 catalog/layout, v3 config/ops; CLI `metagit web serve` (`src/metagit/cli/commands/web.py`).
 - **Context packs (tier 1 repo cards):** `RepoCardService` (`src/metagit/core/context/repo_card_service.py`) merges workspace index rows, `inspect_repo_state`, manifest fields, stack root hints (`_stack_hints`), layered agent instruction excerpts (`AgentInstructionsResolver`), and `_health_flags` (`missing_clone`, `dirty`, `behind_remote`, `stale_head_30d`). Tests under `tests/core/context/test_repo_card_service.py`.
 - **Metagit Web UI scaffold:** Vite + React + TypeScript in `web/` (build output → `src/metagit/data/web/`); typed API client, router shell, Taskfile `web:*` tasks.
 - **Metagit Web Config Studio:** schema tree + field editor for `/config/metagit` and `/config/appconfig` (TanStack Query PATCH flow, theme toggle, `enum_options` on schema nodes).
 - **Metagit Web:** local `metagit web serve` + packaged SPA (**Config Studio** on `/config/*`, **Workspace Console** on `/workspace`) with `task web:dev` / `task web:build` workflow documented in [`docs/reference/metagit-web.md`](../docs/reference/metagit-web.md).
 - **Context packs — T0 map:** pydantic envelopes in `metagit.core.context.models` plus `WorkspaceMapService` (`workspace_map_service.py`) building `WorkspaceMapResult` from `WorkspaceCatalogService.list_workspace(..., include_index=True)` / `repos_index` rows mapped to `WorkspaceMapEntry`.
-- **Context packs CLI:** `metagit context pack --tier 0|1` (map or map+cards) and `metagit context repo-card --project … --repo …` in `src/metagit/cli/commands/context.py`, backed by `ContextPackService.pack` (`context_pack_service.py`); CLI tests in `tests/cli/commands/test_context.py`; service unit tests in `tests/core/context/test_context_pack_service.py`.
-- **Context packs MCP:** ACTIVE-state tools `metagit_context_pack` (required `tier` 0 or 1; optional `project_name`, `repo_name`) and `metagit_repo_card` (required `project_name`, `repo_name`), returning JSON via `model_dump(mode="json")`; coverage in `tests/core/mcp/test_runtime.py`.
+- **Context packs CLI:** `metagit context pack --tier 0|1|2` (map; map+cards; map+cards+digest+touches session boundary) plus `repomix` / `context objective|approval …` helpers in `src/metagit/cli/commands/context.py`, backed by `ContextPackService.pack` (`context_pack_service.py`); CLI tests in `tests/cli/commands/test_context.py`; service unit tests in `tests/core/context/test_context_pack_service.py`.
+- **Context packs MCP:** ACTIVE-state tools `metagit_context_pack` (required `tier` 0, 1, or 2), `metagit_objective_list`, `metagit_objective_upsert`, `metagit_approval_request`, `metagit_approval_list`, `metagit_approval_resolve`, and `metagit_repo_card` (required `project_name`, `repo_name`), returning JSON via `model_dump(mode="json")`; coverage in `tests/core/mcp/test_runtime.py`.
+- **Repomix context profiles:** bundled `src/metagit/data/context_profiles.yaml` (`bugfix-local`, `config-edit`, `cross-repo-impact`); `RepomixProfileService` (`repomix_profile_service.py`) loads include/exclude globs and runs `repomix` with `--include` / `--ignore` for a repo path. Unit tests in `tests/core/context/test_repomix_profile_service.py`.
+- **Context packs — T2 session digest:** `SessionDigestService` (`src/metagit/core/context/session_digest_service.py`) emits `SessionDigestResult`: first session when `since` is omitted; otherwise per-repo `git rev-list --count` / `git log --oneline -n 3` after an ISO boundary plus `manifest_changed` from config mtime vs `since`. Tests in `tests/core/context/test_session_digest_service.py`.
+- **Workspace objectives:** `ObjectiveService` + `ObjectiveStore` persist objectives to `.metagit/sessions/objectives.json`; models and validators live in `metagit.core.context.models`; tests in `tests/core/context/test_objective_service.py`.
+- **Approval queue:** `ApprovalService` (`approval_service.py`) with `ApprovalStore` writing `.metagit/approvals/pending.json`; models `ApprovalRequest` / `ApprovalListResult`; tests `tests/core/context/test_approval_service.py`.
 
 **Not yet built:**
+- **`task repomix:profile` automation:** bundled profiles + CLI `metagit context repomix` ship in code; repo Taskfile wrappers may remain future scope (see design note in `docs/superpowers/specs/2026-05-21-context-packs-phase2-design.md`).
 - **Metagit Web hardened/exposed deployments:** intentional v1 localhost-only framing; authentication and safe non-local binds are future scope.
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
 - End-to-end enterprise mode features described in README (continuous org-wide code mining).

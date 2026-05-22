@@ -17,14 +17,23 @@ from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.context.approval_service import ApprovalService
+from metagit.core.context.models import Objective
+from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.project.manager import project_manager_from_app
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
+from metagit.core.workspace.context_models import utc_now_iso
 from metagit.core.web.graph_service import WorkspaceGraphService
 from metagit.core.web.job_store import SyncJobStore
-from metagit.core.web.models import SyncJobRequest
+from metagit.core.web.models import (
+    ApprovalResolveRequest,
+    ObjectiveStatusPatchRequest,
+    ObjectiveUpsertRequest,
+    SyncJobRequest,
+)
 
 JsonResponder = Callable[[int, dict[str, Any]], None]
 
@@ -33,6 +42,10 @@ _SYNC_JOB_PATH = re.compile(
 )
 _SYNC_EVENTS_PATH = re.compile(
     r"^/v3/ops/sync/(?P<job_id>[0-9a-f]{32})/events$",
+)
+_OBJECTIVE_ITEM_PATH = re.compile(r"^/v3/ops/objectives/(?P<id>[\w.-]+)$")
+_APPROVAL_RESOLVE_PATH = re.compile(
+    r"^/v3/ops/approvals/(?P<id>[0-9a-f]{32})/resolve$",
 )
 
 _JOB_STORE = SyncJobStore()
@@ -78,6 +91,32 @@ class OpsWebHandler:
             self._get_graph(query, respond)
             return True
 
+        if method == "GET" and parsed_path == "/v3/ops/objectives":
+            self._get_objectives(respond)
+            return True
+
+        if method == "POST" and parsed_path == "/v3/ops/objectives":
+            self._post_objectives(body, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/approvals":
+            self._get_approvals(query, respond)
+            return True
+
+        approve_match = _APPROVAL_RESOLVE_PATH.match(parsed_path)
+        if method == "POST" and approve_match is not None:
+            self._post_approval_resolve(
+                approve_match.group("id"),
+                body,
+                respond,
+            )
+            return True
+
+        obj_match = _OBJECTIVE_ITEM_PATH.match(parsed_path)
+        if method == "PATCH" and obj_match is not None:
+            self._patch_objective(obj_match.group("id"), body, respond)
+            return True
+
         if method == "POST" and parsed_path == "/v3/ops/health":
             self._post_health(body, respond)
             return True
@@ -112,6 +151,132 @@ class OpsWebHandler:
     def stream_sync_events(self, job_id: str, stream: BinaryIO) -> None:
         """Write server-sent events for a sync job until it finishes."""
         self._stream_sync_events(job_id, stream)
+
+    def _get_objectives(self, respond: JsonResponder) -> None:
+        svc = ObjectiveService(workspace_root=self._workspace_root)
+        result = svc.list()
+        respond(200, result.model_dump(mode="json"))
+
+    def _post_objectives(self, body: bytes, respond: JsonResponder) -> None:
+        payload = self._parse_body(body, respond, required=True)
+        if payload is None:
+            return
+        try:
+            req = ObjectiveUpsertRequest.model_validate(payload)
+        except ValidationError as exc:
+            respond(
+                400,
+                {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
+            )
+            return
+        now = utc_now_iso()
+        objective = Objective(
+            id=req.id,
+            title=req.title.strip(),
+            status=req.status,
+            repos=list(req.repos),
+            acceptance=req.acceptance,
+            human_notes=req.human_notes,
+            agent_notes=req.agent_notes,
+            created_at=now,
+            updated_at=now,
+        )
+        svc = ObjectiveService(workspace_root=self._workspace_root)
+        saved = svc.upsert(objective)
+        respond(200, saved.model_dump(mode="json"))
+
+    def _patch_objective(
+        self,
+        objective_id: str,
+        body: bytes,
+        respond: JsonResponder,
+    ) -> None:
+        payload = self._parse_body(body, respond, required=True)
+        if payload is None:
+            return
+        try:
+            req = ObjectiveStatusPatchRequest.model_validate(payload)
+        except ValidationError as exc:
+            respond(
+                400,
+                {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
+            )
+            return
+        svc = ObjectiveService(workspace_root=self._workspace_root)
+        try:
+            if req.status == "done":
+                saved = svc.complete(objective_id=objective_id)
+            else:
+                saved = svc.cancel(objective_id=objective_id)
+        except ValueError as exc:
+            respond(
+                404,
+                {
+                    "ok": False,
+                    "error": {"kind": "not_found", "message": str(exc)},
+                },
+            )
+            return
+        respond(200, saved.model_dump(mode="json"))
+
+    def _get_approvals(self, query: str, respond: JsonResponder) -> None:
+        params = parse_qs(query.lstrip("?"))
+        raw_status = (params.get("status") or ["pending"])[0].strip().lower()
+        svc = ApprovalService(workspace_root=self._workspace_root)
+        if raw_status in ("", "pending"):
+            result = svc.list(status="pending")
+        elif raw_status == "all":
+            result = svc.list(status=None)
+        elif raw_status in ("approved", "denied"):
+            result = svc.list(status=raw_status)
+        else:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": "status must be pending, approved, denied, or all",
+                    },
+                },
+            )
+            return
+        respond(200, result.model_dump(mode="json"))
+
+    def _post_approval_resolve(
+        self,
+        approval_id: str,
+        body: bytes,
+        respond: JsonResponder,
+    ) -> None:
+        payload = self._parse_body(body, respond, required=True)
+        if payload is None:
+            return
+        try:
+            req = ApprovalResolveRequest.model_validate(payload)
+        except ValidationError as exc:
+            respond(
+                400,
+                {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
+            )
+            return
+        svc = ApprovalService(workspace_root=self._workspace_root)
+        try:
+            saved = svc.resolve(
+                request_id=approval_id,
+                decision=req.decision,
+                note=req.note,
+            )
+        except ValueError as exc:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {"kind": "resolve_error", "message": str(exc)},
+                },
+            )
+            return
+        respond(200, saved.model_dump(mode="json"))
 
     def _post_health(self, body: bytes, respond: JsonResponder) -> None:
         config = self._load_metagit(respond)

@@ -138,6 +138,20 @@ class SessionStore:
                 last_snapshot_id=snapshot_id,
             )
 
+    def touch_session(self) -> WorkspaceSessionMeta:
+        """Record the current UTC time as the last session boundary."""
+        meta = self.get_workspace_meta()
+        meta.last_session_at = utc_now_iso()
+        self.save_workspace_meta(meta=meta)
+        return meta
+
+    def get_last_session_at(self) -> Optional[str]:
+        """Return last session timestamp or fall back to last project switch."""
+        meta = self.get_workspace_meta()
+        if meta.last_session_at:
+            return meta.last_session_at
+        return meta.last_switch_at
+
     def _project_session_path(self, project_name: str) -> Path:
         """Resolve sanitized per-project session file path."""
         if not _PROJECT_FILE_PATTERN.match(project_name):

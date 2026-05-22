@@ -182,7 +182,9 @@ At **session start**, always load **tier 0** workspace orientation (minimal toke
 
 **Escalate to tier 1** for repositories in your **active scope** only—projects and repos you are actually changing or debugging in this task. Use tier 1 via `metagit context pack --tier 1 --json` or `metagit_context_pack` with tier 1 and repo/project scoping so deeper repo cards and maps apply where work is focused.
 
-**Token budgeting:** default to tier 0; add tier 1 only when needed. Avoid loading full tier-1 packs for every repo in the manifest—stay within the model context window.""",
+**Tier 2 (session-aware):** Adds a digest of git activity since the last session boundary (from `.metagit/sessions`), the active ``in_progress`` objective id when present, and whether the manifest changed—then bumps the session clock. Prefer **tier 2** when resuming multi-repo work rather than reloading an entire tier-1 pack blindly: `metagit context pack --tier 2 --json` / `metagit_context_pack` with tier ``2``.
+
+**Token budgeting:** default to tier 0; add tier 1 only when needed; use tier 2 for resume/session deltas without replacing tier 1. Avoid loading full tier-1 packs for every repo—stay within the model context window.""",
         "repo-enrich": """Review this repository and enrich its workspace manifest entry using metagit CLI discovery only.
 
 ## 1. Baseline (manifest)

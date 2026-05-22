@@ -468,10 +468,64 @@ def test_tools_call_metagit_context_pack_invalid_args_returns_invalid_arguments(
             "method": "tools/call",
             "params": {
                 "name": "metagit_context_pack",
-                "arguments": {"tier": 2},
+                "arguments": {"tier": 9},
             },
         }
     )
     assert bad_tier is not None
     assert bad_tier["error"]["code"] == -32602
     assert bad_tier["error"]["data"]["kind"] == "invalid_arguments"
+
+
+def test_tools_call_metagit_objective_list(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: demo",
+                "      repos:",
+                "        - name: svc",
+                "          path: demo/svc",
+                "          sync: true",
+            ],
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    demo_svc = tmp_path / "demo" / "svc"
+    demo_svc.mkdir(parents=True)
+    from metagit.core.context.models import Objective
+    from metagit.core.context.objective_service import ObjectiveService
+    from metagit.core.workspace.context_models import utc_now_iso
+
+    stamp = utc_now_iso()
+    ObjectiveService(workspace_root=str(tmp_path)).upsert(
+        Objective(
+            id="mcp-goal",
+            title="MCP-listed goal",
+            status="pending",
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 101,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_objective_list",
+                "arguments": {},
+            },
+        },
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is True
+    ids = [item["id"] for item in payload["objectives"]]
+    assert "mcp-goal" in ids

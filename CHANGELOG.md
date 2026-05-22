@@ -4,7 +4,9 @@
 
 ### Added
 
-- `.metagit.yml` **documentation** entries support rich objects (`kind`, `path`, `url`, `tags`, `metadata`) plus legacy bare strings; `documentation_graph_nodes()` exports ingest payloads.
+- **Context packs Phase 2:** tier **2** session digest (`SessionDigestService`), workspace **objectives** (CLI/MCP/Web), **approval queue** for mutating ops, and **repomix context profiles** (`bugfix-local`, `config-edit`, `cross-repo-impact`) via `metagit context repomix` and `task repomix:profile`.
+- **Context packs Phase 1:** tier 0 workspace map and tier 1 repo cards via `metagit context pack`, MCP `metagit_context_pack` / `metagit_repo_card`, and prompt kind `context-pack`.
+- **Repomix context profiles:** `src/metagit/data/context_profiles.yaml` bundles scoped globs; `RepomixProfileService` runs `repomix --include/--ignore` for a repository directory.
 - Top-level **graph** block for manual cross-repo **relationships** (merged into cross-project dependency maps and `graph_export_payload()` for GitNexus-style exports).
 - Per-project `dedupe.enabled` override on `workspace.projects[]` in `.metagit.yml` (overrides app-config `workspace.dedupe.enabled` for sync and layout under that project).
 - `metagit prompt` kind `repo-enrich` (repo scope): CLI workflow to discover repo metadata (`metagit detect`, `project source sync`) and merge into the workspace manifest entry.

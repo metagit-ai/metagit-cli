@@ -103,6 +103,65 @@ def test_context_repo_card_unknown_repo_error(tmp_path: Path, monkeypatch) -> No
     assert result.exit_code != 0
 
 
+def test_context_objective_list_after_set(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+    r1 = runner.invoke(
+        cli,
+        ["context", "objective", "set", "--id", "g1", "--title", "Goal one"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert r1.exit_code == 0
+    r2 = runner.invoke(
+        cli,
+        ["context", "objective", "list"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert r2.exit_code == 0
+    assert "g1" in r2.output
+    assert "[pending]" in r2.output
+
+
+def test_context_pack_tier_two_json_contains_digest(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=True)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+    assert (
+        runner.invoke(
+            cli,
+            [
+                "context",
+                "objective",
+                "set",
+                "--id",
+                "active-q",
+                "--title",
+                "Q",
+                "--status",
+                "in_progress",
+            ],
+            env=env,
+            catch_exceptions=False,
+        ).exit_code
+        == 0
+    )
+    result = runner.invoke(
+        cli,
+        ["context", "pack", "--tier", "2", "--project", "demo", "--repo", "svc", "--json"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+    assert '"tier": 2' in result.output
+    assert '"digest"' in result.output
+    assert '"active_objective_id": "active-q"' in result.output
+
+
 def _write_workspace(root: Path, *, with_git_repo: bool) -> None:
     (root / ".metagit.yml").write_text(
         "\n".join(
