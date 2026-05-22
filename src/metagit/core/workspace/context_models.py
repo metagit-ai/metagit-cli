@@ -47,6 +47,7 @@ class WorkspaceSessionMeta(BaseModel):
     active_project: Optional[str] = None
     last_switch_at: Optional[str] = None
     last_snapshot_id: Optional[str] = None
+    last_session_at: Optional[str] = None
 
 
 class ProjectSession(BaseModel):

@@ -354,3 +354,178 @@ def test_tools_call_cross_project_dependencies(tmp_path: Path) -> None:
     payload = json.loads(response["result"]["content"][0]["text"])
     assert payload["ok"] is True
     assert payload["source_project"] == "alpha"
+
+
+def test_tools_list_includes_context_pack_tools_when_active(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 40, "method": "tools/list", "params": {}}
+    )
+
+    assert response is not None
+    names = [item["name"] for item in response["result"]["tools"]]
+    assert "metagit_context_pack" in names
+    assert "metagit_repo_card" in names
+
+
+def test_tools_call_metagit_context_pack_tier_zero_succeeds(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos:",
+                "        - name: api",
+                "          path: alpha/api",
+                "          sync: true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    repo_dir = tmp_path / "alpha" / "api"
+    repo_dir.mkdir(parents=True)
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 41,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_context_pack",
+                "arguments": {"tier": 0},
+            },
+        }
+    )
+
+    assert response is not None
+    assert "result" in response
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["tier"] == 0
+    assert payload["workspace_name"] == "workspace"
+    assert payload["map"] is not None
+    assert payload["cards"] is None
+    assert "token_estimate" in payload
+
+
+def test_tools_call_metagit_context_pack_invalid_args_returns_invalid_arguments(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+
+    missing_tier = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 42,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_context_pack",
+                "arguments": {},
+            },
+        }
+    )
+    assert missing_tier is not None
+    assert missing_tier["error"]["code"] == -32602
+    assert missing_tier["error"]["data"]["kind"] == "invalid_arguments"
+
+    bad_tier = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 43,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_context_pack",
+                "arguments": {"tier": 9},
+            },
+        }
+    )
+    assert bad_tier is not None
+    assert bad_tier["error"]["code"] == -32602
+    assert bad_tier["error"]["data"]["kind"] == "invalid_arguments"
+
+
+def test_tools_call_metagit_objective_list(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: demo",
+                "      repos:",
+                "        - name: svc",
+                "          path: demo/svc",
+                "          sync: true",
+            ],
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    demo_svc = tmp_path / "demo" / "svc"
+    demo_svc.mkdir(parents=True)
+    from metagit.core.context.models import Objective
+    from metagit.core.context.objective_service import ObjectiveService
+    from metagit.core.workspace.context_models import utc_now_iso
+
+    stamp = utc_now_iso()
+    ObjectiveService(workspace_root=str(tmp_path)).upsert(
+        Objective(
+            id="mcp-goal",
+            title="MCP-listed goal",
+            status="pending",
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 101,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_objective_list",
+                "arguments": {},
+            },
+        },
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is True
+    ids = [item["id"] for item in payload["objectives"]]
+    assert "mcp-goal" in ids

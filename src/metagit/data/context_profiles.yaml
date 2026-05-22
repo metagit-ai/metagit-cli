@@ -1,0 +1,26 @@
+# Repomix glob patterns are relative to each managed repository root (--include / --ignore comma lists).
+profiles:
+  bugfix-local:
+    include:
+      - src/**
+      - tests/**
+      - pyproject.toml
+      - schemas/**
+    exclude:
+      - "**/__pycache__/**"
+
+  config-edit:
+    include:
+      - .metagit.yml
+      - metagit.config.yaml
+      - schemas/**
+    exclude:
+      - "**/__pycache__/**"
+
+  cross-repo-impact:
+    include:
+      - .metagit.yml
+      - schemas/**
+      - docs/reference/**
+    exclude:
+      - "**/__pycache__/**"

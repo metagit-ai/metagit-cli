@@ -26,6 +26,7 @@ from metagit import DEFAULT_CONFIG, __version__
 from metagit.cli.commands.api import api
 from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.config import config
+from metagit.cli.commands.context import context
 from metagit.cli.commands.detect import detect
 from metagit.cli.commands.init import init
 from metagit.cli.commands.mcp import mcp
@@ -143,6 +144,7 @@ cli.add_command(web)
 cli.add_command(search)
 cli.add_command(search, name="find")
 cli.add_command(prompt)
+cli.add_command(context)
 
 
 def main() -> None:

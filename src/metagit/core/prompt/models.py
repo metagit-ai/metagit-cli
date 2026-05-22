@@ -21,6 +21,7 @@ PromptKind = Literal[
     "subagent-handoff",
     "layout-change",
     "repo-enrich",
+    "context-pack",
 ]
 
 

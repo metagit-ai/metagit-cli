@@ -24,12 +24,14 @@ Lookup table for all pattern files in this directory. Check here before starting
 | Pattern | Use when |
 |---------|----------|
 | [add-cli-command.md](add-cli-command.md) | Adding or extending a Click CLI command while keeping core logic in `src/metagit/core/*` |
+| [add-prompt-catalog-kind.md](add-prompt-catalog-kind.md) | Adding a new built-in `metagit prompt` kind (catalog + template + tests) |
 | [add-managed-repo-search.md](add-managed-repo-search.md) | Extending or debugging managed-only repo search (CLI, MCP `metagit_repo_search`, local JSON API) |
 | [add-mcp-tool.md](add-mcp-tool.md) | Adding/changing MCP tools, schemas, dispatch behavior, and runtime tests |
 | [mcp-project-context.md](mcp-project-context.md) | Project context switch, session store, or workspace snapshot MCP tools |
 | [mcp-cross-project-dependencies.md](mcp-cross-project-dependencies.md) | Cross-project dependency graph MCP tool and collectors |
 | [metagit-web-api.md](metagit-web-api.md) | Adding or changing Pydantic models and routes for `metagit web serve` |
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |
+| [context-pack-repo-cards.md](context-pack-repo-cards.md) | Tier-1 context pack repo cards (`RepoCardService`, index + `inspect_repo_state`) |
 | [debug-mcp-runtime.md](debug-mcp-runtime.md) | Diagnosing MCP runtime protocol, framing, gating, and tool/resource failures |
 | [debug-workspace-discovery.md](debug-workspace-discovery.md) | Diagnosing empty/incorrect workspace index, search hits, or upstream hint ranking |
 | [run-graphify-analysis.md](run-graphify-analysis.md) | Running `graphify` on the repo or a focused subtree and turning the result into usable graph/report outputs |
