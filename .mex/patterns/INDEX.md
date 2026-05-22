@@ -32,6 +32,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [metagit-web-api.md](metagit-web-api.md) | Adding or changing Pydantic models and routes for `metagit web serve` |
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |
 | [context-pack-repo-cards.md](context-pack-repo-cards.md) | Tier-1 context pack repo cards (`RepoCardService`, index + `inspect_repo_state`) |
+| [optimize-agent-access.md](optimize-agent-access.md) | Scaffold llms.txt, AGENTS.md, hidden README agent HTML via `metagit-agent-access` skill |
 | [debug-mcp-runtime.md](debug-mcp-runtime.md) | Diagnosing MCP runtime protocol, framing, gating, and tool/resource failures |
 | [debug-workspace-discovery.md](debug-workspace-discovery.md) | Diagnosing empty/incorrect workspace index, search hits, or upstream hint ranking |
 | [run-graphify-analysis.md](run-graphify-analysis.md) | Running `graphify` on the repo or a focused subtree and turning the result into usable graph/report outputs |

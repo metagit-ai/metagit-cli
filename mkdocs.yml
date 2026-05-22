@@ -5,6 +5,7 @@ theme:
   name: material
 nav:
   - 'index.md'
+  - 'For AI agents': 'agents.md'
   - 'Installation': 'install.md'
   - 'Terminology': 'terminology.md'
   - 'Application Logic': 'app.logic.md'

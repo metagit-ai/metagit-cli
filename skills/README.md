@@ -2,6 +2,8 @@
 
 Metagit ships agent **skills** (`skills/metagit-*/SKILL.md`): short playbooks for when and how to use the CLI and MCP. All bundled skills use a `metagit-` prefix.
 
+> **New here?** Read [For AI agents](agents.md) first — install, session start, and context packs.
+
 ## Install the CLI
 
 ```bash
@@ -38,6 +40,7 @@ Other targets: `opencode`, `claude_code`, `github_copilot`.
 | Skill | Use when |
 |-------|----------|
 | `metagit-cli` | CLI-only agent workflows: all `metagit prompt` kinds, catalog, detect, sync, layout (no MCP/API) |
+| `metagit-agent-access` | On-demand: optimize any repo for minimal-token agent onboarding (`llms.txt`, hidden README comments, AGENTS.md) |
 | `metagit-projects` | Starting work; check for existing projects/repos before new folders |
 | `metagit-workspace-scope` | Session start; workspace and sync context |
 | `metagit-control-center` | Ongoing multi-repo coordination |
