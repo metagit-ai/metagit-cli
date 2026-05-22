@@ -1,0 +1,49 @@
+# Metagit CLI
+
+> Multi-repo situational awareness for humans and AI agents. Install once; use from any workspace with `.metagit.yml`.
+
+## Install
+
+```bash
+uv tool install metagit-cli
+export METAGIT_AGENT_MODE=true
+```
+
+PyPI name: `metagit-cli` (not `metagit`).
+
+## Session start (minimal tokens)
+
+```bash
+metagit context pack --tier 2 --json
+metagit prompt workspace --kind session-start --text-only
+```
+
+- Tier 0: workspace map · Tier 1: + repo cards · Tier 2: + since-last-session digest
+
+## Agent docs (read in this order)
+
+- [AGENTS.md](AGENTS.md): GitHub/Cursor quick reference (this repo)
+- [docs/agents.md](docs/agents.md): full agent guide (also on docs site)
+- [docs/skills.md](docs/skills.md): bundled skill catalog + install
+- [Published docs](https://metagit-ai.github.io/metagit-cli/agents/): agents guide on GitHub Pages
+
+## Essential commands
+
+| Goal | Command |
+|------|---------|
+| Context pack | `metagit context pack --tier 0\|1\|2 --json` |
+| Find repo | `metagit search "query" --json` |
+| List workspace | `metagit workspace list --json` |
+| Prompts | `metagit prompt list` |
+| Skills | `metagit skills install --scope user` |
+| MCP | `metagit mcp install --scope user` |
+
+## Bundled skills (after install)
+
+`metagit-cli`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects` — see docs/skills.md.
+
+## Optional
+
+- Local web UI: `metagit web serve`
+- HTTP API: `metagit api serve`
+- Repomix profile: `metagit context repomix --profile bugfix-local --project P --repo R`

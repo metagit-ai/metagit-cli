@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Agent onboarding:** `llms.txt`, [docs/agents.md](docs/agents.md), and README/AGENTS.md sections so agents landing on the GitHub repo can install and use Metagit with minimal tokens (context packs, skills, MCP).
+- **`metagit-agent-access` skill:** On-demand optimizer (script + subagent prompt) to scaffold `llms.txt`, `AGENTS.md`, and hidden README HTML agent blocks for any repository.
 - **Context packs Phase 2:** tier **2** session digest (`SessionDigestService`), workspace **objectives** (CLI/MCP/Web), **approval queue** for mutating ops, and **repomix context profiles** (`bugfix-local`, `config-edit`, `cross-repo-impact`) via `metagit context repomix` and `task repomix:profile`.
 - **Context packs Phase 1:** tier 0 workspace map and tier 1 repo cards via `metagit context pack`, MCP `metagit_context_pack` / `metagit_repo_card`, and prompt kind `context-pack`.
 - **Repomix context profiles:** `src/metagit/data/context_profiles.yaml` bundles scoped globs; `RepomixProfileService` runs `repomix --include/--ignore` for a repository directory.

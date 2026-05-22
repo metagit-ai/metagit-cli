@@ -1,6 +1,24 @@
 # Metagit
 
+<!-- agent-access:start
+project: metagit-cli
+install: uv tool install metagit-cli
+session_start: export METAGIT_AGENT_MODE=true && metagit context pack --tier 2 --json
+refs: llms.txt, AGENTS.md, docs/agents.md
+agent-access:end -->
+
 Metagit gives you situational awareness across Git repositories. It helps multi-repo projects feel manageable by keeping stack details, generated artifacts, dependencies, and related metadata in one place.
+
+## For AI agents
+
+See **[For AI agents](agents.md)** for install, session workflow (`context pack` tiers 0–2), CLI vs MCP, and skills.
+
+```bash
+uv tool install metagit-cli && export METAGIT_AGENT_MODE=true
+metagit context pack --tier 2 --json
+```
+
+GitHub: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob/main/AGENTS.md) · [llms.txt](https://github.com/metagit-ai/metagit-cli/blob/main/llms.txt)
 
 ## About
 
@@ -15,8 +33,6 @@ This tool works well for scenarios like:
 Metagit is designed for developers, SREs, and AI agents who work across connected repositories. It tracks the dependencies and project relationships that are easy to miss when you only look at one repo at a time.
 
 ## Quick start
-
-Install or upgrade the CLI globally with [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv tool install metagit-cli
@@ -33,7 +49,7 @@ metagit skills list
 metagit skills install --scope user --target openclaw --target hermes
 ```
 
-Use `--scope project` when installing into a specific umbrella repository checkout. See [Skills](docs/skills.md) for targets, MCP install, and the project-management skill for agents.
+Use `--scope project` when installing into a specific umbrella repository checkout. See [Skills](skills.md) for targets, MCP install, and the project-management skill for agents.
 
 ## Audience
 
@@ -132,7 +148,7 @@ That creates `.metagit.yml` and updates `.gitignore`.
 
 ## Skills
 
-Bundled skills ship with the package and install via `metagit skills install` (see [docs/skills.md](docs/skills.md)). For development in this repository, `skills/` is the source tree; run `task skills:sync` to mirror into `.cursor/skills/`.
+Bundled skills ship with the package and install via `metagit skills install` (see [skills.md](skills.md)). For development in this repository, `skills/` is the source tree; run `task skills:sync` to mirror into `.cursor/skills/`.
 
 ## Agent guides
 

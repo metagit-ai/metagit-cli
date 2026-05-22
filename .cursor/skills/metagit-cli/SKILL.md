@@ -13,6 +13,15 @@ Set non-interactive defaults when automating:
 export METAGIT_AGENT_MODE=true
 ```
 
+**Session start** (from umbrella repo with `.metagit.yml`):
+
+```bash
+metagit context pack --tier 2 --json
+metagit prompt workspace -k session-start --text-only -c .metagit.yml
+```
+
+Repo-root agent docs: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob/main/AGENTS.md) · [llms.txt](https://github.com/metagit-ai/metagit-cli/blob/main/llms.txt) · [docs/agents.md](https://metagit-ai.github.io/metagit-cli/agents/).
+
 Global flags (most commands):
 
 - `-c path/to/metagit.config.yaml` — app config (default `metagit.config.yaml`)

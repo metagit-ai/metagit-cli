@@ -1,0 +1,7 @@
+{
+  "schema": "metagit-agent-access/1",
+  "project": "{{PROJECT_NAME}}",
+  "install": "{{INSTALL_CMD}}",
+  "session": [{{SESSION_JSON_ARRAY}}],
+  "refs": ["llms.txt", "AGENTS.md"]
+}

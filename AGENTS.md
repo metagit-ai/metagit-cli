@@ -1,5 +1,32 @@
+# Metagit — agent quick reference
+
+For agents instructed to **use Metagit** (not necessarily to contribute to this repository).
+
+**Install:** `uv tool install metagit-cli` · set `METAGIT_AGENT_MODE=true` · PyPI name **`metagit-cli`**.
+
+**Session start** (from repo with `.metagit.yml`):
+
+```bash
+metagit context pack --tier 2 --json
+metagit prompt workspace --kind session-start --text-only
+```
+
+**Skills:** `metagit skills install --scope user` · **MCP:** `metagit mcp install --scope user`
+
+| Need | Command |
+|------|---------|
+| Workspace map / repo cards | `metagit context pack --tier 0\|1\|2 --json` |
+| Find managed repo | `metagit search "…" --json` |
+| Catalog | `metagit workspace list --json` |
+| Operational prompts | `metagit prompt list` |
+| Scoped repo text | `metagit context repomix --profile bugfix-local --project P --repo R` |
+
+Full guide: [docs/agents.md](docs/agents.md) · Index: [llms.txt](llms.txt) · Skills: [docs/skills.md](docs/skills.md) · Docs: <https://metagit-ai.github.io/metagit-cli/agents/>
+
+---
+
 <!-- gitnexus:start -->
-# GitNexus — Code Intelligence
+# GitNexus — Code Intelligence (contributing to metagit-cli)
 
 This project is indexed by GitNexus as **metagit-cli** (3672 symbols, 5447 relationships, 73 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 

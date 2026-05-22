@@ -1,0 +1,24 @@
+# {{PROJECT_NAME}} — agent quick reference
+
+For agents instructed to **use this project** (not necessarily to contribute).
+
+**Install:** `{{INSTALL_CMD}}`
+
+**Session start:**
+
+```bash
+{{SESSION_CMDS}}
+```
+
+| Need | Command |
+|------|---------|
+| Help | `{{CLI_NAME}} --help` |
+{{EXTRA_CMD_ROWS}}
+
+Full guide: [docs/agents.md](docs/agents.md) (if present) · Index: [llms.txt](llms.txt)
+
+---
+
+<!-- contributor-section:start -->
+<!-- Add project contributor instructions below (build, test, architecture). -->
+<!-- contributor-section:end -->

@@ -1,0 +1,31 @@
+# {{PROJECT_NAME}}
+
+> {{ONE_LINE_DESCRIPTION}}
+
+## Install
+
+```bash
+{{INSTALL_CMD}}
+```
+
+## Session start
+
+```bash
+{{SESSION_CMDS}}
+```
+
+## Agent docs
+
+- [AGENTS.md](AGENTS.md)
+{{DOCS_AGENTS_LINK}}
+
+## Essential commands
+
+| Goal | Command |
+|------|---------|
+| Help | `{{CLI_NAME}} --help` |
+{{EXTRA_CMD_ROWS}}
+
+## Optional
+
+{{OPTIONAL_SECTION}}
