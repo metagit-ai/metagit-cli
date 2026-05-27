@@ -13,6 +13,9 @@ from pydantic import BaseModel, ValidationError
 
 T = TypeVar("T", bound=BaseModel)
 
+_OMIT = object()
+_MAX_VALIDATION_RETRIES = 5
+
 _pt_cache: Optional[SimpleNamespace] = None
 _prompt_style_cache: Any = None
 
@@ -81,11 +84,31 @@ class UserPrompt:
         self.session = pk.PromptSession(style=_prompt_style())
 
     @staticmethod
+    def _default_for_unprompted_field(field_info: Any) -> Any:
+        """
+        Resolve a default for fields excluded from interactive prompting.
+
+        Returns _OMIT when the model should apply its own default (including
+        default_factory) by leaving the key out of the constructor kwargs.
+        """
+        if field_info.is_required():
+            return _OMIT
+        try:
+            default_value = field_info.get_default(call_default_factory=True)
+            if str(default_value) == "PydanticUndefined":
+                return _OMIT
+            return default_value
+        except Exception:
+            return _OMIT
+
+    @staticmethod
     def prompt_for_model(
         model_class: Type[T],
         existing_data: Optional[Dict[str, Any]] = None,
         title: str = None,
         fields_to_prompt: Optional[List[str]] = None,
+        *,
+        _retry_count: int = 0,
     ) -> Union[T, Exception]:
         """
         Prompt the user for fields of a Pydantic model.
@@ -139,14 +162,9 @@ class UserPrompt:
 
                 # If fields_to_prompt is specified, only prompt for those fields
                 if fields_to_prompt is not None and field_name not in fields_to_prompt:
-                    # Use default value or None for non-prompted fields
-                    try:
-                        default_value = field_info.get_default()
-                        if str(default_value) == "PydanticUndefined":
-                            default_value = None
+                    default_value = UserPrompt._default_for_unprompted_field(field_info)
+                    if default_value is not _OMIT:
                         field_data[field_name] = default_value
-                    except Exception:
-                        field_data[field_name] = None
                     continue
 
                 # Check if field is required
@@ -177,9 +195,30 @@ class UserPrompt:
                     [("class:error", f"\n❌ Validation error: {e}\n")]
                 )
                 pk.print_formatted_text(error_text)
-                # Retry with corrected data
+                if _retry_count >= _MAX_VALIDATION_RETRIES:
+                    return ValueError(
+                        f"Validation failed after {_MAX_VALIDATION_RETRIES} attempts: {e}"
+                    )
+                failed_fields = {
+                    str(err["loc"][0]) for err in e.errors() if err.get("loc")
+                }
+                corrected_data = dict(field_data)
+                for failed_field in failed_fields:
+                    corrected_data.pop(failed_field, None)
+                for field_name, field_info in model_fields.items():
+                    if field_name not in corrected_data:
+                        continue
+                    if (
+                        corrected_data[field_name] is None
+                        and not field_info.is_required()
+                    ):
+                        corrected_data.pop(field_name, None)
                 return UserPrompt.prompt_for_model(
-                    model_class, field_data, title, fields_to_prompt
+                    model_class,
+                    corrected_data,
+                    title,
+                    fields_to_prompt,
+                    _retry_count=_retry_count + 1,
                 )
         except Exception as e:
             return e
