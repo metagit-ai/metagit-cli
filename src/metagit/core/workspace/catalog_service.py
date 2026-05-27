@@ -24,6 +24,47 @@ from metagit.core.workspace.catalog_models import (
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
+def _repo_ensure_conflict(
+    existing: ProjectPath,
+    desired: ProjectPath,
+) -> str | None:
+    """Return a conflict message when ``desired`` disagrees with ``existing``."""
+    if desired.url is not None:
+        existing_url = str(existing.url) if existing.url else None
+        desired_url = str(desired.url)
+        if existing_url != desired_url:
+            return (
+                f"url mismatch for repo '{existing.name}': "
+                f"catalog has {existing_url!r}, requested {desired_url!r}"
+            )
+    if desired.path is not None and existing.path != desired.path:
+        return (
+            f"path mismatch for repo '{existing.name}': "
+            f"catalog has {existing.path!r}, requested {desired.path!r}"
+        )
+    return None
+
+
+def _project_ensure_conflict(
+    existing: WorkspaceProject,
+    *,
+    description: str | None,
+    agent_instructions: str | None,
+) -> str | None:
+    """Return a conflict message when optional project fields disagree."""
+    if description is not None and existing.description != description:
+        return (
+            f"description mismatch for project '{existing.name}': "
+            f"catalog has {existing.description!r}, requested {description!r}"
+        )
+    if (
+        agent_instructions is not None
+        and existing.agent_instructions != agent_instructions
+    ):
+        return f"agent_instructions mismatch for project '{existing.name}'"
+    return None
+
+
 class WorkspaceCatalogService:
     """CRUD-style catalog operations for workspace manifests."""
 
@@ -131,6 +172,7 @@ class WorkspaceCatalogService:
         name: str,
         description: Optional[str] = None,
         agent_instructions: Optional[str] = None,
+        ensure: bool = False,
     ) -> CatalogMutationResult:
         """Add a workspace project (group) to the manifest."""
         trimmed = name.strip()
@@ -145,12 +187,33 @@ class WorkspaceCatalogService:
             config.workspace = Workspace(projects=[])
         for project in config.workspace.projects:
             if project.name == trimmed:
-                return self._mutation_error(
+                if not ensure:
+                    return self._mutation_error(
+                        entity="project",
+                        operation="add",
+                        kind="already_exists",
+                        message=f"project '{trimmed}' already exists",
+                        project_name=trimmed,
+                    )
+                conflict = _project_ensure_conflict(
+                    project,
+                    description=description,
+                    agent_instructions=agent_instructions,
+                )
+                if conflict:
+                    return self._mutation_error(
+                        entity="project",
+                        operation="add",
+                        kind="conflict",
+                        message=conflict,
+                        project_name=trimmed,
+                    )
+                return CatalogMutationResult(
+                    ok=True,
                     entity="project",
-                    operation="add",
-                    kind="already_exists",
-                    message=f"project '{trimmed}' already exists",
+                    operation="noop",
                     project_name=trimmed,
+                    config_path=config_path,
                 )
         config.workspace.projects.append(
             WorkspaceProject(
@@ -230,6 +293,7 @@ class WorkspaceCatalogService:
         *,
         project_name: str,
         repo: ProjectPath,
+        ensure: bool = False,
     ) -> CatalogMutationResult:
         """Add a repository entry under a workspace project."""
         project = self._find_project(config=config, project_name=project_name)
@@ -243,15 +307,34 @@ class WorkspaceCatalogService:
             )
         for existing in project.repos:
             if existing.name == repo.name:
-                return self._mutation_error(
+                if not ensure:
+                    return self._mutation_error(
+                        entity="repo",
+                        operation="add",
+                        kind="already_exists",
+                        message=(
+                            f"repo '{repo.name}' already exists in project '{project_name}'"
+                        ),
+                        project_name=project_name,
+                        repo_name=repo.name,
+                    )
+                conflict = _repo_ensure_conflict(existing, repo)
+                if conflict:
+                    return self._mutation_error(
+                        entity="repo",
+                        operation="add",
+                        kind="conflict",
+                        message=conflict,
+                        project_name=project_name,
+                        repo_name=repo.name,
+                    )
+                return CatalogMutationResult(
+                    ok=True,
                     entity="repo",
-                    operation="add",
-                    kind="already_exists",
-                    message=(
-                        f"repo '{repo.name}' already exists in project '{project_name}'"
-                    ),
+                    operation="noop",
                     project_name=project_name,
                     repo_name=repo.name,
+                    config_path=config_path,
                 )
         if repo.path is None and repo.url is None:
             return self._mutation_error(
@@ -435,7 +518,7 @@ class WorkspaceCatalogService:
             ok=False,
             error=CatalogError(kind=kind, message=message),
             entity="repo" if entity == "repo" else "project",
-            operation="remove" if operation == "remove" else "add",
+            operation=operation if operation in {"add", "remove", "noop"} else "add",
             project_name=project_name,
             repo_name=repo_name,
             config_path="",

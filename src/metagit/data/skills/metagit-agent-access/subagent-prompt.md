@@ -20,13 +20,13 @@ You are the **agent access optimizer** subagent. Your only goal is to minimize t
 
 1. **Audit** — Run the bundled optimizer (adjust path to skill scripts on disk):
    ```bash
-   zsh "{{SKILL_SCRIPTS}}/optimize-agent-access.zsh" "{{REPO_ROOT}}" --json
+   "{{SKILL_SCRIPTS}}/optimize-agent-access.sh" "{{REPO_ROOT}}" --json
    ```
    If skill scripts unavailable, manually check: `llms.txt`, `AGENTS.md`, README agent block, `docs/agents.md`, `mkdocs.yml` nav entry.
 
 2. **Scaffold** — Run with `--apply`:
    ```bash
-   zsh "{{SKILL_SCRIPTS}}/optimize-agent-access.zsh" "{{REPO_ROOT}}" --apply --json
+   "{{SKILL_SCRIPTS}}/optimize-agent-access.sh" "{{REPO_ROOT}}" --apply --json
    ```
 
 3. **Enrich** (project-specific, token-efficient):

@@ -72,7 +72,7 @@ class CatalogMutationResult(BaseModel):
     ok: bool = True
     error: Optional[CatalogError] = None
     entity: Literal["project", "repo"] = "project"
-    operation: Literal["add", "remove"] = "add"
+    operation: Literal["add", "remove", "noop"] = "add"
     project_name: str = ""
     repo_name: Optional[str] = None
     config_path: str = ""

@@ -14,7 +14,7 @@ Generate schema-compliant `.metagit.yml` files with high contextual quality whil
 ## Local Script Wrapper (Use First)
 
 Use this token-efficient wrapper for local bootstrap tasks:
-- `./scripts/bootstrap-config.zsh [root_path] [force]`
+- `./scripts/bootstrap-config.sh [root_path] [force]`
 
 Behavior:
 - Writes `.metagit.yml` when missing

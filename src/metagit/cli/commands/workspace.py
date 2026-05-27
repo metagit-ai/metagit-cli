@@ -22,6 +22,7 @@ from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
+from metagit.cli.shell_completion import complete_projects, complete_repos
 
 
 def _catalog_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str]:
@@ -129,6 +130,11 @@ def workspace_project_list(ctx: click.Context, as_json: bool) -> None:
     "--agent-instructions", default=None, help="Agent instructions for the project"
 )
 @click.option(
+    "--ensure",
+    is_flag=True,
+    help="Succeed without changes when the project already exists with matching fields",
+)
+@click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
 @click.pass_context
@@ -137,16 +143,19 @@ def workspace_project_add(
     name: str,
     description: str | None,
     agent_instructions: str | None,
+    ensure: bool,
     as_json: bool,
 ) -> None:
     """Add a project to the workspace manifest."""
     local_config, config_path, _ = _catalog_ctx(ctx)
+    ensure_mode = ensure or bool(ctx.obj.get("agent_mode", False))
     result = WorkspaceCatalogService().add_project(
         local_config,
         config_path,
         name=name,
         description=description,
         agent_instructions=agent_instructions,
+        ensure=ensure_mode,
     )
     exit_on_catalog_mutation(result, as_json=as_json)
 
@@ -233,7 +242,13 @@ def workspace_repo(_ctx: click.Context) -> None:
 
 
 @workspace_repo.command("list")
-@click.option("--project", "-p", default=None, help="Limit to one project name")
+@click.option(
+    "--project",
+    "-p",
+    default=None,
+    help="Limit to one project name",
+    shell_complete=complete_projects,
+)
 @click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
@@ -263,14 +278,27 @@ def workspace_repo_list(
 
 
 @workspace_repo.command("add")
-@click.option("--project", "-p", required=True, help="Workspace project name")
-@click.option("--name", "-n", required=True, help="Repository name")
+@click.option(
+    "--project",
+    "-p",
+    required=True,
+    help="Workspace project name",
+    shell_complete=complete_projects,
+)
+@click.option(
+    "--name", "-n", required=True, help="Repository name", shell_complete=complete_repos
+)
 @click.option("--description", default=None)
 @click.option("--kind", type=click.Choice([k.value for k in ProjectKind]), default=None)
 @click.option("--path", default=None, help="Relative path under workspace root")
 @click.option("--url", default=None, help="Remote repository URL")
 @click.option("--sync/--no-sync", default=None)
 @click.option("--agent-instructions", default=None)
+@click.option(
+    "--ensure",
+    is_flag=True,
+    help="Succeed without changes when the repo already exists with matching url/path",
+)
 @click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
@@ -285,10 +313,12 @@ def workspace_repo_add(
     url: str | None,
     sync: bool | None,
     agent_instructions: str | None,
+    ensure: bool,
     as_json: bool,
 ) -> None:
     """Add a repository entry to a workspace project (manifest only)."""
     local_config, config_path, _ = _catalog_ctx(ctx)
+    ensure_mode = ensure or bool(ctx.obj.get("agent_mode", False))
     service = WorkspaceCatalogService()
     built = service.build_repo_from_fields(
         name=name,
@@ -306,13 +336,22 @@ def workspace_repo_add(
         config_path,
         project_name=project,
         repo=built,
+        ensure=ensure_mode,
     )
     exit_on_catalog_mutation(result, as_json=as_json)
 
 
 @workspace_repo.command("remove")
-@click.option("--project", "-p", required=True, help="Workspace project name")
-@click.option("--name", "-n", required=True, help="Repository name")
+@click.option(
+    "--project",
+    "-p",
+    required=True,
+    help="Workspace project name",
+    shell_complete=complete_projects,
+)
+@click.option(
+    "--name", "-n", required=True, help="Repository name", shell_complete=complete_repos
+)
 @click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
@@ -335,7 +374,13 @@ def workspace_repo_remove(
 
 
 @workspace_repo.command("rename")
-@click.option("--project", "-p", required=True, help="Workspace project name")
+@click.option(
+    "--project",
+    "-p",
+    required=True,
+    help="Workspace project name",
+    shell_complete=complete_projects,
+)
 @click.argument("from_name")
 @click.argument("to_name")
 @click.option("--dry-run", is_flag=True, default=False)
@@ -384,7 +429,14 @@ def workspace_repo_rename(
 
 @workspace_repo.command("move")
 @click.option("--project", "-p", "from_project", required=True, help="Source project")
-@click.option("--name", "-n", "repo_name", required=True, help="Repository name")
+@click.option(
+    "--name",
+    "-n",
+    "repo_name",
+    required=True,
+    help="Repository name",
+    shell_complete=complete_repos,
+)
 @click.option(
     "--to-project",
     required=True,

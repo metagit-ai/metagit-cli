@@ -67,6 +67,7 @@ class CatalogApiHandler:
                 name=name,
                 description=payload.get("description"),
                 agent_instructions=payload.get("agent_instructions"),
+                ensure=bool(payload.get("ensure", True)),
             )
             self._respond_mutation(mutation, respond)
             return True
@@ -116,6 +117,7 @@ class CatalogApiHandler:
                 self._config_path,
                 project_name=project_name,
                 repo=built,
+                ensure=bool(payload.get("ensure", True)),
             )
             self._respond_mutation(mutation, respond)
             return True

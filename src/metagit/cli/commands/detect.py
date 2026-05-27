@@ -4,9 +4,16 @@ Detect subcommand
 
 import json
 import os
+from pathlib import Path
 
 import click
 import yaml
+from metagit.core.config.manifest_gate import (
+    ManifestGateInvalid,
+    ManifestGateOutcome,
+    evaluate_existing_manifest,
+    manifest_gate_error_message,
+)
 from metagit.core.detect.manager import (
     DetectionManager,
     DetectionManagerConfig,
@@ -274,6 +281,12 @@ def detect_repo(ctx: click.Context, path: str, output: str) -> None:
     default=".metagit.yml",
     help="Path to the MetagitConfig file to save.",
 )
+@click.option(
+    "--force",
+    "-f",
+    is_flag=True,
+    help="Overwrite an existing .metagit.yml (disabled in agent mode)",
+)
 @click.pass_context
 def detect_repository(
     ctx: click.Context,
@@ -288,6 +301,7 @@ def detect_repository(
     gitlab_url: str,
     use_app_config: bool,
     config_path: str,
+    force: bool,
 ) -> None:
     """Comprehensive repository analysis and MetagitConfig generation using DetectionManager."""
     logger = ctx.obj["logger"]
@@ -432,13 +446,34 @@ def detect_repository(
         if not save:
             click.echo(result)
         else:
-            if ctx.obj.get("agent_mode"):
+            save_target = Path(config_path)
+            agent_mode = bool(ctx.obj.get("agent_mode", False))
+            if save_target.is_file() and force and agent_mode:
                 raise click.UsageError(
-                    "Interactive save confirmation is disabled in agent mode; "
-                    "remove the existing config file first or omit --save"
+                    "Overwrite with --force is disabled in agent mode; "
+                    "remove the existing config file first"
                 )
-            if os.path.exists(config_path) and not click.confirm(
-                f"Configuration file at '{config_path}' already exists. Do you want to overwrite it?"
+
+            gate = evaluate_existing_manifest(save_target, force=force)
+            if isinstance(gate, ManifestGateInvalid):
+                logger.error(manifest_gate_error_message(gate))
+                if hasattr(detection_manager, "cleanup"):
+                    detection_manager.cleanup()
+                ctx.abort()
+            if isinstance(gate, ManifestGateOutcome):
+                logger.success(f"Config already valid: {save_target}")
+                if hasattr(detection_manager, "cleanup"):
+                    detection_manager.cleanup()
+                return
+
+            if (
+                save_target.is_file()
+                and not force
+                and not agent_mode
+                and not click.confirm(
+                    f"Configuration file at '{config_path}' already exists. "
+                    "Do you want to overwrite it?"
+                )
             ):
                 click.echo("Save operation aborted.")
                 if hasattr(detection_manager, "cleanup"):

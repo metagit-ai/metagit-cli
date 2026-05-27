@@ -34,6 +34,33 @@ metagit version
 metagit --help
 ```
 
+## Shell tab completion
+
+Metagit ships first-class shell completion for **zsh**, **bash**, and **fish**. Static commands and flags are completed automatically; when a `.metagit.yml` is present, **`--project`**, **`--repo`**, and repomix **`--profile`** values are completed from the manifest and bundled profiles.
+
+Install (writes to the conventional user path):
+
+```bash
+metagit completion install --shell zsh
+metagit completion install --shell bash
+metagit completion install --shell fish
+```
+
+Print a script or one-line activation hint:
+
+```bash
+metagit completion show --shell zsh
+metagit completion install --shell zsh --stdout
+```
+
+Verify the callback works:
+
+```bash
+metagit completion doctor
+```
+
+**zsh:** ensure the install path is on `fpath` before `compinit` (the install command prints the exact line). After upgrading metagit, re-run `completion install` if new subcommands were added.
+
 ## Option 2: install from source (local development)
 
 Clone and bootstrap:
@@ -85,7 +112,10 @@ Useful first checks:
 ```bash
 metagit config validate
 metagit info
+metagit fmt
 ```
+
+`metagit format` is an alias for `metagit fmt`. Use `--check` in CI to fail when YAML is not normalized; `--target metagit|appconfig|all` selects which file(s) to rewrite.
 
 ## Local MCP runtime usage
 

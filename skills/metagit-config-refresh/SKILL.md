@@ -16,7 +16,7 @@ Use this skill to keep `.metagit.yml` accurate and operational.
 
 ## Command Wrapper
 
-- `zsh ./skills/metagit-bootstrap/scripts/bootstrap-config.zsh [root_path] [mode] [seed_context]`
+- `./skills/metagit-bootstrap/scripts/bootstrap-config.sh [root_path] [mode] [seed_context]`
 
 ## Output Contract
 

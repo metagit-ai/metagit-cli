@@ -125,3 +125,80 @@ def test_add_repo_rejects_duplicate_identity(tmp_path: Path) -> None:
     assert not result.ok
     assert result.error is not None
     assert result.error.kind == "duplicate_identity"
+
+
+def test_add_repo_ensure_noop_when_matching(tmp_path: Path) -> None:
+    config, config_path = _write_manifest(
+        tmp_path,
+        [
+            {
+                "name": "platform",
+                "repos": [
+                    {
+                        "name": "svc-b",
+                        "url": "https://github.com/example/svc-b.git",
+                    }
+                ],
+            }
+        ],
+    )
+    service = WorkspaceCatalogService()
+    built = service.build_repo_from_fields(
+        name="svc-b",
+        url="https://github.com/example/svc-b.git",
+    )
+    assert not isinstance(built, Exception)
+    result = service.add_repo(
+        config,
+        config_path,
+        project_name="platform",
+        repo=built,
+        ensure=True,
+    )
+    assert result.ok
+    assert result.operation == "noop"
+
+
+def test_add_repo_ensure_conflict_on_url_mismatch(tmp_path: Path) -> None:
+    config, config_path = _write_manifest(
+        tmp_path,
+        [
+            {
+                "name": "platform",
+                "repos": [
+                    {
+                        "name": "svc-b",
+                        "url": "https://github.com/example/svc-b.git",
+                    }
+                ],
+            }
+        ],
+    )
+    service = WorkspaceCatalogService()
+    built = service.build_repo_from_fields(
+        name="svc-b",
+        url="https://github.com/example/other.git",
+    )
+    assert not isinstance(built, Exception)
+    result = service.add_repo(
+        config,
+        config_path,
+        project_name="platform",
+        repo=built,
+        ensure=True,
+    )
+    assert not result.ok
+    assert result.error is not None
+    assert result.error.kind == "conflict"
+
+
+def test_add_project_ensure_noop(tmp_path: Path) -> None:
+    config, config_path = _write_manifest(
+        tmp_path,
+        [{"name": "infra", "repos": []}],
+    )
+    service = WorkspaceCatalogService()
+    result = service.add_project(config, config_path, name="infra", ensure=True)
+    assert result.ok
+    assert result.operation == "noop"
+

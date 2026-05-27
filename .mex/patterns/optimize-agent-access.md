@@ -20,11 +20,11 @@ User wants minimal-token agent onboarding for a repo (this repo or another).
 1. Read skill: `src/metagit/data/skills/metagit-agent-access/SKILL.md`
 2. Run audit:
    ```bash
-   zsh src/metagit/data/skills/metagit-agent-access/scripts/optimize-agent-access.zsh . --json
+   src/metagit/data/skills/metagit-agent-access/scripts/optimize-agent-access.sh . --json
    ```
 3. Apply scaffolds when safe:
    ```bash
-   zsh src/metagit/data/skills/metagit-agent-access/scripts/optimize-agent-access.zsh . --apply --json
+   src/metagit/data/skills/metagit-agent-access/scripts/optimize-agent-access.sh . --apply --json
    ```
 4. For large gaps, dispatch subagent with `subagent-prompt.md` from the skill directory.
 

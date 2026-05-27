@@ -25,6 +25,8 @@ import click
 from metagit import DEFAULT_CONFIG, __version__
 from metagit.cli.commands.api import api
 from metagit.cli.commands.appconfig import appconfig
+from metagit.cli.commands.completion_cmd import completion_group
+from metagit.cli.commands.fmt import fmt_cmd
 from metagit.cli.commands.config import config
 from metagit.cli.commands.context import context
 from metagit.cli.commands.detect import detect
@@ -145,6 +147,9 @@ cli.add_command(search)
 cli.add_command(search, name="find")
 cli.add_command(prompt)
 cli.add_command(context)
+cli.add_command(completion_group)
+cli.add_command(fmt_cmd, name="fmt")
+cli.add_command(fmt_cmd, name="format")
 
 
 def main() -> None:

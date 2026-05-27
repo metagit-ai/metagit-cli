@@ -423,6 +423,7 @@ class MetagitMcpRuntime:
                     "name": {"type": "string"},
                     "description": {"type": "string"},
                     "agent_instructions": {"type": "string"},
+                    "ensure": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -449,6 +450,7 @@ class MetagitMcpRuntime:
                     "url": {"type": "string"},
                     "sync": {"type": "boolean"},
                     "agent_instructions": {"type": "string"},
+                    "ensure": {"type": "boolean"},
                     "tags": {
                         "type": "object",
                         "additionalProperties": {"type": "string"},
@@ -1330,6 +1332,7 @@ class MetagitMcpRuntime:
                 name=project_name,
                 description=arguments.get("description"),
                 agent_instructions=arguments.get("agent_instructions"),
+                ensure=bool(arguments.get("ensure", True)),
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_project_remove":
@@ -1375,6 +1378,7 @@ class MetagitMcpRuntime:
                 config_path=config_path,
                 project_name=str(arguments.get("project_name", "")).strip(),
                 repo=built,
+                ensure=bool(arguments.get("ensure", True)),
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_repo_remove":

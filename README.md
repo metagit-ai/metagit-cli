@@ -1,11 +1,22 @@
 # Metagit
 
-<!-- agent-access:start
-project: metagit-cli
-install: uv tool install metagit-cli
-session_start: export METAGIT_AGENT_MODE=true && metagit context pack --tier 2 --json
-refs: llms.txt, AGENTS.md, docs/agents.md
-agent-access:end -->
+<!-- agent-entrypoint:
+intent: executable-tool
+primary_workflow: usage-first
+install: uv tool install -U metagit-cli
+
+bootstrap:
+  - export METAGIT_AGENT_MODE=true
+  - metagit context pack --tier 2 --json
+
+authoritative:
+  - ./AGENTS.md
+  - ./docs/agents.md
+  - ./llms.txt
+
+usage:
+  - ./README.md#quick-start
+-->
 
 Metagit gives you situational awareness across Git repositories. It helps multi-repo projects feel manageable by keeping stack details, generated artifacts, dependencies, and related metadata in one place.
 
@@ -38,6 +49,7 @@ Metagit is designed for developers, SREs, and AI agents who work across connecte
 uv tool install metagit-cli
 uv tool install -U metagit-cli   # upgrade later
 metagit version
+metagit completion install --shell zsh   # optional tab completion; see docs/install.md
 ```
 
 > Use the PyPI package name **`metagit-cli`**. The `metagit` package on PyPI is a different project.

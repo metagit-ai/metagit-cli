@@ -17,7 +17,7 @@ Use this skill for cross-repository feature or fix delivery.
 
 ## Command Wrapper
 
-- `zsh ./skills/metagit-control-center/scripts/control-cycle.zsh [root_path] ["query"] [preset]`
+- `./skills/metagit-control-center/scripts/control-cycle.sh [root_path] ["query"] [preset]`
 
 ## Output Contract
 

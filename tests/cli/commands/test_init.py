@@ -157,3 +157,34 @@ def test_init_minimal_service_kind() -> None:
     assert result.exit_code == 0, result.output
     loaded = yaml.safe_load(Path(".metagit.yml").read_text(encoding="utf-8"))
     assert loaded["kind"] == "service"
+
+
+def test_init_idempotent_when_manifest_valid() -> None:
+  runner = CliRunner()
+  with runner.isolated_filesystem():
+    first = runner.invoke(
+      cli,
+      ["init", "--kind", "application", "--skip-gitignore", "--no-prompt"],
+    )
+    assert first.exit_code == 0, first.output
+    before = Path(".metagit.yml").read_text(encoding="utf-8")
+
+    second = runner.invoke(
+      cli,
+      ["init", "--kind", "application", "--skip-gitignore", "--no-prompt"],
+    )
+    assert second.exit_code == 0, second.output
+    assert "Already initialized" in second.output
+    assert Path(".metagit.yml").read_text(encoding="utf-8") == before
+
+
+def test_init_fails_when_manifest_invalid() -> None:
+  runner = CliRunner()
+  with runner.isolated_filesystem():
+    Path(".metagit.yml").write_text("name: broken\nkind: not-a-kind\n", encoding="utf-8")
+    result = runner.invoke(
+      cli,
+      ["init", "--kind", "application", "--skip-gitignore", "--no-prompt"],
+    )
+    assert result.exit_code != 0
+

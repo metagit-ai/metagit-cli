@@ -100,10 +100,10 @@ Use the **`metagit-agent-access`** skill when a repository needs agent-friendly 
 
 ```bash
 # Audit gaps (llms.txt, AGENTS.md, hidden README HTML comment)
-zsh skills/metagit-agent-access/scripts/optimize-agent-access.zsh /path/to/repo --json
+skills/metagit-agent-access/scripts/optimize-agent-access.sh /path/to/repo --json
 
 # Scaffold missing artifacts from templates
-zsh skills/metagit-agent-access/scripts/optimize-agent-access.zsh /path/to/repo --apply --json
+skills/metagit-agent-access/scripts/optimize-agent-access.sh /path/to/repo --apply --json
 ```
 
 For large or unfamiliar repos, dispatch the subagent prompt in `skills/metagit-agent-access/subagent-prompt.md` (returns JSON summary only — no full file dumps in chat).
@@ -123,9 +123,13 @@ agent-access:end -->
 Inside any Git repo without a manifest:
 
 ```bash
-metagit init
+metagit init          # safe to re-run when .metagit.yml already exists and is valid
 metagit config validate
 ```
+
+Re-running `init` on a valid manifest exits 0 with “Already initialized” and does not overwrite. Use `--force` only when you intend to replace the file (blocked in agent mode without removing it first).
+
+Catalog adds support **`--ensure`** (auto-enabled in agent mode): re-run succeeds with `operation: noop` when the project/repo already exists with matching url/path. MCP/API default `ensure: true`.
 
 ## Human ↔ agent shared state
 

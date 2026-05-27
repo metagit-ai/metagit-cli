@@ -9,7 +9,7 @@ Use this skill whenever GitNexus context is stale or missing for target reposito
 
 ## Local Wrapper (Use First)
 
-- `zsh ./skills/metagit-gitnexus/scripts/analyze-targets.zsh <workspace_root> [project_name]`
+- `./skills/metagit-gitnexus/scripts/analyze-targets.sh <workspace_root> [project_name]`
 
 ## Workflow
 

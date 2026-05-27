@@ -260,7 +260,15 @@ def init(
         ctx.abort()
 
     if dry_run:
-        logger.success("Dry run: manifest validated (no files written).")
+        if result.already_exists:
+            logger.success("Dry run: existing .metagit.yml is valid (no changes).")
+        else:
+            logger.success("Dry run: manifest validated (no files written).")
+        return
+
+    if result.already_exists:
+        logger.success(f"Already initialized: {result.metagit_yml}")
+        logger.info("  metagit config validate")
         return
 
     if not skip_gitignore:
