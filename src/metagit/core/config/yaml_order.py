@@ -92,6 +92,28 @@ def _field_source_keys(field_name: str, field_info: FieldInfo) -> set[str]:
     return keys
 
 
+def find_source_key(
+    data: dict[str, Any],
+    field_name: str,
+    field_info: FieldInfo,
+) -> str | None:
+    """Return the key present in ``data`` for a model field (including aliases)."""
+    for key in _field_source_keys(field_name, field_info):
+        if key in data:
+            return key
+    return None
+
+
+def nested_model(annotation: Any) -> type[BaseModel] | None:
+    """Return nested BaseModel type for a field annotation, if any."""
+    return _nested_model(annotation)
+
+
+def list_item_model(annotation: Any) -> type[BaseModel] | None:
+    """Return list item BaseModel type for a field annotation, if any."""
+    return _list_item_model(annotation)
+
+
 def _nested_model(annotation: Any) -> type[BaseModel] | None:
     annotation = _unwrap_optional(annotation)
     origin = get_origin(annotation)

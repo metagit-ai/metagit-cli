@@ -12,6 +12,10 @@ from metagit import DEFAULT_CONFIG
 from metagit.cli.main import cli
 from metagit.core.config.format_service import ConfigFormatService
 from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.config.schema_urls import (
+    METAGIT_CONFIG_SCHEMA_URL,
+    schema_language_server_comment,
+)
 
 
 def _minimal_metagit_yaml() -> str:
@@ -41,7 +45,8 @@ def test_render_metagit_normalizes_messy_description(tmp_path: Path) -> None:
     loaded = manager.load_config()
     assert not isinstance(loaded, Exception)
 
-    rendered = ConfigFormatService().render_metagit(loaded)
+    rendered = ConfigFormatService().render_metagit(loaded, original_text=_minimal_metagit_yaml())
+    assert schema_language_server_comment(METAGIT_CONFIG_SCHEMA_URL) in rendered
     assert "name: demo" in rendered
     assert rendered.index("name: demo") < rendered.index("description:")
     assert "description: |" in rendered or "description: 'Repositories" not in rendered

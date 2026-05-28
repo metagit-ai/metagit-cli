@@ -12,8 +12,13 @@ from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
-from metagit.core.config.yaml_display import dump_config_dict
+from metagit.core.config.schema_urls import (
+    METAGIT_APPCONFIG_SCHEMA_URL,
+    METAGIT_CONFIG_SCHEMA_URL,
+)
+from metagit.core.config.documentation_models import compact_documentation_list
 from metagit.core.config.yaml_order import order_payload
+from metagit.core.config.yaml_roundtrip import format_yaml_document
 
 FormatTarget = Literal["metagit", "appconfig"]
 
@@ -39,6 +44,7 @@ class ConfigFormatService:
     ) -> FormatFileResult | Exception:
         """Format a ``.metagit.yml`` manifest."""
         resolved = Path(config_path).expanduser().resolve()
+        original_text = self._read_text(resolved)
         manager = MetagitConfigManager(config_path=str(resolved))
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
@@ -46,8 +52,12 @@ class ConfigFormatService:
         return self._build_result(
             target="metagit",
             path=str(resolved),
-            original_text=self._read_text(resolved),
-            formatted=self.render_metagit(loaded, minimal=minimal),
+            original_text=original_text,
+            formatted=self.render_metagit(
+                loaded,
+                minimal=minimal,
+                original_text=original_text,
+            ),
         )
 
     def format_appconfig(
@@ -58,14 +68,19 @@ class ConfigFormatService:
     ) -> FormatFileResult | Exception:
         """Format ``metagit.config.yaml`` application config."""
         resolved = Path(config_path).expanduser().resolve()
+        original_text = self._read_text(resolved)
         loaded = load_appconfig(str(resolved))
         if isinstance(loaded, Exception):
             return loaded
         return self._build_result(
             target="appconfig",
             path=str(resolved),
-            original_text=self._read_text(resolved),
-            formatted=self.render_appconfig(loaded, minimal=minimal),
+            original_text=original_text,
+            formatted=self.render_appconfig(
+                loaded,
+                minimal=minimal,
+                original_text=original_text,
+            ),
         )
 
     def render_metagit(
@@ -73,6 +88,7 @@ class ConfigFormatService:
         config: MetagitConfig,
         *,
         minimal: bool = False,
+        original_text: str = "",
     ) -> str:
         """Render a metagit manifest using schema field order."""
         payload = config.model_dump(
@@ -80,14 +96,22 @@ class ConfigFormatService:
             exclude_defaults=minimal,
             mode="json",
         )
+        if config.documentation:
+            payload["documentation"] = compact_documentation_list(config.documentation)
         ordered = order_payload(payload, MetagitConfig)
-        return self._ensure_trailing_newline(dump_config_dict(ordered))
+        return format_yaml_document(
+            original_text,
+            ordered,
+            MetagitConfig,
+            schema_url=METAGIT_CONFIG_SCHEMA_URL,
+        )
 
     def render_appconfig(
         self,
         config: AppConfig,
         *,
         minimal: bool = False,
+        original_text: str = "",
     ) -> str:
         """Render application config using schema field order."""
         body = config.model_dump(
@@ -96,18 +120,19 @@ class ConfigFormatService:
             mode="json",
         )
         ordered_body = order_payload(body, AppConfig)
-        payload = {"config": ordered_body}
-        return self._ensure_trailing_newline(dump_config_dict(payload))
+        return format_yaml_document(
+            original_text,
+            ordered_body,
+            AppConfig,
+            schema_url=METAGIT_APPCONFIG_SCHEMA_URL,
+            wrapper_key="config",
+        )
 
     @staticmethod
     def _read_text(path: Path) -> str:
         if not path.is_file():
             return ""
         return path.read_text(encoding="utf-8")
-
-    @staticmethod
-    def _ensure_trailing_newline(text: str) -> str:
-        return text if text.endswith("\n") else f"{text}\n"
 
     @staticmethod
     def _build_result(

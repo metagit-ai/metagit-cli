@@ -115,7 +115,7 @@ metagit info
 metagit fmt
 ```
 
-`metagit format` is an alias for `metagit fmt`. Use `--check` in CI to fail when YAML is not normalized; `--target metagit|appconfig|all` selects which file(s) to rewrite.
+`metagit format` is an alias for `metagit fmt`. Formatting preserves YAML comments, injects a top-level `# yaml-language-server: $schema=…` directive, and uses two-space indentation. Use `--check` in CI to fail when YAML is not normalized; `--target metagit|appconfig|all` selects which file(s) to rewrite.
 
 ## Local MCP runtime usage
 

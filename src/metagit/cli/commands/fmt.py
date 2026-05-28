@@ -107,7 +107,8 @@ def fmt_cmd(
     Format .metagit.yml and/or metagit.config.yaml with schema field order and clean YAML.
 
     Re-serializes through the Pydantic models so keys like ``name`` appear first in
-    project/repo list entries and long descriptions use readable literal blocks.
+    project/repo list entries, preserves YAML comments, injects a yaml-language-server
+    schema directive, and uses two-space indentation.
     """
     logger = ctx.obj["logger"]
     selected = targets.strip().lower()
