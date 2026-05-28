@@ -80,8 +80,15 @@ class UserPrompt:
     """
 
     def __init__(self) -> None:
-        pk = _promptkit()
-        self.session = pk.PromptSession(style=_prompt_style())
+        self._session: Any = None
+
+    @property
+    def session(self) -> Any:
+        """Create the prompt session lazily so imports work without a TTY."""
+        if self._session is None:
+            pk = _promptkit()
+            self._session = pk.PromptSession(style=_prompt_style())
+        return self._session
 
     @staticmethod
     def _default_for_unprompted_field(field_info: Any) -> Any:
