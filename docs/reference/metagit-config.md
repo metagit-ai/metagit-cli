@@ -27,8 +27,8 @@ Hermes-oriented examples readable.
 
 JSON Schema for editors and CI:
 
-- [schemas/metagit_config.schema.json](../../schemas/metagit_config.schema.json)
-- [schemas/metagit_appconfig.schema.json](../../schemas/metagit_appconfig.schema.json)
+- [metagit_config.schema.json](schemas/metagit_config.schema.json)
+- [metagit_appconfig.schema.json](schemas/metagit_appconfig.schema.json)
 
 ## Validate your manifest
 
