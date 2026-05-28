@@ -225,9 +225,11 @@ def metagit_executable() -> str:
     discovered = shutil.which("metagit")
     if discovered:
         return discovered
-    candidate = Path(sys.executable).resolve().parent / "metagit"
-    if candidate.is_file():
-        return str(candidate)
+    scripts_dir = Path(sys.executable).resolve().parent
+    for candidate_name in ("metagit.exe", "metagit"):
+        candidate = scripts_dir / candidate_name
+        if candidate.is_file():
+            return str(candidate)
     return "metagit"
 
 

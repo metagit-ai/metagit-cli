@@ -6,6 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import click
+import pytest
 import yaml
 
 from metagit.cli.shell_completion import (
@@ -14,6 +15,7 @@ from metagit.cli.shell_completion import (
     complete_repomix_profiles,
     default_install_path,
     render_completion_script,
+    verify_completion_callback,
 )
 from metagit.cli.main import cli
 
@@ -99,3 +101,23 @@ def test_default_install_path_zsh() -> None:
     path = default_install_path("zsh")
     assert path.name == "_metagit"
     assert ".zfunc" in str(path)
+
+
+def test_verify_completion_callback(monkeypatch) -> None:
+    monkeypatch.setenv("_METAGIT_COMPLETE", "zsh_source")
+    ok, detail = verify_completion_callback()
+    assert ok, detail
+
+
+def test_main_honors_metagit_complete_with_windows_prog_name(monkeypatch) -> None:
+    """Regression: Click must not derive ``_METAGIT_EXE_COMPLETE`` on Windows."""
+    import sys
+
+    from metagit.cli.main import main
+
+    monkeypatch.delenv("_METAGIT_EXE_COMPLETE", raising=False)
+    monkeypatch.setenv("_METAGIT_COMPLETE", "zsh_source")
+    monkeypatch.setattr(sys, "argv", [r"C:\venv\Scripts\metagit.exe"])
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+    assert exc_info.value.code == 0

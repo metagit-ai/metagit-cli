@@ -153,7 +153,14 @@ cli.add_command(fmt_cmd, name="format")
 
 
 def main() -> None:
-    cli()
+    """Console entry point with a stable completion env var on all platforms."""
+    from metagit.cli.shell_completion import _COMPLETION_ENV
+
+    cli.main(
+        prog_name="metagit",
+        complete_var=_COMPLETION_ENV,
+        standalone_mode=True,
+    )
 
 
 if __name__ == "__main__":

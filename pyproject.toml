@@ -57,7 +57,7 @@ format = ["black>=26.3.1", "isort"]
 typecheck = ["mypy"]
 
 [project.scripts]
-metagit = "metagit.cli.main:cli"
+metagit = "metagit.cli.main:main"
 
 [lint]
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
