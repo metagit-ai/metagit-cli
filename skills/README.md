@@ -65,3 +65,5 @@ task skills:sync    # mirrors into .cursor/skills/
 ```
 
 Update both `skills/` and `src/metagit/data/skills/` when changing bundled skills.
+
+Skill helper scripts under `*/scripts/*.sh` use **bash** (`#!/usr/bin/env bash`) for cross-platform compatibility; invoke them directly (`./scripts/foo.sh`) or via `bash scripts/foo.sh`.

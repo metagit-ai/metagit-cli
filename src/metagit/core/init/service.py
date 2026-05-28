@@ -9,6 +9,11 @@ from typing import Optional
 
 import click
 
+from metagit.core.config.manifest_gate import (
+    ManifestGateInvalid,
+    evaluate_existing_manifest,
+    manifest_gate_error_message,
+)
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.init.models import InitTemplateManifest
 from metagit.core.init.prompts import collect_answers, load_answers_file
@@ -24,6 +29,7 @@ class InitWriteResult:
 
     metagit_yml: Path
     extra_files: list[Path] = field(default_factory=list)
+    already_exists: bool = False
 
 
 @dataclass
@@ -46,6 +52,30 @@ class InitService:
                 return candidate
         return "application"
 
+    @staticmethod
+    def _resolve_existing_manifest(
+        metagit_path: Path,
+        *,
+        force: bool,
+    ) -> InitWriteResult | None:
+        """
+        When a manifest already exists, validate it or allow overwrite.
+
+        Returns an ``InitWriteResult`` with ``already_exists=True`` when the file
+        is present, valid, and ``force`` is false. Returns ``None`` when init
+        should proceed with a write.
+        """
+        gate = evaluate_existing_manifest(metagit_path, force=force)
+        if gate is None:
+            return None
+        if isinstance(gate, ManifestGateInvalid):
+            raise click.ClickException(manifest_gate_error_message(gate))
+        return InitWriteResult(
+            metagit_yml=gate.path,
+            extra_files=[],
+            already_exists=True,
+        )
+
     def initialize(
         self,
         target_dir: Path,
@@ -64,6 +94,11 @@ class InitService:
         if manifest is None:
             raise click.ClickException(f"Unknown init template: {template_id!r}")
 
+        metagit_path = target_dir / ".metagit.yml"
+        existing = self._resolve_existing_manifest(metagit_path, force=force)
+        if existing is not None:
+            return existing
+
         file_answers: dict[str, str] = {}
         if answers_file is not None:
             file_answers = load_answers_file(answers_file)
@@ -81,12 +116,6 @@ class InitService:
 
         template_dir = self.registry.template_dir(template_id)
         rendered_files = self.renderer.render_manifest(template_dir, manifest, context)
-
-        metagit_path = target_dir / ".metagit.yml"
-        if metagit_path.exists() and not force and not dry_run:
-            raise click.ClickException(
-                ".metagit.yml already exists (use --force to overwrite)"
-            )
 
         extra_paths: list[Path] = []
         metagit_content: Optional[str] = None
@@ -121,10 +150,9 @@ class InitService:
     ) -> InitWriteResult:
         """Create a minimal validated manifest without a bundled template directory."""
         metagit_path = target_dir / ".metagit.yml"
-        if metagit_path.exists() and not force and not dry_run:
-            raise click.ClickException(
-                ".metagit.yml already exists (use --force to overwrite)"
-            )
+        existing = self._resolve_existing_manifest(metagit_path, force=force)
+        if existing is not None:
+            return existing
 
         try:
             kind_value = ProjectKind(kind)

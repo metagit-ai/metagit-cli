@@ -765,10 +765,11 @@ def config_schema(ctx: click.Context, output_path: str) -> None:
     Generate a JSON schema for the MetagitConfig class and write it to a file.
     """
     from metagit.core.config.models import MetagitConfig
+    from metagit.core.config.schema_generator import generate_json_schema
 
     logger = ctx.obj["logger"]
     try:
-        schema = MetagitConfig.model_json_schema()
+        schema = generate_json_schema(MetagitConfig)
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(schema, f, indent=2)
         logger.success(f"JSON schema written to {output_path}")

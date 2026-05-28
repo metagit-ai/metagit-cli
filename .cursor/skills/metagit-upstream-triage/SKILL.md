@@ -16,7 +16,7 @@ Use this skill for failures likely rooted in another repository.
 
 ## Command Wrapper
 
-- `zsh ./skills/metagit-upstream-scan/scripts/upstream-scan.zsh [root_path] "<query>" [preset] [max_results]`
+- `./skills/metagit-upstream-scan/scripts/upstream-scan.sh [root_path] "<query>" [preset] [max_results]`
 
 ## Output Contract
 

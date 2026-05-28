@@ -14,7 +14,7 @@ Ensure high-risk tooling and multi-repo context are only available when a valid 
 ## Local Script Wrapper (Use First)
 
 Use this token-efficient wrapper for all gating checks:
-- `./scripts/gate-status.zsh [root_path]`
+- `./scripts/gate-status.sh [root_path]`
 
 Expected output (single line, tab-delimited):
 - `state=<value>\troot=<path|none>\ttools=<count>`

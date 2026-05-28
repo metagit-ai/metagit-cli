@@ -25,6 +25,7 @@ from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace.models import WorkspaceProject
+from metagit.cli.shell_completion import complete_projects
 
 
 @click.group(name="project", invoke_without_command=True)
@@ -36,6 +37,7 @@ from metagit.core.workspace.models import WorkspaceProject
     "-p",
     default=None,
     help="Project within workspace to operate on",
+    shell_complete=complete_projects,
 )
 @click.pass_context
 def project(ctx: click.Context, config: str, project: str = None) -> None:
@@ -148,6 +150,11 @@ def project_list(ctx: click.Context, list_all: bool, as_json: bool) -> None:
 @click.option("--description", default=None)
 @click.option("--agent-instructions", default=None)
 @click.option(
+    "--ensure",
+    is_flag=True,
+    help="Succeed without changes when the project already exists with matching fields",
+)
+@click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
 @click.pass_context
@@ -156,17 +163,20 @@ def project_add(
     name: str,
     description: str | None,
     agent_instructions: str | None,
+    ensure: bool,
     as_json: bool,
 ) -> None:
     """Add a workspace project to the manifest."""
     local_config: MetagitConfig = ctx.obj["local_config"]
     config_path: str = ctx.obj["config_path"]
+    ensure_mode = ensure or bool(ctx.obj.get("agent_mode", False))
     result = WorkspaceCatalogService().add_project(
         local_config,
         config_path,
         name=name,
         description=description,
         agent_instructions=agent_instructions,
+        ensure=ensure_mode,
     )
     exit_on_catalog_mutation(result, as_json=as_json)
 

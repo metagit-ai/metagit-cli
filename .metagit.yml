@@ -1,3 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/metagit-ai/metagit-cli/refs/heads/main/schemas/metagit_config.schema.json
+name: metagit-cli
+description: |-
+  Metagit is situational awareness for developers and agents. It can make
+  a sprawling multi-repo project feel more like a monorepo or be used as a standalone
+  tool to provide concise information on the project's used languages/frameworks,
+  artifacts, upstream dependencies, and more.
+kind: application
 documentation:
   # Strings are allowed and will be treated as a markdown file in the root of the project
   - README.md
@@ -9,47 +17,43 @@ documentation:
   - https://metagit-ai.github.io/metagit-cli/
   # All of these are duplicates of the strings above, but they are here to demonstrate 
   # the different types of documentation that can be used.
-  - kind: markdown
-    path: README.md
-  - kind: markdown
-    path: CHANGELOG.md
-  - kind: markdown
-    path: CONTRIBUTING.md
-  - kind: markdown
-    path: CODE_OF_CONDUCT.md
-  - kind: markdown
-    path: SECURITY.md
-  - kind: web
-    url: https://metagit-ai.github.io/metagit-cli/
-  # Explicitly defined documentation types.
   - kind: confluence
     url: https://confluence.example.com/display/METAGIT/Metagit+Documentation
     tags:
-      - playbook
-      - tutorial
+      playbook: 'true'
+      tutorial: 'true'
   - kind: sharepoint
     url: https://sharepoint.example.com/display/METAGIT/Metagit+DevOps
     tags:
-      - devops
+      devops: 'true'
   - kind: web
     url: https://hub.docker.com/_/python
     tags:
-      - docker
-      - python
-
-artifacts:
-  - definition: pyproject.toml
-    location: dist/
-    type: python_package
-    version_strategy: semver
-  - definition: Dockerfile
-    location: .
-    type: docker
-    version_strategy: semver
-
+      docker: 'true'
+      python: 'true'
+license:
+  kind: BSD-3-Clause
+  file: LICENSE.md
+maintainers:
+  - name: Zachary Loeber
+    email: zloeber@gmail.com
+    role: Contributor
 branch_strategy: trunk
 
+taskers:
+  - kind: Taskfile
+artifacts:
+  - type: python_package
+    definition: pyproject.toml
+    location: dist/
+    version_strategy: semver
+  - type: docker
+    definition: Dockerfile
+    location: .
+    version_strategy: semver
+
 cicd:
+  platform: GitHub
   pipelines:
     - name: Lint and Test
       ref: .github/workflows/lint-and-test.yaml
@@ -63,31 +67,6 @@ cicd:
     - name: Publish CLI
       ref: .github/workflows/publish-cli.yaml
       variables: []
-  platform: GitHub
-dependencies:
-  - description:
-      Ubuntu is a Linux distribution based on Debian and composed mostly
-      of free and open-source software.
-    kind: docker_image
-    name: ubuntu_latest
-    ref: ./.github/workflows/lint-and-test.yaml
-  - kind: docker_image
-    name: python:3.12-slim
-    ref: ./Dockerfile
-    url: https://hub.docker.com/_/python
-description:
-  Metagit is situational awareness for developers and agents. It can make
-  a sprawling multi-repo project feel more like a monorepo or be used as a standalone
-  tool to provide concise information on the project's used languages/frameworks,
-  artifacts, upstream dependencies, and more.
-license:
-  file: LICENSE.md
-  kind: BSD-3-Clause
-maintainers:
-  - email: zloeber@gmail.com
-    name: Zachary Loeber
-    role: Contributor
-name: metagit-cli
 observability: {}
   # dashboards:
   #   - name: OpenSearch Dashboards
@@ -97,19 +76,30 @@ observability: {}
   # monitoring_providers:
   #   - grafana
 paths:
-  - description: The main project path
+  - name: metagit
+    description: The main project path
     kind: application
+    path: ./metagit
     language: python
-    language_version: "3.13"
-    name: metagit
+    language_version: '3.13'
     package_manager: uv
     frameworks:
       - CrewAI
       - Click
-    path: ./metagit
-taskers:
-  - kind: Taskfile
+    tags: {}
+    protected: false
+dependencies:
+  - name: ubuntu_latest
+    description: Ubuntu is a Linux distribution based on Debian and composed mostly of free and open-source software.
+    kind: docker_image
+    ref: ./.github/workflows/lint-and-test.yaml
+    tags: {}
+    protected: false
+  - name: python:3.12-slim
+    kind: docker_image
+    ref: ./Dockerfile
+    url: https://hub.docker.com/_/python
+    tags: {}
+    protected: false
 workspace:
   projects: []
-    # - name: default
-    #   description: Default project for repositories that don't fit into other projects. Includes most IaC deployments.

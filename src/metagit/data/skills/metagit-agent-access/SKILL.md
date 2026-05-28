@@ -30,7 +30,7 @@ Do **not** run proactively on every task.
 From the **target repository root** (not necessarily metagit-cli):
 
 ```bash
-zsh /path/to/metagit-agent-access/scripts/optimize-agent-access.zsh [repo_root] [--apply] [--json]
+/path/to/metagit-agent-access/scripts/optimize-agent-access.sh [repo_root] [--apply] [--json]
 ```
 
 Bundled with the package after `metagit skills install --skill metagit-agent-access`:
@@ -38,7 +38,7 @@ Bundled with the package after `metagit skills install --skill metagit-agent-acc
 ```bash
 # Resolve bundled skill path (example layout)
 SKILL_ROOT="$(python3 -c "import metagit, pathlib; print(pathlib.Path(metagit.__file__).parent / 'data/skills/metagit-agent-access')")"
-zsh "$SKILL_ROOT/scripts/optimize-agent-access.zsh" . --apply --json
+"$SKILL_ROOT/scripts/optimize-agent-access.sh" . --apply --json
 ```
 
 Flags:

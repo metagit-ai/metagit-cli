@@ -19,7 +19,7 @@ Use this skill when repository state must be updated.
 - `metagit project sync --project <name>`
 - MCP `metagit_workspace_sync` for batch fetch/pull/clone (`repos`, `only_if`, `dry_run`, `max_parallel`)
 - MCP `metagit_repo_sync` for a single repository (requires `allow_mutation` for pull/clone)
-- `zsh ./skills/metagit-control-center/scripts/control-cycle.zsh [root_path] ["query"] [preset]`
+- `./skills/metagit-control-center/scripts/control-cycle.sh [root_path] ["query"] [preset]`
 
 ## Output Contract
 

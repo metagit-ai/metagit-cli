@@ -16,7 +16,7 @@ Use this skill at session start for workspace-aware tasks.
 
 ## Commands
 
-- `zsh ./skills/metagit-gating/scripts/gate-status.zsh [root_path]`
+- `./skills/metagit-gating/scripts/gate-status.sh [root_path]`
 - `metagit workspace select --project <name>` (interactive repo picker)
 - MCP `metagit_project_context_switch` with `project_name` (structured context + session restore)
 - MCP `metagit_workspace_state_snapshot` before leaving a project for a long switch

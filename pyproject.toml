@@ -23,6 +23,7 @@ dependencies = [
     "gitpython>=3.1.50",
     "rich>=14.0.0",
     "pyyaml>=6.0.2",
+    "ruamel.yaml>=0.18.10",
     "pygithub>=2.6.1",
     "jsonschema>=4.24.0",
     "python-dotenv>=1.2.2",
@@ -56,7 +57,7 @@ format = ["black>=26.3.1", "isort"]
 typecheck = ["mypy"]
 
 [project.scripts]
-metagit = "metagit.cli.main:cli"
+metagit = "metagit.cli.main:main"
 
 [lint]
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']

@@ -243,6 +243,11 @@ def repo_move(
     help="Use interactive prompts instead of command line parameters",
 )
 @click.option(
+    "--ensure",
+    is_flag=True,
+    help="Succeed without changes when the repo already exists with matching url/path",
+)
+@click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
 @click.pass_context
@@ -260,6 +265,7 @@ def repo_add(
     package_manager: Optional[str],
     frameworks: tuple[str, ...],
     prompt: bool,
+    ensure: bool,
     as_json: bool,
 ) -> None:
     """Add a repository to the current project"""
@@ -287,6 +293,7 @@ def repo_add(
     catalog = WorkspaceCatalogService()
     try:
         agent_mode = bool(ctx.obj.get("agent_mode", False))
+        ensure_mode = ensure or agent_mode
         if (not name or prompt) and agent_mode:
             raise click.UsageError(
                 "Interactive repo add is disabled in agent mode; "
@@ -330,22 +337,35 @@ def repo_add(
             }
             repo_data = {k: v for k, v in repo_data.items() if v is not None}
             project_path = ProjectPath(**repo_data)
+            mutation = catalog.add_repo(
+                local_config,
+                config_path,
+                project_name=project,
+                repo=project_path,
+                ensure=ensure_mode,
+            )
             if as_json:
-                mutation = catalog.add_repo(
-                    local_config,
-                    config_path,
-                    project_name=project,
-                    repo=project_path,
-                )
                 exit_on_catalog_mutation(mutation, as_json=True)
                 return
-            result = project_manager.add(
-                config_path,
-                project,
-                project_path,
-                local_config,
-                agent_mode=agent_mode,
+            if not mutation.ok:
+                raise click.ClickException(
+                    mutation.error.message
+                    if mutation.error
+                    else "Failed to add repository"
+                )
+            repo_name = mutation.repo_name or project_path.name
+            if mutation.operation == "noop":
+                logger.info(
+                    f"Repository '{repo_name}' already present in project '{project}'"
+                )
+            else:
+                logger.info(
+                    f"Successfully added repository '{repo_name}' to project '{project}'"
+                )
+            logger.info(
+                f"You can now use `metagit repo sync --project {project}` to sync the repository"
             )
+            return
 
         if isinstance(result, Exception):
             raise result

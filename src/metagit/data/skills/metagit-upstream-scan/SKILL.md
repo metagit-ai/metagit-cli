@@ -17,7 +17,7 @@ Use this skill when the current repo does not appear to contain the full fix and
 ## Local Script Wrapper (Use First)
 
 Use this token-efficient wrapper for upstream discovery tasks:
-- `./scripts/upstream-scan.zsh [root_path] "<query>" [preset] [max_results]`
+- `./scripts/upstream-scan.sh [root_path] "<query>" [preset] [max_results]`
 
 Output format:
 - compact status line

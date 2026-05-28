@@ -40,7 +40,10 @@ def exit_on_catalog_mutation(
             name = getattr(result, "repo_name", None) or getattr(
                 result, "project_name", ""
             )
-            click.echo(f"{entity} {operation}: {name}")
+            if operation == "noop":
+                click.echo(f"{entity} unchanged (ensure): {name}")
+            else:
+                click.echo(f"{entity} {operation}: {name}")
     if not bool(getattr(result, "ok", True)):
         raise SystemExit(1)
 

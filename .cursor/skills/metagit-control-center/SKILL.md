@@ -14,7 +14,7 @@ Provide a repeatable control-center workflow where Metagit MCP guides awareness,
 ## Local Script Wrapper (Use First)
 
 Use this token-efficient wrapper for control-center cycles:
-- `./scripts/control-cycle.zsh [root_path] ["query"] [preset]`
+- `./scripts/control-cycle.sh [root_path] ["query"] [preset]`
 
 Wrapper behavior:
 - runs gating status first

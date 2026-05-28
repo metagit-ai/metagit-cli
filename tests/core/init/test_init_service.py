@@ -68,3 +68,27 @@ def test_init_minimal_library_kind(tmp_path: Path) -> None:
   manifest = yaml.safe_load((target / ".metagit.yml").read_text(encoding="utf-8"))
   assert manifest["kind"] == "library"
   assert manifest["name"] == "my-lib"
+
+
+def test_init_minimal_idempotent_when_manifest_valid(tmp_path: Path) -> None:
+  service = InitService()
+  target = tmp_path / "lib"
+  target.mkdir()
+  service.initialize_minimal(
+    target,
+    kind="library",
+    name="my-lib",
+    description="A library.",
+    url=None,
+  )
+  result = service.initialize_minimal(
+    target,
+    kind="library",
+    name="other-name",
+    description="Would overwrite.",
+    url=None,
+  )
+  assert result.already_exists is True
+  manifest = yaml.safe_load((target / ".metagit.yml").read_text(encoding="utf-8"))
+  assert manifest["name"] == "my-lib"
+

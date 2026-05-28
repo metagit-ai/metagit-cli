@@ -27,6 +27,11 @@ from metagit.core.workspace.context_models import utc_now_iso
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.repomix_profile_service import RepomixProfileService
+from metagit.cli.shell_completion import (
+    complete_projects,
+    complete_repos,
+    complete_repomix_profiles,
+)
 
 
 def _load_manifest(definition_path: str) -> MetagitConfig:
@@ -144,8 +149,20 @@ def context(ctx: click.Context) -> None:
         "2 = tier 1 + session digest then touch session boundary"
     ),
 )
-@click.option("--project", "project_name", default=None, help="Limit cards (tier 1+)")
-@click.option("--repo", "repo_name", default=None, help="Limit cards (tier 1+)")
+@click.option(
+    "--project",
+    "project_name",
+    default=None,
+    help="Limit cards (tier 1+)",
+    shell_complete=complete_projects,
+)
+@click.option(
+    "--repo",
+    "repo_name",
+    default=None,
+    help="Limit cards (tier 1+)",
+    shell_complete=complete_repos,
+)
 @click.option(
     "--json",
     "as_json",
@@ -188,8 +205,10 @@ def pack_cmd(
     show_default=True,
     help="Path to the workspace .metagit.yml definition file",
 )
-@click.option("--project", "project_name", required=True)
-@click.option("--repo", "repo_name", required=True)
+@click.option(
+    "--project", "project_name", required=True, shell_complete=complete_projects
+)
+@click.option("--repo", "repo_name", required=True, shell_complete=complete_repos)
 @click.option(
     "--json",
     "as_json",
@@ -231,9 +250,13 @@ def repo_card_cmd(
     show_default=True,
     help="Path to the workspace .metagit.yml definition file",
 )
-@click.option("--profile", "profile_name", required=True)
-@click.option("--project", "project_name", required=True)
-@click.option("--repo", "repo_name", required=True)
+@click.option(
+    "--profile", "profile_name", required=True, shell_complete=complete_repomix_profiles
+)
+@click.option(
+    "--project", "project_name", required=True, shell_complete=complete_projects
+)
+@click.option("--repo", "repo_name", required=True, shell_complete=complete_repos)
 @click.option(
     "--output",
     "output_path",

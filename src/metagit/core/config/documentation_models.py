@@ -121,3 +121,87 @@ class DocumentationSource(BaseModel):
 
 
 DocumentationEntry = Union[str, DocumentationSource]
+
+
+def documentation_entry_identity(entry: DocumentationSource) -> str:
+    """Stable deduplication key for a documentation source."""
+    if entry.path:
+        return f"path:{entry.path.strip()}"
+    if entry.url:
+        return f"url:{str(entry.url).strip()}"
+    return f"kind:{entry.kind}"
+
+
+def is_documentation_shorthand_eligible(entry: DocumentationSource) -> bool:
+    """Return True when a source can be written as a bare path or URL string."""
+    if entry.title or entry.description or entry.tags or entry.metadata:
+        return False
+    if entry.kind == "markdown" and entry.path and not entry.url:
+        return True
+    return entry.kind == "web" and entry.url is not None and not entry.path
+
+
+def compact_documentation_entry(
+    entry: DocumentationSource,
+) -> str | dict[str, Any]:
+    """Serialize one documentation entry for formatted YAML output."""
+    if is_documentation_shorthand_eligible(entry):
+        return entry.path if entry.kind == "markdown" else str(entry.url)
+    payload = entry.model_dump(exclude_none=True, mode="json")
+    if not payload.get("tags"):
+        payload.pop("tags", None)
+    if not payload.get("metadata"):
+        payload.pop("metadata", None)
+    return payload
+
+
+def _documentation_representation_richness(item: str | dict[str, Any]) -> int:
+    if isinstance(item, str):
+        return 0
+    score = 0
+    for key in ("title", "description"):
+        if item.get(key):
+            score += 2
+    if item.get("tags"):
+        score += 2
+    if item.get("metadata"):
+        score += 2
+    return score
+
+
+def _merge_documentation_representations(
+    existing: str | dict[str, Any],
+    candidate: str | dict[str, Any],
+) -> str | dict[str, Any]:
+    """Keep the richer duplicate; prefer shorthand when equally simple."""
+    existing_score = _documentation_representation_richness(existing)
+    candidate_score = _documentation_representation_richness(candidate)
+    if candidate_score > existing_score:
+        return candidate
+    if existing_score > candidate_score:
+        return existing
+    if isinstance(existing, str):
+        return existing
+    if isinstance(candidate, str):
+        return candidate
+    return existing
+
+
+def compact_documentation_list(
+    entries: list[DocumentationSource],
+) -> list[str | dict[str, Any]]:
+    """Deduplicate and compact documentation entries for formatted YAML."""
+    seen: dict[str, str | dict[str, Any]] = {}
+    order: list[str] = []
+    for entry in entries:
+        identity = documentation_entry_identity(entry)
+        compact = compact_documentation_entry(entry)
+        if identity not in seen:
+            seen[identity] = compact
+            order.append(identity)
+            continue
+        seen[identity] = _merge_documentation_representations(
+            seen[identity],
+            compact,
+        )
+    return [seen[key] for key in order]
