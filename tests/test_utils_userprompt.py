@@ -70,6 +70,7 @@ def test_prompt_for_model_validation_retry_drops_failed_fields(monkeypatch) -> N
 
     monkeypatch.setattr(UserPrompt, "_prompt_for_field", fake_prompt_field)
     monkeypatch.setattr(UserPrompt, "_prompt_for_optional_field", lambda *_: None)
+    monkeypatch.setattr(userprompt, "_interactive_prompt_ui_enabled", lambda: True)
     monkeypatch.setattr(
         userprompt._promptkit(),
         "print_formatted_text",
@@ -85,6 +86,30 @@ def test_prompt_for_model_validation_retry_drops_failed_fields(monkeypatch) -> N
 
     assert isinstance(result, ValueError)
     assert "Validation failed after" in str(result)
+
+
+def test_prompt_for_model_skips_decorative_output_without_console(monkeypatch) -> None:
+    monkeypatch.setattr(userprompt, "_interactive_prompt_ui_enabled", lambda: False)
+    printed = {"count": 0}
+
+    def count_print(_text) -> None:
+        printed["count"] += 1
+
+    monkeypatch.setattr(
+        userprompt._promptkit(),
+        "print_formatted_text",
+        count_print,
+    )
+
+    result = UserPrompt.prompt_for_model(
+        ProjectPath,
+        existing_data={"name": "terraform-ops", "tags": None},
+        fields_to_prompt=["name"],
+        _retry_count=userprompt._MAX_VALIDATION_RETRIES,
+    )
+
+    assert isinstance(result, ValueError)
+    assert printed["count"] == 0
 
 
 def test_prompt_for_model_validation_retry_reprompts_failed_field(monkeypatch) -> None:

@@ -6,6 +6,8 @@ UserPrompt utility for dynamically prompting users for Pydantic object propertie
 from __future__ import annotations
 
 import json
+import os
+import sys
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
@@ -71,17 +73,37 @@ def _prompt_style() -> Any:
     return _prompt_style_cache
 
 
+def _interactive_prompt_ui_enabled() -> bool:
+    """Return True when styled prompt_toolkit output can safely use a console."""
+    flag = os.environ.get("METAGIT_PROMPT_UI", "").strip().lower()
+    if flag in {"0", "false", "no", "off"}:
+        return False
+    if flag in {"1", "true", "yes", "on"}:
+        return True
+    try:
+        if not sys.stdout.isatty():
+            return False
+    except Exception:
+        return False
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            return ctypes.windll.kernel32.GetConsoleWindow() != 0
+        except Exception:
+            return False
+    return True
+
+
 def _safe_print_formatted_text(text: Any) -> None:
     """Print styled text when a console is available; ignore headless failures."""
+    if not _interactive_prompt_ui_enabled():
+        return
     try:
         pk = _promptkit()
         pk.print_formatted_text(text)
-    except OSError:
+    except Exception:
         return
-    except Exception as exc:
-        if type(exc).__name__ in {"NoConsoleScreenBufferError", "NoAnsiEscapeError"}:
-            return
-        raise
 
 
 class UserPrompt:
