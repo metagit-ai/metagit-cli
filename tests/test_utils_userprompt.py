@@ -60,8 +60,21 @@ def test_prompt_for_model_validation_retry_drops_failed_fields(monkeypatch) -> N
         calls["count"] += 1
         return "terraform-ops"
 
+    class NoConsoleScreenBufferError(Exception):
+        pass
+
+    def raise_no_console(_text) -> None:
+        raise NoConsoleScreenBufferError(
+            "No Windows console found. Are you running cmd.exe?"
+        )
+
     monkeypatch.setattr(UserPrompt, "_prompt_for_field", fake_prompt_field)
     monkeypatch.setattr(UserPrompt, "_prompt_for_optional_field", lambda *_: None)
+    monkeypatch.setattr(
+        userprompt._promptkit(),
+        "print_formatted_text",
+        raise_no_console,
+    )
 
     result = UserPrompt.prompt_for_model(
         ProjectPath,

@@ -71,6 +71,19 @@ def _prompt_style() -> Any:
     return _prompt_style_cache
 
 
+def _safe_print_formatted_text(text: Any) -> None:
+    """Print styled text when a console is available; ignore headless failures."""
+    try:
+        pk = _promptkit()
+        pk.print_formatted_text(text)
+    except OSError:
+        return
+    except Exception as exc:
+        if type(exc).__name__ in {"NoConsoleScreenBufferError", "NoAnsiEscapeError"}:
+            return
+        raise
+
+
 class UserPrompt:
     """
     A utility class for prompting users to input values for Pydantic model properties.
@@ -149,7 +162,7 @@ class UserPrompt:
             if title:
                 # Print title
                 title_text = pk.FormattedText([("class:title", f"\n=== {title} ===\n")])
-                pk.print_formatted_text(title_text)
+                _safe_print_formatted_text(title_text)
 
             for field_name, field_info in model_fields.items():
                 # Skip if field already has a value
@@ -164,7 +177,7 @@ class UserPrompt:
                             ),
                         ]
                     )
-                    pk.print_formatted_text(success_text)
+                    _safe_print_formatted_text(success_text)
                     continue
 
                 # If fields_to_prompt is specified, only prompt for those fields
@@ -201,7 +214,7 @@ class UserPrompt:
                 error_text = pk.FormattedText(
                     [("class:error", f"\n❌ Validation error: {e}\n")]
                 )
-                pk.print_formatted_text(error_text)
+                _safe_print_formatted_text(error_text)
                 if _retry_count >= _MAX_VALIDATION_RETRIES:
                     return ValueError(
                         f"Validation failed after {_MAX_VALIDATION_RETRIES} attempts: {e}"
@@ -312,7 +325,7 @@ class UserPrompt:
                                 )
                             ]
                         )
-                        pk.print_formatted_text(error_text)
+                        _safe_print_formatted_text(error_text)
                         continue
 
                     # Convert and return the input
@@ -322,7 +335,7 @@ class UserPrompt:
                         error_text = pk.FormattedText(
                             [("class:error", f"❌ {converted_value}\n")]
                         )
-                        pk.print_formatted_text(error_text)
+                        _safe_print_formatted_text(error_text)
                         continue
                     return converted_value
 
@@ -330,7 +343,7 @@ class UserPrompt:
                     error_text = pk.FormattedText(
                         [("class:error", f"❌ {e.message}\n")]
                     )
-                    pk.print_formatted_text(error_text)
+                    _safe_print_formatted_text(error_text)
                     continue
         except Exception as e:
             return e
@@ -427,7 +440,7 @@ class UserPrompt:
                         error_text = pk.FormattedText(
                             [("class:error", f"❌ {converted_value}\n")]
                         )
-                        pk.print_formatted_text(error_text)
+                        _safe_print_formatted_text(error_text)
                         continue
                     return converted_value
 
@@ -435,7 +448,7 @@ class UserPrompt:
                     error_text = pk.FormattedText(
                         [("class:error", f"❌ {e.message}\n")]
                     )
-                    pk.print_formatted_text(error_text)
+                    _safe_print_formatted_text(error_text)
                     continue
         except Exception as e:
             return e
@@ -625,7 +638,7 @@ class UserPrompt:
                 error_text = pk.FormattedText(
                     [("class:error", "❌ Please enter 'y' or 'n'.\n")]
                 )
-                pk.print_formatted_text(error_text)
+                _safe_print_formatted_text(error_text)
         except Exception as e:
             return e
 
