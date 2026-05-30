@@ -11,21 +11,56 @@ Use this skill when an agent should actively coordinate repository context and t
 
 Provide a repeatable control-center workflow where Metagit MCP guides awareness, synchronization, and operational continuity over multiple related repositories.
 
-## Local Script Wrapper (Use First)
+## Bundled scripts (optional)
 
-Use this token-efficient wrapper for control-center cycles:
-- `./scripts/control-cycle.sh [root_path] ["query"] [preset]`
+Helper scripts live under `scripts/` when the **full skill tree** is installed. Hermes
+`skill_manage` copies **SKILL.md only** — scripts are not present unless you also run
+`metagit skills install --skill metagit-control-center`.
+
+Resolve scripts from the PyPI package (works whenever `metagit-cli` is installed):
+
+```bash
+SKILL_ROOT="$(python3 -c "import metagit, pathlib; print(pathlib.Path(metagit.__file__).parent / 'data/skills/metagit-control-center')")"
+"$SKILL_ROOT/scripts/control-cycle.sh" [root_path] ["query"] [preset]
+```
+
+Or from a full skill install:
+
+```bash
+"$HOME/.config/hermes/skills/metagit-control-center/scripts/control-cycle.sh" .
+```
 
 Wrapper behavior:
 - runs gating status first
 - optionally runs upstream discovery for blocker queries
 - emits compact, machine-readable lines
 
+### Inline CLI fallback (no scripts)
+
+Use when skill scripts are unavailable (Hermes SKILL-only install, no shell helpers):
+
+```bash
+export METAGIT_AGENT_MODE=true
+metagit mcp serve --status-once --root .
+metagit context pack --tier 1 --json -c .metagit.yml
+metagit prompt workspace -k health-preflight --text-only -c .metagit.yml
+# blocker may be upstream — search managed repos:
+metagit search "error signature" -c .metagit.yml --json
+metagit prompt workspace -k sync-safe --text-only -c .metagit.yml
+```
+
 ## Core Workflows
 
 ### 1) Session Initialization
-- Validate active workspace gate.
-- Read `metagit://workspace/config` and `metagit://workspace/repos/status`.
+- Run context pack + session prompt first (see **`metagit-context-pack`** skill):
+
+```bash
+metagit context pack --tier 2 --json -c .metagit.yml
+metagit prompt workspace -k session-start --text-only -c .metagit.yml
+```
+
+- Validate active workspace gate (`metagit mcp serve --status-once` or gate script).
+- Read `metagit://workspace/config` and `metagit://workspace/repos/status` (MCP) or tier-1 pack JSON (CLI).
 - Call `metagit_project_context_switch` when the objective is tied to a workspace project.
 - Run `metagit_workspace_health_check` or read `metagit://workspace/health` for maintenance signals.
 - Identify stale repos and unresolved blockers from prior activity.

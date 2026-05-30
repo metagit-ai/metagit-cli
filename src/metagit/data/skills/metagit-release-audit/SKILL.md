@@ -5,7 +5,7 @@ description: Mandatory before calling work complete when the session changed rep
 
 # Auditing Release Readiness
 
-Use this skill **whenever** your session added or edited tracked files in this repository and you are about to hand off or say the task is done—not only "release" workflows. Read-only Q&A with no writes can skip it.
+Use this skill **whenever** your session added or edited tracked files in this repository and you are about to hand off or say the task is done—not only “release” workflows. Read-only Q&A with no writes can skip it.
 
 ## Workflow
 

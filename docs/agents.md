@@ -84,6 +84,7 @@ Install once; skills are short playbooks (when to use which command):
 
 | Skill | Use when |
 |-------|----------|
+| `metagit-context-pack` | Tiered context packs, digest, objectives, approvals, repomix; Hermes session bootstrap |
 | `metagit-cli` | All CLI-only workflows (this doc expanded) |
 | `metagit-workspace-scope` | Session start, workspace boundaries |
 | `metagit-control-center` | Ongoing multi-repo coordination |
