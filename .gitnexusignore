@@ -2,6 +2,7 @@
 .vscode
 node_modules
 .metagit/
+site
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
