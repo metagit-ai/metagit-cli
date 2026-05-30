@@ -2,9 +2,10 @@
 
 Installed via `metagit skills install`. All names use the `metagit-` prefix.
 
+- `metagit-context-pack` — tiered context packs, digest, objectives, approvals, repomix
 - `metagit-cli` — CLI-only agent shortcuts (prompts, catalog, detect, sync; no MCP/API)
 - `metagit-projects` — workspace project lifecycle
-- `metagit-workspace-scope` — scope discovery
+- `metagit-workspace-scope` — scope discovery and Hermes session bootstrap
 - `metagit-control-center` — multi-repo control center
 - `metagit-workspace-sync` — guarded sync
 - `metagit-config-refresh` / `metagit-bootstrap` — config refresh and bootstrap
@@ -13,5 +14,6 @@ Installed via `metagit skills install`. All names use the `metagit-` prefix.
 - `metagit-repo-impact` / `metagit-multi-repo` — impact and implementation
 - `metagit-gitnexus` — GitNexus analysis
 - `metagit-release-audit` — release readiness
+- `metagit-agent-access` — on-demand agent onboarding optimizer
 
-See [docs/skills.md](../../../../docs/skills.md) for install instructions.
+See [docs/skills.md](../../../../docs/skills.md) for install instructions and Hermes script notes.

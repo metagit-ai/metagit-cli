@@ -140,23 +140,6 @@ After project-management actions, report:
 - sync status if `project sync` was run
 - recommended next command (`workspace select`, `project select`, or `detect`)
 
-## Rename and move (layout)
-
-Use layout commands when reorganizing project or repo names. **Always dry-run first.**
-
-```bash
-metagit workspace project rename old-name new-name --dry-run --json
-metagit workspace repo rename -p <project> old-repo new-repo --dry-run --json
-metagit workspace repo move -p <from> -n <repo> --to-project <to> --dry-run --json
-```
-
-MCP: `metagit_workspace_project_rename`, `metagit_workspace_repo_rename`, `metagit_workspace_repo_move`.
-
-- Renames update `.metagit.yml` and synced folders under `workspace.path` when they exist.
-- Moves relocate repo mounts between projects (dedupe mode relinks symlinks to canonical checkouts).
-- Use `--manifest-only` to change the manifest without touching disk.
-- Run `metagit config validate` after any layout change.
-
 ## Safety
 
 - Do not clone, delete, or overwrite sync directories without explicit user approval.

@@ -362,4 +362,4 @@ metagit info
 
 ## Related bundled skills
 
-Use topic skills when you need deeper playbooks (some mention MCP): `metagit-projects`, `metagit-workspace-scope`, `metagit-workspace-sync`, `metagit-config-refresh`. This skill is the **CLI-only** index and prompt reference.
+Use topic skills when you need deeper playbooks (some mention MCP): `metagit-context-pack` (tiered packs, digest, objectives, approvals, repomix), `metagit-projects`, `metagit-workspace-scope`, `metagit-workspace-sync`, `metagit-config-refresh`. This skill is the **CLI-only** index and prompt reference.

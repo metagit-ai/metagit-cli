@@ -27,19 +27,42 @@ Do **not** run proactively on every task.
 
 ### 1) Script (run first)
 
+Hermes `skill_manage` installs **SKILL.md only** — local `./scripts/` paths will not exist.
+Prefer the PyPI package path (always available when `metagit-cli` is installed) or
+`metagit skills install --skill metagit-agent-access` for a full skill tree.
+
 From the **target repository root** (not necessarily metagit-cli):
 
 ```bash
-/path/to/metagit-agent-access/scripts/optimize-agent-access.sh [repo_root] [--apply] [--json]
-```
-
-Bundled with the package after `metagit skills install --skill metagit-agent-access`:
-
-```bash
-# Resolve bundled skill path (example layout)
 SKILL_ROOT="$(python3 -c "import metagit, pathlib; print(pathlib.Path(metagit.__file__).parent / 'data/skills/metagit-agent-access')")"
 "$SKILL_ROOT/scripts/optimize-agent-access.sh" . --apply --json
 ```
+
+After `metagit skills install --skill metagit-agent-access`:
+
+```bash
+"$HOME/.config/hermes/skills/metagit-agent-access/scripts/optimize-agent-access.sh" . --apply --json
+```
+
+### Inline fallback (no scripts)
+
+Run the optimizer Python entrypoint from the installed package:
+
+```bash
+SKILL_ROOT="$(python3 -c "import metagit, pathlib; print(pathlib.Path(metagit.__file__).parent / 'data/skills/metagit-agent-access')")"
+python3 "$SKILL_ROOT/scripts/optimize_agent_access.py" . --json
+python3 "$SKILL_ROOT/scripts/optimize_agent_access.py" . --apply --json
+```
+
+If `uv` is available in the target repo, the shell wrapper is equivalent:
+
+```bash
+uv run python "$SKILL_ROOT/scripts/optimize_agent_access.py" . --json
+```
+
+Manual audit when scripts cannot run: check for `llms.txt`, `AGENTS.md`, `docs/agents.md`, and
+`<!-- agent-access:start -->` in README; scaffold from `$SKILL_ROOT/templates/` only after
+dry-run review.
 
 Flags:
 

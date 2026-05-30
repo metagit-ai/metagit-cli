@@ -11,13 +11,27 @@ Use this skill whenever you need to control whether Metagit MCP tools/resources 
 
 Ensure high-risk tooling and multi-repo context are only available when a valid `.metagit.yml` exists at the resolved workspace root.
 
-## Local Script Wrapper (Use First)
+## Bundled scripts (optional)
 
-Use this token-efficient wrapper for all gating checks:
-- `./scripts/gate-status.sh [root_path]`
+Hermes `skill_manage` installs SKILL.md only. Resolve scripts from the package or a full
+`metagit skills install`:
+
+```bash
+SKILL_ROOT="$(python3 -c "import metagit, pathlib; print(pathlib.Path(metagit.__file__).parent / 'data/skills/metagit-gating')")"
+"$SKILL_ROOT/scripts/gate-status.sh" [root_path]
+```
 
 Expected output (single line, tab-delimited):
 - `state=<value>\troot=<path|none>\ttools=<count>`
+
+### Inline CLI fallback (no scripts)
+
+```bash
+metagit mcp serve --status-once --root .
+metagit config validate -c .metagit.yml
+```
+
+Parse `mcp_state=` from `--status-once` output (`missing`, `invalid`, or `active`).
 
 ## Activation Workflow
 

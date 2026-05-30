@@ -48,6 +48,39 @@ metagit project sync --project local
 metagit mcp serve --root /path/to/coordinator
 ```
 
+## Hermes session bootstrap
+
+Wire metagit into every Hermes objective **before the first tool call**. Inject output into
+system context, a pre-turn shell hook, or the opening user message.
+
+```bash
+export METAGIT_AGENT_MODE=true
+metagit context pack --tier 2 --json -c .metagit.yml
+metagit prompt workspace -k session-start --text-only -c .metagit.yml
+metagit prompt workspace -k context-pack --text-only -c .metagit.yml   # optional tier guide
+```
+
+| Trigger | Command |
+|---------|---------|
+| Session / objective open | Tier 2 pack + `session-start` prompt |
+| Token-tight open | Tier 0 pack + `session-start` prompt |
+| Subagent to one repo | Tier 1 pack with `--project`/`--repo` + `subagent-handoff` prompt |
+| MCP-connected Hermes | `metagit_context_pack` tier 2 instead of CLI pack |
+
+Full playbook: bundled **`metagit-context-pack`** skill. Install with
+`metagit skills install --skill metagit-context-pack --target hermes`.
+
+## Multi-instance workspaces (Syncthing)
+
+When multiple machines share a coordinator repo via Syncthing:
+
+- Designate **one agent** as manifest writer for `.metagit.yml` catalog edits.
+- Only the session-owning agent runs `metagit context pack --tier 2` (updates session boundary).
+- After sync idle: `metagit config validate` then tier 0/1 pack before trusting scope.
+- Run `metagit project sync` locally on each machine — clones are not synced by Syncthing.
+
+See **`metagit-context-pack`** for conflict zones and stale-sync detection.
+
 ## Projects in the example manifest
 
 | Project | Purpose |
