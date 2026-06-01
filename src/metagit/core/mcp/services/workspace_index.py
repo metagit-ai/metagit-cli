@@ -9,6 +9,7 @@ from typing import Any
 from metagit.core.config.models import MetagitConfig
 from metagit.core.utils.common import is_git_repository
 from metagit.core.workspace import workspace_dedupe
+from metagit.core.workspace.protection import merge_project_repo_tags
 
 
 class WorkspaceIndexService:
@@ -38,6 +39,9 @@ class WorkspaceIndexService:
                     bool(is_git_repository(resolved_path)) if exists else False
                 )
                 status = "synced" if exists and is_git_repo else "configured_missing"
+                project_tags = dict(project.tags)
+                repo_tags = dict(repo.tags)
+                effective_tags = merge_project_repo_tags(project, repo)
                 rows.append(
                     {
                         "project_name": project.name,
@@ -49,7 +53,10 @@ class WorkspaceIndexService:
                         "status": status,
                         "url": str(repo.url) if repo.url else None,
                         "sync": repo.sync if repo.sync is not None else False,
-                        "tags": dict(repo.tags),
+                        "project_tags": project_tags,
+                        "repo_tags": repo_tags,
+                        "tags": effective_tags,
+                        "project_protected": bool(project.protected),
                     }
                 )
         return rows

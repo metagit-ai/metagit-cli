@@ -45,6 +45,10 @@ class ProjectListEntry(BaseModel):
     name: str
     description: Optional[str] = None
     agent_instructions: Optional[str] = None
+    protected: bool = False
+    tags: dict[str, str] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    documentation_count: int = 0
     dedupe_enabled: Optional[bool] = Field(
         default=None,
         description=(

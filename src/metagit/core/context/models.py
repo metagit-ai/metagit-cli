@@ -28,6 +28,8 @@ class WorkspaceMapProject(BaseModel):
     name: str
     repo_count: int
     description: Optional[str] = None
+    tags: list[str] = Field(default_factory=list)
+    protected: bool = False
 
 
 class WorkspaceMapResult(BaseModel):

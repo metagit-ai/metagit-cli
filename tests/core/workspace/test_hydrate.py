@@ -6,7 +6,7 @@ from pathlib import Path
 
 from metagit.core.appconfig.models import WorkspaceDedupeConfig
 from metagit.core.project.manager import ProjectManager
-from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.hydrate import collect_file_copy_jobs, materialize_symlink_mount
 from metagit.core.workspace.models import WorkspaceProject
 
@@ -57,7 +57,7 @@ def test_project_sync_hydrate_after_deduped_symlink(tmp_path: Path) -> None:
   workspace_root = tmp_path / ".metagit"
   dedupe = WorkspaceDedupeConfig(enabled=True, canonical_dir="_canonical")
   manager = ProjectManager(workspace_root, _DummyLogger(), dedupe=dedupe)
-  repo = ProjectPath(name="site", path=str(source), sync=True, kind=ProjectKind.WEBSITE)
+  repo = ProjectPath(name="site", path=str(source), sync=True)
   project = WorkspaceProject(name="local", repos=[repo])
 
   assert manager.sync(project) is True

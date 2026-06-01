@@ -11,6 +11,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from metagit.core.api.catalog_handler import CatalogApiHandler
+from metagit.core.api.grep_handler import GrepApiHandler
 from metagit.core.api.layout_handler import LayoutApiHandler
 from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.web.config_handler import ConfigWebHandler
@@ -55,6 +56,10 @@ def build_web_server(
     )
     layout_handler = LayoutApiHandler(
         definition_root=root_resolved,
+        config_path=config_path,
+    )
+    grep_handler = GrepApiHandler(
+        workspace_root=workspace_root,
         config_path=config_path,
     )
     config_handler = ConfigWebHandler(
@@ -106,6 +111,14 @@ def build_web_server(
                 if static_handler.handle(method, parsed.path, self):
                     return
                 if catalog_handler.handle(
+                    method,
+                    parsed.path,
+                    parsed.query,
+                    body,
+                    self._json,
+                ):
+                    return
+                if grep_handler.handle(
                     method,
                     parsed.path,
                     parsed.query,

@@ -117,20 +117,22 @@ export function getAppconfigTree(): Promise<ConfigTreeResponse> {
 export function patchMetagitConfig(
   ops: ConfigOperation[],
   save: boolean,
+  autoFormat = true,
 ): Promise<ConfigTreeResponse> {
   return requestJson<ConfigTreeResponse>('/v3/config/metagit', {
     method: 'PATCH',
-    body: JSON.stringify({ operations: ops, save }),
+    body: JSON.stringify({ operations: ops, save, auto_format: autoFormat }),
   })
 }
 
 export function patchAppconfig(
   ops: ConfigOperation[],
   save: boolean,
+  autoFormat = true,
 ): Promise<ConfigTreeResponse> {
   return requestJson<ConfigTreeResponse>('/v3/config/appconfig', {
     method: 'PATCH',
-    body: JSON.stringify({ operations: ops, save }),
+    body: JSON.stringify({ operations: ops, save, auto_format: autoFormat }),
   })
 }
 
@@ -311,4 +313,64 @@ export function postPrune(body: {
     method: 'POST',
     body: JSON.stringify(body),
   })
+}
+
+export interface WorkspaceGrepHit {
+  project_name?: string | null
+  repo_name?: string | null
+  repo_path: string
+  file_path: string
+  line_number: number
+  line: string
+  context_before?: string[]
+  context_after?: string[]
+  match_kind?: 'content' | 'path' | string
+}
+
+export interface WorkspaceGrepResult {
+  ok: boolean
+  data?: { hits: WorkspaceGrepHit[] }
+  error?: { kind: string; message: string } | null
+}
+
+export interface WorkspaceGrepOptions {
+  q: string
+  project?: string
+  repos?: string[]
+  preset?: string
+  intent?: string
+  maxResults?: number
+  contextLines?: number
+  includePaths?: boolean
+}
+
+export function getWorkspaceGrep(
+  options: WorkspaceGrepOptions,
+): Promise<WorkspaceGrepResult> {
+  const params = new URLSearchParams()
+  params.set('q', options.q)
+  if (options.project) {
+    params.set('project', options.project)
+  }
+  for (const repo of options.repos ?? []) {
+    if (repo.trim()) {
+      params.append('repo', repo.trim())
+    }
+  }
+  if (options.preset) {
+    params.set('preset', options.preset)
+  }
+  if (options.intent) {
+    params.set('intent', options.intent)
+  }
+  if (options.maxResults !== undefined) {
+    params.set('max_results', String(options.maxResults))
+  }
+  if (options.contextLines !== undefined) {
+    params.set('context_lines', String(options.contextLines))
+  }
+  if (options.includePaths) {
+    params.set('include_paths', 'true')
+  }
+  return requestJson<WorkspaceGrepResult>(`/v2/workspace/grep?${params.toString()}`)
 }

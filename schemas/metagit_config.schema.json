@@ -860,18 +860,6 @@
           "description": "Short description of the path or project",
           "title": "Description"
         },
-        "kind": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ProjectKind"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Project kind"
-        },
         "ref": {
           "anyOf": [
             {
@@ -1372,6 +1360,49 @@
           ],
           "default": null,
           "description": "Optional override of app-config workspace.dedupe for this project (currently supports enabled only)"
+        },
+        "protected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "If true, catalog and layout mutations on this project and its repos require force",
+          "title": "Protected"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags inherited by repos unless overridden",
+          "title": "Tags",
+          "type": "object"
+        },
+        "documentation": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/DocumentationSource"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Documentation sources for this workspace project group (paths, URLs, graph metadata)",
+          "title": "Documentation"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible key-value payload for exports and tooling",
+          "title": "Metadata",
+          "type": "object"
         },
         "repos": {
           "description": "Repository list",

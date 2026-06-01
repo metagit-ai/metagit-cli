@@ -8,7 +8,7 @@ from typing import Optional
 
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager
-from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -34,7 +34,6 @@ def _build_metagit_config() -> MetagitConfig:
             ProjectPath(
               name="repo-a",
               description="Core repository",
-              kind=ProjectKind.APPLICATION,
               path="/tmp/repo-a",
               url="https://example.com/repo-a.git",
               language="python",

@@ -16,13 +16,14 @@ from metagit.cli.json_output import (
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
-from metagit.core.project.models import ProjectKind
 from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.cli.shell_completion import complete_projects, complete_repos
+from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 
 
 def _catalog_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str]:
@@ -162,17 +163,24 @@ def workspace_project_add(
 
 @workspace_project.command("remove")
 @click.argument("name")
+@click.option("--force", is_flag=True, default=False, help="Remove protected projects")
 @click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
 @click.pass_context
-def workspace_project_remove(ctx: click.Context, name: str, as_json: bool) -> None:
+def workspace_project_remove(
+    ctx: click.Context,
+    name: str,
+    force: bool,
+    as_json: bool,
+) -> None:
     """Remove a project (and its repos) from the workspace manifest."""
     local_config, config_path, _ = _catalog_ctx(ctx)
     result = WorkspaceCatalogService().remove_project(
         local_config,
         config_path,
         name=name,
+        force=force,
     )
     exit_on_catalog_mutation(result, as_json=as_json)
 
@@ -289,11 +297,16 @@ def workspace_repo_list(
     "--name", "-n", required=True, help="Repository name", shell_complete=complete_repos
 )
 @click.option("--description", default=None)
-@click.option("--kind", type=click.Choice([k.value for k in ProjectKind]), default=None)
 @click.option("--path", default=None, help="Relative path under workspace root")
 @click.option("--url", default=None, help="Remote repository URL")
 @click.option("--sync/--no-sync", default=None)
 @click.option("--agent-instructions", default=None)
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Add repos to protected projects",
+)
 @click.option(
     "--ensure",
     is_flag=True,
@@ -308,11 +321,11 @@ def workspace_repo_add(
     project: str,
     name: str,
     description: str | None,
-    kind: str | None,
     path: str | None,
     url: str | None,
     sync: bool | None,
     agent_instructions: str | None,
+    force: bool,
     ensure: bool,
     as_json: bool,
 ) -> None:
@@ -323,7 +336,6 @@ def workspace_repo_add(
     built = service.build_repo_from_fields(
         name=name,
         description=description,
-        kind=kind,
         path=path,
         url=url,
         sync=sync,
@@ -337,6 +349,7 @@ def workspace_repo_add(
         project_name=project,
         repo=built,
         ensure=ensure_mode,
+        force=force,
     )
     exit_on_catalog_mutation(result, as_json=as_json)
 
@@ -352,6 +365,7 @@ def workspace_repo_add(
 @click.option(
     "--name", "-n", required=True, help="Repository name", shell_complete=complete_repos
 )
+@click.option("--force", is_flag=True, default=False, help="Remove protected repos")
 @click.option(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
@@ -360,6 +374,7 @@ def workspace_repo_remove(
     ctx: click.Context,
     project: str,
     name: str,
+    force: bool,
     as_json: bool,
 ) -> None:
     """Remove a repository entry from the workspace manifest (does not delete files)."""
@@ -369,6 +384,7 @@ def workspace_repo_remove(
         config_path,
         project_name=project,
         repo_name=name,
+        force=force,
     )
     exit_on_catalog_mutation(result, as_json=as_json)
 
@@ -484,6 +500,117 @@ def workspace_repo_move(
         force=force,
     )
     exit_on_layout_mutation(result, as_json=as_json)
+
+
+@workspace.command("grep")
+@click.argument("query")
+@click.option(
+    "--project",
+    "-p",
+    default=None,
+    help="Limit search to a workspace project",
+    shell_complete=complete_projects,
+)
+@click.option(
+    "--repo",
+    "-r",
+    multiple=True,
+    help="Limit search to repo selector(s); repeatable",
+    shell_complete=complete_repos,
+)
+@click.option(
+    "--preset", default=None, help="Search preset (terraform, docker, infra, ci)"
+)
+@click.option(
+    "--intent",
+    default=None,
+    help="Intent filter (config, scripts, ci, docker, terraform)",
+)
+@click.option("--limit", default=25, show_default=True, help="Maximum number of hits")
+@click.option(
+    "-C",
+    "context_lines",
+    default=0,
+    show_default=True,
+    help="Context lines around matches",
+)
+@click.option(
+    "--files-with-matches",
+    is_flag=True,
+    default=False,
+    help="Return matching file paths only",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def workspace_grep(
+    ctx: click.Context,
+    query: str,
+    project: str | None,
+    repo: tuple[str, ...],
+    preset: str | None,
+    intent: str | None,
+    limit: int,
+    context_lines: int,
+    files_with_matches: bool,
+    as_json: bool,
+) -> None:
+    """Search file contents across workspace repositories."""
+    local_config, _, workspace_root = _catalog_ctx(ctx)
+    query_text = query.strip()
+    if not query_text:
+        click.echo("Error: query is required", err=True)
+        raise SystemExit(1)
+
+    index_service = WorkspaceIndexService()
+    search_service = WorkspaceSearchService()
+    repo_rows = index_service.build_index(local_config, workspace_root)
+    if project:
+        repo_rows = [
+            row for row in repo_rows if str(row.get("project_name", "")) == project
+        ]
+    repo_selectors = [item.strip() for item in repo if item.strip()]
+    repo_paths = search_service.filter_repo_paths(
+        repo_rows=repo_rows,
+        repos=repo_selectors or None,
+    )
+    path_to_row = {str(row.get("repo_path", "")): row for row in repo_rows}
+    bounded_limit = max(1, min(int(limit), 500))
+    bounded_context = max(0, min(int(context_lines), 20))
+    hits = search_service.search(
+        query=query_text,
+        repo_paths=repo_paths,
+        preset=preset,
+        intent=intent,
+        max_results=bounded_limit,
+        context_lines=bounded_context,
+        include_paths=files_with_matches,
+    )
+    enriched: list[dict[str, object]] = []
+    for hit in hits:
+        row = path_to_row.get(str(hit.get("repo_path", "")))
+        enriched_hit = dict(hit)
+        if row is not None:
+            enriched_hit["project_name"] = row.get("project_name")
+            enriched_hit["repo_name"] = row.get("repo_name")
+        enriched.append(enriched_hit)
+
+    payload = {"ok": True, "data": {"hits": enriched}}
+    if as_json:
+        emit_json(payload)
+        return
+
+    if not enriched:
+        click.echo("No matches.")
+        return
+    for hit in enriched:
+        project_name = hit.get("project_name", "?")
+        repo_name = hit.get("repo_name", "?")
+        file_path = hit.get("file_path", "")
+        line_number = hit.get("line_number", 0)
+        line_text = hit.get("line", "")
+        click.echo(f"{project_name}/{repo_name}:{file_path}:{line_number}: {line_text}")
 
 
 @workspace.command("select")

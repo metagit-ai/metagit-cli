@@ -68,7 +68,6 @@ class ProjectPath(BaseModel):
     description: Optional[str] = Field(
         None, description="Short description of the path or project"
     )
-    kind: Optional[ProjectKind] = Field(None, description="Project kind")
     ref: Optional[str] = Field(
         None,
         description="Reference in the current project for the target project, used in dependencies",

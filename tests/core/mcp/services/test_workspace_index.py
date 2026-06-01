@@ -26,7 +26,6 @@ def test_workspace_index_resolves_repo_paths(tmp_path: Path) -> None:
                         {
                             "name": "repo-a",
                             "path": "./repo-a",
-                            "kind": "repository",
                             "sync": True,
                         }
                     ],

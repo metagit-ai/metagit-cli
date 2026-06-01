@@ -585,6 +585,13 @@ def config_preview(
     help="Write changes to disk when validation passes",
 )
 @click.option(
+    "--no-format",
+    "no_format",
+    is_flag=True,
+    default=False,
+    help="Skip schema-ordered YAML formatting when saving",
+)
+@click.option(
     "--tree",
     "include_tree",
     is_flag=True,
@@ -602,6 +609,7 @@ def config_patch(
     path: str | None,
     value: str | None,
     save: bool,
+    no_format: bool,
     include_tree: bool,
     as_json: bool,
 ) -> None:
@@ -625,6 +633,7 @@ def config_patch(
         config_path,
         operations,
         save=save,
+        auto_format=not no_format,
         include_tree=include_tree or as_json,
     )
     if isinstance(result, Exception):

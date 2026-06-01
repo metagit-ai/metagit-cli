@@ -5,7 +5,7 @@ from pathlib import Path
 
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager
-from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -30,7 +30,6 @@ def _config_one_repo() -> MetagitConfig:
                     repos=[
                         ProjectPath(
                             name="managed",
-                            kind=ProjectKind.REPOSITORY,
                             url="https://example.com/managed.git",
                         )
                     ],

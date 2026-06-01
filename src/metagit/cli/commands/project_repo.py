@@ -16,7 +16,7 @@ from metagit.cli.json_output import (
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import project_manager_from_app
-from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.project.models import ProjectPath
 from metagit.core.utils.common import open_editor
 from metagit.core.workspace.catalog_models import CatalogMutationResult
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
@@ -222,9 +222,6 @@ def repo_move(
 @repo.command("add")
 @click.option("--name", "-n", help="Repository name")
 @click.option("--description", "-d", help="Repository description")
-@click.option(
-    "--kind", type=click.Choice([k.value for k in ProjectKind]), help="Project kind"
-)
 @click.option("--ref", help="Reference in the current project for the target project")
 @click.option("--path", help="Local project path")
 @click.option("--url", help="Repository URL")
@@ -255,7 +252,6 @@ def repo_add(
     ctx: click.Context,
     name: Optional[str],
     description: Optional[str],
-    kind: Optional[str],
     ref: Optional[str],
     path: Optional[str],
     url: Optional[str],
@@ -325,7 +321,6 @@ def repo_add(
             repo_data = {
                 "name": name,
                 "description": description,
-                "kind": ProjectKind(kind) if kind else None,
                 "ref": ref,
                 "path": path,
                 "url": url,

@@ -27,7 +27,6 @@ def test_build_index_synced_git_repo_with_tags_and_paths(tmp_path: Path) -> None
                         {
                             "name": "svc-auth",
                             "path": "./svc-auth",
-                            "kind": "repository",
                             "url": "https://example.com/org/svc-auth.git",
                             "sync": True,
                             "tags": {"tier": "1", "domain": "auth"},
@@ -104,7 +103,6 @@ def test_build_index_missing_path_is_configured_missing(tmp_path: Path) -> None:
                         {
                             "name": "ghost-repo",
                             "path": "./not-on-disk",
-                            "kind": "repository",
                             "sync": False,
                         }
                     ],

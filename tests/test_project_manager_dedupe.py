@@ -7,7 +7,7 @@ from pathlib import Path
 from metagit.core.appconfig.models import WorkspaceDedupeConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager
-from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -33,7 +33,7 @@ def test_deduped_local_path_creates_single_canonical_and_two_mounts(
   dedupe = WorkspaceDedupeConfig(enabled=True, canonical_dir="_canonical")
   manager = ProjectManager(workspace_root, _DummyLogger(), dedupe=dedupe)
 
-  repo = ProjectPath(name="site", path=str(source), sync=True, kind=ProjectKind.WEBSITE)
+  repo = ProjectPath(name="site", path=str(source), sync=True)
   project_a = WorkspaceProject(name="local", repos=[repo])
   project_b = WorkspaceProject(
     name="mirror",
@@ -42,7 +42,6 @@ def test_deduped_local_path_creates_single_canonical_and_two_mounts(
         name="site",
         path=str(source),
         sync=True,
-        kind=ProjectKind.WEBSITE,
       )
     ],
   )
@@ -82,11 +81,11 @@ def test_deduped_remote_clone_is_shared(
   url = "https://github.com/example/remote.git"
   project_a = WorkspaceProject(
     name="p1",
-    repos=[ProjectPath(name="remote", url=url, kind=ProjectKind.REPOSITORY)],
+    repos=[ProjectPath(name="remote", url=url)],
   )
   project_b = WorkspaceProject(
     name="p2",
-    repos=[ProjectPath(name="remote", url=url, kind=ProjectKind.REPOSITORY)],
+    repos=[ProjectPath(name="remote", url=url)],
   )
 
   assert manager.sync(project_a) is True
