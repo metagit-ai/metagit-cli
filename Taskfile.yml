@@ -168,6 +168,11 @@ tasks:
         uv pip install -e ".[test]"
         uv run pytest --maxfail=1 --disable-warnings -v tests
 
+  validate:manifests:
+    desc: Validate curated .metagit.yml manifest fixtures
+    cmds:
+      - uv run python scripts/validate-manifest-fixtures.py
+
   qa:prepush:
     desc: Token-optimized local pre-push quality gate
     cmds:

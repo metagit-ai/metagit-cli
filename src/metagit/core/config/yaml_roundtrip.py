@@ -42,6 +42,7 @@ def format_yaml_document(
     *,
     schema_url: str,
     wrapper_key: str | None = None,
+    strip_absent_model_fields: bool = False,
 ) -> str:
     """Format YAML while preserving comments and injecting a schema directive."""
     yaml = build_roundtrip_yaml()
@@ -53,7 +54,12 @@ def format_yaml_document(
         document = CommentedMap(document)
 
     if wrapper_key is None:
-        merged = _merge_map(document, ordered_payload, model)
+        merged = _merge_map(
+            document,
+            ordered_payload,
+            model,
+            strip_absent_model_fields=strip_absent_model_fields,
+        )
         merged.yaml_set_start_comment(
             f"{schema_language_server_directive(schema_url)}\n"
         )
@@ -62,7 +68,12 @@ def format_yaml_document(
         wrapper = document.get(wrapper_key)
         if not isinstance(wrapper, CommentedMap):
             wrapper = CommentedMap(wrapper or {})
-        merged_inner = _merge_map(wrapper, ordered_payload, model)
+        merged_inner = _merge_map(
+            wrapper,
+            ordered_payload,
+            model,
+            strip_absent_model_fields=strip_absent_model_fields,
+        )
         output_root = CommentedMap()
         output_root[wrapper_key] = merged_inner
         _copy_map_key_comment(document, output_root, wrapper_key, wrapper_key)
@@ -80,9 +91,12 @@ def _merge_map(
     source: CommentedMap,
     payload: dict[str, Any],
     model: type[BaseModel],
+    *,
+    strip_absent_model_fields: bool = False,
 ) -> CommentedMap:
     merged = CommentedMap()
     consumed_source_keys: set[str] = set()
+    model_field_names = set(model.model_fields.keys())
 
     for field_name, field_info in model.model_fields.items():
         if field_name not in payload:
@@ -100,14 +114,24 @@ def _merge_map(
                 if isinstance(source_value, CommentedMap)
                 else CommentedMap()
             )
-            merged[field_name] = _merge_map(source_map, payload_value, child_model)
+            merged[field_name] = _merge_map(
+                source_map,
+                payload_value,
+                child_model,
+                strip_absent_model_fields=strip_absent_model_fields,
+            )
         elif child_model is not None and isinstance(payload_value, list):
             source_list = (
                 source_value
                 if isinstance(source_value, CommentedSeq)
                 else CommentedSeq()
             )
-            merged[field_name] = _merge_list(source_list, payload_value, child_model)
+            merged[field_name] = _merge_list(
+                source_list,
+                payload_value,
+                child_model,
+                strip_absent_model_fields=strip_absent_model_fields,
+            )
         else:
             merged[field_name] = _normalize_value(payload_value)
 
@@ -116,6 +140,8 @@ def _merge_map(
 
     for key, value in source.items():
         if key in consumed_source_keys or key in merged:
+            continue
+        if strip_absent_model_fields and key in model_field_names:
             continue
         merged[key] = value
         _copy_map_key_comment(source, merged, key, key)
@@ -127,6 +153,8 @@ def _merge_list(
     source: CommentedSeq,
     payload: list[Any],
     model: type[BaseModel],
+    *,
+    strip_absent_model_fields: bool = False,
 ) -> CommentedSeq:
     merged = CommentedSeq()
     identity_index = _build_source_identity_index(source)
@@ -144,7 +172,14 @@ def _merge_list(
             source_map = (
                 source_item if isinstance(source_item, CommentedMap) else CommentedMap()
             )
-            merged.append(_merge_map(source_map, payload_item, model))
+            merged.append(
+                _merge_map(
+                    source_map,
+                    payload_item,
+                    model,
+                    strip_absent_model_fields=strip_absent_model_fields,
+                )
+            )
         else:
             merged.append(_normalize_value(payload_item))
         if source_index is not None:

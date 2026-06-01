@@ -15,14 +15,18 @@ def _format_targets(
     *,
     metagit_path: str | None,
     appconfig_path: str | None,
-    minimal: bool,
+    include_defaults: bool,
 ) -> list[FormatFileResult | Exception]:
     service = ConfigFormatService()
     results: list[FormatFileResult | Exception] = []
     if metagit_path is not None:
-        results.append(service.format_metagit(metagit_path, minimal=minimal))
+        results.append(
+            service.format_metagit(metagit_path, include_defaults=include_defaults)
+        )
     if appconfig_path is not None:
-        results.append(service.format_appconfig(appconfig_path, minimal=minimal))
+        results.append(
+            service.format_appconfig(appconfig_path, include_defaults=include_defaults)
+        )
     return results
 
 
@@ -76,10 +80,17 @@ def _emit_results(
     help="Path to metagit.config.yaml (default: global --config from CLI context)",
 )
 @click.option(
+    "--include-defaults",
+    is_flag=True,
+    default=False,
+    help="Include optional fields set to schema defaults (empty lists/dicts, false, etc.)",
+)
+@click.option(
     "--minimal",
     is_flag=True,
     default=False,
-    help="Omit fields equal to schema defaults",
+    hidden=True,
+    help="Deprecated alias for default formatting (omit schema defaults).",
 )
 @click.option(
     "--check",
@@ -99,6 +110,7 @@ def fmt_cmd(
     targets: str,
     metagit_path: str,
     appconfig_path: str | None,
+    include_defaults: bool,
     minimal: bool,
     check: bool,
     stdout: bool,
@@ -106,10 +118,16 @@ def fmt_cmd(
     """
     Format .metagit.yml and/or metagit.config.yaml with schema field order and clean YAML.
 
+    By default, optional fields equal to schema defaults are omitted (including empty
+    lists and dicts). Use ``--include-defaults`` to retain them.
+
     Re-serializes through the Pydantic models so keys like ``name`` appear first in
     project/repo list entries, preserves YAML comments, injects a yaml-language-server
     schema directive, and uses two-space indentation.
     """
+    if minimal and include_defaults:
+        raise click.ClickException("Use only one of --include-defaults or --minimal")
+    omit_defaults = not include_defaults
     logger = ctx.obj["logger"]
     selected = targets.strip().lower()
     format_metagit = selected in {"metagit", "all"}
@@ -136,7 +154,7 @@ def fmt_cmd(
     pending = _format_targets(
         metagit_path=resolved_metagit,
         appconfig_path=resolved_appconfig,
-        minimal=minimal,
+        include_defaults=not omit_defaults,
     )
 
     formatted: list[FormatFileResult] = []

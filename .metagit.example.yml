@@ -17,11 +17,12 @@ taskers:
 paths:
   - name: metagit-cli
     description: The main CLI application
-    kind: cli
     path: src/metagit
     language: python
     language_version: "3.13"
     package_manager: uv
+    tags:
+      type: cli
     frameworks:
       - click
       - pydantic

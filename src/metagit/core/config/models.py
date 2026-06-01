@@ -274,6 +274,24 @@ class DependencyKind(str, Enum):
     OTHER = "other"
 
 
+class Dependency(ProjectPath):
+    """External dependency (docker image, helm chart, terraform module, etc.)."""
+
+    kind: DependencyKind = Field(
+        default=DependencyKind.UNKNOWN,
+        description=(
+            "Dependency kind. Distinct from workspace repo entries; "
+            "use tags on ProjectPath for managed repos."
+        ),
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        use_enum_values = True
+        extra = "forbid"
+
+
 class Maintainer(BaseModel):
     """Model for project maintainer information."""
 
@@ -391,8 +409,8 @@ class Pipeline(BaseModel):
     @field_validator("variables", mode="before")
     def validate_variables(cls, v: Any) -> Any:
         """Validate variables field."""
-        if v is None:
-            return []
+        if v is None or v == []:
+            return None
         return v
 
     class Config:
@@ -801,7 +819,7 @@ class MetagitConfig(BaseModel):
         default_factory=lambda: [],
         description="Important local project paths. In a monorepo, this would include any sub-projects typically found being built in the CICD pipelines.",
     )
-    dependencies: Optional[List[ProjectPath]] = Field(
+    dependencies: Optional[List[Dependency]] = Field(
         default_factory=lambda: [],
         description="Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.",
     )
@@ -826,6 +844,16 @@ class MetagitConfig(BaseModel):
     def _coerce_documentation(cls, value: object) -> object:
         """Accept strings or dicts in YAML documentation lists."""
         return normalize_documentation_entries(value)
+
+    @field_validator("observability", mode="before")
+    @classmethod
+    def _normalize_empty_observability(cls, value: object) -> object:
+        """Treat empty observability blocks as unset."""
+        if value is None:
+            return None
+        if isinstance(value, dict) and not value:
+            return None
+        return value
 
     @field_serializer("url")
     def serialize_url(

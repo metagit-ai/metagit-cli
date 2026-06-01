@@ -236,6 +236,259 @@
       "title": "Dashboard",
       "type": "object"
     },
+    "Dependency": {
+      "additionalProperties": false,
+      "description": "External dependency (docker image, helm chart, terraform module, etc.).",
+      "properties": {
+        "name": {
+          "description": "Friendly name for the path or project",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description of the path or project",
+          "title": "Description"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reference in the current project for the target project, used in dependencies",
+          "title": "Ref"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project path",
+          "title": "Path"
+        },
+        "branches": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project branches",
+          "title": "Branches"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project URL",
+          "title": "Url"
+        },
+        "sync": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sync setting",
+          "title": "Sync"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Programming language",
+          "title": "Language"
+        },
+        "language_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Language version",
+          "title": "Language Version"
+        },
+        "package_manager": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Package manager used by the project",
+          "title": "Package Manager"
+        },
+        "frameworks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Frameworks used by the project",
+          "title": "Frameworks"
+        },
+        "source_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider used to discover this repository",
+          "title": "Source Provider"
+        },
+        "source_namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source namespace identifier (org/user/group)",
+          "title": "Source Namespace"
+        },
+        "source_repo_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider-native repository identifier",
+          "title": "Source Repo Id"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags for managed repo search and filtering",
+          "title": "Tags",
+          "type": "object"
+        },
+        "protected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "If true, reconcile mode must not remove this repository automatically",
+          "title": "Protected"
+        },
+        "agent_instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional instructions for subagents operating in this repo or path",
+          "title": "Agent Instructions"
+        },
+        "kind": {
+          "$ref": "#/$defs/DependencyKind",
+          "default": "unknown",
+          "description": "Dependency kind. Distinct from workspace repo entries; use tags on ProjectPath for managed repos."
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Dependency",
+      "type": "object"
+    },
+    "DependencyKind": {
+      "description": "Enumeration of dependency kinds.",
+      "enum": [
+        "docker_image",
+        "repository",
+        "unknown",
+        "other"
+      ],
+      "title": "DependencyKind",
+      "type": "string"
+    },
     "Deployment": {
       "additionalProperties": false,
       "description": "Model for deployment configuration.",
@@ -1736,7 +1989,7 @@
       "anyOf": [
         {
           "items": {
-            "$ref": "#/$defs/ProjectPath"
+            "$ref": "#/$defs/Dependency"
           },
           "type": "array"
         },

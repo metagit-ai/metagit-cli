@@ -17,6 +17,7 @@ from metagit.core.config.schema_urls import (
     METAGIT_CONFIG_SCHEMA_URL,
 )
 from metagit.core.config.documentation_models import compact_documentation_list
+from metagit.core.config.payload_compact import prepare_format_payload
 from metagit.core.config.yaml_order import order_payload
 from metagit.core.config.yaml_roundtrip import format_yaml_document
 
@@ -40,7 +41,7 @@ class ConfigFormatService:
         self,
         config_path: str | Path,
         *,
-        minimal: bool = False,
+        include_defaults: bool = False,
     ) -> FormatFileResult | Exception:
         """Format a ``.metagit.yml`` manifest."""
         resolved = Path(config_path).expanduser().resolve()
@@ -55,7 +56,7 @@ class ConfigFormatService:
             original_text=original_text,
             formatted=self.render_metagit(
                 loaded,
-                minimal=minimal,
+                include_defaults=include_defaults,
                 original_text=original_text,
             ),
         )
@@ -64,7 +65,7 @@ class ConfigFormatService:
         self,
         config_path: str | Path,
         *,
-        minimal: bool = False,
+        include_defaults: bool = False,
     ) -> FormatFileResult | Exception:
         """Format ``metagit.config.yaml`` application config."""
         resolved = Path(config_path).expanduser().resolve()
@@ -78,7 +79,7 @@ class ConfigFormatService:
             original_text=original_text,
             formatted=self.render_appconfig(
                 loaded,
-                minimal=minimal,
+                include_defaults=include_defaults,
                 original_text=original_text,
             ),
         )
@@ -87,37 +88,46 @@ class ConfigFormatService:
         self,
         config: MetagitConfig,
         *,
-        minimal: bool = False,
+        include_defaults: bool = False,
         original_text: str = "",
     ) -> str:
         """Render a metagit manifest using schema field order."""
         payload = config.model_dump(
             exclude_none=True,
-            exclude_defaults=minimal,
+            exclude_defaults=not include_defaults,
             mode="json",
         )
         if config.documentation:
             payload["documentation"] = compact_documentation_list(config.documentation)
+        payload = prepare_format_payload(
+            payload,
+            MetagitConfig,
+            include_defaults=include_defaults,
+        )
         ordered = order_payload(payload, MetagitConfig)
         return format_yaml_document(
             original_text,
             ordered,
             MetagitConfig,
             schema_url=METAGIT_CONFIG_SCHEMA_URL,
+            strip_absent_model_fields=not include_defaults,
         )
 
     def render_appconfig(
         self,
         config: AppConfig,
         *,
-        minimal: bool = False,
+        include_defaults: bool = False,
         original_text: str = "",
     ) -> str:
         """Render application config using schema field order."""
         body = config.model_dump(
             exclude_none=True,
-            exclude_defaults=minimal,
+            exclude_defaults=not include_defaults,
             mode="json",
+        )
+        body = prepare_format_payload(
+            body, AppConfig, include_defaults=include_defaults
         )
         ordered_body = order_payload(body, AppConfig)
         return format_yaml_document(
@@ -126,6 +136,7 @@ class ConfigFormatService:
             AppConfig,
             schema_url=METAGIT_APPCONFIG_SCHEMA_URL,
             wrapper_key="config",
+            strip_absent_model_fields=not include_defaults,
         )
 
     @staticmethod

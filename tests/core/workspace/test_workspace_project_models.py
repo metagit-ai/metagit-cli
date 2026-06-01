@@ -2,6 +2,7 @@
 """Tests for WorkspaceProject schema extensions."""
 
 from metagit.core.config.models import MetagitConfig
+from metagit.core.config import models
 from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
@@ -53,3 +54,30 @@ def test_manifest_loads_without_repo_kind() -> None:
   )
   assert config.workspace is not None
   assert config.workspace.projects[0].tags["team"] == "core"
+
+
+def test_dependency_accepts_kind_field() -> None:
+  dep = models.Dependency(
+    name="python",
+    kind=models.DependencyKind.DOCKER_IMAGE,
+    ref="./Dockerfile",
+    url="https://hub.docker.com/_/python",
+  )
+  assert dep.kind == models.DependencyKind.DOCKER_IMAGE
+
+
+def test_manifest_dependencies_reject_kind_on_project_path_only() -> None:
+  config = MetagitConfig.model_validate(
+    {
+      "name": "demo",
+      "dependencies": [
+        {
+          "name": "python",
+          "kind": "docker_image",
+          "ref": "./Dockerfile",
+        }
+      ],
+    }
+  )
+  assert config.dependencies is not None
+  assert config.dependencies[0].kind == "docker_image"

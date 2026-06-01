@@ -1,0 +1,9 @@
+# Representative metagit manifests validated on every qa:prepush run.
+# Add paths here when new first-class examples ship in-repo.
+fixtures:
+  - path: .metagit.yml
+    label: local project manifest
+  - path: .metagit.example.yml
+    label: documented example manifest
+  - path: examples/hermes-orchestrator/.metagit.yml
+    label: hermes orchestrator workspace example
