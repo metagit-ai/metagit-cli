@@ -78,7 +78,6 @@ observability: {}
 paths:
   - name: metagit
     description: The main project path
-    kind: application
     path: ./metagit
     language: python
     language_version: '3.13'

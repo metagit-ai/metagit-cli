@@ -97,3 +97,63 @@ def test_fmt_writes_in_place(tmp_path: Path, monkeypatch) -> None:
     assert result.exit_code == 0, result.output
     updated = config_path.read_text(encoding="utf-8")
     assert updated.index("name: demo") < updated.index("description:")
+
+
+def test_render_metagit_omits_schema_defaults_by_default(tmp_path: Path) -> None:
+    config_path = tmp_path / ".metagit.yml"
+    config_path.write_text(
+        """\
+name: demo
+observability: {}
+paths:
+  - name: svc
+    path: ./svc
+    tags: {}
+    protected: false
+cicd:
+  platform: GitHub
+  pipelines:
+    - name: build
+      ref: .github/workflows/build.yaml
+      variables: []
+""",
+        encoding="utf-8",
+    )
+    manager = MetagitConfigManager(config_path=str(config_path))
+    loaded = manager.load_config()
+    assert not isinstance(loaded, Exception)
+
+    rendered = ConfigFormatService().render_metagit(
+        loaded,
+        original_text=config_path.read_text(encoding="utf-8"),
+    )
+    assert "tags: {}" not in rendered
+    assert "protected: false" not in rendered
+    assert "variables: []" not in rendered
+    assert "observability:" not in rendered
+
+
+def test_render_metagit_include_defaults_preserves_default_fields(tmp_path: Path) -> None:
+    config_path = tmp_path / ".metagit.yml"
+    config_path.write_text(
+        """\
+name: demo
+paths:
+  - name: svc
+    path: ./svc
+    tags: {}
+    protected: false
+""",
+        encoding="utf-8",
+    )
+    manager = MetagitConfigManager(config_path=str(config_path))
+    loaded = manager.load_config()
+    assert not isinstance(loaded, Exception)
+
+    rendered = ConfigFormatService().render_metagit(
+        loaded,
+        include_defaults=True,
+        original_text=config_path.read_text(encoding="utf-8"),
+    )
+    assert "tags: {}" in rendered
+    assert "protected: false" in rendered

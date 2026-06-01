@@ -21,6 +21,7 @@ from .models import (
     CICDPlatform,
     ComponentKind,
     Dashboard,
+    Dependency,
     DependencyKind,
     Deployment,
     DeploymentStrategy,

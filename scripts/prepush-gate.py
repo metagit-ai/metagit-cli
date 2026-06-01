@@ -35,6 +35,12 @@ def run_step(name: str, cmd: list[str], logs_dir: Path, shell: bool = False) -> 
     return False
 
 
+def resolve_manifest_fixture_cmd() -> list[str]:
+    if shutil.which("uv"):
+        return ["uv", "run", "python", "scripts/validate-manifest-fixtures.py"]
+    return [sys.executable, "scripts/validate-manifest-fixtures.py"]
+
+
 def resolve_pytest_cmd() -> list[str]:
     if shutil.which("uv"):
         return ["uv", "run", "pytest", "tests/integration", "-v"]
@@ -146,6 +152,11 @@ def main() -> int:
         failed |= not run_step("format", ["task", "format"], logs_dir)
         failed |= not run_step("lint_fix", ["task", "lint:fix"], logs_dir)
         failed |= not run_step("lint", ["task", "lint"], logs_dir)
+        failed |= not run_step(
+            "manifest_fixtures",
+            resolve_manifest_fixture_cmd(),
+            logs_dir,
+        )
         failed |= not run_step("unit_tests", ["task", "test"], logs_dir)
         failed |= not run_step("e2e_tests", resolve_pytest_cmd(), logs_dir)
         failed |= not run_security_scan(logs_dir)

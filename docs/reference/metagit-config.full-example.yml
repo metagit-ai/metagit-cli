@@ -314,6 +314,8 @@ dependencies:
     protected: false
     # Optional instructions for subagents operating in this repo or path
     agent_instructions: Example text for documentation; replace before production use.
+    # Dependency kind. Distinct from workspace repo entries; use tags on ProjectPath for managed repos.
+    kind: docker_image
 # Additional project component paths that may be useful in other projects.
 components:
   -
