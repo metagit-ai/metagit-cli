@@ -6,32 +6,78 @@ Human-readable YAML serialization for Metagit config display.
 from __future__ import annotations
 
 import re
+import textwrap
 from typing import Any
 
 import yaml
 
-LITERAL_BLOCK_MIN_LENGTH = 100
+DEFAULT_WRAP_WIDTH = 88
+LITERAL_BLOCK_MIN_LENGTH = DEFAULT_WRAP_WIDTH
 
 
-def should_use_literal_block(value: str) -> bool:
+def _looks_like_url(value: str) -> bool:
+    trimmed = value.strip().lower()
+    return trimmed.startswith("http://") or trimmed.startswith("https://")
+
+
+def should_use_literal_block(
+    value: str, *, wrap_width: int = DEFAULT_WRAP_WIDTH
+) -> bool:
     """Return True when a string should use YAML literal block (``|``) style."""
     if not value:
         return False
-    return "\n" in value or len(value.strip()) > LITERAL_BLOCK_MIN_LENGTH
+    if "\n" in value:
+        return True
+    stripped = value.strip()
+    if _looks_like_url(stripped):
+        return False
+    return len(stripped) > wrap_width
 
 
-def prepare_literal_block_string(value: str) -> str:
+def wrap_long_string(value: str, *, wrap_width: int = DEFAULT_WRAP_WIDTH) -> str:
+    """Insert newlines at word boundaries for long single-line prose."""
+    if not value or "\n" in value:
+        return value
+    stripped = value.strip()
+    if len(stripped) <= wrap_width or _looks_like_url(stripped):
+        return stripped
+    return textwrap.fill(
+        stripped,
+        width=wrap_width,
+        break_long_words=False,
+        break_on_hyphens=False,
+    )
+
+
+def prepare_literal_block_string(
+    value: str,
+    *,
+    wrap_width: int = DEFAULT_WRAP_WIDTH,
+) -> str:
     """Normalize string content for YAML literal block output."""
     if not value:
         return value
     if "\n" not in value:
-        return value.strip()
+        return wrap_long_string(value, wrap_width=wrap_width)
     lines = [line.rstrip() for line in value.splitlines()]
     while lines and not lines[0].strip():
         lines.pop(0)
     while lines and not lines[-1].strip():
         lines.pop()
-    return "\n".join(lines)
+    wrapped: list[str] = []
+    for line in lines:
+        if len(line) <= wrap_width:
+            wrapped.append(line)
+            continue
+        wrapped.extend(
+            textwrap.wrap(
+                line,
+                width=wrap_width,
+                break_long_words=False,
+                break_on_hyphens=False,
+            )
+        )
+    return "\n".join(wrapped)
 
 
 def normalize_yaml_string(value: str) -> str:
@@ -49,10 +95,14 @@ def normalize_yaml_string(value: str) -> str:
     return re.sub(r"\s+", " ", " ".join(lines))
 
 
-def format_yaml_string(value: str) -> str:
+def format_yaml_string(
+    value: str,
+    *,
+    wrap_width: int = DEFAULT_WRAP_WIDTH,
+) -> str:
     """Prepare a string for YAML output (block or inline)."""
-    if should_use_literal_block(value):
-        return prepare_literal_block_string(value)
+    if should_use_literal_block(value, wrap_width=wrap_width):
+        return prepare_literal_block_string(value, wrap_width=wrap_width)
     return normalize_yaml_string(value)
 
 

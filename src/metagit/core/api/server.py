@@ -11,6 +11,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from metagit.core.api.catalog_handler import CatalogApiHandler
+from metagit.core.api.grep_handler import GrepApiHandler
 from metagit.core.api.layout_handler import LayoutApiHandler
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.project.search_service import ManagedRepoSearchService
@@ -54,6 +55,10 @@ def build_server(root: str, host: str, port: int) -> ThreadingHTTPServer:
         definition_root=root_resolved,
         config_path=config_path,
     )
+    grep = GrepApiHandler(
+        workspace_root=root_resolved,
+        config_path=config_path,
+    )
 
     class ReusableThreadingHTTPServer(ThreadingHTTPServer):
         allow_reuse_address = True
@@ -66,6 +71,14 @@ def build_server(root: str, host: str, port: int) -> ThreadingHTTPServer:
             parsed = urlparse(self.path)
             params = parse_qs(parsed.query, keep_blank_values=True)
             if catalog.handle(
+                "GET",
+                parsed.path,
+                parsed.query,
+                b"",
+                self._json,
+            ):
+                return
+            if grep.handle(
                 "GET",
                 parsed.path,
                 parsed.query,

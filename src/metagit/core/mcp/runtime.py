@@ -430,7 +430,10 @@ class MetagitMcpRuntime:
             "metagit_workspace_project_remove": {
                 "type": "object",
                 "required": ["name"],
-                "properties": {"name": {"type": "string"}},
+                "properties": {
+                    "name": {"type": "string"},
+                    "force": {"type": "boolean"},
+                },
                 "additionalProperties": False,
             },
             "metagit_workspace_repos_list": {
@@ -445,12 +448,13 @@ class MetagitMcpRuntime:
                     "project_name": {"type": "string"},
                     "name": {"type": "string"},
                     "description": {"type": "string"},
-                    "kind": {"type": "string"},
                     "path": {"type": "string"},
                     "url": {"type": "string"},
                     "sync": {"type": "boolean"},
                     "agent_instructions": {"type": "string"},
                     "ensure": {"type": "boolean"},
+                    "force": {"type": "boolean"},
+                    "protected": {"type": "boolean"},
                     "tags": {
                         "type": "object",
                         "additionalProperties": {"type": "string"},
@@ -464,6 +468,7 @@ class MetagitMcpRuntime:
                 "properties": {
                     "project_name": {"type": "string"},
                     "name": {"type": "string"},
+                    "force": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -1341,6 +1346,7 @@ class MetagitMcpRuntime:
                 config=config,
                 config_path=config_path,
                 name=str(arguments.get("name", "")).strip(),
+                force=bool(arguments.get("force", False)),
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_repos_list":
@@ -1362,7 +1368,6 @@ class MetagitMcpRuntime:
             built = self._workspace_catalog.build_repo_from_fields(
                 name=str(arguments.get("name", "")),
                 description=arguments.get("description"),
-                kind=arguments.get("kind"),
                 path=arguments.get("path"),
                 url=arguments.get("url"),
                 sync=arguments.get("sync"),
@@ -1370,6 +1375,7 @@ class MetagitMcpRuntime:
                 tags=arguments.get("tags")
                 if isinstance(arguments.get("tags"), dict)
                 else None,
+                protected=arguments.get("protected"),
             )
             if isinstance(built, CatalogError):
                 return {"ok": False, "error": built.model_dump(mode="json")}
@@ -1379,6 +1385,7 @@ class MetagitMcpRuntime:
                 project_name=str(arguments.get("project_name", "")).strip(),
                 repo=built,
                 ensure=bool(arguments.get("ensure", True)),
+                force=bool(arguments.get("force", False)),
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_repo_remove":
@@ -1388,6 +1395,7 @@ class MetagitMcpRuntime:
                 config_path=config_path,
                 project_name=str(arguments.get("project_name", "")).strip(),
                 repo_name=str(arguments.get("name", "")).strip(),
+                force=bool(arguments.get("force", False)),
             ).model_dump(mode="json")
 
         if name in {

@@ -149,6 +149,7 @@ class ConfigPatchService:
         operations: list[ConfigOperation],
         *,
         save: bool = False,
+        auto_format: bool = True,
         include_tree: bool = False,
         mask_secrets: bool = False,
     ) -> PatchResult | Exception:
@@ -170,9 +171,16 @@ class ConfigPatchService:
         saved = False
         if save and not validation_errors:
             if target == "metagit":
-                save_result = MetagitConfigManager(resolved).save_config(updated)
+                save_result = MetagitConfigManager(resolved).save_config(
+                    updated,
+                    auto_format=auto_format,
+                )
             else:
-                save_result = save_appconfig(resolved, updated)
+                save_result = save_appconfig(
+                    resolved,
+                    updated,
+                    auto_format=auto_format,
+                )
             if isinstance(save_result, Exception):
                 return save_result
             saved = True

@@ -30,6 +30,7 @@ from metagit.core.workspace.layout_resolver import (
     sync_root_path,
     validate_layout_name,
 )
+from metagit.core.workspace.protection import project_is_protected, repo_is_protected
 
 
 class WorkspaceLayoutService:
@@ -76,6 +77,14 @@ class WorkspaceLayoutService:
                 source,
                 kind="not_found",
                 message=f"project '{source}' not found",
+            )
+        if project_is_protected(project) and not force:
+            return self._error(
+                "rename",
+                "project",
+                source,
+                kind="protected",
+                message=f"project '{source}' is protected (use force=True)",
             )
         if find_project(config, target) is not None:
             return self._error(
@@ -253,7 +262,7 @@ class WorkspaceLayoutService:
                 kind="not_found",
                 message=f"repo '{source}' not found in project '{project_key}'",
             )
-        if repo.protected and not force:
+        if repo_is_protected(project, repo) and not force:
             return self._error(
                 "rename",
                 "repo",
@@ -464,7 +473,29 @@ class WorkspaceLayoutService:
                     f"repo '{repo_key}' not found in project '{source_project_name}'"
                 ),
             )
-        if repo.protected and not force:
+        if project_is_protected(source_project) and not force:
+            return self._error(
+                "move",
+                "repo",
+                source_project_name,
+                repo_name=repo_key,
+                kind="protected",
+                message=(
+                    f"project '{source_project_name}' is protected (use force=True)"
+                ),
+            )
+        if project_is_protected(target_project) and not force:
+            return self._error(
+                "move",
+                "repo",
+                target_project_name,
+                repo_name=repo_key,
+                kind="protected",
+                message=(
+                    f"project '{target_project_name}' is protected (use force=True)"
+                ),
+            )
+        if repo_is_protected(source_project, repo) and not force:
             return self._error(
                 "move",
                 "repo",

@@ -23,6 +23,7 @@ class ConfigOperation(BaseModel):
 
 class ConfigPatchRequest(BaseModel):
     save: bool = False
+    auto_format: bool = True
     operations: list[ConfigOperation] = Field(default_factory=list)
 
 

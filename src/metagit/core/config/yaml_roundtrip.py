@@ -21,7 +21,7 @@ from metagit.core.config.yaml_order import (
     nested_model,
 )
 
-_YAML_WIDTH = 4096
+_YAML_WIDTH = 88
 
 
 def build_roundtrip_yaml() -> YAML:

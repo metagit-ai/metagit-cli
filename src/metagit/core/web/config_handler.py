@@ -176,7 +176,10 @@ class ConfigWebHandler:
                 respond(422, response.model_dump(mode="json"))
                 return
             manager = MetagitConfigManager(self._metagit_config_path)
-            save_result = manager.save_config(updated)
+            save_result = manager.save_config(
+                updated,
+                auto_format=patch.auto_format,
+            )
             if isinstance(save_result, Exception):
                 respond(
                     500,
@@ -220,7 +223,11 @@ class ConfigWebHandler:
                 )
                 respond(422, response.model_dump(mode="json"))
                 return
-            save_result = save_appconfig(self._appconfig_path, updated)
+            save_result = save_appconfig(
+                self._appconfig_path,
+                updated,
+                auto_format=patch.auto_format,
+            )
             if isinstance(save_result, Exception):
                 respond(
                     500,

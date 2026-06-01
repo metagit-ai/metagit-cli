@@ -45,9 +45,9 @@ workspace:
           description: Sample HTTP API service (replace with your repository).
           url: {{ portfolio_repo_url }}
           sync: true
-          kind: service
           tags:
             tier: application
+            type: service
           agent_instructions: |
             Run unit tests and lint before opening PRs. Note breaking API changes in PR text.
 
@@ -63,9 +63,9 @@ workspace:
           description: Sample static site published from a folder on disk.
           path: {{ local_site_path }}
           sync: true
-          kind: website
           tags:
             publish: static
+            type: website
           agent_instructions: |
             Build: npm run build (or project README). Publish: copy dist/ to the host named
             in README. Update `path` in .metagit.yml if the site directory moves.

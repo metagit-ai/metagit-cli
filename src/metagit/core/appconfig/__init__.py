@@ -39,11 +39,30 @@ def load_config(config_path: str) -> Union[AppConfig, Exception]:
         return e
 
 
-def save_config(config_path: str, config: AppConfig) -> Union[None, Exception]:
+def save_config(
+    config_path: str,
+    config: AppConfig,
+    *,
+    auto_format: bool = True,
+) -> Union[None, Exception]:
     """
     Save the AppConfig object to a YAML file.
     """
     try:
+        if auto_format:
+            from metagit.core.config.format_service import ConfigFormatService
+
+            original_text = (
+                Path(config_path).read_text(encoding="utf-8")
+                if Path(config_path).is_file()
+                else ""
+            )
+            formatted = ConfigFormatService().render_appconfig(
+                config,
+                original_text=original_text,
+            )
+            Path(config_path).write_text(formatted, encoding="utf-8")
+            return None
         config_dict = {"config": config.model_dump(exclude_none=True, mode="json")}
         with open(config_path, "w") as f:
             base_yaml.dump(

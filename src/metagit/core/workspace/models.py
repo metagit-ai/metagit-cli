@@ -7,6 +7,10 @@ from typing import Any, List, Optional
 
 from pydantic import AliasChoices, BaseModel, Field, field_validator
 
+from metagit.core.config.documentation_models import (
+    DocumentationSource,
+    normalize_documentation_entries,
+)
 from metagit.core.project.models import ProjectPath
 
 
@@ -46,7 +50,35 @@ class WorkspaceProject(BaseModel):
             "(currently supports enabled only)"
         ),
     )
+    protected: Optional[bool] = Field(
+        False,
+        description=(
+            "If true, catalog and layout mutations on this project and its repos "
+            "require force"
+        ),
+    )
+    tags: dict[str, str] = Field(
+        default_factory=dict,
+        description="Flat metadata tags inherited by repos unless overridden",
+    )
+    documentation: Optional[List[DocumentationSource]] = Field(
+        None,
+        description=(
+            "Documentation sources for this workspace project group "
+            "(paths, URLs, graph metadata)"
+        ),
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Extensible key-value payload for exports and tooling",
+    )
     repos: List[ProjectPath] = Field(..., description="Repository list")
+
+    @field_validator("documentation", mode="before")
+    @classmethod
+    def _coerce_documentation(cls, value: object) -> object:
+        """Accept strings or dicts in YAML documentation lists."""
+        return normalize_documentation_entries(value)
 
     @field_validator("repos", mode="before")
     def validate_repos(cls, v: Any) -> Any:

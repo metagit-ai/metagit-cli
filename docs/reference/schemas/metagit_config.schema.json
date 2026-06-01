@@ -357,12 +357,24 @@
           "title": "Description"
         },
         "tags": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "Flat metadata tags for filtering and graph edges",
-          "title": "Tags",
-          "type": "object"
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Flat string tags keyed by name"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Tag names (normalized to map values of true at load time)"
+            }
+          ],
+          "description": "Flat metadata tags as a map or list of tag names",
+          "title": "Tags"
         },
         "metadata": {
           "additionalProperties": true,
@@ -848,18 +860,6 @@
           "description": "Short description of the path or project",
           "title": "Description"
         },
-        "kind": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/ProjectKind"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "Project kind"
-        },
         "ref": {
           "anyOf": [
             {
@@ -1067,6 +1067,19 @@
           "default": null,
           "description": "Optional instructions for subagents operating in this repo or path",
           "title": "Agent Instructions"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+          "title": "Agent Prompt"
         }
       },
       "required": [
@@ -1258,6 +1271,19 @@
           },
           "title": "Projects",
           "type": "array"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+          "title": "Agent Prompt"
         }
       },
       "required": [
@@ -1335,13 +1361,80 @@
           "default": null,
           "description": "Optional override of app-config workspace.dedupe for this project (currently supports enabled only)"
         },
+        "protected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "If true, catalog and layout mutations on this project and its repos require force",
+          "title": "Protected"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags inherited by repos unless overridden",
+          "title": "Tags",
+          "type": "object"
+        },
+        "documentation": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/DocumentationSource"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Documentation sources for this workspace project group (paths, URLs, graph metadata)",
+          "title": "Documentation"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible key-value payload for exports and tooling",
+          "title": "Metadata",
+          "type": "object"
+        },
         "repos": {
           "description": "Repository list",
           "items": {
-            "$ref": "#/$defs/ProjectPath"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectPath"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProjectPath"
+                },
+                "description": "Nested repo list (flattened when YAML anchors expand)"
+              }
+            ]
           },
           "title": "Repos",
           "type": "array"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+          "title": "Agent Prompt"
         }
       },
       "required": [
@@ -1421,7 +1514,15 @@
       "anyOf": [
         {
           "items": {
-            "$ref": "#/$defs/DocumentationSource"
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Markdown path or http(s) URL shorthand"
+              },
+              {
+                "$ref": "#/$defs/DocumentationSource"
+              }
+            ]
           },
           "type": "array"
         },
@@ -1672,6 +1773,19 @@
         }
       ],
       "description": "Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. The internal workspace name is reservice"
+    },
+    "agent_prompt": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+      "title": "Agent Prompt"
     }
   },
   "required": [

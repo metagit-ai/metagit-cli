@@ -23,10 +23,11 @@ export function patchConfigTree(
   target: ConfigTarget,
   ops: ConfigOperation[],
   save: boolean,
+  autoFormat = true,
 ): Promise<ConfigTreeResponse> {
   return target === 'metagit'
-    ? patchMetagitConfig(ops, save)
-    : patchAppconfig(ops, save)
+    ? patchMetagitConfig(ops, save, autoFormat)
+    : patchAppconfig(ops, save, autoFormat)
 }
 
 export function fetchConfigPreview(

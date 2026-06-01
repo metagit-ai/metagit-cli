@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import requests
 
 from metagit.core.appconfig.models import AppConfig
-from metagit.core.project.models import ProjectPath, ProjectKind
+from metagit.core.project.models import ProjectPath
 from metagit.core.project.source_models import (
     DiscoveredRepo,
     SourceProvider,
@@ -21,6 +21,7 @@ from metagit.core.project.source_models import (
 from metagit.core.utils.common import normalize_git_url
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.models import WorkspaceProject
+from metagit.core.workspace.protection import project_is_protected
 
 
 class SourceSyncService:
@@ -71,6 +72,8 @@ class SourceSyncService:
 
         if mode == SourceSyncMode.RECONCILE:
             for repo in project.repos:
+                if project_is_protected(project):
+                    continue
                 if not repo.url:
                     continue
                 if bool(repo.protected):
@@ -123,6 +126,11 @@ class SourceSyncService:
             name=project.name,
             description=project.description,
             agent_instructions=project.agent_instructions,
+            dedupe=project.dedupe,
+            protected=project.protected,
+            tags=dict(project.tags),
+            documentation=project.documentation,
+            metadata=dict(project.metadata),
             repos=repos,
         )
 
@@ -242,12 +250,12 @@ class SourceSyncService:
         return ProjectPath(
             name=repo.name,
             description=repo.description,
-            kind=ProjectKind.REPOSITORY,
             url=repo.clone_url,
             sync=True,
             source_provider=repo.provider.value,
             source_namespace=repo.namespace,
             source_repo_id=repo.repo_id,
+            tags={"source": repo.provider.value},
         )
 
     def _needs_update(self, current: ProjectPath, incoming: ProjectPath) -> bool:

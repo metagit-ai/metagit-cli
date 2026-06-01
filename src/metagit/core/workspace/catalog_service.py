@@ -11,8 +11,9 @@ from typing import Any, Optional
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
-from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.workspace_dedupe import find_duplicate_identities
+from metagit.core.workspace.protection import project_is_protected, repo_is_protected
 from metagit.core.workspace.catalog_models import (
     CatalogError,
     CatalogMutationResult,
@@ -50,6 +51,8 @@ def _project_ensure_conflict(
     *,
     description: str | None,
     agent_instructions: str | None,
+    protected: bool | None = None,
+    tags: dict[str, str] | None = None,
 ) -> str | None:
     """Return a conflict message when optional project fields disagree."""
     if description is not None and existing.description != description:
@@ -62,6 +65,10 @@ def _project_ensure_conflict(
         and existing.agent_instructions != agent_instructions
     ):
         return f"agent_instructions mismatch for project '{existing.name}'"
+    if protected is not None and bool(existing.protected) != protected:
+        return f"protected mismatch for project '{existing.name}'"
+    if tags is not None and dict(existing.tags) != tags:
+        return f"tags mismatch for project '{existing.name}'"
     return None
 
 
@@ -112,6 +119,10 @@ class WorkspaceCatalogService:
                 name=project.name,
                 description=project.description,
                 agent_instructions=project.agent_instructions,
+                protected=bool(project.protected),
+                tags=dict(project.tags),
+                metadata=dict(project.metadata),
+                documentation_count=len(project.documentation or []),
                 dedupe_enabled=(
                     project.dedupe.enabled if project.dedupe is not None else None
                 ),
@@ -172,7 +183,11 @@ class WorkspaceCatalogService:
         name: str,
         description: Optional[str] = None,
         agent_instructions: Optional[str] = None,
+        protected: Optional[bool] = None,
+        tags: Optional[dict[str, str]] = None,
+        metadata: Optional[dict[str, Any]] = None,
         ensure: bool = False,
+        force: bool = False,
     ) -> CatalogMutationResult:
         """Add a workspace project (group) to the manifest."""
         trimmed = name.strip()
@@ -199,6 +214,8 @@ class WorkspaceCatalogService:
                     project,
                     description=description,
                     agent_instructions=agent_instructions,
+                    protected=protected,
+                    tags=tags,
                 )
                 if conflict:
                     return self._mutation_error(
@@ -220,6 +237,9 @@ class WorkspaceCatalogService:
                 name=trimmed,
                 description=description,
                 agent_instructions=agent_instructions,
+                protected=protected if protected is not None else False,
+                tags=tags or {},
+                metadata=metadata or {},
                 repos=[],
             )
         )
@@ -246,6 +266,7 @@ class WorkspaceCatalogService:
         config_path: str,
         *,
         name: str,
+        force: bool = False,
     ) -> CatalogMutationResult:
         """Remove a workspace project from the manifest (repos are removed with it)."""
         trimmed = name.strip()
@@ -255,6 +276,23 @@ class WorkspaceCatalogService:
                 operation="remove",
                 kind="not_found",
                 message=f"project '{trimmed}' not found",
+                project_name=trimmed,
+            )
+        target = self._find_project(config=config, project_name=trimmed)
+        if target is None:
+            return self._mutation_error(
+                entity="project",
+                operation="remove",
+                kind="not_found",
+                message=f"project '{trimmed}' not found",
+                project_name=trimmed,
+            )
+        if project_is_protected(target) and not force:
+            return self._mutation_error(
+                entity="project",
+                operation="remove",
+                kind="protected",
+                message=f"project '{trimmed}' is protected (use force=True)",
                 project_name=trimmed,
             )
         before = len(config.workspace.projects)
@@ -294,6 +332,7 @@ class WorkspaceCatalogService:
         project_name: str,
         repo: ProjectPath,
         ensure: bool = False,
+        force: bool = False,
     ) -> CatalogMutationResult:
         """Add a repository entry under a workspace project."""
         project = self._find_project(config=config, project_name=project_name)
@@ -304,6 +343,18 @@ class WorkspaceCatalogService:
                 kind="project_not_found",
                 message=f"project '{project_name}' not found",
                 project_name=project_name,
+            )
+        if project_is_protected(project) and not force:
+            return self._mutation_error(
+                entity="repo",
+                operation="add",
+                kind="protected",
+                message=(
+                    f"project '{project_name}' is protected "
+                    "(use force=True to add repos)"
+                ),
+                project_name=project_name,
+                repo_name=repo.name,
             )
         for existing in project.repos:
             if existing.name == repo.name:
@@ -386,6 +437,7 @@ class WorkspaceCatalogService:
         *,
         project_name: str,
         repo_name: str,
+        force: bool = False,
     ) -> CatalogMutationResult:
         """Remove a repository entry from a workspace project (manifest only)."""
         project = self._find_project(config=config, project_name=project_name)
@@ -398,6 +450,23 @@ class WorkspaceCatalogService:
                 project_name=project_name,
                 repo_name=repo_name,
             )
+        existing_repo = next(
+            (item for item in project.repos if item.name == repo_name),
+            None,
+        )
+        if existing_repo is not None and repo_is_protected(project, existing_repo):
+            if not force:
+                return self._mutation_error(
+                    entity="repo",
+                    operation="remove",
+                    kind="protected",
+                    message=(
+                        f"repo '{repo_name}' or project '{project_name}' is protected "
+                        "(use force=True)"
+                    ),
+                    project_name=project_name,
+                    repo_name=repo_name,
+                )
         before = len(project.repos)
         project.repos = [item for item in project.repos if item.name != repo_name]
         if len(project.repos) == before:
@@ -433,35 +502,26 @@ class WorkspaceCatalogService:
         *,
         name: str,
         description: Optional[str] = None,
-        kind: Optional[str] = None,
         path: Optional[str] = None,
         url: Optional[str] = None,
         sync: Optional[bool] = None,
         agent_instructions: Optional[str] = None,
         tags: Optional[dict[str, str]] = None,
+        protected: Optional[bool] = None,
     ) -> ProjectPath | CatalogError:
         """Construct a ProjectPath from API/MCP/CLI fields."""
         trimmed_name = name.strip()
         if not trimmed_name:
             return CatalogError(kind="invalid_name", message="repo name is required")
-        kind_val: ProjectKind | None = None
-        if kind:
-            try:
-                kind_val = ProjectKind(kind)
-            except ValueError:
-                return CatalogError(
-                    kind="invalid_kind",
-                    message=f"invalid project kind: {kind}",
-                )
         return ProjectPath(
             name=trimmed_name,
             description=description,
-            kind=kind_val,
             path=path,
             url=url,
             sync=sync,
             agent_instructions=agent_instructions,
             tags=tags or {},
+            protected=protected if protected is not None else False,
         )
 
     def _workspace_summary(

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from metagit.core.appconfig.models import WorkspaceDedupeConfig
 from metagit.core.config.models import MetagitConfig
-from metagit.core.project.models import ProjectKind, ProjectPath
+from metagit.core.project.models import ProjectPath
 from metagit.core.workspace import workspace_dedupe
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
@@ -36,7 +36,6 @@ def test_build_repo_identity_branch_suffix_differs() -> None:
 def test_find_duplicate_identities_reports_existing() -> None:
   shared = ProjectPath(
     name="shared",
-    kind=ProjectKind.REPOSITORY,
     url="https://github.com/example/shared.git",
   )
   config = MetagitConfig(

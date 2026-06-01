@@ -775,8 +775,8 @@ class ProjectManager:
             summary_lines.append(f"Path: {repo.path}")
         if repo.url:
             summary_lines.append(f"URL: {repo.url}")
-        if repo.kind:
-            summary_lines.append(f"Kind: {repo.kind}")
+        if repo.tags:
+            summary_lines.append(f"Tags: {repo.tags}")
         if repo.ref:
             summary_lines.append(f"Ref: {repo.ref}")
         if repo.language:

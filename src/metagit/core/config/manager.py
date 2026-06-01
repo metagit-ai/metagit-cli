@@ -136,7 +136,11 @@ class MetagitConfigManager:
         return self.load_config()
 
     def save_config(
-        self, config: Optional[MetagitConfig] = None, output_path: Optional[Path] = None
+        self,
+        config: Optional[MetagitConfig] = None,
+        output_path: Optional[Path] = None,
+        *,
+        auto_format: bool = True,
     ) -> Union[None, Exception]:
         """
         Save a configuration to a YAML file.
@@ -144,6 +148,7 @@ class MetagitConfigManager:
         Args:
             config: Configuration to save. If None, uses the loaded config.
             output_path: Path where to save the configuration. If None, uses the instance config_path.
+            auto_format: When True, use schema-ordered round-trip formatting.
         """
         try:
             config_to_save = config or self._config
@@ -152,7 +157,20 @@ class MetagitConfigManager:
                     "No configuration to save. Load a config first or provide one."
                 )
 
-            save_path = output_path or self.config_path
+            save_path = Path(output_path or self.config_path)
+            if auto_format:
+                from metagit.core.config.format_service import ConfigFormatService
+
+                original_text = (
+                    save_path.read_text(encoding="utf-8") if save_path.is_file() else ""
+                )
+                formatted = ConfigFormatService().render_metagit(
+                    config_to_save,
+                    original_text=original_text,
+                )
+                save_path.write_text(formatted, encoding="utf-8")
+                return None
+
             with open(save_path, "w", encoding="utf-8") as f:
                 yaml.dump(
                     config_to_save.model_dump(exclude_none=True, exclude_defaults=True),

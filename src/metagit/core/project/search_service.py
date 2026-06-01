@@ -127,6 +127,8 @@ class ManagedRepoSearchService:
             url=row.get("url"),
             configured_path=row.get("configured_path"),
             tags=dict(row.get("tags") or {}),
+            project_tags=dict(row.get("project_tags") or {}),
+            repo_tags=dict(row.get("repo_tags") or {}),
             status=status,
             match_reasons=list(reasons),
             score=score,

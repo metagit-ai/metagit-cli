@@ -67,6 +67,13 @@ class CatalogApiHandler:
                 name=name,
                 description=payload.get("description"),
                 agent_instructions=payload.get("agent_instructions"),
+                protected=payload.get("protected"),
+                tags=payload.get("tags")
+                if isinstance(payload.get("tags"), dict)
+                else None,
+                metadata=payload.get("metadata")
+                if isinstance(payload.get("metadata"), dict)
+                else None,
                 ensure=bool(payload.get("ensure", True)),
             )
             self._respond_mutation(mutation, respond)
@@ -74,10 +81,12 @@ class CatalogApiHandler:
 
         if method == "DELETE" and parsed_path.startswith("/v2/projects/"):
             name = unquote(parsed_path.removeprefix("/v2/projects/").strip("/"))
+            force = self._first(params, "force") == "true"
             mutation = self._service.remove_project(
                 config,
                 self._config_path,
                 name=name,
+                force=force,
             )
             self._respond_mutation(mutation, respond)
             return True
@@ -100,7 +109,6 @@ class CatalogApiHandler:
             built = self._service.build_repo_from_fields(
                 name=str(payload.get("name", "")),
                 description=payload.get("description"),
-                kind=payload.get("kind"),
                 path=payload.get("path"),
                 url=payload.get("url"),
                 sync=payload.get("sync"),
@@ -108,6 +116,7 @@ class CatalogApiHandler:
                 tags=payload.get("tags")
                 if isinstance(payload.get("tags"), dict)
                 else None,
+                protected=payload.get("protected"),
             )
             if isinstance(built, CatalogError):
                 respond(400, {"ok": False, "error": built.model_dump(mode="json")})
@@ -118,6 +127,7 @@ class CatalogApiHandler:
                 project_name=project_name,
                 repo=built,
                 ensure=bool(payload.get("ensure", True)),
+                force=bool(payload.get("force", False)),
             )
             self._respond_mutation(mutation, respond)
             return True
@@ -137,11 +147,13 @@ class CatalogApiHandler:
                 )
                 return True
             project_name, repo_name = remainder.split("/", 1)
+            force = self._first(params, "force") == "true"
             mutation = self._service.remove_repo(
                 config,
                 self._config_path,
                 project_name=unquote(project_name),
                 repo_name=unquote(repo_name),
+                force=force,
             )
             self._respond_mutation(mutation, respond)
             return True

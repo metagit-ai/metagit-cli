@@ -76,6 +76,16 @@ function parseDraftValue(node: SchemaFieldNode, raw: string): unknown {
   return raw
 }
 
+const AUTO_FORMAT_STORAGE_KEY = 'metagit.config.autoFormat'
+
+function readAutoFormatPreference(): boolean {
+  if (typeof window === 'undefined') {
+    return true
+  }
+  const stored = window.localStorage.getItem(AUTO_FORMAT_STORAGE_KEY)
+  return stored == null ? true : stored === 'true'
+}
+
 export default function FieldEditor({
   target,
   node,
@@ -91,6 +101,7 @@ export default function FieldEditor({
 
   const [draft, setDraft] = useState<string>('')
   const [dirty, setDirty] = useState(false)
+  const [autoFormat, setAutoFormat] = useState(readAutoFormatPreference)
 
   useEffect(() => {
     if (!node) {
@@ -110,7 +121,7 @@ export default function FieldEditor({
 
   const applyMutation = useMutation({
     mutationFn: (payload: { ops: ConfigOperation[]; save: boolean }) =>
-      patchConfigTree(target, payload.ops, payload.save),
+      patchConfigTree(target, payload.ops, payload.save, autoFormat),
     onSuccess: (response, variables) => {
       queryClient.setQueryData(queryKey, response)
       if (variables.save) {
@@ -321,6 +332,21 @@ export default function FieldEditor({
 
       {isScalar && editable ? (
         <div className={styles.actions}>
+          <label className={styles.checkbox}>
+            <input
+              type="checkbox"
+              checked={autoFormat}
+              onChange={(event) => {
+                const next = event.target.checked
+                setAutoFormat(next)
+                window.localStorage.setItem(
+                  AUTO_FORMAT_STORAGE_KEY,
+                  String(next),
+                )
+              }}
+            />
+            Auto-format on save
+          </label>
           <button
             type="button"
             className={`${styles.button} ${styles.buttonPrimary}`}

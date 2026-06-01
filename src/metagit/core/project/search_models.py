@@ -24,6 +24,8 @@ class ManagedRepoMatch(BaseModel):
     url: str | None = None
     configured_path: str | None = None
     tags: dict[str, str] = Field(default_factory=dict)
+    project_tags: dict[str, str] = Field(default_factory=dict)
+    repo_tags: dict[str, str] = Field(default_factory=dict)
     status: ManagedRepoStatus
     match_reasons: list[str] = Field(default_factory=list)
     score: int

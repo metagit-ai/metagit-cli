@@ -226,8 +226,6 @@ paths:
 ...
     # Short description of the path or project
     description: Example text for documentation; replace before production use.
-    # Project kind
-    kind: monorepo
     # Reference in the current project for the target project, used in dependencies
     ref: example
     # Project path
@@ -276,8 +274,6 @@ dependencies:
 ...
     # Short description of the path or project
     description: Example text for documentation; replace before production use.
-    # Project kind
-    kind: monorepo
     # Reference in the current project for the target project, used in dependencies
     ref: example
     # Project path
@@ -326,8 +322,6 @@ components:
 ...
     # Short description of the path or project
     description: Example text for documentation; replace before production use.
-    # Project kind
-    kind: monorepo
     # Reference in the current project for the target project, used in dependencies
     ref: example
     # Project path
@@ -427,7 +421,8 @@ workspace:
 ...
           # Sync setting
           sync: true
-          # Project kind
-          kind: website
+          # Flat metadata tags for managed repo search and filtering
+          tags:
+            type: website
           # Optional instructions for subagents operating in this repo or path
           agent_instructions: Document build and publish steps here; update path if the site moves.\n
