@@ -33,7 +33,7 @@ def test_profiles_model():
 def test_workspace_model():
     w = WorkspaceConfig()
     assert w.path == "./.metagit"
-    assert w.default_project == "default"
+    assert w.default_project is None
     assert w.dedupe.enabled is False
     assert w.ui_show_preview is True
     assert w.ui_ignore_hidden is True

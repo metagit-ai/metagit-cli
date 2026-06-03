@@ -1,9 +1,9 @@
 ---
-name: cluster-188
-description: "Skill for the Cluster_188 area of metagit-cli. 15 symbols across 1 files."
+name: cluster-191
+description: "Skill for the Cluster_191 area of metagit-cli. 15 symbols across 1 files."
 ---
 
-# Cluster_188
+# Cluster_191
 
 15 symbols | 1 files | Cohesion: 100%
 
@@ -11,7 +11,7 @@ description: "Skill for the Cluster_188 area of metagit-cli. 15 symbols across 1
 
 - Working with code in `src/`
 - Understanding how session, prompt_for_model, validate_type work
-- Modifying cluster_188-related functionality
+- Modifying cluster_191-related functionality
 
 ## Key Files
 
@@ -61,5 +61,5 @@ Start here when exploring this area:
 ## How to Explore
 
 1. `gitnexus_context({name: "session"})` — see callers and callees
-2. `gitnexus_query({query: "cluster_188"})` — find related execution flows
+2. `gitnexus_query({query: "cluster_191"})` — find related execution flows
 3. Read key files listed above for implementation details

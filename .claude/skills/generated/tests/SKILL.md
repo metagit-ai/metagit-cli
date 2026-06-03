@@ -1,11 +1,11 @@
 ---
 name: tests
-description: "Skill for the Tests area of metagit-cli. 33 symbols across 14 files."
+description: "Skill for the Tests area of metagit-cli. 37 symbols across 15 files."
 ---
 
 # Tests
 
-33 symbols | 14 files | Cohesion: 87%
+37 symbols | 15 files | Cohesion: 85%
 
 ## When to Use
 
@@ -20,13 +20,13 @@ description: "Skill for the Tests area of metagit-cli. 33 symbols across 14 file
 | `src/metagit/core/utils/fuzzyfinder.py` | on_mount, on_input_changed, _perform_search, _update_results_meta, _search |
 | `tests/test_project_search_service.py` | _config, test_search_prioritizes_exact_repo_name, test_search_can_filter_by_tag, test_search_filters_by_status_and_has_url, test_search_sorts_by_project_name |
 | `tests/test_project_manager_prune.py` | _config_one_repo, test_list_unmanaged_sync_directories_excludes_managed, test_list_unmanaged_respects_dot_directories_when_ignore_hidden, test_select_repo_skips_dot_directories_when_ignore_hidden |
+| `tests/test_project_manager_select_repo.py` | _build_metagit_config, test_select_repo_respects_gitignore_and_sets_total_count, test_select_repo_preview_contains_extended_metadata, test_select_repo_missing_project_returns_value_error |
 | `tests/test_config_example_generator.py` | test_render_yaml_includes_header_and_workspace, test_build_merges_overrides, test_generated_payload_validates_when_overrides_used |
 | `src/metagit/core/config/example_generator.py` | deep_merge, build, render_yaml |
 | `tests/test_gitcache.py` | test_git_cache_config_get_cache_path, test_git_cache_config_stale_detection |
 | `src/metagit/core/gitcache/config.py` | get_cache_path, is_entry_stale |
 | `tests/test_documentation_graph_models.py` | test_documentation_accepts_strings_and_dicts, test_graph_relationships_and_export |
 | `src/metagit/core/config/models.py` | documentation_graph_nodes, graph_export_payload |
-| `src/metagit/cli/commands/config.py` | config_example |
 
 ## Entry Points
 
@@ -59,16 +59,16 @@ Start here when exploring this area:
 | `test_list_unmanaged_sync_directories_excludes_managed` | Function | `tests/test_project_manager_prune.py` | 41 |
 | `test_list_unmanaged_respects_dot_directories_when_ignore_hidden` | Function | `tests/test_project_manager_prune.py` | 55 |
 | `test_select_repo_skips_dot_directories_when_ignore_hidden` | Function | `tests/test_project_manager_prune.py` | 77 |
-| `list_unmanaged_sync_directories` | Function | `src/metagit/core/project/manager.py` | 530 |
-| `test_get_detection_summary_without_optional_fields` | Function | `tests/test_record_conversion.py` | 270 |
-| `get_detection_summary` | Function | `src/metagit/core/record/models.py` | 430 |
+| `list_unmanaged_sync_directories` | Function | `src/metagit/core/project/manager.py` | 545 |
+| `test_select_repo_respects_gitignore_and_sets_total_count` | Function | `tests/test_project_manager_select_repo.py` | 55 |
+| `test_select_repo_preview_contains_extended_metadata` | Function | `tests/test_project_manager_select_repo.py` | 85 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Project | 5 calls |
-| Cluster_196 | 3 calls |
+| Project | 8 calls |
+| Cluster_199 | 3 calls |
 | Config | 2 calls |
 
 ## How to Explore

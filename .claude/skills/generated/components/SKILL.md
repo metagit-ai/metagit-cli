@@ -47,13 +47,13 @@ Start here when exploring this area:
 | `postSync` | Function | `web/src/api/client.ts` | 270 |
 | `getSyncJob` | Function | `web/src/api/client.ts` | 277 |
 | `revert` | Function | `web/src/components/FieldEditor.tsx` | 214 |
-| `postHealth` | Function | `web/src/api/client.ts` | 261 |
-| `postPrunePreview` | Function | `web/src/api/client.ts` | 295 |
-| `postPrune` | Function | `web/src/api/client.ts` | 305 |
 | `OpsPanel` | Function | `web/src/components/OpsPanel.tsx` | 17 |
 | `runHealth` | Function | `web/src/components/OpsPanel.tsx` | 37 |
 | `runPrunePreview` | Function | `web/src/components/OpsPanel.tsx` | 53 |
 | `runPruneExecute` | Function | `web/src/components/OpsPanel.tsx` | 78 |
+| `postHealth` | Function | `web/src/api/client.ts` | 261 |
+| `postPrunePreview` | Function | `web/src/api/client.ts` | 295 |
+| `postPrune` | Function | `web/src/api/client.ts` | 305 |
 | `repoSelector` | Function | `web/src/pages/workspaceQueries.ts` | 15 |
 | `RepoTable` | Function | `web/src/components/RepoTable.tsx` | 43 |
 | `toggleProject` | Function | `web/src/components/RepoTable.tsx` | 75 |

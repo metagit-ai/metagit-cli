@@ -1,11 +1,11 @@
 ---
 name: web
-description: "Skill for the Web area of metagit-cli. 111 symbols across 13 files."
+description: "Skill for the Web area of metagit-cli. 112 symbols across 13 files."
 ---
 
 # Web
 
-111 symbols | 13 files | Cohesion: 81%
+112 symbols | 13 files | Cohesion: 81%
 
 ## When to Use
 
@@ -19,7 +19,7 @@ description: "Skill for the Web area of metagit-cli. 111 symbols across 13 files
 |------|---------|
 | `src/metagit/core/web/schema_tree.py` | _build_children, _build_field_children, _field_enabled, _join_path, _unwrap_optional (+24) |
 | `src/metagit/core/web/config_handler.py` | handle, _respond_metagit_tree, _patch_metagit, _preview_metagit, _preview_appconfig (+12) |
-| `src/metagit/core/web/ops_handler.py` | handle, _post_objectives, _post_approval_resolve, _post_health, _get_graph (+10) |
+| `src/metagit/core/web/ops_handler.py` | handle, _post_objectives, _patch_objective, _post_approval_resolve, _post_health (+11) |
 | `tests/core/web/test_schema_tree.py` | test_disable_optional_field_removes_key, test_enable_optional_field_adds_default, test_set_field_updates_value, test_apply_operations_returns_original_instance_on_validation_error, test_sensitive_token_unchanged_after_masked_set (+6) |
 | `src/metagit/core/web/server.py` | do_GET, do_PATCH, do_POST, do_DELETE, _dispatch (+3) |
 | `tests/core/web/test_config_handler.py` | _start_server, _patch_json, test_get_metagit_config_tree, test_patch_metagit_set_name_without_save, test_patch_metagit_set_name_with_save (+3) |
@@ -78,7 +78,7 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Context | 5 calls |
+| Context | 6 calls |
 | Api | 5 calls |
 | Config | 3 calls |
 | Workspace | 1 calls |

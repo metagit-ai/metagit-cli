@@ -5,7 +5,6 @@ description: |-
   a sprawling multi-repo project feel more like a monorepo or be used as a standalone
   tool to provide concise information on the project's used languages/frameworks,
   artifacts, upstream dependencies, and more.
-kind: application
 documentation:
   # Strings are allowed and will be treated as a markdown file in the root of the project
   - README.md
@@ -57,17 +56,12 @@ cicd:
   pipelines:
     - name: Lint and Test
       ref: .github/workflows/lint-and-test.yaml
-      variables: []
     - name: Docs
       ref: .github/workflows/docs.yaml
-      variables: []
     - name: PR and Push
       ref: .github/workflows/pr-and-push.yaml
-      variables: []
     - name: Publish CLI
       ref: .github/workflows/publish-cli.yaml
-      variables: []
-observability: {}
   # dashboards:
   #   - name: OpenSearch Dashboards
   #     tool: OpenSearch
@@ -85,20 +79,14 @@ paths:
     frameworks:
       - CrewAI
       - Click
-    tags: {}
-    protected: false
 dependencies:
   - name: ubuntu_latest
-    description: Ubuntu is a Linux distribution based on Debian and composed mostly of free and open-source software.
-    kind: docker_image
+    description: |-
+      Ubuntu is a Linux distribution based on Debian and composed mostly of free and
+      open-source software.
     ref: ./.github/workflows/lint-and-test.yaml
-    tags: {}
-    protected: false
-  - name: python:3.12-slim
     kind: docker_image
+  - name: python:3.12-slim
     ref: ./Dockerfile
     url: https://hub.docker.com/_/python
-    tags: {}
-    protected: false
-workspace:
-  projects: []
+    kind: docker_image

@@ -1,11 +1,11 @@
 ---
 name: config
-description: "Skill for the Config area of metagit-cli. 109 symbols across 22 files."
+description: "Skill for the Config area of metagit-cli. 103 symbols across 20 files."
 ---
 
 # Config
 
-109 symbols | 22 files | Cohesion: 84%
+103 symbols | 20 files | Cohesion: 83%
 
 ## When to Use
 
@@ -42,8 +42,6 @@ Start here when exploring this area:
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `TenantConfig` | Class | `src/metagit/core/config/models.py` | 912 |
-| `AppConfig` | Class | `src/metagit/core/appconfig/models.py` | 194 |
 | `test_render_metagit_omits_schema_defaults_by_default` | Function | `tests/core/config/test_format_service.py` | 101 |
 | `test_render_metagit_include_defaults_preserves_default_fields` | Function | `tests/core/config/test_format_service.py` | 135 |
 | `resolve_sync_context` | Function | `src/metagit/core/workspace/layout_context.py` | 15 |
@@ -51,8 +49,8 @@ Start here when exploring this area:
 | `load_config` | Function | `src/metagit/core/config/manager.py` | 50 |
 | `validate_config` | Function | `src/metagit/core/config/manager.py` | 76 |
 | `reload_config` | Function | `src/metagit/core/config/manager.py` | 127 |
-| `workspace` | Function | `src/metagit/cli/commands/workspace.py` | 92 |
-| `project` | Function | `src/metagit/cli/commands/project.py` | 42 |
+| `workspace` | Function | `src/metagit/cli/commands/workspace.py` | 93 |
+| `project` | Function | `src/metagit/cli/commands/project.py` | 47 |
 | `config_show` | Function | `src/metagit/cli/commands/config.py` | 69 |
 | `config_validate` | Function | `src/metagit/cli/commands/config.py` | 156 |
 | `config_info` | Function | `src/metagit/cli/commands/config.py` | 374 |
@@ -62,6 +60,8 @@ Start here when exploring this area:
 | `render_metagit` | Function | `src/metagit/core/config/format_service.py` | 86 |
 | `render_appconfig` | Function | `src/metagit/core/config/format_service.py` | 115 |
 | `fmt_cmd` | Function | `src/metagit/cli/commands/fmt.py` | 107 |
+| `should_use_literal_block` | Function | `src/metagit/core/config/yaml_display.py` | 22 |
+| `wrap_long_string` | Function | `src/metagit/core/config/yaml_display.py` | 36 |
 
 ## Execution Flows
 

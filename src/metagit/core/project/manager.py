@@ -32,7 +32,10 @@ from metagit.core.utils.files import parse_gitignore, should_ignore_path
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.utils.userprompt import UserPrompt
 from metagit.core.workspace.dedupe_resolver import resolve_effective_dedupe
-from metagit.core.workspace.layout_resolver import find_project
+from metagit.core.workspace.layout_resolver import (
+    find_project,
+    list_project_names,
+)
 from metagit.core.workspace.models import WorkspaceProject
 
 
@@ -133,7 +136,19 @@ class ProjectManager:
                 repo_result = UserPrompt.prompt_for_model(
                     ProjectPath,
                     title="Add git repository or local path to project group",
-                    fields_to_prompt=["name", "path", "url", "description"],
+                    fields_to_prompt=[
+                        "name",
+                        "path",
+                        "url",
+                        "description",
+                        "ref",
+                        "sync",
+                        "language",
+                        "language_version",
+                        "package_manager",
+                        "frameworks",
+                        "tags",
+                    ],
                 )
                 if isinstance(repo_result, Exception):
                     return repo_result
@@ -601,11 +616,16 @@ class ProjectManager:
         if project == "local":
             workspace_project = metagit_config.local_workspace_project
         else:
-            workspace_project = [
-                target_project
-                for target_project in metagit_config.workspace.projects
-                if target_project.name == project
-            ][0]
+            workspace_project = find_project(metagit_config, project)
+            if workspace_project is None:
+                available = list_project_names(metagit_config)
+                if available:
+                    hint = f" Available projects: {', '.join(available)}."
+                else:
+                    hint = " No workspace projects are defined in .metagit.yml."
+                return ValueError(
+                    f"Project '{project}' not found in workspace configuration.{hint}"
+                )
 
         if not Path(project_path).exists(follow_symlinks=True):
             self.logger.warning(

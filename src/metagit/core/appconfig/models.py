@@ -54,7 +54,14 @@ class WorkspaceConfig(BaseModel):
     """Model for workspace configuration in AppConfig."""
 
     path: str = Field(default="./.metagit", description="Workspace path")
-    default_project: str = Field(default="default", description="Default project")
+    default_project: Optional[str] = Field(
+        default=None,
+        description=(
+            "Optional session preference for -p/--project when omitted. "
+            "When unset, metagit resolves from the manifest (sole project) "
+            "or uses the computed local project for application manifests."
+        ),
+    )
     dedupe: WorkspaceDedupeConfig = Field(
         default_factory=WorkspaceDedupeConfig,
         description="Optional workspace-scoped repository deduplication settings",
