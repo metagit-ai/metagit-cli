@@ -119,9 +119,11 @@ def test_project_list_empty_workspace(tmp_path: Path) -> None:
 def test_project_select_missing_default_uses_single_project(
     tmp_path: Path, monkeypatch
 ) -> None:
+    finder_calls: list[object] = []
+
     class _DummyFinder:
-        def __init__(self, _config) -> None:
-            pass
+        def __init__(self, config) -> None:
+            finder_calls.append(config)
 
         def run(self):
             return None
@@ -160,4 +162,6 @@ def test_project_select_missing_default_uses_single_project(
 
     assert result.exit_code == 1
     assert "IndexError" not in result.output
-    assert "No repo selected" in result.output
+    assert "Traceback" not in result.output
+    assert "Project 'default' not found" not in result.output
+    assert len(finder_calls) == 1
