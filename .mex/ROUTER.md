@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-06-01
+last_updated: 2026-06-03
 ---
 
 # Session Bootstrap
@@ -34,7 +34,7 @@ Then read this file fully before doing anything else in this session.
 - **Workspace layout** (`WorkspaceLayoutService`): rename/move projects and repos (manifest + sync folders, dedupe-aware, session migration); CLI, MCP, HTTP v2 — see `docs/reference/workspace-layout-api.md`.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
 - MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply, **context packs** `metagit_context_pack` / `metagit_repo_card`), resources for health/context, protocol-framed stdio loop, and runtime tests.
-- Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api` (including **`GET /v2/workspace/grep`** via `GrepApiHandler`), **`metagit workspace grep`** CLI, and guarded repo inspect/sync flows.
+- Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api` (**`GET /v2/workspace/grep`** + **`GET /v2/workspace/grep/info`** via `GrepApiHandler`), **`metagit workspace grep`** CLI group (search + `info`), MCP **`metagit_workspace_search`** / **`metagit_workspace_grep_info`**, bundled **`metagit-workspace-grep`** skill, and guarded repo inspect/sync flows.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows, including `metagit-projects` for OpenClaw/Hermes workspace project lifecycle (check-before-create, register in `.metagit.yml`).
 - `docs/skills.md` documents global install, `metagit skills install`, and bundled skill overview.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.

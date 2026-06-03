@@ -182,6 +182,12 @@
   min-width: 0;
 }
 
+.grepBackend {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
 .grepHits {
   list-style: none;
   margin: 0;

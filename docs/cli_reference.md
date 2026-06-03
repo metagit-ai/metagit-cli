@@ -16,7 +16,8 @@ This page contains the auto-generated documentation for the `metagit` command-li
 - Print status snapshot and exit:
   - `metagit mcp serve --status-once`
 - When the workspace gate is **active**, the tool **`metagit_repo_search`** searches only repos listed under `workspace.projects[].repos` in `.metagit.yml` (tags, sync status, resolved paths). Optional filters: `status[]`, `has_url`, `sync_enabled`, `sort` (`score`|`project`|`name`). Use query `*` for filter-only listing.
-- **`metagit_workspace_search`** uses ripgrep when available (`repos`, `paths`, `exclude`, `context_lines`, `intent`, `include_paths`). Falls back to a bounded scanner if `rg` is not installed.
+- **`metagit_workspace_search`** searches on-disk file contents (not manifest metadata). Uses ripgrep when available (`repos`, `paths`, `exclude`, `context_lines`, `intent`, `include_paths`). Always excludes scaffold paths (`node_modules`, `.venv`, etc.). Falls back to a bounded scanner if `rg` is not installed.
+- **`metagit_workspace_grep_info`** returns `ripgrep_available`, `ripgrep_path`, `ripgrep_version`, and `search_backend` (`ripgrep` or `python_walk`). CLI equivalent: `metagit workspace grep info`.
 - **`metagit_workspace_sync`** batch-syncs repos (`repos: ["all"]` or selectors), with `only_if` (`any`|`missing`|`dirty`|`behind_origin`), `max_parallel`, and `dry_run`.
 - **`metagit_cross_project_dependencies`** maps relationships from a `source_project` using `dependency_types` (`declared`, `imports`, `shared_config`, `url_match`, `ref`), `depth`, and per-repo GitNexus `graph_status` (`indexed`|`stale`|`missing`).
 - **`metagit_workspace_health_check`** returns per-repo git/GitNexus signals, optional staleness metrics (`head_commit_age_days`, `merge_base_age_days` when `check_stale_branches`), tunable thresholds (`branch_head_warning_days`, `branch_head_critical_days`, `integration_stale_days`), and prioritized recommendations (`sync`, `analyze`, `clone`, `fix_config`, `review_branch_age`, `reconcile_integration`, …).
@@ -50,3 +51,5 @@ Under `workspace.projects[].repos`, each repository entry may include a flat str
 - `metagit api serve --status-once` — allocate a port (use `--port 0` for ephemeral), print `api_state=ready host=… port=…`, and exit (for tests and automation).
 - `GET /v1/repos/search?q=…` — same managed-repo search as the CLI; optional query params: `project`, `exact=true|false`, `synced_only=true|false`, `limit`, repeat `tag=key=value`.
 - `GET /v1/repos/resolve?q=…` — single-match resolution; HTTP `404` when not found, `409` when ambiguous (body includes `ManagedRepoResolveResult` JSON).
+- `GET /v2/workspace/grep?q=…` — content grep across managed repos (optional `project`, `repo`, `preset`, `intent`, `max_results`, `context_lines`, `include_paths`). CLI equivalent: `metagit workspace grep`.
+- `GET /v2/workspace/grep/info` — ripgrep availability and search backend. CLI equivalent: `metagit workspace grep info`.

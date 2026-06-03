@@ -347,3 +347,7 @@ tasks:
       - task: security:deps
       - task: security:bandit
   
+  gitnexus:analyze:
+    desc: Run gitnexus analyze
+    cmds:
+      - npx gitnexus analyze --skip-agents-md --skills

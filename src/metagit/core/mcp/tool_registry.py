@@ -17,6 +17,7 @@ class ToolRegistry:
         "metagit_workspace_status",
         "metagit_workspace_index",
         "metagit_workspace_search",
+        "metagit_workspace_grep_info",
         "metagit_workspace_semantic_search",
         "metagit_repo_search",
         "metagit_upstream_hints",

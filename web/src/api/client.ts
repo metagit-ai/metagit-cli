@@ -374,3 +374,20 @@ export function getWorkspaceGrep(
   }
   return requestJson<WorkspaceGrepResult>(`/v2/workspace/grep?${params.toString()}`)
 }
+
+export interface WorkspaceGrepInfo {
+  ripgrep_available: boolean
+  ripgrep_path: string | null
+  ripgrep_version: string | null
+  search_backend: 'ripgrep' | 'python_walk' | string
+}
+
+export interface WorkspaceGrepInfoResult {
+  ok: boolean
+  data?: WorkspaceGrepInfo
+  error?: { kind: string; message: string } | null
+}
+
+export function getWorkspaceGrepInfo(): Promise<WorkspaceGrepInfoResult> {
+  return requestJson<WorkspaceGrepInfoResult>('/v2/workspace/grep/info')
+}

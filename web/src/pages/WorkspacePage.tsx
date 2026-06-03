@@ -5,7 +5,12 @@ import OpsPanel from '../components/OpsPanel'
 import RepoTable from '../components/RepoTable'
 import SyncDialog from '../components/SyncDialog'
 import { fetchWorkspaceGraph, graphQueryKey } from './graphQueries'
-import { fetchWorkspaceGrep, grepQueryKey } from './grepQueries'
+import {
+  fetchWorkspaceGrep,
+  fetchWorkspaceGrepInfo,
+  grepInfoQueryKey,
+  grepQueryKey,
+} from './grepQueries'
 import {
   fetchWorkspace,
   workspaceQueryKey,
@@ -68,6 +73,12 @@ export default function WorkspacePage() {
         includePaths: grepFilesOnly,
       }),
     enabled: view === 'search' && grepSubmitted.length > 0,
+  })
+
+  const { data: grepInfo } = useQuery({
+    queryKey: grepInfoQueryKey,
+    queryFn: fetchWorkspaceGrepInfo,
+    enabled: view === 'search',
   })
 
   const reposIndex = data?.repos_index ?? []
@@ -266,6 +277,14 @@ export default function WorkspacePage() {
             />
           ) : view === 'search' ? (
             <section className={styles.grepPanel} aria-label="Content search results">
+              {grepInfo ? (
+                <p className={styles.grepBackend}>
+                  Search backend:{' '}
+                  {grepInfo.ripgrep_available
+                    ? `ripgrep (${grepInfo.ripgrep_version ?? grepInfo.ripgrep_path ?? 'available'})`
+                    : 'Python walk (install ripgrep for faster search)'}
+                </p>
+              ) : null}
               {!grepSubmitted ? (
                 <p className={styles.loading}>
                   Enter a query and press Search to grep workspace repositories.

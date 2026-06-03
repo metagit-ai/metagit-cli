@@ -17,6 +17,8 @@ metagit prompt workspace --kind session-start --text-only
 |------|---------|
 | Workspace map / repo cards | `metagit context pack --tier 0\|1\|2 --json` |
 | Find managed repo | `metagit search "…" --json` |
+| Search repo file contents | `metagit workspace grep "…" --json` |
+| Grep backend (ripgrep) | `metagit workspace grep info --json` |
 | Catalog | `metagit workspace list --json` |
 | Operational prompts | `metagit prompt list` |
 | Scoped repo text | `metagit context repomix --profile bugfix-local --project P --repo R` |

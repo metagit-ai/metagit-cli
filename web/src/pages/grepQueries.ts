@@ -1,6 +1,8 @@
 import {
   getWorkspaceGrep,
+  getWorkspaceGrepInfo,
   type WorkspaceGrepHit,
+  type WorkspaceGrepInfo,
   type WorkspaceGrepOptions,
 } from '../api/client'
 
@@ -29,4 +31,14 @@ export async function fetchWorkspaceGrep(
   return result.data?.hits ?? []
 }
 
-export type { WorkspaceGrepHit, WorkspaceGrepOptions }
+export const grepInfoQueryKey = ['workspace-grep-info'] as const
+
+export async function fetchWorkspaceGrepInfo(): Promise<WorkspaceGrepInfo> {
+  const result = await getWorkspaceGrepInfo()
+  if (!result.ok || !result.data) {
+    throw new Error(result.error?.message ?? 'Failed to load grep backend status')
+  }
+  return result.data
+}
+
+export type { WorkspaceGrepHit, WorkspaceGrepInfo, WorkspaceGrepOptions }

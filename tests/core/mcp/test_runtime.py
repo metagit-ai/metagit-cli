@@ -186,6 +186,37 @@ def test_bootstrap_uses_sampling_when_client_supports_it(tmp_path: Path) -> None
     assert payload["mode"] == "sampled"
 
 
+def test_tools_call_workspace_grep_info_returns_backend(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: default",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 11,
+            "method": "tools/call",
+            "params": {"name": "metagit_workspace_grep_info", "arguments": {}},
+        }
+    )
+
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert "ripgrep_available" in payload
+    assert payload["search_backend"] in {"ripgrep", "python_walk"}
+
+
 def test_tools_list_includes_repo_search_for_active_workspace(tmp_path: Path) -> None:
     (tmp_path / ".metagit.yml").write_text(
         "\n".join(
