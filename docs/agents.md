@@ -42,6 +42,8 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Goal | Command |
 |------|---------|
 | Find a managed repo | `metagit search "<query>" --json` |
+| Search file contents (workspace) | `metagit workspace grep "<query>" --json` |
+| Ripgrep / grep backend status | `metagit workspace grep info --json` |
 | Workspace catalog | `metagit workspace list --json` |
 | Validate manifest | `metagit config validate` |
 | Safe sync (fetch-first) | `metagit project sync` |
@@ -74,9 +76,25 @@ metagit prompt project --kind sync-safe --project myproj --text-only
 | Shell / subprocess agent | IDE host with MCP (Cursor, Claude Desktop, OpenClaw) |
 | `METAGIT_AGENT_MODE=true` | Gate active (valid `.metagit.yml` in workspace) |
 
-Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_repo_search`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`.
+Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_repo_search`, `metagit_workspace_search`, `metagit_workspace_grep_info`, `metagit_workspace_discover`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`.
 
 Start MCP: `metagit mcp serve` (stdio). Install config: `metagit mcp install --scope user`.
+
+## Workspace content grep (not manifest search)
+
+Search **on-disk files** in managed repos. Always excludes `node_modules`, `.venv`, and similar scaffold paths.
+
+| Goal | CLI | MCP | HTTP (`metagit api serve`) |
+|------|-----|-----|----------------------------|
+| Content search | `metagit workspace grep "QUERY" --json` | `metagit_workspace_search` | `GET /v2/workspace/grep?q=…` |
+| Scoped to project | `--project NAME` | (filter via `repos` selectors) | `?project=NAME` |
+| Scoped to repo | `--repo NAME` | `repos: ["project/repo"]` | `?repo=NAME` |
+| Ripgrep status | `metagit workspace grep info --json` | `metagit_workspace_grep_info` | `GET /v2/workspace/grep/info` |
+| List files by intent | — | `metagit_workspace_discover` | — |
+
+Do **not** use `metagit search` for file contents — that command searches `.metagit.yml` metadata only.
+
+Install skill: `metagit-workspace-grep` (see [Skills](skills.md)). Examples: `metagit workspace grep --help`.
 
 ## Skills catalog
 

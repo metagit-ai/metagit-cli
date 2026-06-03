@@ -41,6 +41,7 @@ Other targets: `opencode`, `claude_code`, `github_copilot`.
 |-------|----------|
 | `metagit-context-pack` | Session start; tiered packs (map, cards, digest), objectives, approvals, repomix profiles |
 | `metagit-cli` | CLI-only agent workflows: all `metagit prompt` kinds, catalog, detect, sync, layout (no MCP/API) |
+| `metagit-workspace-grep` | On-disk content search across managed repos (CLI, MCP, HTTP); not manifest `metagit search` |
 | `metagit-agent-access` | On-demand: optimize any repo for minimal-token agent onboarding (`llms.txt`, hidden README comments, AGENTS.md) |
 | `metagit-projects` | Starting work; check for existing projects/repos before new folders |
 | `metagit-workspace-scope` | Session start; workspace boundaries; Hermes bootstrap wiring |

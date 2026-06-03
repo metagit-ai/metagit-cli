@@ -53,6 +53,25 @@ def test_workspace_grep_requires_query(tmp_path: Path) -> None:
         thread.join(timeout=10.0)
 
 
+def test_workspace_grep_info_returns_ripgrep_status(tmp_path: Path) -> None:
+    _write_grep_fixture(tmp_path)
+    server = build_server(root=str(tmp_path), host="127.0.0.1", port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        port = server.server_address[1]
+        url = f"http://127.0.0.1:{port}/v2/workspace/grep/info"
+        payload = json.loads(urllib.request.urlopen(url, timeout=5).read().decode("utf-8"))
+        assert payload["ok"] is True
+        data = payload["data"]
+        assert "ripgrep_available" in data
+        assert "search_backend" in data
+        assert data["search_backend"] in {"ripgrep", "python_walk"}
+    finally:
+        server.shutdown()
+        thread.join(timeout=10.0)
+
+
 def test_workspace_grep_returns_enriched_hits(tmp_path: Path) -> None:
     _write_grep_fixture(tmp_path)
     server = build_server(root=str(tmp_path), host="127.0.0.1", port=0)

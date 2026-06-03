@@ -56,6 +56,7 @@ Expose full set:
 - `metagit_workspace_status`
 - `metagit_workspace_index`
 - `metagit_workspace_search`
+- `metagit_workspace_grep_info`
 - `metagit_upstream_hints`
 - `metagit_repo_inspect`
 - `metagit_repo_sync`

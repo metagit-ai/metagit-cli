@@ -32,7 +32,9 @@ metagit prompt workspace --kind session-start --text-only
 | Goal | Command |
 |------|---------|
 | Context pack | `metagit context pack --tier 0\|1\|2 --json` |
-| Find repo | `metagit search "query" --json` |
+| Find repo (manifest) | `metagit search "query" --json` |
+| Grep file contents | `metagit workspace grep "query" --json` |
+| Grep backend status | `metagit workspace grep info --json` |
 | List workspace | `metagit workspace list --json` |
 | Prompts | `metagit prompt list` |
 | Skills | `metagit skills install --scope user` |
@@ -40,7 +42,7 @@ metagit prompt workspace --kind session-start --text-only
 
 ## Bundled skills (after install)
 
-`metagit-cli`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects` — see docs/skills.md.
+`metagit-cli`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects` — see docs/skills.md.
 
 ## Optional
 

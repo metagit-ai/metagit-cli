@@ -25,6 +25,48 @@ from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 
+_WORKSPACE_GREP_EPILOG = """
+Examples:
+
+  Whole workspace (all managed repos):
+
+    metagit workspace grep "DATABASE_URL" --json
+
+  Single project:
+
+    metagit workspace grep 'module "vpc"' --project platform --json
+
+  Single repo with context lines:
+
+    metagit workspace grep "def main" --project portfolio --repo api -C 2
+
+  Terraform-oriented preset:
+
+    metagit workspace grep "aws_instance" --preset terraform --project infra
+
+  Matching paths only:
+
+    metagit workspace grep "TODO" --files-with-matches --limit 50
+
+  Ripgrep backend status:
+
+    metagit workspace grep info --json
+"""
+
+
+class _WorkspaceGrepGroup(click.Group):
+    """Route `grep QUERY` to search and `grep info` to the info subcommand."""
+
+    def resolve_command(
+        self, ctx: click.Context, args: list[str]
+    ) -> tuple[str | None, click.Command | None, list[str]]:
+        if args and args[0] == "info":
+            return super().resolve_command(ctx, args)
+        if not args:
+            return None, None, []
+        cmd = self.get_command(ctx, "search")
+        return "search", cmd, args
+
 
 def _catalog_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str]:
     local_config: MetagitConfig = ctx.obj["local_config"]
@@ -502,7 +544,25 @@ def workspace_repo_move(
     exit_on_layout_mutation(result, as_json=as_json)
 
 
-@workspace.command("grep")
+@workspace.group(
+    "grep",
+    cls=_WorkspaceGrepGroup,
+    invoke_without_command=True,
+    epilog=_WORKSPACE_GREP_EPILOG,
+)
+@click.pass_context
+def workspace_grep_group(ctx: click.Context) -> None:
+    """
+    Search on-disk file contents across managed workspace repos.
+
+    Use `metagit search` for manifest metadata only. Matches under
+    node_modules, .venv, and similar scaffold paths are always excluded.
+    """
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+
+
+@workspace_grep_group.command("search")
 @click.argument("query")
 @click.option(
     "--project",
@@ -544,7 +604,7 @@ def workspace_repo_move(
     "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
 )
 @click.pass_context
-def workspace_grep(
+def workspace_grep_search(
     ctx: click.Context,
     query: str,
     project: str | None,
@@ -556,7 +616,7 @@ def workspace_grep(
     files_with_matches: bool,
     as_json: bool,
 ) -> None:
-    """Search file contents across workspace repositories."""
+    """Search file contents (default when a QUERY argument is provided)."""
     local_config, _, workspace_root = _catalog_ctx(ctx)
     query_text = query.strip()
     if not query_text:
@@ -611,6 +671,29 @@ def workspace_grep(
         line_number = hit.get("line_number", 0)
         line_text = hit.get("line", "")
         click.echo(f"{project_name}/{repo_name}:{file_path}:{line_number}: {line_text}")
+
+
+@workspace_grep_group.command("info")
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def workspace_grep_info(ctx: click.Context, as_json: bool) -> None:
+    """Show ripgrep availability and workspace grep search backend."""
+    _ = ctx
+    status = WorkspaceSearchService.ripgrep_status()
+    payload = {"ok": True, "data": status}
+    if as_json:
+        emit_json(payload)
+        return
+    if status.get("ripgrep_available"):
+        click.echo(f"ripgrep: available ({status.get('ripgrep_path')})")
+        version = status.get("ripgrep_version")
+        if version:
+            click.echo(f"version: {version}")
+    else:
+        click.echo("ripgrep: not found on PATH")
+    click.echo(f"search backend: {status.get('search_backend')}")
 
 
 @workspace.command("select")

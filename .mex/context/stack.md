@@ -34,7 +34,8 @@ last_updated: 2026-05-05
 - **`GitPython`** — repository metadata and sync operations instead of raw shell git calls in core logic.
 - **`pytest`** — primary testing framework for unit/integration tests in `tests/`.
 - **`ruff`** — primary lint + format tool for current local workflow (`task lint`, `task format`).
-- **`litellm` / `crewai`** — agent-oriented integrations present in dependencies and examples for AI-assisted flows.
+- **`litellm`** — agent-oriented integrations in core dependencies.
+- **`crewai`** — optional dependency group (`uv sync --group crewai`) for detect-flow crews; not installed in default/prepush audit env (avoids transitive chromadb until upstream patch).
 
 ## What We Deliberately Do NOT Use
 - No JavaScript/TypeScript runtime as the primary execution path; core implementation is Python CLI/service modules.

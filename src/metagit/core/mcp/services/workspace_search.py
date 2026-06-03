@@ -4,10 +4,49 @@ Workspace-scoped search service using ripgrep with a bounded fallback scanner.
 """
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
+from collections.abc import Iterator
 from typing import Any, Optional
+
+
+# Directory names that exclude a file when they appear as any path segment.
+_SCAFFOLD_PATH_SEGMENTS: frozenset[str] = frozenset(
+    {
+        ".git",
+        ".metagit",
+        ".venv",
+        "venv",
+        "node_modules",
+        "__pycache__",
+        ".tox",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        "dist",
+        "build",
+        "out",
+        ".next",
+        ".nuxt",
+        ".svelte-kit",
+        "bower_components",
+        "vendor",
+        ".cache",
+        ".turbo",
+        ".parcel-cache",
+        "coverage",
+        "htmlcov",
+        ".eggs",
+        "site-packages",
+        "__pypackages__",
+        ".gradle",
+        "target",
+        ".yarn",
+        ".pnpm",
+    }
+)
 
 
 class WorkspaceSearchService:
@@ -30,12 +69,35 @@ class WorkspaceSearchService:
 
     _default_exclude: list[str] = [
         "**/.git/**",
+        "**/.metagit/**",
         "**/node_modules/**",
         "**/__pycache__/**",
         "**/.venv/**",
         "**/venv/**",
+        "**/.tox/**",
+        "**/.pytest_cache/**",
+        "**/.mypy_cache/**",
+        "**/.ruff_cache/**",
         "**/dist/**",
         "**/build/**",
+        "**/out/**",
+        "**/.next/**",
+        "**/.nuxt/**",
+        "**/.svelte-kit/**",
+        "**/bower_components/**",
+        "**/vendor/**",
+        "**/.cache/**",
+        "**/.turbo/**",
+        "**/.parcel-cache/**",
+        "**/coverage/**",
+        "**/htmlcov/**",
+        "**/.eggs/**",
+        "**/site-packages/**",
+        "**/__pypackages__/**",
+        "**/.gradle/**",
+        "**/target/**",
+        "**/.yarn/**",
+        "**/.pnpm/**",
     ]
 
     _generated_exclude: list[str] = [
@@ -112,10 +174,42 @@ class WorkspaceSearchService:
                     preset=preset,
                     max_results=remaining,
                 )
-            results.extend(hits)
+            results.extend(self._filter_scaffold_hits(hits))
             if len(results) >= max_results:
                 return results[:max_results]
         return results[:max_results]
+
+    @staticmethod
+    def ripgrep_status() -> dict[str, Any]:
+        """Report whether ripgrep is on PATH and which search backend is used."""
+        rg_path = shutil.which("rg")
+        if not rg_path:
+            return {
+                "ripgrep_available": False,
+                "ripgrep_path": None,
+                "ripgrep_version": None,
+                "search_backend": "python_walk",
+            }
+        version_line: str | None = None
+        try:
+            completed = subprocess.run(
+                ["rg", "--version"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            completed = None
+        if completed is not None and completed.returncode == 0:
+            raw = (completed.stdout or completed.stderr or "").strip()
+            version_line = raw.splitlines()[0] if raw else None
+        return {
+            "ripgrep_available": True,
+            "ripgrep_path": rg_path,
+            "ripgrep_version": version_line,
+            "search_backend": "ripgrep",
+        }
 
     def filter_repo_paths(
         self,
@@ -244,11 +338,9 @@ class WorkspaceSearchService:
         if not terms:
             return []
         results: list[dict[str, Any]] = []
-        for file_path in root.rglob("*"):
+        for file_path in self._iter_searchable_files(root=root):
             if len(results) >= max_results:
                 return results
-            if not file_path.is_file():
-                continue
             if file_path.stat().st_size > 1_000_000:
                 continue
             if self._is_ignored(file_path=file_path):
@@ -309,6 +401,8 @@ class WorkspaceSearchService:
                 max_results=max_results - len(files),
             )
             for file_path in discovered:
+                if self._path_has_scaffold_segment(file_path):
+                    continue
                 files.append({"repo_path": str(root), "file_path": file_path})
             if len(files) >= max_results:
                 break
@@ -415,6 +509,44 @@ class WorkspaceSearchService:
             return list(dict.fromkeys(query_terms + self._preset_terms[preset]))
         return query_terms
 
+    def _filter_scaffold_hits(self, hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Drop hits whose file paths traverse local dev/cache directories."""
+        return [
+            hit
+            for hit in hits
+            if not self._path_has_scaffold_segment(str(hit.get("file_path", "")))
+        ]
+
+    @staticmethod
+    def _path_has_scaffold_segment(file_path: str) -> bool:
+        """True when any path component is local scaffolding (node_modules, .venv, …)."""
+        if not file_path.strip():
+            return False
+        return bool(_SCAFFOLD_PATH_SEGMENTS.intersection(Path(file_path).parts))
+
+    def _iter_searchable_files(self, root: Path) -> Iterator[Path]:
+        """Walk a repo tree, skipping scaffold directories."""
+        for dirpath, dirnames, filenames in os.walk(
+            root, topdown=True, followlinks=False
+        ):
+            current = Path(dirpath)
+            rel_dir = str(current.relative_to(root))
+            if rel_dir != "." and self._path_has_scaffold_segment(rel_dir):
+                dirnames.clear()
+                continue
+            dirnames[:] = [
+                name for name in dirnames if name not in _SCAFFOLD_PATH_SEGMENTS
+            ]
+            for name in filenames:
+                file_path = current / name
+                rel_file = str(file_path.relative_to(root))
+                if self._path_has_scaffold_segment(rel_file):
+                    continue
+                if file_path.is_file():
+                    yield file_path
+
     def _is_ignored(self, file_path: Path) -> bool:
+        if self._path_has_scaffold_segment(str(file_path)):
+            return True
         name = file_path.name
         return name.startswith(".") or name.endswith((".png", ".jpg", ".jpeg", ".gif"))

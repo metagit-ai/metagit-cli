@@ -186,6 +186,22 @@ metagit prompt repo -p default -n my-api -k subagent-handoff --text-only -c .met
 
 ---
 
+## Workspace content grep (on-disk files)
+
+Not manifest search — use `metagit search` for catalog metadata only. Prefer skill **`metagit-workspace-grep`** for MCP/HTTP parity.
+
+| Task | Command |
+|------|---------|
+| Search all managed repos | `metagit workspace grep "QUERY" --json` |
+| One project | `metagit workspace grep "QUERY" --project <p> --json` |
+| One repo | `metagit workspace grep "QUERY" --project <p> --repo <r> -C 2 --json` |
+| Paths only | `metagit workspace grep "QUERY" --files-with-matches` |
+| Ripgrep backend | `metagit workspace grep info --json` |
+
+`metagit workspace grep --help` lists more scoped examples.
+
+---
+
 ## Repo enrich workflow (`repo-enrich`)
 
 Run the prompt, then execute its steps:

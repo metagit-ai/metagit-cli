@@ -37,7 +37,15 @@ class GrepApiHandler:
         """Dispatch grep routes; return True when handled."""
         _ = body
         parsed_path = urlparse(path).path
-        if method != "GET" or parsed_path != "/v2/workspace/grep":
+        if method != "GET":
+            return False
+        if parsed_path == "/v2/workspace/grep/info":
+            respond(
+                200,
+                {"ok": True, "data": WorkspaceSearchService.ripgrep_status()},
+            )
+            return True
+        if parsed_path != "/v2/workspace/grep":
             return False
 
         params = parse_qs(query, keep_blank_values=True)

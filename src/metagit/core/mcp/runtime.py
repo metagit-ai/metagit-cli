@@ -108,6 +108,7 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_workspace_grep_info": {"type": "object", "properties": {}},
             "metagit_workspace_semantic_search": {
                 "type": "object",
                 "required": ["query"],
@@ -740,6 +741,9 @@ class MetagitMcpRuntime:
                     intent=arguments.get("intent"),
                 )
             }
+
+        if name == "metagit_workspace_grep_info":
+            return WorkspaceSearchService.ripgrep_status()
 
         if name == "metagit_workspace_semantic_search":
             if not config or not status.root_path:

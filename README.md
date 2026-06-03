@@ -1,4 +1,4 @@
-# Metagit
+# Metagit™
 
 <!-- agent-entrypoint:
 intent: executable-tool
@@ -17,19 +17,29 @@ authoritative:
 usage:
   - ./README.md#quick-start
 -->
+<div align="center">
+<a href="https://metagit-ai.github.io/metagit-cli/">
+<img src="docs/inc/metagit_logo_dark.png" width="520" alt="Metagit™ logo">
+</a>
+</div>
 
-Metagit gives you situational awareness across Git repositories. It helps multi-repo projects feel manageable by keeping stack details, generated artifacts, dependencies, and related metadata in one place.
+<p align="center">
+    <a href="https://github.com/metagit-ai/metagit-cli/releases/latest">
+        <img src="https://img.shields.io/github/v/release/metagit-ai/metagit-cli?color=blue&label=Latest%20Release" alt="Latest Release">
+    </a>
+    <a href="https://github.com/metagit-ai/metagit-cli/blob/main/LICENSE">
+        <img src="https://img.shields.io/badge/License-MIT-ffffff?labelColor=d4eaf7&color=2e6cc4" alt="License: Apache 2.0">
+    </a>
+    <a href="https://deepwiki.com/metagit-ai/metagit-cli">
+        <img alt="Ask DeepWiki" src="https://deepwiki.com/badge.svg">
+    </a>
+    <img src="https://img.shields.io/badge/status-stable-green.svg" alt="Status: Stable">
+    <img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="Python 3.12+">
+    <img src="https://github.com/metagit-ai/metagit-cli/actions/workflows/test.yaml/badge.svg" alt="Tests">
+    <img src="https://github.com/metagit-ai/metagit-cli/actions/workflows/docker.yaml/badge.svg" alt="Build">
+</p>
 
-## For AI agents
-
-See **[For AI agents](agents.md)** for install, session workflow (`context pack` tiers 0–2), CLI vs MCP, and skills.
-
-```bash
-uv tool install metagit-cli && export METAGIT_AGENT_MODE=true
-metagit context pack --tier 2 --json
-```
-
-GitHub: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob/main/AGENTS.md) · [llms.txt](https://github.com/metagit-ai/metagit-cli/blob/main/llms.txt)
+Metagit gives you situational awareness across Git repositories. It helps multi-repo projects feel manageable, discoverable, and cohesive. It captures cross-repository relationships and project knowledge in easy to understand version controlled manifests.
 
 ## About
 
@@ -41,126 +51,40 @@ This tool works well for scenarios like:
 4. Automated documentation of a code's provenance.
 5. Helping new contributors get from onboarding to first commit faster.
 
-Metagit is designed for developers, SREs, and AI agents who work across connected repositories. It tracks the dependencies and project relationships that are easy to miss when you only look at one repo at a time.
+Metagit is designed for developers, SREs, and AI agents who work across loosely connected repositories. It tracks the dependencies and project relationships that are easy to miss when you only look at one repo at a time.
 
 ## Quick start
 
 ```bash
-uv tool install metagit-cli
-uv tool install -U metagit-cli   # upgrade later
+uv tool install -U metagit-cli
 metagit version
-metagit completion install --shell zsh   # optional tab completion; see docs/install.md
+metagit completion install --shell zsh   # optional tab completion
 ```
 
-> Use the PyPI package name **`metagit-cli`**. The `metagit` package on PyPI is a different project.
+> **NOTE** - Use the PyPI package name **`metagit-cli`** NOT `metagit`!
+
+Inside any Git repository, initialize a metagit manifest:
+
+```bash
+metagit init
+```
+
+That creates `.metagit.yml` and updates or adds a `.gitignore` for `.metagit/` (synced git repos).
+
+
+## Skills
 
 Install bundled agent skills (OpenClaw, Hermes, Claude Code, and others):
 
 ```bash
 metagit skills list
 metagit skills install --scope user --target openclaw --target hermes
+
+# or, using vercel's skills registry (preferred)
+npx skills add metagit-ai/metagit-cli
 ```
 
 Use `--scope project` when installing into a specific umbrella repository checkout. See [Skills](skills.md) for targets, MCP install, and the project-management skill for agents.
-
-## Audience
-
-This tool targets:
-
-- DevOps Engineers
-- Polyglot developers
-- New team members
-- Project Managers
-- SREs
-- Solution Engineers
-- AI Agents (more to come!)
-
-## Metagit is NOT...
-
-### ...an SBOM tool
-
-SBOM output is often thousands of lines and includes full transitive dependency trees. That level of detail is usually too heavy for day-to-day situational awareness and agent context. Metagit may read SBOM manifests as an input in the future, but it is not trying to replace SBOM tooling.
-
-Metagit uses common project files (for example `go.mod`, `package.json`, and `requirements.txt`) for detection and validation boundaries. These are used to identify stack composition, not to provide exhaustive version intelligence.
-
-### ...a Git client
-
-Despite the name, this still relies on Git and your existing hosting platform.
-
-## ...a full project packer
-
-Metagit intentionally focuses on the highest-value project signals. It does not package full repositories. If you need full-project packing, use [repomix](https://github.com/yamadashy/repomix/tree/main).
-
-### Why brevity?
-
-One of the core goals is reducing cognitive load when understanding project relationships. A practical side effect is lower token usage for automated AI workflows.
-
-## How It Works
-
-Metagit stores project configuration metadata in `.metagit.yml` inside the repository. That file follows a schema that the CLI can validate and read.
-
-If you use Metagit for dozens of repositories (an umbrella workspace), you can edit the config manually or refresh it with heuristics and AI-assisted workflows.
-
-## Modes
-
-Metagit supports several operating modes:
-
-### Workspace Mode
-
-This is the first planned open-source CLI mode.
-
-In this mode, you group related repositories into one workspace that you can open in VS Code or access individually from the terminal.
-
-> **AKA** Multi-repo as Monorepo
-
-You use one top-level umbrella project with a single metagit definition file that tracks related repositories and local target folders. You can then sync that workspace locally.
-
-The metagit configuration file is committed to version control as its own project artifact.
-
-**Managed repo lookup:** Use `metagit search` / `metagit find` for quick CLI lookup of repos declared in `.metagit.yml` (with optional tags and JSON output). MCP clients can call `metagit_repo_search`, and `metagit api serve` exposes the same search and resolve behavior over a small local JSON HTTP API for agents and scripts.
-
-This mode is useful for:
-
-- Creating umbrella projects for new team members of a multi-repo project
-- Individual power users that need to quickly pivot between several project repositories that comprise a larger team effort
-- Keeping loosely coupled Git projects grouped without relying on submodules
-
-## Metadata Mode
-
-This mode uses the same config file as workspace mode, with additional metadata such as primary language, frameworks, and other context you want available when entering a repo.
-
-Configuring this by hand for one project is simple. Doing it across dozens or thousands of repos is not. Metagit uses detection heuristics to automate as much as possible and can use AI workflows where deterministic code is not enough.
-
-> **Note**: AI-assisted detection should be monitored and converted into deterministic logic over time.
-
-In this mode, Metagit helps answer questions like:
-
-- What other projects are related to this project?
-- What application and development stacks does this project use?
-- What external dependencies exist for this project?
-- What artifacts does this project create?
-- What branch strategy is employed?
-- What version strategy is employed?
-
-> **External dependencies** are a common source of pipeline instability.
-
-## Install
-
-Global install and skill setup are covered in [Quick start](#quick-start) above.
-
-### Local first-run
-
-Inside any Git repository:
-
-```bash
-metagit init
-```
-
-That creates `.metagit.yml` and updates `.gitignore`.
-
-## Skills
-
-Bundled skills ship with the package and install via `metagit skills install` (see [skills.md](skills.md)). For development in this repository, `skills/` is the source tree; run `task skills:sync` to mirror into `.cursor/skills/`.
 
 ## Agent guides
 
@@ -175,3 +99,9 @@ For installation guidance, detailed usage, including full CLI command surface, l
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE.md) file for details.
+
+## Trademark
+
+MetaGit™ is an open-source project.
+
+MetaGit and the MetaGit logo are trademarks of Zachary Loeber.
