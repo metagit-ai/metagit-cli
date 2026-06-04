@@ -127,3 +127,42 @@ def test_objective_model_rejects_non_string_repo_entries() -> None:
                 "updated_at": utc_now_iso(),
             }
         )
+
+
+def test_upsert_partial_requires_title_on_create(tmp_path: Path) -> None:
+    service = ObjectiveService(workspace_root=str(tmp_path))
+    with pytest.raises(ValueError, match="title is required"):
+        service.upsert_partial({"id": "new-one", "status": "pending"})
+
+
+def test_upsert_partial_merge_preserves_repos(tmp_path: Path) -> None:
+    service = ObjectiveService(workspace_root=str(tmp_path))
+    service.upsert_partial(
+        {
+            "id": "task-a",
+            "title": "Initial",
+            "repos": ["default/framework"],
+            "status": "in_progress",
+        }
+    )
+    updated = service.upsert_partial(
+        {
+            "id": "task-a",
+            "status": "in_progress",
+            "notes": "step one complete",
+        }
+    )
+    assert updated.repos == ["default/framework"]
+    assert updated.title == "Initial"
+    assert "step one complete" in (updated.agent_notes or "")
+
+
+def test_upsert_partial_appends_agent_notes(tmp_path: Path) -> None:
+    service = ObjectiveService(workspace_root=str(tmp_path))
+    service.upsert_partial(
+        {"id": "log", "title": "Log work", "agent_notes": "first"},
+    )
+    second = service.upsert_partial(
+        {"id": "log", "agent_notes": "second"},
+    )
+    assert second.agent_notes == "first\nsecond"

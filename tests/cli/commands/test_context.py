@@ -162,6 +162,65 @@ def test_context_pack_tier_two_json_contains_digest(tmp_path: Path, monkeypatch)
     assert '"active_objective_id": "active-q"' in result.output
 
 
+def test_context_objective_partial_update_without_title(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+    create = runner.invoke(
+        cli,
+        [
+            "context",
+            "objective",
+            "set",
+            "--id",
+            "keep-repos",
+            "--title",
+            "Initial",
+            "--repo",
+            "demo/svc",
+        ],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert create.exit_code == 0
+    update = runner.invoke(
+        cli,
+        ["context", "objective", "set", "--id", "keep-repos", "--status", "in_progress"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert update.exit_code == 0
+    assert "demo/svc" in update.output
+    assert "Initial" in update.output
+
+
+def test_context_approval_request_json(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+    result = runner.invoke(
+        cli,
+        [
+            "context",
+            "approval",
+            "request",
+            "--action",
+            "repo_sync",
+            "--requested-by",
+            "hermes",
+            "--payload",
+            '{"project":"demo","repo":"svc"}',
+        ],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+    assert '"status": "pending"' in result.output
+    assert '"action": "repo_sync"' in result.output
+
+
 def _write_workspace(root: Path, *, with_git_repo: bool) -> None:
     (root / ".metagit.yml").write_text(
         "\n".join(

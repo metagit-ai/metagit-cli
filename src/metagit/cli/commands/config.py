@@ -152,7 +152,12 @@ def config_create(
 
 
 @config.command("validate")
-@click.option("--config-path", help="Path to the configuration file", default=None)
+@click.option(
+    "--config-path",
+    "-c",
+    help="Path to the configuration file",
+    default=None,
+)
 @click.pass_context
 def config_validate(ctx: click.Context, config_path: Union[str, None] = None) -> None:
     """Validate metagit configuration"""

@@ -88,6 +88,7 @@ export default function ConfigPage({ target, title }: ConfigPageProps) {
           <SchemaTree
             target={target}
             selectedPath={selectedPath}
+            pendingOps={pendingOps}
             onSelect={handleSelect}
             onOperationApplied={handleOperationApplied}
           />

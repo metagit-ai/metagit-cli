@@ -49,6 +49,8 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Safe sync (fetch-first) | `metagit project sync` |
 | Scoped repo snapshot | `metagit context repomix --profile bugfix-local --project P --repo R` |
 | Record objective | `echo '{"id":"…","status":"in_progress","title":"…","repos":[]}' \| metagit context objective set` |
+| Update objective (merge) | `echo '{"id":"…","status":"in_progress","notes":"progress"}' \| metagit context objective set` — title/repos optional when id exists |
+| Request approval (CLI) | `echo '{"action":"repo_sync","requested_by":"agent","payload":{}}' \| metagit context approval request` |
 | List pending approvals | `metagit context approval list --json` |
 
 Set `--definition path/to/.metagit.yml` when not in the manifest repo root.

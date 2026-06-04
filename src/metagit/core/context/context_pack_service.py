@@ -7,6 +7,7 @@ and tier 2 (tier 1 + session digest, then touches session boundary).
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Literal, Optional
 
 from metagit.core.config.models import MetagitConfig
@@ -42,12 +43,18 @@ class ContextPackService:
         workspace_root: str,
         *,
         tier: Literal[0, 1, 2],
+        session_root: Optional[str] = None,
         project_name: Optional[str] = None,
         repo_name: Optional[str] = None,
         active_project: Optional[str] = None,
         max_cards: int = 50,
+        definition_root: Optional[str] = None,
     ) -> ContextPackResult:
         """Assemble a context pack for tier 0, 1, or 2 (see module docstring)."""
+        resolved_definition_root = definition_root or str(
+            Path(config_path).expanduser().resolve().parent
+        )
+        resolved_session_root = session_root or resolved_definition_root
         map_result = self._map.build(
             config=config,
             config_path=config_path,
@@ -66,6 +73,7 @@ class ContextPackService:
             card_rows = self._cards.build_many(
                 config=config,
                 workspace_root=workspace_root,
+                definition_root=resolved_definition_root,
                 project_name=project_name,
                 repo_name=repo_name,
                 max_cards=max_cards,
@@ -81,14 +89,15 @@ class ContextPackService:
             card_rows = self._cards.build_many(
                 config=config,
                 workspace_root=workspace_root,
+                definition_root=resolved_definition_root,
                 project_name=project_name,
                 repo_name=repo_name,
                 max_cards=max_cards,
             )
-            session_store = SessionStore(workspace_root=workspace_root)
+            session_store = SessionStore(workspace_root=resolved_session_root)
             since = session_store.get_last_session_at()
             objectives_list = (
-                ObjectiveService(workspace_root=workspace_root).list().objectives
+                ObjectiveService(workspace_root=resolved_session_root).list().objectives
             )
             active_oid = next(
                 (o.id for o in objectives_list if o.status == "in_progress"),
@@ -98,6 +107,7 @@ class ContextPackService:
                 config=config,
                 config_path=config_path,
                 workspace_root=workspace_root,
+                definition_root=resolved_definition_root,
                 since=since,
                 active_objective_id=active_oid,
             )

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Literal, Optional, cast
 
 from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.appconfig import AppConfig
 from metagit.core.mcp.gate import WorkspaceGate
 from metagit.core.mcp.models import McpActivationState, WorkspaceStatus
 from metagit.core.mcp.resources import ResourcePublisher
@@ -33,13 +34,13 @@ from metagit.core.mcp.services.cross_project_dependencies import (
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
-from metagit.core.context.models import ApprovalStatus, Objective
+from metagit.core.context.models import ApprovalStatus
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
-from metagit.core.workspace.context_models import utc_now_iso
 from metagit.core.workspace.layout_context import resolve_sync_context
+from metagit.core.workspace.root_resolver import resolve_sync_root
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.mcp.services.workspace_template import WorkspaceTemplateService
@@ -960,8 +961,6 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError(
                     "branch age thresholds must be non-negative"
                 )
-            from metagit.core.appconfig.models import AppConfig
-
             loaded_app = AppConfig.load()
             dedupe_cfg = (
                 loaded_app.workspace.dedupe
@@ -1012,10 +1011,19 @@ class MetagitMcpRuntime:
             )
             config_path = str(Path(status.root_path) / ".metagit.yml")
             tier_literal = cast(Literal[0, 1, 2], tier_val)
+            definition_root = status.root_path
+            app_config = AppConfig.load()
+            sync_root = (
+                resolve_sync_root(definition_root, app_config.workspace.path)
+                if not isinstance(app_config, Exception)
+                else definition_root
+            )
             pack = self._context_pack.pack(
                 config=config,
                 config_path=config_path,
-                workspace_root=status.root_path,
+                workspace_root=sync_root,
+                session_root=definition_root,
+                definition_root=definition_root,
                 tier=tier_literal,
                 project_name=project_opt,
                 repo_name=repo_opt,
@@ -1036,18 +1044,14 @@ class MetagitMcpRuntime:
                     "objective upsert requires an active workspace",
                 )
             obj_id = str(arguments.get("id", "")).strip()
-            title_raw = arguments.get("title")
-            title = str(title_raw).strip() if isinstance(title_raw, str) else ""
             if not obj_id:
                 raise InvalidToolArgumentsError("id is required")
-            if not title:
-                raise InvalidToolArgumentsError("title is required")
+            partial: dict[str, Any] = {"id": obj_id}
+            title_raw = arguments.get("title")
+            if isinstance(title_raw, str) and title_raw.strip():
+                partial["title"] = title_raw.strip()
             status_raw = arguments.get("status")
-            if status_raw is None:
-                status_val: Literal["pending", "in_progress", "done", "cancelled"] = (
-                    "pending"
-                )
-            else:
+            if status_raw is not None:
                 sv = str(status_raw).strip()
                 if sv not in (
                     "pending",
@@ -1056,46 +1060,19 @@ class MetagitMcpRuntime:
                     "cancelled",
                 ):
                     raise InvalidToolArgumentsError("invalid objective status")
-                status_val = cast(
-                    Literal["pending", "in_progress", "done", "cancelled"],
-                    sv,
-                )
+                partial["status"] = sv
             raw_repos = arguments.get("repos")
-            repos: list[str] = []
             if isinstance(raw_repos, list):
-                repos = [str(r) for r in raw_repos]
-            acceptance_raw = arguments.get("acceptance")
-            human_notes_raw = arguments.get("human_notes")
-            agent_notes_raw = arguments.get("agent_notes")
-            acceptance_fin = (
-                str(acceptance_raw).strip()
-                if isinstance(acceptance_raw, str) and acceptance_raw.strip()
-                else None
-            )
-            human_notes_fin = (
-                str(human_notes_raw).strip()
-                if isinstance(human_notes_raw, str) and human_notes_raw.strip()
-                else None
-            )
-            agent_notes_fin = (
-                str(agent_notes_raw).strip()
-                if isinstance(agent_notes_raw, str) and agent_notes_raw.strip()
-                else None
-            )
-            now = utc_now_iso()
-            objective = Objective(
-                id=obj_id,
-                title=title,
-                status=status_val,
-                repos=repos,
-                acceptance=acceptance_fin,
-                human_notes=human_notes_fin,
-                agent_notes=agent_notes_fin,
-                created_at=now,
-                updated_at=now,
-            )
+                partial["repos"] = [str(r) for r in raw_repos]
+            for field in ("acceptance", "human_notes", "agent_notes", "notes"):
+                raw_val = arguments.get(field)
+                if isinstance(raw_val, str) and raw_val.strip():
+                    partial[field] = raw_val.strip()
             svc = ObjectiveService(workspace_root=status.root_path)
-            saved = svc.upsert(objective)
+            try:
+                saved = svc.upsert_partial(partial)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
             return saved.model_dump(mode="json")
 
         if name == "metagit_approval_request":

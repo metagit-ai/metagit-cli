@@ -213,10 +213,17 @@
           "type": "string"
         },
         "default_project": {
-          "default": "default",
-          "description": "Default project",
-          "title": "Default Project",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional session preference for -p/--project when omitted. When unset, metagit resolves from the manifest (sole project) or uses the computed local project for application manifests.",
+          "title": "Default Project"
         },
         "dedupe": {
           "$ref": "#/$defs/WorkspaceDedupeConfig",
@@ -390,7 +397,7 @@
       "$ref": "#/$defs/WorkspaceConfig",
       "default": {
         "path": "./.metagit",
-        "default_project": "default",
+        "default_project": null,
         "dedupe": {
           "canonical_dir": "_canonical",
           "enabled": false,

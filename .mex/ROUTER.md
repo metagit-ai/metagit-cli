@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-06-03
+last_updated: 2026-06-04
 ---
 
 # Session Bootstrap
@@ -66,7 +66,13 @@ Then read this file fully before doing anything else in this session.
 - **Repomix context profiles:** bundled `src/metagit/data/context_profiles.yaml` (`bugfix-local`, `config-edit`, `cross-repo-impact`); `RepomixProfileService` (`repomix_profile_service.py`) loads include/exclude globs and runs `repomix` with `--include` / `--ignore` for a repo path. Unit tests in `tests/core/context/test_repomix_profile_service.py`.
 - **Context packs — T2 session digest:** `SessionDigestService` (`src/metagit/core/context/session_digest_service.py`) emits `SessionDigestResult`: first session when `since` is omitted; otherwise per-repo `git rev-list --count` / `git log --oneline -n 3` after an ISO boundary plus `manifest_changed` from config mtime vs `since`. Tests in `tests/core/context/test_session_digest_service.py`.
 - **Workspace objectives:** `ObjectiveService` + `ObjectiveStore` persist objectives to `.metagit/sessions/objectives.json`; models and validators live in `metagit.core.context.models`; tests in `tests/core/context/test_objective_service.py`.
-- **Approval queue:** `ApprovalService` (`approval_service.py`) with `ApprovalStore` writing `.metagit/approvals/pending.json`; models `ApprovalRequest` / `ApprovalListResult`; tests `tests/core/context/test_approval_service.py`.
+- **Approval queue:** `ApprovalService` (`approval_service.py`) with `ApprovalStore` writing `.metagit/approvals/pending.json`; models `ApprovalRequest` / `ApprovalListResult`; CLI **`metagit context approval request`** (stdin JSON) plus list/approve/deny; tests `tests/core/context/test_approval_service.py`.
+- **Workspace root resolution:** `root_resolver.py` splits **sync root** (repo mounts under `appconfig.workspace.path`) from **session root** (manifest directory for `.metagit/sessions` + objectives/approvals). Context pack tier-2 uses both; fixes `active_objective_id` when sync path ≠ manifest root.
+- **Objective partial upsert:** `ObjectiveService.upsert_partial` deep-merges by id (`title` required on create only); `notes` aliases to append-only `agent_notes`.
+- **Manifest-root repo paths:** `WorkspaceIndexService` resolves `path: ./` or `.` to the definition root (self-referencing coordinator repos).
+- **`metagit config validate -c`:** subcommand accepts `-c`/`--config-path` after `validate`.
+- **Documentation entry tags:** `documentation[].tags` is canonical **`list[str]`** (legacy map input normalized on load via `normalize_documentation_tags`); project/repo tags remain `dict[str, str]`.
+- **Web Config Studio unsaved edits:** `SchemaTreeService._navigate_parent(..., mutate=True)` materializes null list/object parents before REMOVE/APPEND; React `SchemaTree` sends cumulative `pendingOps` on each PATCH so preview removes work before disk save.
 
 **Not yet built:**
 - **`task repomix:profile` automation:** bundled profiles + CLI `metagit context repomix` ship in code; repo Taskfile wrappers may remain future scope (see design note in `docs/superpowers/specs/2026-05-21-context-packs-phase2-design.md`).

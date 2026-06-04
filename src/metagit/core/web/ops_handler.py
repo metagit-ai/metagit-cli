@@ -18,14 +18,12 @@ from metagit.core.appconfig.models import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_service import ApprovalService
-from metagit.core.context.models import Objective
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.project.manager import project_manager_from_app
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
-from metagit.core.workspace.context_models import utc_now_iso
 from metagit.core.web.graph_service import WorkspaceGraphService
 from metagit.core.web.job_store import SyncJobStore
 from metagit.core.web.models import (
@@ -153,7 +151,7 @@ class OpsWebHandler:
         self._stream_sync_events(job_id, stream)
 
     def _get_objectives(self, respond: JsonResponder) -> None:
-        svc = ObjectiveService(workspace_root=self._workspace_root)
+        svc = ObjectiveService(workspace_root=self._root)
         result = svc.list()
         respond(200, result.model_dump(mode="json"))
 
@@ -169,20 +167,18 @@ class OpsWebHandler:
                 {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
             )
             return
-        now = utc_now_iso()
-        objective = Objective(
-            id=req.id,
-            title=req.title.strip(),
-            status=req.status,
-            repos=list(req.repos),
-            acceptance=req.acceptance,
-            human_notes=req.human_notes,
-            agent_notes=req.agent_notes,
-            created_at=now,
-            updated_at=now,
+        svc = ObjectiveService(workspace_root=self._root)
+        saved = svc.upsert_partial(
+            {
+                "id": req.id,
+                "title": req.title.strip(),
+                "status": req.status,
+                "repos": list(req.repos),
+                "acceptance": req.acceptance,
+                "human_notes": req.human_notes,
+                "agent_notes": req.agent_notes,
+            }
         )
-        svc = ObjectiveService(workspace_root=self._workspace_root)
-        saved = svc.upsert(objective)
         respond(200, saved.model_dump(mode="json"))
 
     def _patch_objective(
@@ -202,7 +198,7 @@ class OpsWebHandler:
                 {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
             )
             return
-        svc = ObjectiveService(workspace_root=self._workspace_root)
+        svc = ObjectiveService(workspace_root=self._root)
         try:
             if req.status == "done":
                 saved = svc.complete(objective_id=objective_id)
@@ -222,7 +218,7 @@ class OpsWebHandler:
     def _get_approvals(self, query: str, respond: JsonResponder) -> None:
         params = parse_qs(query.lstrip("?"))
         raw_status = (params.get("status") or ["pending"])[0].strip().lower()
-        svc = ApprovalService(workspace_root=self._workspace_root)
+        svc = ApprovalService(workspace_root=self._root)
         if raw_status in ("", "pending"):
             result = svc.list(status="pending")
         elif raw_status == "all":
@@ -260,7 +256,7 @@ class OpsWebHandler:
                 {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
             )
             return
-        svc = ApprovalService(workspace_root=self._workspace_root)
+        svc = ApprovalService(workspace_root=self._root)
         try:
             saved = svc.resolve(
                 request_id=approval_id,

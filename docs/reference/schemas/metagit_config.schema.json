@@ -281,7 +281,7 @@
             }
           ],
           "default": null,
-          "description": "Project path",
+          "description": "Local project path",
           "title": "Path"
         },
         "branches": {
@@ -316,7 +316,7 @@
             }
           ],
           "default": null,
-          "description": "Project URL",
+          "description": "Remote git URL (ssh or https)",
           "title": "Url"
         },
         "sync": {
@@ -623,7 +623,7 @@
               "items": {
                 "type": "string"
               },
-              "description": "Tag names (normalized to map values of true at load time)"
+              "description": "Tag names (legacy maps normalized to lists at load time)"
             }
           ],
           "description": "Flat metadata tags as a map or list of tag names",
@@ -1136,7 +1136,7 @@
             }
           ],
           "default": null,
-          "description": "Project path",
+          "description": "Local project path",
           "title": "Path"
         },
         "branches": {
@@ -1171,7 +1171,7 @@
             }
           ],
           "default": null,
-          "description": "Project URL",
+          "description": "Remote git URL (ssh or https)",
           "title": "Url"
         },
         "sync": {
@@ -2025,7 +2025,8 @@
           "type": "null"
         }
       ],
-      "description": "Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. The internal workspace name is reservice"
+      "default": null,
+      "description": "Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. Omit for single-repo application manifests; use top-level paths and dependencies instead."
     },
     "agent_prompt": {
       "anyOf": [

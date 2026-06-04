@@ -19,17 +19,17 @@ documentation:
   - kind: confluence
     url: https://confluence.example.com/display/METAGIT/Metagit+Documentation
     tags:
-      playbook: 'true'
-      tutorial: 'true'
+      - playbook
+      - tutorial
   - kind: sharepoint
     url: https://sharepoint.example.com/display/METAGIT/Metagit+DevOps
     tags:
-      devops: 'true'
+      - devops
   - kind: web
     url: https://hub.docker.com/_/python
     tags:
-      docker: 'true'
-      python: 'true'
+      - docker
+      - python
 license:
   kind: BSD-3-Clause
   file: LICENSE.md

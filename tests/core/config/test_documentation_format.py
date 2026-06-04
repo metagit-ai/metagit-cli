@@ -29,7 +29,7 @@ def test_compact_documentation_entry_keeps_rich_objects() -> None:
     confluence = DocumentationSource(
         kind="confluence",
         url="https://confluence.example.com/display/METAGIT/Docs",
-        tags={"playbook": "true"},
+        tags=["playbook"],
     )
     markdown_with_metadata = DocumentationSource(
         kind="markdown",
@@ -39,7 +39,7 @@ def test_compact_documentation_entry_keeps_rich_objects() -> None:
     assert compact_documentation_entry(confluence) == {
         "kind": "confluence",
         "url": "https://confluence.example.com/display/METAGIT/Docs",
-        "tags": {"playbook": "true"},
+        "tags": ["playbook"],
     }
     assert compact_documentation_entry(markdown_with_metadata) == {
         "kind": "markdown",
@@ -63,7 +63,7 @@ def test_compact_documentation_list_deduplicates_and_prefers_shorthand() -> None
         DocumentationSource(
             kind="confluence",
             url="https://confluence.example.com/display/METAGIT/Docs",
-            tags={"playbook": "true"},
+            tags=["playbook"],
         ),
     ]
     compacted = compact_documentation_list(entries)
@@ -73,7 +73,7 @@ def test_compact_documentation_list_deduplicates_and_prefers_shorthand() -> None
         {
             "kind": "confluence",
             "url": "https://confluence.example.com/display/METAGIT/Docs",
-            "tags": {"playbook": "true"},
+            "tags": ["playbook"],
         },
     ]
 

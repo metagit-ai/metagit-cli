@@ -15,6 +15,50 @@ def _looks_like_url(value: str) -> bool:
     return trimmed.startswith("http://") or trimmed.startswith("https://")
 
 
+def normalize_documentation_tags(value: object) -> list[str]:
+    """
+    Normalize documentation tags to a sorted unique list of strings.
+
+    Accepts a list of tag names or a legacy map (``{name: "true"}``).
+    Map entries with non-boolean values become ``key=value`` tag strings.
+    """
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return _dedupe_tag_strings(value)
+    if isinstance(value, dict):
+        tags: list[str] = []
+        for key, item in value.items():
+            key_str = str(key).strip()
+            if not key_str:
+                continue
+            val_str = str(item).strip().lower()
+            if val_str in ("true", "1", "yes"):
+                tags.append(key_str)
+            elif val_str in ("false", "0", "no"):
+                continue
+            elif not val_str:
+                tags.append(key_str)
+            else:
+                tags.append(f"{key_str}={item}")
+        return _dedupe_tag_strings(tags)
+    raise ValueError("documentation tags must be a list of strings or a map")
+
+
+def _dedupe_tag_strings(values: object) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    if not isinstance(values, list):
+        return ordered
+    for raw in values:
+        tag = str(raw).strip()
+        if not tag or tag in seen:
+            continue
+        seen.add(tag)
+        ordered.append(tag)
+    return ordered
+
+
 def normalize_documentation_entries(
     value: object,
 ) -> Optional[list[dict[str, Any]]]:
@@ -69,9 +113,9 @@ class DocumentationSource(BaseModel):
         None,
         description="Short summary for indexing and graph nodes",
     )
-    tags: dict[str, str] = Field(
-        default_factory=dict,
-        description="Flat metadata tags for filtering and graph edges",
+    tags: list[str] = Field(
+        default_factory=list,
+        description="Flat tag labels for filtering and graph edges",
     )
     metadata: dict[str, Any] = Field(
         default_factory=dict,
@@ -87,14 +131,8 @@ class DocumentationSource(BaseModel):
 
     @field_validator("tags", mode="before")
     @classmethod
-    def _normalize_tags(cls, value: object) -> dict[str, str]:
-        if value is None:
-            return {}
-        if isinstance(value, dict):
-            return {str(key): str(item) for key, item in value.items()}
-        if isinstance(value, list):
-            return {str(item): "true" for item in value}
-        raise ValueError("documentation tags must be a list of strings or a map")
+    def _normalize_tags(cls, value: object) -> list[str]:
+        return normalize_documentation_tags(value)
 
     @model_validator(mode="after")
     def _require_path_or_url(self) -> DocumentationSource:
@@ -106,7 +144,7 @@ class DocumentationSource(BaseModel):
         """Serialize for knowledge-graph or export pipelines."""
         payload: dict[str, Any] = {
             "kind": self.kind,
-            "tags": dict(self.tags),
+            "tags": list(self.tags),
             "metadata": dict(self.metadata),
         }
         if self.path:

@@ -283,6 +283,7 @@ class SchemaTreeService:
             data,
             model_class,
             segments,
+            mutate=True,
         )
         field_name = str(leaf)
         field_info = model_at_parent.model_fields[field_name]
@@ -304,10 +305,97 @@ class SchemaTreeService:
         segments = self._parse_path(path)
         if not segments or not isinstance(segments[-1], int):
             raise KeyError(f"{path} must end with a list index")
-        parent, _, leaf = self._navigate_parent(data, model_class, segments)
+        parent, _, leaf = self._navigate_parent(
+            data,
+            model_class,
+            segments,
+            mutate=True,
+        )
         if not isinstance(parent, list) or not isinstance(leaf, int):
-            raise KeyError(f"{path} is not a list item")
+            return
+        if leaf < 0 or leaf >= len(parent):
+            return
         parent.pop(leaf)
+
+    def _materialize_field(
+        self,
+        parent: dict[str, Any],
+        segment: str,
+        field_info: FieldInfo,
+    ) -> Any:
+        """Ensure optional list/object fields exist before nested navigation."""
+        current = parent.get(segment)
+        if current is not None:
+            return current
+        annotation = self._unwrap_optional(field_info.annotation)
+        if get_origin(annotation) is list:
+            parent[segment] = []
+            return parent[segment]
+        if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+            parent[segment] = {}
+            return parent[segment]
+        return None
+
+    def _navigate_parent(
+        self,
+        data: dict[str, Any],
+        model_class: type[BaseModel],
+        segments: list[str | int],
+        *,
+        mutate: bool = False,
+    ) -> tuple[Any, type[BaseModel], str | int]:
+        """Return parent container, model class at leaf field, and leaf key/index."""
+        parent: Any = data
+        current_class: type[BaseModel] = model_class
+        index = 0
+        while index < len(segments) - 1:
+            segment = segments[index]
+            if isinstance(segment, int):
+                if not isinstance(parent, list):
+                    raise KeyError("invalid list index in path")
+                if segment < 0 or segment >= len(parent):
+                    raise KeyError("list index out of range in path")
+                parent = parent[segment]
+                index += 1
+                continue
+            field_info = current_class.model_fields[segment]
+            annotation = self._unwrap_optional(field_info.annotation)
+            next_segment = segments[index + 1]
+            if isinstance(next_segment, int) and get_origin(annotation) is list:
+                bucket = (
+                    self._materialize_field(parent, segment, field_info)
+                    if mutate
+                    else parent.get(segment)
+                )
+                if not isinstance(bucket, list):
+                    parent = bucket
+                    current_class = self._list_item_type(annotation)
+                    index += 1
+                    continue
+                if index == len(segments) - 2:
+                    parent = bucket
+                    current_class = self._list_item_type(annotation)
+                    index += 1
+                else:
+                    if next_segment < 0 or next_segment >= len(bucket):
+                        raise KeyError("list index out of range in path")
+                    parent = bucket[next_segment]
+                    current_class = self._list_item_type(annotation)
+                    index += 2
+                continue
+            if mutate:
+                parent = self._materialize_field(parent, segment, field_info)
+            else:
+                parent = parent.get(segment)
+            if parent is None:
+                raise KeyError("path segment is not present")
+            if isinstance(annotation, type) and issubclass(annotation, BaseModel):
+                current_class = annotation
+            index += 1
+        leaf = segments[-1]
+        if isinstance(leaf, int):
+            return parent, current_class, leaf
+        return parent, current_class, leaf
 
     def _set_at_path(self, data: dict[str, Any], path: str, value: Any) -> None:
         segments = self._parse_path(path)
@@ -323,7 +411,7 @@ class SchemaTreeService:
                 index += 1
                 continue
             if isinstance(next_segment, int):
-                if segment not in parent:
+                if segment not in parent or parent[segment] is None:
                     parent[segment] = []
                 bucket = parent[segment]
                 if not isinstance(bucket, list) or next_segment >= len(bucket):
@@ -334,7 +422,7 @@ class SchemaTreeService:
                 parent = bucket[next_segment]
                 index += 2
                 continue
-            if segment not in parent:
+            if segment not in parent or parent[segment] is None:
                 parent[segment] = {}
             parent = parent[segment]
             index += 1
@@ -346,46 +434,6 @@ class SchemaTreeService:
             parent[leaf] = value
         else:
             parent[leaf] = value
-
-    def _navigate_parent(
-        self,
-        data: dict[str, Any],
-        model_class: type[BaseModel],
-        segments: list[str | int],
-    ) -> tuple[Any, type[BaseModel], str | int]:
-        """Return parent container, model class at leaf field, and leaf key/index."""
-        parent: Any = data
-        current_class: type[BaseModel] = model_class
-        index = 0
-        while index < len(segments) - 1:
-            segment = segments[index]
-            if isinstance(segment, int):
-                if not isinstance(parent, list):
-                    raise KeyError("invalid list index in path")
-                parent = parent[segment]
-                index += 1
-                continue
-            field_info = current_class.model_fields[segment]
-            annotation = self._unwrap_optional(field_info.annotation)
-            next_segment = segments[index + 1]
-            if isinstance(next_segment, int) and get_origin(annotation) is list:
-                if index == len(segments) - 2:
-                    parent = parent[segment]
-                    current_class = self._list_item_type(annotation)
-                    index += 1
-                else:
-                    parent = parent[segment][next_segment]
-                    current_class = self._list_item_type(annotation)
-                    index += 2
-                continue
-            parent = parent[segment]
-            if isinstance(annotation, type) and issubclass(annotation, BaseModel):
-                current_class = annotation
-            index += 1
-        leaf = segments[-1]
-        if isinstance(leaf, int):
-            return parent, current_class, leaf
-        return parent, current_class, leaf
 
     def _validate(
         self,

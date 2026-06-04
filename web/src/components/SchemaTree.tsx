@@ -12,6 +12,7 @@ import styles from './SchemaTree.module.css'
 interface SchemaTreeProps {
   target: ConfigTarget
   selectedPath: string | null
+  pendingOps: ConfigOperation[]
   onSelect: (node: SchemaFieldNode) => void
   onOperationApplied?: (op: ConfigOperation) => void
 }
@@ -28,9 +29,24 @@ function isListItemNode(node: SchemaFieldNode): boolean {
   return /^\[\d+\]$/.test(node.key)
 }
 
+function mergePendingOp(
+  pending: ConfigOperation[],
+  op: ConfigOperation,
+): ConfigOperation[] {
+  const next = [...pending]
+  const index = next.findIndex((item) => item.path === op.path)
+  if (index >= 0) {
+    next[index] = op
+  } else {
+    next.push(op)
+  }
+  return next
+}
+
 export default function SchemaTree({
   target,
   selectedPath,
+  pendingOps,
   onSelect,
   onOperationApplied,
 }: SchemaTreeProps) {
@@ -43,7 +59,8 @@ export default function SchemaTree({
   })
 
   const mutation = useMutation({
-    mutationFn: (op: ConfigOperation) => patchConfigTree(target, [op], false),
+    mutationFn: (op: ConfigOperation) =>
+      patchConfigTree(target, mergePendingOp(pendingOps, op), false),
     onSuccess: (response, op) => {
       queryClient.setQueryData(queryKey, response)
       onOperationApplied?.(op)

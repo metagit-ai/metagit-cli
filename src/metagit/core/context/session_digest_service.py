@@ -44,6 +44,7 @@ class SessionDigestService:
         *,
         since: Optional[str] = None,
         active_objective_id: Optional[str] = None,
+        definition_root: Optional[str] = None,
     ) -> SessionDigestResult:
         """
         Assemble a session digest.
@@ -67,8 +68,15 @@ class SessionDigestService:
         )
 
         index = WorkspaceIndexService()
+        resolved_definition_root = definition_root or str(
+            Path(config_path).expanduser().resolve().parent
+        )
         repo_changes: list[SessionDigestRepoChange] = []
-        for row in index.build_index(config, workspace_root):
+        for row in index.build_index(
+            config,
+            workspace_root,
+            definition_root=resolved_definition_root,
+        ):
             if not row.get("exists") or not row.get("is_git_repo"):
                 continue
             repo_path = str(row["repo_path"])
