@@ -1,16 +1,16 @@
 ---
 name: init
-description: "Skill for the Init area of metagit-cli. 26 symbols across 7 files."
+description: "Skill for the Init area of metagit-cli. 24 symbols across 6 files."
 ---
 
 # Init
 
-26 symbols | 7 files | Cohesion: 74%
+24 symbols | 6 files | Cohesion: 81%
 
 ## When to Use
 
 - Working with code in `src/`
-- Understanding how resolve_target_dir, init, test_list_templates_includes_hermes work
+- Understanding how resolve_target_dir, init, load_answers_file work
 - Modifying init-related functionality
 
 ## Key Files
@@ -18,12 +18,11 @@ description: "Skill for the Init area of metagit-cli. 26 symbols across 7 files.
 | File | Symbols |
 |------|---------|
 | `src/metagit/core/init/renderer.py` | render_placeholders, clean_manifest_payload, validate_metagit_yaml, render_file, render_manifest |
-| `src/metagit/cli/commands/init.py` | _resolve_project_metadata, resolve_target_dir, init, _print_next_steps |
+| `src/metagit/core/init/prompts.py` | load_answers_file, build_builtin_defaults, resolve_prompt_default, collect_answers |
 | `src/metagit/core/init/registry.py` | list_templates, load_manifest, template_dir, _safe_template_path |
 | `src/metagit/core/init/service.py` | list_templates, resolve_template_id, initialize, initialize_minimal |
 | `tests/core/init/test_init_service.py` | test_list_templates_includes_hermes, test_init_hermes_with_answers_file, test_init_minimal_library_kind, test_init_minimal_idempotent_when_manifest_valid |
-| `src/metagit/core/init/prompts.py` | load_answers_file, build_builtin_defaults, resolve_prompt_default, collect_answers |
-| `src/metagit/core/utils/logging.py` | header |
+| `src/metagit/cli/commands/init.py` | _resolve_project_metadata, resolve_target_dir, init |
 
 ## Entry Points
 
@@ -31,9 +30,9 @@ Start here when exploring this area:
 
 - **`resolve_target_dir`** (Function) — `src/metagit/cli/commands/init.py:46`
 - **`init`** (Function) — `src/metagit/cli/commands/init.py:164`
-- **`test_list_templates_includes_hermes`** (Function) — `tests/core/init/test_init_service.py:10`
 - **`load_answers_file`** (Function) — `src/metagit/core/init/prompts.py:17`
 - **`build_builtin_defaults`** (Function) — `src/metagit/core/init/prompts.py:33`
+- **`resolve_prompt_default`** (Function) — `src/metagit/core/init/prompts.py:46`
 
 ## Key Symbols
 
@@ -41,11 +40,11 @@ Start here when exploring this area:
 |--------|------|------|------|
 | `resolve_target_dir` | Function | `src/metagit/cli/commands/init.py` | 46 |
 | `init` | Function | `src/metagit/cli/commands/init.py` | 164 |
-| `test_list_templates_includes_hermes` | Function | `tests/core/init/test_init_service.py` | 10 |
 | `load_answers_file` | Function | `src/metagit/core/init/prompts.py` | 17 |
 | `build_builtin_defaults` | Function | `src/metagit/core/init/prompts.py` | 33 |
 | `resolve_prompt_default` | Function | `src/metagit/core/init/prompts.py` | 46 |
 | `collect_answers` | Function | `src/metagit/core/init/prompts.py` | 58 |
+| `test_list_templates_includes_hermes` | Function | `tests/core/init/test_init_service.py` | 10 |
 | `test_init_hermes_with_answers_file` | Function | `tests/core/init/test_init_service.py` | 18 |
 | `render_placeholders` | Function | `src/metagit/core/init/renderer.py` | 16 |
 | `clean_manifest_payload` | Function | `src/metagit/core/init/renderer.py` | 26 |
@@ -54,17 +53,17 @@ Start here when exploring this area:
 | `test_init_minimal_idempotent_when_manifest_valid` | Function | `tests/core/init/test_init_service.py` | 72 |
 | `list_templates` | Method | `src/metagit/core/init/registry.py` | 23 |
 | `load_manifest` | Method | `src/metagit/core/init/registry.py` | 36 |
+| `template_dir` | Method | `src/metagit/core/init/registry.py` | 47 |
 | `list_templates` | Method | `src/metagit/core/init/service.py` | 41 |
 | `resolve_template_id` | Method | `src/metagit/core/init/service.py` | 44 |
-| `header` | Method | `src/metagit/core/utils/logging.py` | 504 |
-| `template_dir` | Method | `src/metagit/core/init/registry.py` | 47 |
 | `initialize` | Method | `src/metagit/core/init/service.py` | 78 |
+| `render_file` | Method | `src/metagit/core/init/renderer.py` | 47 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `Init → _safe_template_path` | cross_community | 5 |
+| `Init → _safe_template_path` | intra_community | 5 |
 | `Init → Load_config` | cross_community | 5 |
 | `Init → Render_placeholders` | cross_community | 5 |
 | `Init → Clean_manifest_payload` | cross_community | 5 |
@@ -74,11 +73,10 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Cluster_311 | 13 calls |
 | Cli | 5 calls |
+| Commands | 5 calls |
 | Providers | 2 calls |
 | Examples | 1 calls |
-| Commands | 1 calls |
 
 ## How to Explore
 

@@ -157,6 +157,8 @@ export interface WorkspaceProjectEntry {
   name: string
   description?: string | null
   agent_instructions?: string | null
+  protected?: boolean
+  tags?: Record<string, string>
   dedupe_enabled?: boolean | null
   repo_count: number
 }
@@ -310,6 +312,25 @@ export function postPrune(body: {
   force?: boolean
 }): Promise<PruneExecuteResponse> {
   return requestJson<PruneExecuteResponse>('/v3/ops/prune', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export interface OpenPathRequest {
+  path: string
+  editor?: string
+}
+
+export interface OpenPathResponse {
+  ok: boolean
+  path?: string
+  editor?: string
+  error?: { kind: string; message: string }
+}
+
+export function postOpenPath(body: OpenPathRequest): Promise<OpenPathResponse> {
+  return requestJson<OpenPathResponse>('/v3/ops/open', {
     method: 'POST',
     body: JSON.stringify(body),
   })

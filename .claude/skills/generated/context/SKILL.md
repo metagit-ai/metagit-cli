@@ -75,8 +75,6 @@ Start here when exploring this area:
 | `Objective_set_cmd → Load_config` | cross_community | 4 |
 | `Approval_list_cmd → Load_config` | cross_community | 4 |
 | `Repomix_cmd → _run_repomix_process` | cross_community | 3 |
-| `Objective_set_cmd → Normalize_objective_partial` | intra_community | 3 |
-| `Objective_set_cmd → Utc_now_iso` | cross_community | 3 |
 
 ## Connected Areas
 

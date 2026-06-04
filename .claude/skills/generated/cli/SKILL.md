@@ -75,8 +75,7 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 5 calls |
-| Cluster_311 | 3 calls |
+| Commands | 8 calls |
 | Config | 2 calls |
 
 ## How to Explore

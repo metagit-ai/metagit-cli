@@ -4,6 +4,7 @@ import GraphDiagram from '../components/GraphDiagram'
 import OpsPanel from '../components/OpsPanel'
 import RepoTable from '../components/RepoTable'
 import SyncDialog from '../components/SyncDialog'
+import WorkspaceExplorer from '../components/WorkspaceExplorer'
 import { fetchWorkspaceGraph, graphQueryKey } from './graphQueries'
 import {
   fetchWorkspaceGrep,
@@ -18,7 +19,7 @@ import {
 } from './workspaceQueries'
 import styles from './WorkspacePage.module.css'
 
-type WorkspaceView = 'repos' | 'graph' | 'search'
+type WorkspaceView = 'repos' | 'explorer' | 'graph' | 'search'
 
 interface SyncTarget {
   repos: string[]
@@ -29,6 +30,7 @@ export default function WorkspacePage() {
   const [view, setView] = useState<WorkspaceView>('repos')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
+  const [explorerSearch, setExplorerSearch] = useState('')
   const [includeInferred, setIncludeInferred] = useState(true)
   const [includeStructure, setIncludeStructure] = useState(true)
   const [syncTarget, setSyncTarget] = useState<SyncTarget | null>(null)
@@ -102,6 +104,15 @@ export default function WorkspacePage() {
       ? data.summary.definition_path
       : null
 
+  const workspaceName =
+    typeof data?.summary?.file_name === 'string'
+      ? data.summary.file_name.replace(/\.metagit\.yml$/i, '')
+      : typeof data?.summary?.workspace === 'object' &&
+          data.summary.workspace !== null &&
+          typeof (data.summary.workspace as { name?: unknown }).name === 'string'
+        ? String((data.summary.workspace as { name: string }).name)
+        : null
+
   return (
     <section className={styles.page}>
       <header className={styles.header}>
@@ -133,6 +144,7 @@ export default function WorkspacePage() {
           {(
             [
               ['repos', 'Repositories'],
+              ['explorer', 'Explorer'],
               ['search', 'Search'],
               ['graph', 'Graph'],
             ] as const
@@ -274,6 +286,15 @@ export default function WorkspacePage() {
               statusFilter={statusFilter}
               search={search}
               onSync={(repos, title) => setSyncTarget({ repos, title })}
+            />
+          ) : view === 'explorer' ? (
+            <WorkspaceExplorer
+              workspaceName={workspaceName}
+              definitionPath={definitionPath}
+              projects={projects}
+              reposIndex={reposIndex}
+              search={explorerSearch}
+              onSearchChange={setExplorerSearch}
             />
           ) : view === 'search' ? (
             <section className={styles.grepPanel} aria-label="Content search results">

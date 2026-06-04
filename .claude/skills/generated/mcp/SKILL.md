@@ -70,7 +70,6 @@ Start here when exploring this area:
 | `Pack_cmd → Resolve_sync_root` | cross_community | 3 |
 | `Repomix_cmd → Resolve_sync_root` | cross_community | 3 |
 | `Repo_card_cmd → Resolve_sync_root` | cross_community | 3 |
-| `Objective_set_cmd → Resolve_sync_root` | cross_community | 3 |
 
 ## Connected Areas
 
@@ -80,7 +79,7 @@ Start here when exploring this area:
 | Services | 2 calls |
 | Tests | 2 calls |
 | Config | 2 calls |
-| Api | 1 calls |
+| Workspace | 1 calls |
 
 ## How to Explore
 

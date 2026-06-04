@@ -108,3 +108,10 @@ class ApprovalResolveRequest(BaseModel):
 
     decision: Literal["approved", "denied"]
     note: str | None = None
+
+
+class OpenPathRequest(BaseModel):
+    """Body for POST `/v3/ops/open` — open a managed repo path in a local editor."""
+
+    path: str
+    editor: str | None = None

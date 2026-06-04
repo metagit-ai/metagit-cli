@@ -23,6 +23,7 @@ from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.project.manager import project_manager_from_app
+from metagit.core.utils.common import open_editor
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.web.graph_service import WorkspaceGraphService
 from metagit.core.web.job_store import SyncJobStore
@@ -30,8 +31,10 @@ from metagit.core.web.models import (
     ApprovalResolveRequest,
     ObjectiveStatusPatchRequest,
     ObjectiveUpsertRequest,
+    OpenPathRequest,
     SyncJobRequest,
 )
+from metagit.core.workspace.root_resolver import resolve_definition_root
 
 JsonResponder = Callable[[int, dict[str, Any]], None]
 
@@ -129,6 +132,10 @@ class OpsWebHandler:
 
         if method == "POST" and parsed_path == "/v3/ops/sync":
             self._post_sync(body, respond)
+            return True
+
+        if method == "POST" and parsed_path == "/v3/ops/open":
+            self._post_open(body, respond)
             return True
 
         status_match = _SYNC_JOB_PATH.match(parsed_path)
@@ -273,6 +280,80 @@ class OpsWebHandler:
             )
             return
         respond(200, saved.model_dump(mode="json"))
+
+    def _post_open(self, body: bytes, respond: JsonResponder) -> None:
+        payload = self._parse_body(body, respond, required=True)
+        if payload is None:
+            return
+        try:
+            req = OpenPathRequest.model_validate(payload)
+        except ValidationError as exc:
+            respond(
+                400,
+                {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
+            )
+            return
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        app_config = self._load_appconfig(respond)
+        if app_config is None:
+            return
+        resolved = str(Path(req.path.strip()).resolve())
+        definition_root = resolve_definition_root(self._config_path)
+        rows = self._index.build_index(
+            config=config,
+            workspace_root=self._workspace_root,
+            definition_root=definition_root,
+        )
+        allowed_paths = {
+            str(Path(str(row.get("repo_path", ""))).resolve())
+            for row in rows
+            if row.get("repo_path")
+        }
+        if resolved not in allowed_paths:
+            respond(
+                403,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "forbidden_path",
+                        "message": "path is not a managed workspace repository",
+                    },
+                },
+            )
+            return
+        if not Path(resolved).exists():
+            respond(
+                404,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "missing_path",
+                        "message": f"path does not exist: {resolved}",
+                    },
+                },
+            )
+            return
+        editor = (req.editor or app_config.editor or "code").strip() or "code"
+        opened = open_editor(editor, resolved)
+        if isinstance(opened, Exception):
+            respond(
+                500,
+                {
+                    "ok": False,
+                    "error": {"kind": "open_failed", "message": str(opened)},
+                },
+            )
+            return
+        respond(
+            200,
+            {
+                "ok": True,
+                "path": resolved,
+                "editor": editor,
+            },
+        )
 
     def _post_health(self, body: bytes, respond: JsonResponder) -> None:
         config = self._load_metagit(respond)
