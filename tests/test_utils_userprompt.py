@@ -34,7 +34,7 @@ def test_prompt_for_model_project_path_url_only(monkeypatch) -> None:
 
     def fake_prompt_optional(_self, field_name, _field_info):
         if field_name == "url":
-            return "git@gitlab.com:sram/hammerhead/terraform-ops.git"
+            return "git@gitlab.com:example-org/platform/terraform-ops.git"
         return None
 
     monkeypatch.setattr(UserPrompt, "_prompt_for_field", fake_prompt_field)
@@ -128,7 +128,7 @@ def test_prompt_for_model_validation_retry_reprompts_failed_field(monkeypatch) -
         existing_data={
             "name": "terraform-ops",
             "tags": None,
-            "url": "git@gitlab.com:sram/hammerhead/terraform-ops.git",
+            "url": "git@gitlab.com:example-org/platform/terraform-ops.git",
         },
         fields_to_prompt=["name", "url"],
     )

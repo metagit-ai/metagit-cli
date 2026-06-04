@@ -48,7 +48,7 @@ Start here when exploring this area:
 | `deep_merge` | Function | `src/metagit/core/config/example_generator.py` | 32 |
 | `build` | Function | `src/metagit/core/config/example_generator.py` | 49 |
 | `render_yaml` | Function | `src/metagit/core/config/example_generator.py` | 56 |
-| `config_example` | Function | `src/metagit/cli/commands/config.py` | 441 |
+| `config_example` | Function | `src/metagit/cli/commands/config.py` | 446 |
 | `test_fuzzyfinder_app_search_not_capped_by_max_results` | Function | `tests/test_utils_fuzzyfinder.py` | 27 |
 | `on_mount` | Function | `src/metagit/core/utils/fuzzyfinder.py` | 291 |
 | `on_input_changed` | Function | `src/metagit/core/utils/fuzzyfinder.py` | 298 |
@@ -68,7 +68,7 @@ Start here when exploring this area:
 | Area | Connections |
 |------|-------------|
 | Project | 8 calls |
-| Cluster_199 | 3 calls |
+| Cluster_134 | 3 calls |
 | Config | 2 calls |
 
 ## How to Explore

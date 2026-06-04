@@ -21,6 +21,12 @@ agent_instructions: |
   - metagit_workspace_sync: fetch by default; pull/clone only with explicit operator approval.
   - metagit_session_update before switching projects or ending the session.
 
+  Objectives and approvals (CLI-only orchestrators):
+  - Create objectives: `echo '{"id":"…","title":"…","status":"in_progress"}' | metagit context objective set`
+  - Progress updates merge by id (title/repos optional on update); use `notes` for append-only agent log
+  - Request approval: `metagit context approval request` with JSON stdin (action, requested_by, payload)
+  - Tier-2 pack surfaces `active_objective_id` for in-flight objectives
+
   Documentation duty:
   - Every repo or path must have a clear description in this manifest.
   - Record build, deploy, and publish steps in per-repo agent_instructions when non-obvious.

@@ -78,7 +78,7 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Cluster_195 | 15 calls |
+| Cluster_130 | 15 calls |
 | Project | 3 calls |
 | Config | 2 calls |
 | Workspace | 2 calls |

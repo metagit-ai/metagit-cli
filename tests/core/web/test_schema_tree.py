@@ -165,6 +165,44 @@ def test_enable_optional_list_defaults_empty() -> None:
     assert updated.artifacts == []
 
 
+def test_remove_workspace_project_when_projects_null() -> None:
+    service = SchemaTreeService()
+    data: dict[str, object] = {
+        "name": "demo",
+        "kind": "umbrella",
+        "workspace": {
+            "projects": None,
+        },
+    }
+    service._remove_at_path(data, MetagitConfig, "workspace.projects[0]")
+    assert data["workspace"]["projects"] == []
+
+
+def test_remove_workspace_project_from_preview_batch() -> None:
+    service = SchemaTreeService()
+    config = MetagitConfig.model_validate({"name": "demo", "kind": "umbrella"})
+    enabled, _ = service.apply_operations(
+        config,
+        MetagitConfig,
+        [ConfigOperation(op=ConfigOpKind.ENABLE, path="workspace")],
+    )
+    assert enabled.workspace is not None
+    assert len(enabled.workspace.projects) == 1
+    appended, _ = service.apply_operations(
+        enabled,
+        MetagitConfig,
+        [ConfigOperation(op=ConfigOpKind.APPEND, path="workspace.projects")],
+    )
+    assert len(appended.workspace.projects) == 2
+    removed, errors = service.apply_operations(
+        appended,
+        MetagitConfig,
+        [ConfigOperation(op=ConfigOpKind.REMOVE, path="workspace.projects[0]")],
+    )
+    assert errors == []
+    assert len(removed.workspace.projects) == 1
+
+
 def test_append_and_remove_list_items() -> None:
     service = SchemaTreeService()
     config = MetagitConfig.model_validate({"name": "demo", "kind": "application"})

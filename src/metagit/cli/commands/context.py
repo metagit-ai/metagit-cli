@@ -19,14 +19,17 @@ from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.models import (
     ContextPackResult,
-    Objective,
     RepoCardResult,
     SessionDigestResult,
 )
-from metagit.core.workspace.context_models import utc_now_iso
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.repomix_profile_service import RepomixProfileService
+from metagit.core.workspace.root_resolver import (
+    resolve_definition_root,
+    resolve_session_root,
+    resolve_sync_root,
+)
 from metagit.cli.shell_completion import (
     complete_projects,
     complete_repos,
@@ -45,13 +48,15 @@ def _load_manifest(definition_path: str) -> MetagitConfig:
 def _context_paths(
     ctx: click.Context,
     definition_path: str,
-) -> tuple[MetagitConfig, str, str, AppConfig]:
-    """Return manifest config, resolved definition path, workspace root, app config."""
+) -> tuple[MetagitConfig, str, str, str, AppConfig]:
+    """Return manifest, config path, sync root, session root, and app config."""
     app_config: AppConfig = ctx.obj["config"]
     config = _load_manifest(definition_path)
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
     config_path = str(Path(definition_path).expanduser().resolve())
-    return config, config_path, workspace_root, app_config
+    definition_root = resolve_definition_root(definition_path)
+    sync_root = resolve_sync_root(definition_root, app_config.workspace.path)
+    session_root = resolve_session_root(definition_root)
+    return config, config_path, sync_root, session_root, app_config
 
 
 def _summarize_digest_line(digest: SessionDigestResult) -> None:
@@ -180,12 +185,18 @@ def pack_cmd(
     as_json: bool,
 ) -> None:
     """Emit a tiered context pack (workspace map ± repo cards ± digest)."""
-    config, config_path, workspace_root, _ = _context_paths(ctx, definition_path)
+    config, config_path, sync_root, session_root, _ = _context_paths(
+        ctx,
+        definition_path,
+    )
+    definition_root = resolve_definition_root(definition_path)
     svc = ContextPackService()
     result = svc.pack(
         config=config,
         config_path=config_path,
-        workspace_root=workspace_root,
+        workspace_root=sync_root,
+        session_root=session_root,
+        definition_root=definition_root,
         tier=tier,
         project_name=project_name,
         repo_name=repo_name,
@@ -225,13 +236,15 @@ def repo_card_cmd(
     as_json: bool,
 ) -> None:
     """Emit a single tier-1 repo card."""
-    config, _, workspace_root, _ = _context_paths(ctx, definition_path)
+    config, _, sync_root, _, _ = _context_paths(ctx, definition_path)
+    definition_root = resolve_definition_root(definition_path)
     try:
         card = RepoCardService().build_one(
             config,
-            workspace_root,
+            sync_root,
             project_name,
             repo_name,
+            definition_root=definition_root,
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
@@ -273,13 +286,15 @@ def repomix_cmd(
     output_path: str | None,
 ) -> None:
     """Run repomix with a bundled context profile for one managed repo."""
-    config, _, workspace_root, _ = _context_paths(ctx, definition_path)
+    config, _, sync_root, _, _ = _context_paths(ctx, definition_path)
+    definition_root = resolve_definition_root(definition_path)
     try:
         card = RepoCardService().build_one(
             config,
-            workspace_root,
+            sync_root,
             project_name,
             repo_name,
+            definition_root=definition_root,
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
@@ -331,8 +346,8 @@ def objective_list_cmd(
     as_json: bool,
 ) -> None:
     """List objectives persisted under `.metagit/sessions/objectives.json`."""
-    _, _, workspace_root, _ = _context_paths(ctx, definition_path)
-    result = ObjectiveService(workspace_root=workspace_root).list()
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    result = ObjectiveService(workspace_root=session_root).list()
     if as_json:
         click.echo(result.model_dump_json(indent=2))
         return
@@ -344,18 +359,6 @@ def objective_list_cmd(
             f"{obj.id} [{obj.status}] {obj.title} "
             f"repos={','.join(obj.repos) if obj.repos else '—'}",
         )
-
-
-def _objective_from_merged_dict(merged: dict[str, Any]) -> Objective:
-    """Build an ``Objective`` for upsert, filling timestamps when omitted."""
-    now = utc_now_iso()
-    raw = dict(merged)
-    raw.setdefault("status", "pending")
-    if "repos" not in raw or raw["repos"] is None:
-        raw["repos"] = []
-    raw["created_at"] = str(raw.get("created_at") or now)
-    raw["updated_at"] = str(raw.get("updated_at") or now)
-    return Objective.model_validate(raw)
 
 
 def _resolve_objective_dict_from_cli(
@@ -427,12 +430,12 @@ def objective_set_cmd(
     )
     if "id" not in merged or not str(merged.get("id", "")).strip():
         raise click.ClickException("objective id is required (stdin or --id)")
-    if "title" not in merged or not str(merged.get("title", "")).strip():
-        raise click.ClickException("objective title is required (stdin or --title)")
-    _, _, workspace_root, _ = _context_paths(ctx, definition_path)
-    objective = _objective_from_merged_dict(merged)
-    svc = ObjectiveService(workspace_root=workspace_root)
-    saved = svc.upsert(objective)
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    svc = ObjectiveService(workspace_root=session_root)
+    try:
+        saved = svc.upsert_partial(merged)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
     click.echo(saved.model_dump_json(indent=2))
 
 
@@ -459,8 +462,8 @@ def objective_get_cmd(
     as_json: bool,
 ) -> None:
     """Print one objective by id."""
-    _, _, workspace_root, _ = _context_paths(ctx, definition_path)
-    obj = ObjectiveService(workspace_root=workspace_root).get(objective_id=objective_id)
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    obj = ObjectiveService(workspace_root=session_root).get(objective_id=objective_id)
     if obj is None:
         raise click.ClickException(f"objective not found: {objective_id}")
     if as_json:
@@ -487,9 +490,9 @@ def objective_complete_cmd(
     objective_id: str,
 ) -> None:
     """Mark an objective done."""
-    _, _, workspace_root, _ = _context_paths(ctx, definition_path)
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
     try:
-        saved = ObjectiveService(workspace_root=workspace_root).complete(
+        saved = ObjectiveService(workspace_root=session_root).complete(
             objective_id=objective_id,
         )
     except ValueError as exc:
@@ -513,9 +516,9 @@ def objective_cancel_cmd(
     objective_id: str,
 ) -> None:
     """Mark an objective cancelled."""
-    _, _, workspace_root, _ = _context_paths(ctx, definition_path)
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
     try:
-        saved = ObjectiveService(workspace_root=workspace_root).cancel(
+        saved = ObjectiveService(workspace_root=session_root).cancel(
             objective_id=objective_id,
         )
     except ValueError as exc:
@@ -557,8 +560,8 @@ def approval_list_cmd(
     as_json: bool,
 ) -> None:
     """List approval requests (pending by default)."""
-    _, _, workspace_root, _ = _context_paths(ctx, definition_path)
-    svc = ApprovalService(workspace_root=workspace_root)
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    svc = ApprovalService(workspace_root=session_root)
     result = (
         svc.list(status=None)
         if status_filter == "all"
@@ -595,15 +598,94 @@ def approval_approve_cmd(
     resolver_note: str | None,
 ) -> None:
     """Approve a pending request."""
-    _, _, workspace_root, _ = _context_paths(ctx, definition_path)
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
     try:
-        row = ApprovalService(workspace_root=workspace_root).resolve(
+        row = ApprovalService(workspace_root=session_root).resolve(
             request_id=approval_id,
             decision="approved",
             note=resolver_note,
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
+    click.echo(row.model_dump_json(indent=2))
+
+
+def _resolve_approval_dict_from_cli(
+    stdin_obj: dict[str, Any],
+    *,
+    action: str | None,
+    requested_by: str | None,
+    payload_json: str | None,
+) -> dict[str, Any]:
+    merged = dict(stdin_obj)
+    if action is not None:
+        merged["action"] = action
+    if requested_by is not None:
+        merged["requested_by"] = requested_by
+    if payload_json is not None:
+        try:
+            parsed_payload = json.loads(payload_json)
+        except json.JSONDecodeError as exc:
+            raise click.ClickException(f"--payload JSON invalid: {exc}") from exc
+        if not isinstance(parsed_payload, dict):
+            raise click.ClickException("--payload JSON must be an object")
+        merged["payload"] = parsed_payload
+    return merged
+
+
+@approval_group.command("request")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--action")
+@click.option("--requested-by", "requested_by")
+@click.option("--payload", "payload_json", default=None, help="JSON object string")
+@click.pass_context
+def approval_request_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    action: str | None,
+    requested_by: str | None,
+    payload_json: str | None,
+) -> None:
+    """Create an approval request from JSON on stdin or flags."""
+    base: dict[str, Any]
+    if not sys.stdin.isatty():
+        raw_stdin = sys.stdin.read().strip()
+        if raw_stdin:
+            try:
+                parsed = json.loads(raw_stdin)
+            except json.JSONDecodeError as exc:
+                raise click.ClickException(f"stdin JSON invalid: {exc}") from exc
+            if not isinstance(parsed, dict):
+                raise click.ClickException("stdin JSON must be an object")
+            base = parsed
+        else:
+            base = {}
+    else:
+        base = {}
+    merged = _resolve_approval_dict_from_cli(
+        base,
+        action=action,
+        requested_by=requested_by,
+        payload_json=payload_json,
+    )
+    action_val = str(merged.get("action") or "").strip()
+    if not action_val:
+        raise click.ClickException("action is required (stdin or --action)")
+    requester = str(merged.get("requested_by") or "agent").strip() or "agent"
+    payload_raw = merged.get("payload")
+    payload = dict(payload_raw) if isinstance(payload_raw, dict) else {}
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    row = ApprovalService(workspace_root=session_root).request(
+        action=action_val,
+        payload=payload,
+        requested_by=requester,
+    )
     click.echo(row.model_dump_json(indent=2))
 
 
@@ -625,9 +707,9 @@ def approval_deny_cmd(
     resolver_note: str,
 ) -> None:
     """Deny a pending request (note required)."""
-    _, _, workspace_root, _ = _context_paths(ctx, definition_path)
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
     try:
-        row = ApprovalService(workspace_root=workspace_root).resolve(
+        row = ApprovalService(workspace_root=session_root).resolve(
             request_id=approval_id,
             decision="denied",
             note=resolver_note,

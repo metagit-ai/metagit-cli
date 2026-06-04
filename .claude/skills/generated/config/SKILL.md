@@ -1,11 +1,11 @@
 ---
 name: config
-description: "Skill for the Config area of metagit-cli. 103 symbols across 20 files."
+description: "Skill for the Config area of metagit-cli. 108 symbols across 21 files."
 ---
 
 # Config
 
-103 symbols | 20 files | Cohesion: 83%
+108 symbols | 21 files | Cohesion: 84%
 
 ## When to Use
 
@@ -18,9 +18,9 @@ description: "Skill for the Config area of metagit-cli. 103 symbols across 20 fi
 | File | Symbols |
 |------|---------|
 | `src/metagit/core/config/graph_cypher_export.py` | export, _ensure_workspace_node, _add_structure_nodes, _add_structure_edges, _add_documentation_nodes (+8) |
+| `src/metagit/core/config/documentation_models.py` | documentation_entry_identity, is_documentation_shorthand_eligible, compact_documentation_entry, _documentation_representation_richness, _merge_documentation_representations (+7) |
 | `src/metagit/core/config/yaml_roundtrip.py` | _merge_list, _match_source_item, _build_source_identity_index, _list_item_identity, _normalize_value (+5) |
 | `src/metagit/core/config/yaml_order.py` | _unwrap_optional, nested_model, list_item_model, _nested_model, _list_item_model (+4) |
-| `src/metagit/core/config/documentation_models.py` | documentation_entry_identity, is_documentation_shorthand_eligible, compact_documentation_entry, _documentation_representation_richness, _merge_documentation_representations (+3) |
 | `src/metagit/core/config/example_generator.py` | _render_mapping, _render_key_value, _format_scalar, _nested_model_for_annotation, _sample_model (+3) |
 | `tests/core/config/test_format_service.py` | test_render_metagit_omits_schema_defaults_by_default, test_render_metagit_include_defaults_preserves_default_fields, _minimal_metagit_yaml, test_render_metagit_normalizes_messy_description, test_format_metagit_writes_ordered_file (+2) |
 | `src/metagit/core/config/yaml_display.py` | _looks_like_url, should_use_literal_block, wrap_long_string, prepare_literal_block_string, normalize_yaml_string (+2) |
@@ -52,9 +52,9 @@ Start here when exploring this area:
 | `workspace` | Function | `src/metagit/cli/commands/workspace.py` | 93 |
 | `project` | Function | `src/metagit/cli/commands/project.py` | 47 |
 | `config_show` | Function | `src/metagit/cli/commands/config.py` | 69 |
-| `config_validate` | Function | `src/metagit/cli/commands/config.py` | 156 |
-| `config_info` | Function | `src/metagit/cli/commands/config.py` | 374 |
-| `config_graph_export` | Function | `src/metagit/cli/commands/config.py` | 694 |
+| `config_validate` | Function | `src/metagit/cli/commands/config.py` | 161 |
+| `config_info` | Function | `src/metagit/cli/commands/config.py` | 379 |
+| `config_graph_export` | Function | `src/metagit/cli/commands/config.py` | 699 |
 | `format_metagit` | Function | `src/metagit/core/config/format_service.py` | 39 |
 | `format_appconfig` | Function | `src/metagit/core/config/format_service.py` | 63 |
 | `render_metagit` | Function | `src/metagit/core/config/format_service.py` | 86 |
@@ -68,10 +68,10 @@ Start here when exploring this area:
 | Flow | Type | Steps |
 |------|------|-------|
 | `Do_POST → Load_config` | cross_community | 4 |
-| `Objective_set_cmd → Load_config` | cross_community | 4 |
 | `Do_DELETE → Load_config` | cross_community | 4 |
 | `Pack_cmd → Load_config` | cross_community | 4 |
 | `Repomix_cmd → Load_config` | cross_community | 4 |
+| `Objective_set_cmd → Load_config` | cross_community | 4 |
 | `Approval_list_cmd → Load_config` | cross_community | 4 |
 | `Handle → Load_config` | cross_community | 4 |
 | `Fmt_cmd → _read_text` | intra_community | 4 |

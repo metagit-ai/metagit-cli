@@ -23,6 +23,7 @@ from metagit.core.workspace.catalog_models import (
     WorkspaceSummary,
 )
 from metagit.core.workspace.models import Workspace, WorkspaceProject
+from metagit.core.workspace.root_resolver import resolve_definition_root
 
 
 def _repo_ensure_conflict(
@@ -104,6 +105,7 @@ class WorkspaceCatalogService:
             payload["repos_index"] = self._index.build_index(
                 config=config,
                 workspace_root=workspace_root,
+                definition_root=resolve_definition_root(config_path),
             )
         return CatalogResult(ok=True, data=payload)
 

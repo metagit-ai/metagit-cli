@@ -21,7 +21,7 @@ TAGS_OBJECT_OR_STRING_LIST: dict[str, Any] = {
         {
             "type": "array",
             "items": {"type": "string"},
-            "description": "Tag names (normalized to map values of true at load time)",
+            "description": "Tag names (legacy maps normalized to lists at load time)",
         },
     ],
     "description": "Flat metadata tags as a map or list of tag names",

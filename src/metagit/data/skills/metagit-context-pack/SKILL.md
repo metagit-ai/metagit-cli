@@ -115,6 +115,7 @@ Tier-2 digest surfaces `active_objective_id` when one objective is in progress.
 Queue under `.metagit/approvals/pending.json`.
 
 ```bash
+metagit context approval request --action repo_sync --requested-by hermes --payload '{"project":"P","repo":"R"}' -c .metagit.yml
 metagit context approval list --json -c .metagit.yml
 metagit context approval list --status all --json
 
@@ -206,7 +207,7 @@ metagit config validate -c .metagit.yml
 | `context pack --tier N` | `metagit_context_pack` (required `tier`) |
 | `context repo-card` | `metagit_repo_card` |
 | `context objective list/set` | `metagit_objective_list` / `metagit_objective_upsert` |
-| `context approval list/approve/deny` | `metagit_approval_list` / `metagit_approval_resolve` |
+| `context approval request/list/approve/deny` | `metagit_approval_request` / `metagit_approval_list` / `metagit_approval_resolve` |
 
 Use CLI when operating shell-only (`METAGIT_AGENT_MODE=true`); use MCP when the IDE host exposes metagit tools.
 

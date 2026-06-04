@@ -11,12 +11,18 @@ from metagit.core.utils.common import is_git_repository
 from metagit.core.workspace import workspace_dedupe
 from metagit.core.workspace.protection import merge_project_repo_tags
 
+_MANIFEST_ROOT_PATHS = frozenset({".", "./"})
+
 
 class WorkspaceIndexService:
     """Build normalized repository status rows from workspace configuration."""
 
     def build_index(
-        self, config: MetagitConfig, workspace_root: str
+        self,
+        config: MetagitConfig,
+        workspace_root: str,
+        *,
+        definition_root: str | None = None,
     ) -> list[dict[str, Any]]:
         """Return repository index rows for all configured workspace repos."""
         rows: list[dict[str, Any]] = []
@@ -27,6 +33,7 @@ class WorkspaceIndexService:
             for repo in project.repos:
                 resolved_path = self._resolve_repo_path(
                     workspace_root=workspace_root,
+                    definition_root=definition_root or workspace_root,
                     project_name=project.name,
                     configured_path=repo.path,
                     repo_name=repo.name,
@@ -64,6 +71,7 @@ class WorkspaceIndexService:
     def _resolve_repo_path(
         self,
         workspace_root: str,
+        definition_root: str,
         project_name: str,
         configured_path: str | None,
         repo_name: str,
@@ -71,6 +79,9 @@ class WorkspaceIndexService:
         """Resolve repository mount path (matches project sync layout)."""
         if configured_path:
             path = Path(configured_path).expanduser()
+            normalized = str(path).replace("\\", "/").rstrip("/") or "."
+            if normalized in _MANIFEST_ROOT_PATHS:
+                return str(Path(definition_root).resolve())
             if path.is_absolute():
                 return str(path.resolve())
             return str((Path(workspace_root) / path).resolve())

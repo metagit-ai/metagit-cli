@@ -50,9 +50,17 @@ class RepoCardService:
         workspace_root: str,
         project_name: str,
         repo_name: str,
+        *,
+        definition_root: str | None = None,
     ) -> RepoCardResult:
         """Produce a single repo card for ``project_name`` / ``repo_name``."""
-        row = self._find_index_row(config, workspace_root, project_name, repo_name)
+        row = self._find_index_row(
+            config,
+            workspace_root,
+            project_name,
+            repo_name,
+            definition_root=definition_root,
+        )
         if row is None:
             raise ValueError(
                 f"Unknown workspace repo '{project_name}/{repo_name}' in manifest",
@@ -69,12 +77,17 @@ class RepoCardService:
         config: MetagitConfig,
         workspace_root: str,
         *,
+        definition_root: str | None = None,
         project_name: Optional[str] = None,
         repo_name: Optional[str] = None,
         max_cards: int = 50,
     ) -> list[RepoCardResult]:
         """Produce up to ``max_cards`` repo cards with optional filtering."""
-        rows = self._index.build_index(config=config, workspace_root=workspace_root)
+        rows = self._index.build_index(
+            config=config,
+            workspace_root=workspace_root,
+            definition_root=definition_root or workspace_root,
+        )
         filtered: list[dict[str, Any]] = []
         for row in rows:
             if project_name is not None and row["project_name"] != project_name:
@@ -186,8 +199,14 @@ class RepoCardService:
         workspace_root: str,
         project_name: str,
         repo_name: str,
+        *,
+        definition_root: str | None = None,
     ) -> Optional[dict[str, Any]]:
-        rows = self._index.build_index(config=config, workspace_root=workspace_root)
+        rows = self._index.build_index(
+            config=config,
+            workspace_root=workspace_root,
+            definition_root=definition_root or workspace_root,
+        )
         for row in rows:
             if row["project_name"] == project_name and row["repo_name"] == repo_name:
                 return row

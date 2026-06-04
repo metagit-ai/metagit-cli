@@ -34,10 +34,7 @@ def test_documentation_accepts_strings_and_dicts() -> None:
     assert config.documentation[0].kind == "markdown"
     assert config.documentation[0].path == "README.md"
     assert config.documentation[1].kind == "web"
-    assert config.documentation[2].tags == {
-        "playbook": "true",
-        "tutorial": "true",
-    }
+    assert config.documentation[2].tags == ["playbook", "tutorial"]
     assert config.documentation[3].metadata["ingest"] == "knowledge-graph"
     nodes = config.documentation_graph_nodes()
     assert nodes[2]["kind"] == "confluence"

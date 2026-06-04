@@ -72,7 +72,7 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Pages | 1 calls |
+| Api | 1 calls |
 | Config | 1 calls |
 
 ## How to Explore
