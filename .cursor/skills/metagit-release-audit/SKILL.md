@@ -1,6 +1,6 @@
 ---
 name: metagit-release-audit
-description: Mandatory before calling work complete when the session changed repo files. Runs format, lint, tests, integration tests, context-aware pip-audit/bandit, and optional gitleaks via task qa:prepush. Use before push, release, or hand-off.
+description: Mandatory before calling work complete when the session changed repo files. Runs format, lint, tests, integration tests, context-aware pip-audit/bandit, and optional gitleaks via task qa:prepush; then task gitnexus:analyze last. Use before push, release, or hand-off.
 ---
 
 # Auditing Release Readiness
@@ -12,12 +12,14 @@ Use this skill **whenever** your session added or edited tracked files in this r
 1. Run the pre-push quality gate.
 2. Capture failing stage logs and iterate fixes.
 3. Re-run until all required checks pass.
-4. Return a short readiness summary.
+4. Run **`task gitnexus:analyze`** as the **final** step (refreshes the GitNexus index for MCP tools).
+5. Return a short readiness summary.
 
 ## Commands
 
 - `task qa:prepush`
 - `task qa:prepush:loop -- 3` (optional bounded retry loop)
+- `task gitnexus:analyze` (always last after QA passes)
 
 ## Output Contract
 

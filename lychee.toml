@@ -1,0 +1,12 @@
+# Link checker config for README.md and docs/**/*.md (see task docs:links).
+# Generated repomix dumps and localhost examples are out of scope.
+
+exclude = [
+  "^https?://127\\.0\\.0\\.1",
+  "^https?://localhost",
+]
+
+exclude_path = [
+  "docs/llm.txt",
+  "docs/llm-detailed.txt",
+]

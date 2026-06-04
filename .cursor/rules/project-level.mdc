@@ -119,6 +119,7 @@ You are an expert in Python, YAML configurations, and AI toolchain integration. 
 ## Task closeout
 
 - After changes to this codebase, before implying the task is finished, run **`task qa:prepush`** from the repository root (`scripts/prepush-gate.zsh`). It runs format, lint, unit tests, integration tests, and context-aware security (`pip-audit` / `bandit` when `src/` or lockfiles changed). Fix failures and re-run until it passes unless the conversation was read-only (no edits) or the user explicitly waived the gate.
+- **Always last:** run **`task gitnexus:analyze`** from the repository root so the GitNexus knowledge graph index stays fresh for MCP navigation and impact analysis. Run after QA passes; skip only for read-only sessions with no file writes.
 
 ## Documentation Sources
 - If working with a new library or tool, consider looking for its documentation from its website, GitHub project, or the relevant llms.txt.

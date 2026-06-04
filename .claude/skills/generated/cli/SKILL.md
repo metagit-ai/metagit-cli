@@ -5,86 +5,82 @@ description: "Skill for the Cli area of metagit-cli. 33 symbols across 8 files."
 
 # Cli
 
-33 symbols | 8 files | Cohesion: 86%
+33 symbols | 8 files | Cohesion: 79%
 
 ## When to Use
 
 - Working with code in `src/`
-- Understanding how cli, emit_patch_result, emit_preview_result work
+- Understanding how appconfig_preview, appconfig_patch, config_preview work
 - Modifying cli-related functionality
 
 ## Key Files
 
 | File | Symbols |
 |------|---------|
-| `src/metagit/cli/shell_completion.py` | _definition_path_from_ctx, _project_names_from_manifest, _repo_names_from_manifest, _filter_incomplete, complete_projects (+6) |
-| `src/metagit/cli/config_patch_ops.py` | emit_patch_result, emit_preview_result, parse_cli_value, load_operations_file, resolve_operations (+2) |
-| `src/metagit/core/utils/logging.py` | print_debug, debug, warning, error, success |
+| `src/metagit/cli/shell_completion.py` | default_install_path, install_completion_script, shell_activation_hint, metagit_executable, verify_completion_callback (+8) |
+| `src/metagit/cli/config_patch_ops.py` | parse_cli_value, load_operations_file, resolve_operations, emit_patch_result, emit_preview_result |
+| `src/metagit/core/utils/logging.py` | success, print_debug, print_error, debug, error |
 | `tests/cli/test_shell_completion.py` | _write_manifest, test_complete_projects_from_manifest, test_complete_repos_scoped_to_project |
-| `src/metagit/cli/json_output.py` | emit_json, exit_on_catalog_mutation, exit_on_layout_mutation |
-| `src/metagit/cli/commands/project_repo.py` | repo_add, repo_prune |
+| `src/metagit/cli/commands/appconfig.py` | appconfig_preview, appconfig_patch |
+| `src/metagit/cli/commands/config.py` | config_preview, config_patch |
+| `src/metagit/cli/commands/completion_cmd.py` | completion_install, completion_doctor |
 | `src/metagit/cli/main.py` | cli |
-| `src/metagit/cli/commands/project_source.py` | source_sync |
 
 ## Entry Points
 
 Start here when exploring this area:
 
-- **`cli`** (Function) — `src/metagit/cli/main.py:63`
-- **`emit_patch_result`** (Function) — `src/metagit/cli/config_patch_ops.py:92`
-- **`emit_preview_result`** (Function) — `src/metagit/cli/config_patch_ops.py:121`
-- **`print_debug`** (Function) — `src/metagit/core/utils/logging.py:306`
-- **`debug`** (Function) — `src/metagit/core/utils/logging.py:426`
+- **`appconfig_preview`** (Function) — `src/metagit/cli/commands/appconfig.py:276`
+- **`appconfig_patch`** (Function) — `src/metagit/cli/commands/appconfig.py:356`
+- **`config_preview`** (Function) — `src/metagit/cli/commands/config.py:529`
+- **`config_patch`** (Function) — `src/metagit/cli/commands/config.py:609`
+- **`parse_cli_value`** (Function) — `src/metagit/cli/config_patch_ops.py:16`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `cli` | Function | `src/metagit/cli/main.py` | 63 |
+| `appconfig_preview` | Function | `src/metagit/cli/commands/appconfig.py` | 276 |
+| `appconfig_patch` | Function | `src/metagit/cli/commands/appconfig.py` | 356 |
+| `config_preview` | Function | `src/metagit/cli/commands/config.py` | 529 |
+| `config_patch` | Function | `src/metagit/cli/commands/config.py` | 609 |
+| `parse_cli_value` | Function | `src/metagit/cli/config_patch_ops.py` | 16 |
+| `load_operations_file` | Function | `src/metagit/cli/config_patch_ops.py` | 38 |
+| `resolve_operations` | Function | `src/metagit/cli/config_patch_ops.py` | 59 |
 | `emit_patch_result` | Function | `src/metagit/cli/config_patch_ops.py` | 92 |
 | `emit_preview_result` | Function | `src/metagit/cli/config_patch_ops.py` | 121 |
-| `print_debug` | Function | `src/metagit/core/utils/logging.py` | 306 |
-| `debug` | Function | `src/metagit/core/utils/logging.py` | 426 |
-| `warning` | Function | `src/metagit/core/utils/logging.py` | 442 |
-| `error` | Function | `src/metagit/core/utils/logging.py` | 450 |
-| `success` | Function | `src/metagit/core/utils/logging.py` | 584 |
-| `source_sync` | Function | `src/metagit/cli/commands/project_source.py` | 77 |
-| `repo_add` | Function | `src/metagit/cli/commands/project_repo.py` | 254 |
-| `repo_prune` | Function | `src/metagit/cli/commands/project_repo.py` | 403 |
+| `completion_install` | Function | `src/metagit/cli/commands/completion_cmd.py` | 65 |
+| `completion_doctor` | Function | `src/metagit/cli/commands/completion_cmd.py` | 90 |
+| `default_install_path` | Function | `src/metagit/cli/shell_completion.py` | 163 |
+| `install_completion_script` | Function | `src/metagit/cli/shell_completion.py` | 188 |
+| `shell_activation_hint` | Function | `src/metagit/cli/shell_completion.py` | 206 |
+| `metagit_executable` | Function | `src/metagit/cli/shell_completion.py` | 219 |
+| `verify_completion_callback` | Function | `src/metagit/cli/shell_completion.py` | 235 |
+| `format_install_message` | Function | `src/metagit/cli/shell_completion.py` | 258 |
 | `complete_projects` | Function | `src/metagit/cli/shell_completion.py` | 90 |
 | `complete_repos` | Function | `src/metagit/cli/shell_completion.py` | 100 |
 | `complete_repomix_profiles` | Function | `src/metagit/cli/shell_completion.py` | 123 |
-| `test_complete_projects_from_manifest` | Function | `tests/cli/test_shell_completion.py` | 48 |
-| `test_complete_repos_scoped_to_project` | Function | `tests/cli/test_shell_completion.py` | 65 |
-| `emit_json` | Function | `src/metagit/cli/json_output.py` | 14 |
-| `exit_on_catalog_mutation` | Function | `src/metagit/cli/json_output.py` | 23 |
-| `exit_on_layout_mutation` | Function | `src/metagit/cli/json_output.py` | 50 |
-| `parse_cli_value` | Function | `src/metagit/cli/config_patch_ops.py` | 16 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `Source_sync → _include_candidate` | cross_community | 4 |
-| `Source_sync → _to_project_path` | cross_community | 3 |
-| `Source_sync → _normalized_url` | cross_community | 3 |
-| `Source_sync → _needs_update` | cross_community | 3 |
-| `Repo_add → _find_project` | cross_community | 3 |
-| `Repo_add → _mutation_error` | cross_community | 3 |
-| `Complete_projects → Load_config` | cross_community | 3 |
-| `Complete_repos → Load_config` | cross_community | 3 |
+| `Main → Debug` | cross_community | 4 |
+| `Main → Debug` | cross_community | 4 |
+| `Main → Debug` | cross_community | 4 |
+| `Completion_install → _completion_class` | cross_community | 3 |
+| `Cli → _override_from_environment` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Cluster_130 | 15 calls |
-| Project | 3 calls |
+| Commands | 5 calls |
+| Cluster_311 | 3 calls |
 | Config | 2 calls |
-| Workspace | 2 calls |
 
 ## How to Explore
 
-1. `gitnexus_context({name: "cli"})` — see callers and callees
+1. `gitnexus_context({name: "appconfig_preview"})` — see callers and callees
 2. `gitnexus_query({query: "cli"})` — find related execution flows
 3. Read key files listed above for implementation details

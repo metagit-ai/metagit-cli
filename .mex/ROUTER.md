@@ -39,6 +39,7 @@ Then read this file fully before doing anything else in this session.
 - `docs/skills.md` documents global install, `metagit skills install`, and bundled skill overview.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
 - Docs build path resolves CLI imports correctly in CI by including interactive prompt runtime dependency.
+- **`task docs:links`** validates markdown links in `README.md` and `docs/**/*.md` via lychee (`scripts/check-doc-links.zsh`, `lychee.toml`); CI runs the same check on Ubuntu in `.github/workflows/test.yaml`. `docs/index.md` is a separate MkDocs home page (not a symlink to README) with docs-relative asset paths.
 - A semantic-release workflow now computes and pushes tags from conventional commits on `main`, and tag pushes drive PyPI/TestPyPI publish workflows.
 - **`task qa:prepush`** (via `scripts/prepush-gate.py` / `prepush-gate.zsh`) is mandatory in the behavioural contract whenever a session modifies tracked files — not optional “session closeout only.” Includes **`manifest_fixtures`** step validating curated manifests listed in `scripts/manifest-fixtures.yml` (`.metagit.yml`, `.metagit.example.yml`, `examples/hermes-orchestrator/.metagit.yml`, …).
 - **Skill helper scripts:** bundled `skills/*/scripts/*.sh` use bash for cross-platform wrappers around `uv run python` (zsh retained only for local dev gate script).
@@ -115,6 +116,7 @@ For every task, follow this loop:
    - If any `context/` file is now out of date because of this work, update it surgically — do not rewrite entire files.
    - Update the "Current Project State" section above if the work was significant.
 6. **QA GATE (mandatory for any delivered work)** — If you changed or added tracked project files in this conversation, run `task qa:prepush` from the repo root before reporting the task as finished. Fix failures and re-run until green. Also run `task skills:sync generate:schema` when bundled skills/schemas need to stay mirrored (see conventions). Omit the QA gate only for strictly read‑only exploration (no file writes) or when the user explicitly waived it in this thread. Document any intentional blockers plainly.
+7. **GITNEXUS (always last)** — Run `task gitnexus:analyze` from the repo root as the final step before hand-off whenever this session changed tracked files (including after QA passes). Skip only for strictly read‑only exploration with no writes.
 
 ## Commit Message Semantics
 - Use `fix:` by default (patch-level intent).

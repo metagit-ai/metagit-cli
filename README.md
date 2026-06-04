@@ -27,7 +27,7 @@ usage:
     <a href="https://github.com/metagit-ai/metagit-cli/releases/latest">
         <img src="https://img.shields.io/github/v/release/metagit-ai/metagit-cli?color=blue&label=Latest%20Release" alt="Latest Release">
     </a>
-    <a href="https://github.com/metagit-ai/metagit-cli/blob/main/LICENSE">
+    <a href="https://github.com/metagit-ai/metagit-cli/blob/main/LICENSE.md">
         <img src="https://img.shields.io/badge/License-MIT-ffffff?labelColor=d4eaf7&color=2e6cc4" alt="License: Apache 2.0">
     </a>
     <a href="https://deepwiki.com/metagit-ai/metagit-cli">
@@ -84,11 +84,11 @@ metagit skills install --scope user --target openclaw --target hermes
 npx skills add metagit-ai/metagit-cli
 ```
 
-Use `--scope project` when installing into a specific umbrella repository checkout. See [Skills](skills.md) for targets, MCP install, and the project-management skill for agents.
+Use `--scope project` when installing into a specific umbrella repository checkout. See [Skills](docs/skills.md) for targets, MCP install, and the project-management skill for agents.
 
 ## Agent guides
 
-- [Hermes agents and organization-wide IaC](hermes-iac-workspace-guide.md) — illustrated workflow for using Metagit as a control plane across Terraform, policy, and module repositories (controller + subagents, layered `agent_instructions`, MCP tools).
+- [Hermes agents and organization-wide IaC](docs/hermes-iac-workspace-guide.md) — illustrated workflow for using Metagit as a control plane across Terraform, policy, and module repositories (controller + subagents, layered `agent_instructions`, MCP tools).
 
 ## Documentation
 

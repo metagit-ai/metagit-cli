@@ -63,8 +63,6 @@ Start here when exploring this area:
 | Flow | Type | Steps |
 |------|------|-------|
 | `Main → _git_lines` | intra_community | 4 |
-| `Main → Security_scan_plan` | intra_community | 3 |
-| `Main → Run_step` | intra_community | 3 |
 
 ## How to Explore
 

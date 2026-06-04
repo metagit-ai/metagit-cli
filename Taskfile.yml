@@ -161,6 +161,11 @@ tasks:
         #gemini -y -p 'Perform a comprehensive analysis of the files in this project. Update the yaml file named .metagit.example.yml in the root of this project in a manner that adheres to the jsonschema file located at ./schemas/metagit_config.schema.json. Ensure you skip files matching the patterns in .gitignore. Do your best to update even optional elements of this schema. Pay special attention to dependencies found in Dockerfiles, CICD files, and mcp definitions. When complete also create ./docs/app.logic.md with additional documentation on the project components that includes a mermaid diagram of how they interact.'
         uv run mkdocs build --strict
 
+  docs:links:
+    desc: Validate links in README.md and docs/**/*.md
+    cmds:
+      - zsh ./scripts/check-doc-links.zsh
+
   test:
     desc: Run the tests
     cmds:

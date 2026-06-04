@@ -1,93 +1,97 @@
 ---
 name: api
-description: "Skill for the Api area of metagit-cli. 45 symbols across 12 files."
+description: "Skill for the Api area of metagit-cli. 48 symbols across 15 files."
 ---
 
 # Api
 
-45 symbols | 12 files | Cohesion: 81%
+48 symbols | 15 files | Cohesion: 75%
 
 ## When to Use
 
 - Working with code in `src/`
-- Understanding how fetchWorkspace, fetchWorkspaceGrepInfo, fetchConfigTree work
+- Understanding how requestJson, patchMetagitConfig, patchAppconfig work
 - Modifying api-related functionality
 
 ## Key Files
 
 | File | Symbols |
 |------|---------|
-| `web/src/api/client.ts` | ApiError, requestJson, getMetagitConfigTree, getAppconfigTree, patchMetagitConfig (+4) |
+| `web/src/api/client.ts` | ApiError, requestJson, patchMetagitConfig, patchAppconfig, postConfigPreview (+4) |
 | `src/metagit/core/api/server.py` | _parse_tag_filters_from_query, _first, do_GET, do_POST, do_DELETE (+1) |
 | `src/metagit/core/api/layout_handler.py` | handle, _layout_flags, _bool_param, _load_config, _respond_layout (+1) |
 | `src/metagit/core/api/catalog_handler.py` | handle, _load_config, _parse_body, _respond_mutation, _first |
-| `tests/api/test_grep_api.py` | _write_grep_fixture, test_workspace_grep_requires_query, test_workspace_grep_info_returns_ripgrep_status, test_workspace_grep_returns_enriched_hits |
 | `src/metagit/core/api/grep_handler.py` | handle, _load_config, _first, _bounded_int |
-| `web/src/pages/configQueries.ts` | fetchConfigTree, patchConfigTree, fetchConfigPreview |
-| `web/src/pages/ConfigPage.tsx` | findNodeByPath, mergePendingOp, ConfigPage |
-| `web/src/components/SchemaTree.tsx` | mergePendingOp, SchemaTree |
-| `web/src/pages/workspaceQueries.ts` | fetchWorkspace |
+| `tests/api/test_grep_api.py` | _write_grep_fixture, test_workspace_grep_requires_query, test_workspace_grep_info_returns_ripgrep_status, test_workspace_grep_returns_enriched_hits |
+| `web/src/pages/configQueries.ts` | patchConfigTree, fetchConfigPreview, fetchConfigTree |
+| `web/src/components/SchemaTree.tsx` | mergePendingOp, mutationFn, queryFn |
+| `web/src/components/FieldEditor.tsx` | mutationFn, queryFn |
+| `web/src/pages/grepQueries.ts` | fetchWorkspaceGrepInfo |
 
 ## Entry Points
 
 Start here when exploring this area:
 
-- **`fetchWorkspace`** (Function) — `web/src/pages/workspaceQueries.ts:4`
-- **`fetchWorkspaceGrepInfo`** (Function) — `web/src/pages/grepQueries.ts:35`
-- **`fetchConfigTree`** (Function) — `web/src/pages/configQueries.ts:17`
-- **`patchConfigTree`** (Function) — `web/src/pages/configQueries.ts:21`
-- **`fetchConfigPreview`** (Function) — `web/src/pages/configQueries.ts:32`
+- **`requestJson`** (Function) — `web/src/api/client.ts:75`
+- **`patchMetagitConfig`** (Function) — `web/src/api/client.ts:116`
+- **`patchAppconfig`** (Function) — `web/src/api/client.ts:127`
+- **`postConfigPreview`** (Function) — `web/src/api/client.ts:138`
+- **`getWorkspace`** (Function) — `web/src/api/client.ts:215`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
 | `ApiError` | Class | `web/src/api/client.ts` | 63 |
-| `fetchWorkspace` | Function | `web/src/pages/workspaceQueries.ts` | 4 |
-| `fetchWorkspaceGrepInfo` | Function | `web/src/pages/grepQueries.ts` | 35 |
-| `fetchConfigTree` | Function | `web/src/pages/configQueries.ts` | 17 |
-| `patchConfigTree` | Function | `web/src/pages/configQueries.ts` | 21 |
-| `fetchConfigPreview` | Function | `web/src/pages/configQueries.ts` | 32 |
-| `SchemaTree` | Function | `web/src/components/SchemaTree.tsx` | 45 |
-| `ConfigPreview` | Function | `web/src/components/ConfigPreview.tsx` | 11 |
 | `requestJson` | Function | `web/src/api/client.ts` | 75 |
-| `getMetagitConfigTree` | Function | `web/src/api/client.ts` | 108 |
-| `getAppconfigTree` | Function | `web/src/api/client.ts` | 112 |
 | `patchMetagitConfig` | Function | `web/src/api/client.ts` | 116 |
 | `patchAppconfig` | Function | `web/src/api/client.ts` | 127 |
 | `postConfigPreview` | Function | `web/src/api/client.ts` | 138 |
 | `getWorkspace` | Function | `web/src/api/client.ts` | 215 |
 | `getWorkspaceGrepInfo` | Function | `web/src/api/client.ts` | 390 |
-| `ConfigPage` | Function | `web/src/pages/ConfigPage.tsx` | 51 |
-| `do_GET` | Function | `src/metagit/core/api/server.py` | 69 |
-| `do_POST` | Function | `src/metagit/core/api/server.py` | 170 |
-| `do_DELETE` | Function | `src/metagit/core/api/server.py` | 183 |
+| `patchConfigTree` | Function | `web/src/pages/configQueries.ts` | 21 |
+| `fetchConfigPreview` | Function | `web/src/pages/configQueries.ts` | 32 |
+| `fetchWorkspaceGrepInfo` | Function | `web/src/pages/grepQueries.ts` | 35 |
+| `fetchWorkspace` | Function | `web/src/pages/workspaceQueries.ts` | 4 |
+| `queryFn` | Function | `web/src/components/ConfigPreview.tsx` | 21 |
+| `mutationFn` | Function | `web/src/components/FieldEditor.tsx` | 122 |
+| `mutationFn` | Function | `web/src/components/SchemaTree.tsx` | 61 |
+| `resolve_effective_dedupe_for_project` | Function | `src/metagit/core/workspace/dedupe_resolver.py` | 34 |
+| `resolve_sync_context` | Function | `src/metagit/core/workspace/layout_context.py` | 15 |
+| `getMetagitConfigTree` | Function | `web/src/api/client.ts` | 108 |
+| `getAppconfigTree` | Function | `web/src/api/client.ts` | 112 |
+| `fetchConfigTree` | Function | `web/src/pages/configQueries.ts` | 17 |
+| `queryFn` | Function | `web/src/components/FieldEditor.tsx` | 98 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `WorkspacePage → ApiError` | cross_community | 5 |
-| `FieldEditor → ApiError` | cross_community | 5 |
-| `ConfigPage → ApiError` | intra_community | 5 |
-| `SchemaTree → ApiError` | intra_community | 5 |
+| `QueryFn → ApiError` | cross_community | 5 |
 | `OpsPanel → ApiError` | cross_community | 5 |
 | `SyncDialog → ApiError` | cross_community | 5 |
+| `MutationFn → ApiError` | intra_community | 5 |
+| `QueryFn → ApiError` | cross_community | 5 |
+| `Do_GET → Load_config` | cross_community | 4 |
 | `Do_POST → Load_config` | cross_community | 4 |
 | `Do_POST → _bool_param` | cross_community | 4 |
 | `Do_DELETE → Load_config` | cross_community | 4 |
-| `FetchWorkspace → ApiError` | intra_community | 4 |
+| `Workspace_project_rename → Find_project` | cross_community | 4 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Config | 4 calls |
+| Config | 5 calls |
+| Tests | 1 calls |
 | Project | 1 calls |
 | Commands | 1 calls |
+| Services | 1 calls |
+| Workspace | 1 calls |
+| Prompt | 1 calls |
 
 ## How to Explore
 
-1. `gitnexus_context({name: "fetchWorkspace"})` — see callers and callees
+1. `gitnexus_context({name: "requestJson"})` — see callers and callees
 2. `gitnexus_query({query: "api"})` — find related execution flows
 3. Read key files listed above for implementation details

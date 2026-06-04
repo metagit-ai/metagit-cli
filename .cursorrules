@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to ROUTER.md for full context.
-last_updated: 2026-05-15
+last_updated: 2026-06-04
 ---
 
 # Metagit
@@ -11,8 +11,11 @@ After completing any task: update `.mex/ROUTER.md` project state and any `.mex/`
 
 **Before you tell the user the work is done** — if this conversation introduced or edited project files under this repo — run **`task qa:prepush`** from the repository root (`scripts/prepush-gate.py` via `scripts/prepush-gate.zsh`). Fix failures and re-run until green. Only skip when the task was strictly read-only (no writes) or the user explicitly waived the QA gate in this thread.
 
+**Last step before hand-off** — after QA passes (or when QA was skipped for read-only work), run **`task gitnexus:analyze`** from the repository root so the GitNexus index stays current for MCP tools and agents.
+
 ## Commands (minimum)
 - QA gate before hand-off / “work complete”: `task qa:prepush` (format, lint, tests, integration tests, context-aware pip-audit/bandit; optional `gitleaks` when installed)
+- GitNexus index refresh (always last): `task gitnexus:analyze`
 - Full unit tests only: `task test`
 
 ## Navigation
