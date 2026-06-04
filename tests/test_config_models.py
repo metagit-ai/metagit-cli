@@ -146,6 +146,7 @@ def test_metrics_and_pull_requests():
 def test_metagit_config_minimal():
     cfg = models.MetagitConfig(name="proj")
     assert cfg.name == "proj"
+    assert cfg.workspace is None
     assert cfg.agent_instructions is None
     # Test serialization
     assert isinstance(cfg.serialize_url(None, None), type(None))

@@ -20,6 +20,7 @@ from metagit.core.project.models import ProjectPath
 from metagit.core.utils.common import open_editor
 from metagit.core.workspace.catalog_models import CatalogMutationResult
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace.layout_resolver import active_project_resolution_error
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace import workspace_dedupe
 from metagit.core.workspace.dedupe_resolver import (
@@ -46,6 +47,9 @@ def repo_select(ctx: click.Context) -> None:
     local_config: MetagitConfig = ctx.obj["local_config"]
     project = ctx.obj["project"]
     app_config: AppConfig = ctx.obj["config"]
+    if not project:
+        logger.error(active_project_resolution_error(local_config))
+        ctx.abort()
     project_manager = project_manager_from_app(
         app_config,
         logger,
@@ -224,7 +228,7 @@ def repo_move(
 @click.option("--description", "-d", help="Repository description")
 @click.option("--ref", help="Reference in the current project for the target project")
 @click.option("--path", help="Local project path")
-@click.option("--url", help="Repository URL")
+@click.option("--url", help="Remote git URL (ssh or https)")
 @click.option("--sync/--no-sync", default=None, help="Sync setting")
 @click.option("--language", help="Programming language")
 @click.option("--language-version", help="Language version")

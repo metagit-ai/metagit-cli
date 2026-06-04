@@ -221,14 +221,6 @@ def create_metagit_config(
     config_manager.paths = []
     config_manager.dependencies = []
     config_manager.components = []
-    config_manager.workspace = Workspace(
-        projects=[
-            WorkspaceProject(
-                name="default",
-                repos=[],
-            )
-        ],
-    )
 
     if as_yaml:
         yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005

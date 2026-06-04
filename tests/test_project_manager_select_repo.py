@@ -117,3 +117,11 @@ def test_select_repo_preview_contains_extended_metadata(tmp_path, monkeypatch) -
   assert "Source Provider: github" in preview
   assert "Source Namespace: org-a" in preview
   assert "Protected: True" in preview
+
+
+def test_select_repo_missing_project_returns_value_error(tmp_path) -> None:
+  manager = ProjectManager(tmp_path / "workspace", _DummyLogger())
+  result = manager.select_repo(_build_metagit_config(), "missing-project")
+  assert isinstance(result, ValueError)
+  assert "missing-project" in str(result)
+  assert "proj-one" in str(result)

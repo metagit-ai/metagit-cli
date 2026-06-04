@@ -79,6 +79,7 @@ Then read this file fully before doing anything else in this session.
 - Local `black` execution path is unstable in this environment; project lint path currently relies on Ruff workflow.
 - Some MCP schema/tool contracts are still evolving and may require downstream client adjustments.
 - Pydantic deprecation warnings are present in test output due to existing class-based config usage.
+- **`metagit project list` / `select`:** manifest-driven project resolution (`layout_resolver`) — no synthetic in-memory `default` workspace project; optional app-config `default_project` preference; `local` for application manifests without `workspace.projects`.
 
 ## Routing Table
 

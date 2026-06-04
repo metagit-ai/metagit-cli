@@ -24,6 +24,11 @@ from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
+from metagit.core.workspace.layout_resolver import (
+    active_project_resolution_error,
+    project_exists_in_manifest,
+    resolve_active_project_name,
+)
 from metagit.core.workspace.models import WorkspaceProject
 from metagit.cli.shell_completion import complete_projects
 
@@ -48,10 +53,8 @@ def project(ctx: click.Context, config: str, project: str = None) -> None:
         click.echo(ctx.get_help())
         return
     app_config: AppConfig = ctx.obj["config"]
-    if not project:
-        project: str = app_config.workspace.default_project
-    ctx.obj["project"] = project
     ctx.obj["config_path"] = config
+    ctx.obj["explicit_project"] = project
     try:
         config_manager: MetagitConfigManager = MetagitConfigManager(config)
         local_config: MetagitConfig = config_manager.load_config()
@@ -61,6 +64,11 @@ def project(ctx: click.Context, config: str, project: str = None) -> None:
     except Exception as e:
         logger.error(f"Failed to load metagit definition file: {e}")
         sys.exit(1)
+    ctx.obj["project"] = resolve_active_project_name(
+        local_config,
+        explicit=project,
+        default_project=app_config.workspace.default_project,
+    )
 
 
 # Add repo group to project group
@@ -85,8 +93,18 @@ def project_list(ctx: click.Context, list_all: bool, as_json: bool) -> None:
     logger: UnifiedLogger = ctx.obj["logger"]
     project: str = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
+    explicit_project: bool = bool(ctx.obj.get("explicit_project"))
 
-    if list_all:
+    use_catalog = (
+        list_all
+        or project is None
+        or (
+            project
+            and not explicit_project
+            and not project_exists_in_manifest(local_config, project)
+        )
+    )
+    if use_catalog:
         service = WorkspaceCatalogService()
         if as_json:
             emit_json(service.list_projects(local_config))
@@ -140,6 +158,8 @@ def project_list(ctx: click.Context, list_all: bool, as_json: bool) -> None:
         yaml_output = yaml.dump(project_dict, default_flow_style=False, sort_keys=False)
         logger.echo(yaml_output)
 
+    except click.Abort:
+        raise
     except Exception as e:
         logger.error(f"Failed to list project: {e}")
         ctx.abort()
@@ -262,8 +282,11 @@ def project_sync(ctx: click.Context, hydrate: bool) -> None:
     """Sync project within workspace"""
     logger = ctx.obj["logger"]
     app_config: AppConfig = ctx.obj["config"]
-    project: str = ctx.obj["project"]
+    project: str | None = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
+    if not project:
+        logger.error(active_project_resolution_error(local_config))
+        ctx.abort()
     project_manager: ProjectManager = project_manager_from_app(
         app_config,
         logger,

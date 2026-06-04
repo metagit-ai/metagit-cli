@@ -1,0 +1,24 @@
+---
+description: GitHub CLI (gh) auth — unset stale token env vars before API calls
+alwaysApply: true
+---
+
+# GitHub CLI authentication
+
+Before any `gh` command (`gh pr create`, `gh issue`, `gh run`, etc.), **unset stale token environment variables** that override the keyring login:
+
+```bash
+env -u GH_TOKEN -u GITHUB_TOKEN gh <subcommand> ...
+```
+
+## Why
+
+An invalid or expired `GH_TOKEN` / `GITHUB_TOKEN` in the shell environment causes `HTTP 401: Bad credentials` even when `gh auth status` shows a valid keyring account (with "Active account: false" on the keyring entry).
+
+## Checklist for PRs
+
+1. Push branch: `git push -u origin HEAD` (SSH/git creds are separate from `gh`).
+2. Create PR: `env -u GH_TOKEN -u GITHUB_TOKEN gh pr create ...`
+3. If auth still fails: `gh auth status` then `gh auth login` if needed.
+
+Do **not** export `GH_TOKEN` for local `gh` unless intentionally using that token for the session.

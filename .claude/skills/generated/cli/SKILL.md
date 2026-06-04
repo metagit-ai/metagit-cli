@@ -49,8 +49,8 @@ Start here when exploring this area:
 | `error` | Function | `src/metagit/core/utils/logging.py` | 450 |
 | `success` | Function | `src/metagit/core/utils/logging.py` | 584 |
 | `source_sync` | Function | `src/metagit/cli/commands/project_source.py` | 77 |
-| `repo_add` | Function | `src/metagit/cli/commands/project_repo.py` | 250 |
-| `repo_prune` | Function | `src/metagit/cli/commands/project_repo.py` | 399 |
+| `repo_add` | Function | `src/metagit/cli/commands/project_repo.py` | 254 |
+| `repo_prune` | Function | `src/metagit/cli/commands/project_repo.py` | 403 |
 | `complete_projects` | Function | `src/metagit/cli/shell_completion.py` | 90 |
 | `complete_repos` | Function | `src/metagit/cli/shell_completion.py` | 100 |
 | `complete_repomix_profiles` | Function | `src/metagit/cli/shell_completion.py` | 123 |
@@ -78,7 +78,7 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Cluster_192 | 15 calls |
+| Cluster_195 | 15 calls |
 | Project | 3 calls |
 | Config | 2 calls |
 | Workspace | 2 calls |

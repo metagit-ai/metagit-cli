@@ -1,11 +1,11 @@
 ---
 name: examples
-description: "Skill for the Examples area of metagit-cli. 87 symbols across 26 files."
+description: "Skill for the Examples area of metagit-cli. 89 symbols across 26 files."
 ---
 
 # Examples
 
-87 symbols | 26 files | Cohesion: 93%
+89 symbols | 26 files | Cohesion: 94%
 
 ## When to Use
 
@@ -18,8 +18,8 @@ description: "Skill for the Examples area of metagit-cli. 87 symbols across 26 f
 | File | Symbols |
 |------|---------|
 | `examples/fuzzyfinder_custom_colors_demo.py` | test_fuzzyfindertarget_with_colors, test_mixed_object_types, test_priority_demonstration, test_string_items_with_colors, test_object_items_with_colors (+4) |
+| `src/metagit/core/record/manager.py` | create_record_from_config, _get_git_info, store_record, get_record, search_records (+3) |
 | `examples/test_record_manager_simple.py` | test_basic_functionality, store_record, get_record, search_records, list_records (+2) |
-| `src/metagit/core/record/manager.py` | create_record_from_config, _get_git_info, store_record, get_record, search_records (+2) |
 | `examples/detection_manager_example.py` | example_local_repository_analysis, example_configuration_options, example_metagit_record_integration, example_output_formats, example_specific_analysis_methods (+2) |
 | `examples/provider_example.py` | setup_providers_from_appconfig, setup_providers_from_environment, setup_providers_manually, analyze_local_repo, demonstrate_configuration_methods (+1) |
 | `examples/repository_analysis_example.py` | example_local_repository_analysis, example_remote_repository_analysis, example_specific_analysis, example_configuration, main |
@@ -70,8 +70,8 @@ Start here when exploring this area:
 | `Main → _get_git_info` | intra_community | 4 |
 | `Main → _get_git_info` | intra_community | 4 |
 | `Main → Run` | intra_community | 3 |
-| `Record_create → Store_record` | cross_community | 3 |
-| `Record_create → _get_git_info` | cross_community | 3 |
+| `Record_create → Store_record` | intra_community | 3 |
+| `Record_create → _get_git_info` | intra_community | 3 |
 | `Record_update → Get_record` | cross_community | 3 |
 | `Main → Get_enabled_methods` | cross_community | 3 |
 | `Record_show → Get_record` | cross_community | 3 |
@@ -82,8 +82,8 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 4 calls |
-| Config | 1 calls |
+| Commands | 3 calls |
+| Config | 2 calls |
 | Cli | 1 calls |
 
 ## How to Explore

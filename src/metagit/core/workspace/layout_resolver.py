@@ -53,6 +53,75 @@ def repo_mount_path(
     )
 
 
+def list_project_names(config: MetagitConfig) -> list[str]:
+    """Return workspace project names from the manifest."""
+    if not config.workspace:
+        return []
+    return [project.name for project in config.workspace.projects]
+
+
+def project_exists_in_manifest(config: MetagitConfig, project_name: str) -> bool:
+    """Return True when project_name is defined under workspace.projects."""
+    return find_project(config, project_name) is not None
+
+
+def resolve_active_project_name(
+    config: MetagitConfig,
+    *,
+    explicit: Optional[str] = None,
+    default_project: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Resolve the workspace project name for CLI context.
+
+    Prefers an explicit ``-p`` value, then the app-config preference when it
+    exists in the manifest, then the sole manifest project, then ``local`` when
+    no workspace projects are defined. Returns ``None`` when multiple manifest
+    projects exist and no unambiguous preference applies.
+    """
+    if explicit and explicit.strip():
+        return explicit.strip()
+    names = list_project_names(config)
+    preferred = (
+        default_project.strip() if default_project and default_project.strip() else None
+    )
+    if preferred and preferred in names:
+        return preferred
+    if len(names) == 1:
+        return names[0]
+    if not names:
+        return "local"
+    return None
+
+
+def active_project_resolution_error(config: MetagitConfig) -> str:
+    """Human-readable message when project context cannot be resolved."""
+    names = list_project_names(config)
+    if not names:
+        return (
+            "No workspace projects defined in .metagit.yml; "
+            "add one with `metagit project add`."
+        )
+    return f"Multiple workspace projects ({', '.join(names)}); pass -p/--project."
+
+
+def require_active_project_name(
+    config: MetagitConfig,
+    *,
+    explicit: Optional[str] = None,
+    default_project: Optional[str] = None,
+) -> str:
+    """Resolve active project or raise ValueError with guidance."""
+    name = resolve_active_project_name(
+        config,
+        explicit=explicit,
+        default_project=default_project,
+    )
+    if name:
+        return name
+    raise ValueError(active_project_resolution_error(config))
+
+
 def find_project(
     config: MetagitConfig,
     project_name: str,

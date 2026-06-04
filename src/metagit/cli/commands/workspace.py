@@ -20,6 +20,7 @@ from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
+from metagit.core.workspace.layout_resolver import resolve_active_project_name
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
@@ -707,9 +708,10 @@ def workspace_grep_info(ctx: click.Context, as_json: bool) -> None:
 def workspace_select(ctx: click.Context, project: str = None) -> None:
     """Select project repo to work on"""
     app_config: AppConfig = ctx.obj["config"]
-    if not project:
-        project = app_config.workspace.default_project
-        ctx.obj["project"] = project
-    else:
-        ctx.obj["project"] = project
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    ctx.obj["project"] = resolve_active_project_name(
+        local_config,
+        explicit=project,
+        default_project=app_config.workspace.default_project,
+    )
     call_click_command_with_ctx(repo_select, ctx)

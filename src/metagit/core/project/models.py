@@ -72,9 +72,11 @@ class ProjectPath(BaseModel):
         None,
         description="Reference in the current project for the target project, used in dependencies",
     )
-    path: Optional[str] = Field(None, description="Project path")
+    path: Optional[str] = Field(None, description="Local project path")
     branches: Optional[List[str]] = Field(None, description="Project branches")
-    url: Optional[Union[HttpUrl, GitUrl]] = Field(None, description="Project URL")
+    url: Optional[Union[HttpUrl, GitUrl]] = Field(
+        None, description="Remote git URL (ssh or https)"
+    )
     sync: Optional[bool] = Field(None, description="Sync setting")
     language: Optional[str] = Field(None, description="Programming language")
     language_version: Optional[Union[str, float, int]] = Field(

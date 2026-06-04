@@ -828,15 +828,8 @@ class MetagitConfig(BaseModel):
         description="Additional project component paths that may be useful in other projects.",
     )
     workspace: Optional[Workspace] = Field(
-        default_factory=lambda: Workspace(
-            projects=[
-                WorkspaceProject(
-                    name="default",
-                    repos=[],
-                )
-            ],
-        ),
-        description="Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. The internal workspace name is reservice",
+        default=None,
+        description="Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. Omit for single-repo application manifests; use top-level paths and dependencies instead.",
     )
 
     @field_validator("documentation", mode="before")

@@ -15,7 +15,7 @@ config:
   # Workspace Configuration
   workspace:
     path: "./.metagit"
-    default_project: "default"
+    # default_project: remote  # optional; omit to resolve from .metagit.yml
   
   # Profiles Configuration
   profiles:
