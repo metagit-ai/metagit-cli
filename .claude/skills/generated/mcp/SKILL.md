@@ -1,82 +1,89 @@
 ---
 name: mcp
-description: "Skill for the Mcp area of metagit-cli. 19 symbols across 12 files."
+description: "Skill for the Mcp area of metagit-cli. 53 symbols across 13 files."
 ---
 
 # Mcp
 
-19 symbols | 12 files | Cohesion: 87%
+53 symbols | 13 files | Cohesion: 80%
 
 ## When to Use
 
 - Working with code in `tests/`
-- Understanding how fetchWorkspaceGrep, getWorkspaceGrep, test_workspace_resources_available_when_active work
+- Understanding how test_initialize_request_returns_capabilities, test_tools_list_returns_inactive_tools_without_config, test_tools_call_workspace_status_returns_text_payload work
 - Modifying mcp-related functionality
 
 ## Key Files
 
 | File | Symbols |
 |------|---------|
+| `tests/core/mcp/test_runtime.py` | test_initialize_request_returns_capabilities, test_tools_list_returns_inactive_tools_without_config, test_tools_call_workspace_status_returns_text_payload, test_resources_read_ops_log_returns_json_content, test_tools_call_invalid_arguments_returns_mcp_invalid_params (+13) |
+| `src/metagit/core/mcp/runtime.py` | _handle_request, _handle_initialize, _error_response, status_snapshot, run_stdio (+12) |
 | `tests/core/mcp/test_gate.py` | test_missing_root_is_inactive_missing, test_missing_config_file_is_inactive_missing, test_invalid_config_file_is_inactive_invalid, test_valid_config_file_is_active |
 | `tests/core/mcp/test_root_resolver.py` | test_env_root_has_highest_precedence, test_cli_root_used_when_env_unset, test_walk_up_finds_workspace_root |
 | `src/metagit/core/mcp/root_resolver.py` | resolve, _walk_for_config |
 | `tests/core/mcp/test_tool_registry.py` | test_inactive_registry_exposes_only_safe_tools, test_active_registry_exposes_full_toolset |
-| `web/src/pages/grepQueries.ts` | fetchWorkspaceGrep |
-| `web/src/api/client.ts` | getWorkspaceGrep |
-| `tests/core/mcp/test_resources.py` | test_workspace_resources_available_when_active |
-| `src/metagit/core/mcp/resources.py` | get_resource |
-| `src/metagit/core/mcp/services/ops_log.py` | append |
-| `src/metagit/data/web/assets/index-C6eUwfs-.js` | Qi |
+| `tests/integration/test_mcp_workspace_flow.py` | test_end_to_end_workspace_activation_and_discovery |
+| `src/metagit/cli/commands/mcp.py` | serve |
+| `src/metagit/core/mcp/tools/bootstrap_plan_only.py` | metagit_bootstrap_config_plan_only |
+| `src/metagit/core/mcp/tools/workspace_status.py` | metagit_workspace_status |
 
 ## Entry Points
 
 Start here when exploring this area:
 
-- **`fetchWorkspaceGrep`** (Function) — `web/src/pages/grepQueries.ts:22`
-- **`getWorkspaceGrep`** (Function) — `web/src/api/client.ts:346`
-- **`test_workspace_resources_available_when_active`** (Function) — `tests/core/mcp/test_resources.py:10`
-- **`get_resource`** (Function) — `src/metagit/core/mcp/resources.py:18`
-- **`append`** (Function) — `src/metagit/core/mcp/services/ops_log.py:15`
+- **`test_initialize_request_returns_capabilities`** (Function) — `tests/core/mcp/test_runtime.py:11`
+- **`test_tools_list_returns_inactive_tools_without_config`** (Function) — `tests/core/mcp/test_runtime.py:23`
+- **`test_tools_call_workspace_status_returns_text_payload`** (Function) — `tests/core/mcp/test_runtime.py:41`
+- **`test_resources_read_ops_log_returns_json_content`** (Function) — `tests/core/mcp/test_runtime.py:58`
+- **`test_tools_call_invalid_arguments_returns_mcp_invalid_params`** (Function) — `tests/core/mcp/test_runtime.py:74`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `fetchWorkspaceGrep` | Function | `web/src/pages/grepQueries.ts` | 22 |
-| `getWorkspaceGrep` | Function | `web/src/api/client.ts` | 346 |
-| `test_workspace_resources_available_when_active` | Function | `tests/core/mcp/test_resources.py` | 10 |
-| `get_resource` | Function | `src/metagit/core/mcp/resources.py` | 18 |
-| `append` | Function | `src/metagit/core/mcp/services/ops_log.py` | 15 |
-| `test_env_root_has_highest_precedence` | Function | `tests/core/mcp/test_root_resolver.py` | 10 |
-| `test_cli_root_used_when_env_unset` | Function | `tests/core/mcp/test_root_resolver.py` | 21 |
-| `test_walk_up_finds_workspace_root` | Function | `tests/core/mcp/test_root_resolver.py` | 32 |
-| `resolve` | Function | `src/metagit/core/mcp/root_resolver.py` | 16 |
-| `test_missing_root_is_inactive_missing` | Function | `tests/core/mcp/test_gate.py` | 11 |
-| `test_missing_config_file_is_inactive_missing` | Function | `tests/core/mcp/test_gate.py` | 19 |
-| `test_invalid_config_file_is_inactive_invalid` | Function | `tests/core/mcp/test_gate.py` | 27 |
-| `test_valid_config_file_is_active` | Function | `tests/core/mcp/test_gate.py` | 37 |
-| `evaluate` | Function | `src/metagit/core/mcp/gate.py` | 18 |
-| `test_inactive_registry_exposes_only_safe_tools` | Function | `tests/core/mcp/test_tool_registry.py` | 9 |
-| `test_active_registry_exposes_full_toolset` | Function | `tests/core/mcp/test_tool_registry.py` | 25 |
-| `list_tools` | Function | `src/metagit/core/mcp/tool_registry.py` | 55 |
-| `Qi` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 10 |
-| `_walk_for_config` | Function | `src/metagit/core/mcp/root_resolver.py` | 27 |
+| `test_initialize_request_returns_capabilities` | Function | `tests/core/mcp/test_runtime.py` | 11 |
+| `test_tools_list_returns_inactive_tools_without_config` | Function | `tests/core/mcp/test_runtime.py` | 23 |
+| `test_tools_call_workspace_status_returns_text_payload` | Function | `tests/core/mcp/test_runtime.py` | 41 |
+| `test_resources_read_ops_log_returns_json_content` | Function | `tests/core/mcp/test_runtime.py` | 58 |
+| `test_tools_call_invalid_arguments_returns_mcp_invalid_params` | Function | `tests/core/mcp/test_runtime.py` | 74 |
+| `test_tools_call_workspace_semantic_search_requires_query` | Function | `tests/core/mcp/test_runtime.py` | 91 |
+| `test_initialize_can_enable_sampling_capability` | Function | `tests/core/mcp/test_runtime.py` | 124 |
+| `test_bootstrap_uses_sampling_when_client_supports_it` | Function | `tests/core/mcp/test_runtime.py` | 140 |
+| `test_tools_call_workspace_grep_info_returns_backend` | Function | `tests/core/mcp/test_runtime.py` | 188 |
+| `test_tools_list_includes_repo_search_for_active_workspace` | Function | `tests/core/mcp/test_runtime.py` | 219 |
+| `test_tools_call_repo_search_returns_matches` | Function | `tests/core/mcp/test_runtime.py` | 244 |
+| `test_tools_list_includes_project_context_tools` | Function | `tests/core/mcp/test_runtime.py` | 280 |
+| `test_tools_call_project_context_switch_unknown_project` | Function | `tests/core/mcp/test_runtime.py` | 306 |
+| `test_tools_call_cross_project_dependencies` | Function | `tests/core/mcp/test_runtime.py` | 340 |
+| `test_tools_list_includes_context_pack_tools_when_active` | Function | `tests/core/mcp/test_runtime.py` | 389 |
+| `test_tools_call_metagit_context_pack_tier_zero_succeeds` | Function | `tests/core/mcp/test_runtime.py` | 415 |
+| `test_tools_call_metagit_context_pack_invalid_args_returns_invalid_arguments` | Function | `tests/core/mcp/test_runtime.py` | 460 |
+| `test_tools_call_metagit_objective_list` | Function | `tests/core/mcp/test_runtime.py` | 510 |
+| `test_end_to_end_workspace_activation_and_discovery` | Function | `tests/integration/test_mcp_workspace_flow.py` | 13 |
+| `serve` | Function | `src/metagit/cli/commands/mcp.py` | 31 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `WorkspacePage → Append` | cross_community | 4 |
+| `Pack_cmd → Resolve_sync_root` | cross_community | 3 |
+| `Repomix_cmd → Resolve_sync_root` | cross_community | 3 |
+| `Repo_card_cmd → Resolve_sync_root` | cross_community | 3 |
+| `Objective_set_cmd → Resolve_sync_root` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
+| Context | 6 calls |
+| Services | 2 calls |
+| Tests | 2 calls |
+| Config | 2 calls |
 | Api | 1 calls |
-| Config | 1 calls |
 
 ## How to Explore
 
-1. `gitnexus_context({name: "fetchWorkspaceGrep"})` — see callers and callees
+1. `gitnexus_context({name: "test_initialize_request_returns_capabilities"})` — see callers and callees
 2. `gitnexus_query({query: "mcp"})` — find related execution flows
 3. Read key files listed above for implementation details
