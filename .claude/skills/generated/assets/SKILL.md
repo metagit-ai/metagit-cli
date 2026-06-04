@@ -39,10 +39,10 @@ description: "Skill for the Assets area of metagit-cli. 608 symbols across 1 fil
 | `j` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
 | `on` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
 | `Wn` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
+| `ir` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
+| `ar` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
 | `sr` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
 | `gr` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
-| `ui` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
-| `pi` | Function | `src/metagit/data/web/assets/index-C6eUwfs-.js` | 7 |
 
 ## Execution Flows
 

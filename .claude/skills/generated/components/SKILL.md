@@ -34,8 +34,8 @@ Start here when exploring this area:
 - **`SyncDialog`** (Function) — `web/src/components/SyncDialog.tsx:20`
 - **`poll`** (Function) — `web/src/components/SyncDialog.tsx:56`
 - **`handleSubmit`** (Function) — `web/src/components/SyncDialog.tsx:97`
+- **`revert`** (Function) — `web/src/components/FieldEditor.tsx:214`
 - **`postSync`** (Function) — `web/src/api/client.ts:270`
-- **`getSyncJob`** (Function) — `web/src/api/client.ts:277`
 
 ## Key Symbols
 
@@ -44,9 +44,9 @@ Start here when exploring this area:
 | `SyncDialog` | Function | `web/src/components/SyncDialog.tsx` | 20 |
 | `poll` | Function | `web/src/components/SyncDialog.tsx` | 56 |
 | `handleSubmit` | Function | `web/src/components/SyncDialog.tsx` | 97 |
+| `revert` | Function | `web/src/components/FieldEditor.tsx` | 214 |
 | `postSync` | Function | `web/src/api/client.ts` | 270 |
 | `getSyncJob` | Function | `web/src/api/client.ts` | 277 |
-| `revert` | Function | `web/src/components/FieldEditor.tsx` | 214 |
 | `OpsPanel` | Function | `web/src/components/OpsPanel.tsx` | 17 |
 | `runHealth` | Function | `web/src/components/OpsPanel.tsx` | 37 |
 | `runPrunePreview` | Function | `web/src/components/OpsPanel.tsx` | 53 |
@@ -76,8 +76,7 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Pages | 6 calls |
-| Api | 1 calls |
+| Api | 7 calls |
 
 ## How to Explore
 

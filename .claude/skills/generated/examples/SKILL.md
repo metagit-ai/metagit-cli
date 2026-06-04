@@ -1,11 +1,11 @@
 ---
 name: examples
-description: "Skill for the Examples area of metagit-cli. 89 symbols across 26 files."
+description: "Skill for the Examples area of metagit-cli. 90 symbols across 26 files."
 ---
 
 # Examples
 
-89 symbols | 26 files | Cohesion: 94%
+90 symbols | 26 files | Cohesion: 94%
 
 ## When to Use
 
@@ -25,8 +25,8 @@ description: "Skill for the Examples area of metagit-cli. 89 symbols across 26 f
 | `examples/repository_analysis_example.py` | example_local_repository_analysis, example_remote_repository_analysis, example_specific_analysis, example_configuration, main |
 | `examples/gitcache_example.py` | create_sample_local_directory, sync_example, async_example, cleanup_example, main |
 | `examples/record_manager_example.py` | example_local_file_storage, example_opensearch_storage, example_file_operations, main |
+| `src/metagit/cli/commands/record.py` | record_create, store_record, search_records, record_import |
 | `tests/test_record_manager.py` | test_create_record_from_config_manager, test_store_record_without_backend, test_get_record_without_backend |
-| `examples/datetime_serialization_fix_example.py` | demonstrate_datetime_serialization_fix, demonstrate_record_creation, main |
 
 ## Entry Points
 
@@ -68,7 +68,6 @@ Start here when exploring this area:
 | Flow | Type | Steps |
 |------|------|-------|
 | `Main → _get_git_info` | intra_community | 4 |
-| `Main → _get_git_info` | intra_community | 4 |
 | `Main → Run` | intra_community | 3 |
 | `Record_create → Store_record` | intra_community | 3 |
 | `Record_create → _get_git_info` | intra_community | 3 |
@@ -77,6 +76,7 @@ Start here when exploring this area:
 | `Record_show → Get_record` | cross_community | 3 |
 | `Record_show → List_records` | cross_community | 3 |
 | `Record_delete → Get_record` | cross_community | 3 |
+| `Record_export → Get_record` | cross_community | 3 |
 
 ## Connected Areas
 
