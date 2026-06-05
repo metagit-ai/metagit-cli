@@ -1,8 +1,9 @@
 ---
 name: pages
 description: "Skill for the Pages area of metagit-cli. 17 symbols across 8 files."
+metadata:
+  internal: true
 ---
-
 # Pages
 
 17 symbols | 8 files | Cohesion: 75%

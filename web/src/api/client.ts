@@ -412,3 +412,125 @@ export interface WorkspaceGrepInfoResult {
 export function getWorkspaceGrepInfo(): Promise<WorkspaceGrepInfoResult> {
   return requestJson<WorkspaceGrepInfoResult>('/v2/workspace/grep/info')
 }
+
+export interface AgentUiSpec {
+  category: string
+  icon?: string
+  color?: string
+  sort_order: number
+}
+
+export interface AgentCatalogEntry {
+  id: string
+  label: string
+  description: string
+  archetype: 'control_plane' | 'specialist'
+  scope: 'workspace' | 'project' | 'repo'
+  status: 'stable' | 'beta'
+  version: string
+  source: 'bundled' | 'overlay' | 'merged'
+  overlay_path?: string | null
+  ui: AgentUiSpec
+  prompt_kinds: string[]
+  mcp_tools: string[]
+  recommended_skills: string[]
+  external_skills: Array<{ name: string; note: string }>
+  vendors: string[]
+  delegates_to: string[]
+  delegated_by: string[]
+}
+
+export interface AgentCatalogEnvelope {
+  schema_version: string
+  templates: AgentCatalogEntry[]
+  taxonomy: {
+    archetypes: string[]
+    scopes: string[]
+    vendors: string[]
+    categories: string[]
+  }
+}
+
+export interface AgentCatalogResponse {
+  ok: boolean
+  catalog: AgentCatalogEnvelope
+}
+
+export interface AgentTemplateDetailResponse {
+  ok: boolean
+  template: {
+    source: AgentCatalogEntry['source']
+    overlay_path?: string | null
+    manifest: Record<string, unknown>
+    template_files: string[]
+  }
+}
+
+export interface AgentPreviewResponse {
+  ok: boolean
+  preview: {
+    template_id: string
+    vendor: string
+    filename: string
+    content: string
+    source: AgentCatalogEntry['source']
+  }
+}
+
+export function getAgentCatalog(): Promise<AgentCatalogResponse> {
+  return requestJson<AgentCatalogResponse>('/v3/agents/catalog')
+}
+
+export function getAgentTemplate(templateId: string): Promise<AgentTemplateDetailResponse> {
+  return requestJson<AgentTemplateDetailResponse>(
+    `/v3/agents/templates/${encodeURIComponent(templateId)}`,
+  )
+}
+
+export function getAgentPreview(
+  templateId: string,
+  vendor: string,
+): Promise<AgentPreviewResponse> {
+  const params = new URLSearchParams({ vendor })
+  return requestJson<AgentPreviewResponse>(
+    `/v3/agents/templates/${encodeURIComponent(templateId)}/preview?${params.toString()}`,
+  )
+}
+
+export interface AgentOverlayInitOptions {
+  mode?: 'minimal' | 'full'
+  scope?: 'committed' | 'local'
+  force?: boolean
+  dry_run?: boolean
+}
+
+export interface AgentOverlayInitResponse {
+  ok: boolean
+    overlay?: {
+    template_id: string
+    overlay_path: string
+    scope: 'committed' | 'local'
+    mode: 'minimal' | 'full'
+    paths: string[]
+    dry_run: boolean
+  }
+  error?: { kind: string; message: string }
+}
+
+export function postAgentOverlayInit(
+  templateId: string,
+  options: AgentOverlayInitOptions = {},
+): Promise<AgentOverlayInitResponse> {
+  return requestJson<AgentOverlayInitResponse>(
+    `/v3/agents/templates/${encodeURIComponent(templateId)}/overlay/init`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        mode: options.mode ?? 'full',
+        scope: options.scope ?? 'committed',
+        force: options.force ?? false,
+        dry_run: options.dry_run ?? false,
+      }),
+    },
+  )
+}

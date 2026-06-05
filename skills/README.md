@@ -33,7 +33,7 @@ Optional MCP registration:
 metagit mcp install --scope user --target openclaw --target hermes
 ```
 
-Other targets: `opencode`, `claude_code`, `github_copilot`.
+Other targets: `opencode`, `claude_code`, `cursor`, `github_copilot`, `windsurf`, `codex`.
 
 ## Skill catalog
 
@@ -54,7 +54,8 @@ Other targets: `opencode`, `claude_code`, `github_copilot`.
 | `metagit-upstream-triage` | Rank upstream blockers |
 | `metagit-repo-impact` | Plan cross-repo changes |
 | `metagit-multi-repo` | Implement across several repos |
-| `metagit-gitnexus` | GitNexus index and graph workflows |
+| `metagit-gitnexus` | GitNexus index, Cypher overlay ingest, and graph export |
+| `metagit-graph-maintain` | Suggest/apply `graph.relationships` and sync into GitNexus |
 | `metagit-release-audit` | Pre-push / release readiness |
 
 For workspace vs project vs repo definitions, see [Terminology](terminology.md).
@@ -84,9 +85,11 @@ next to the Hermes skill copy.
 
 ```bash
 task skills:validate
-task skills:sync    # mirrors into .cursor/skills/
+task skills:sync    # mirrors into .cursor/skills/ and tags internal copies
+task skills:tag-internal   # re-apply metadata.internal on non-skills/ SKILL.md
 ```
 
 Update both `skills/` and `src/metagit/data/skills/` when changing bundled skills.
+Copies outside `skills/` (`.cursor/skills/`, `src/metagit/data/skills/`, generated GitNexus skills) must carry `metadata.internal: true` in frontmatter; `task skills:tag-internal` enforces that.
 
 Skill helper scripts under `*/scripts/*.sh` use **bash** (`#!/usr/bin/env bash`) for cross-platform compatibility; invoke them directly (`./scripts/foo.sh`) or via `bash scripts/foo.sh`.

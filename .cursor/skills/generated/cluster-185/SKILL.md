@@ -1,8 +1,9 @@
 ---
 name: cluster-185
 description: "Skill for the Cluster_185 area of metagit-cli. 15 symbols across 1 files."
+metadata:
+  internal: true
 ---
-
 # Cluster_185
 
 15 symbols | 1 files | Cohesion: 100%

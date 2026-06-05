@@ -1,8 +1,9 @@
 ---
 name: metagit-gating
 description: Use when implementing or operating Metagit MCP server activation and tool exposure rules based on .metagit.yml presence and validity.
+metadata:
+  internal: true
 ---
-
 # Metagit MCP Gating Skill
 
 Use this skill whenever you need to control whether Metagit MCP tools/resources are exposed.

@@ -14,6 +14,7 @@ from metagit.core.api.catalog_handler import CatalogApiHandler
 from metagit.core.api.grep_handler import GrepApiHandler
 from metagit.core.api.layout_handler import LayoutApiHandler
 from metagit.core.appconfig import load_config as load_appconfig
+from metagit.core.web.agent_handler import AgentWebHandler
 from metagit.core.web.config_handler import ConfigWebHandler
 from metagit.core.web.ops_handler import OpsWebHandler
 from metagit.core.web.static_handler import StaticWebHandler
@@ -72,6 +73,7 @@ def build_web_server(
         appconfig_path=appconfig_resolved,
         workspace_root=workspace_root,
     )
+    agent_handler = AgentWebHandler(manifest_root=root_resolved)
 
     class ReusableThreadingHTTPServer(ThreadingHTTPServer):
         allow_reuse_address = True
@@ -106,6 +108,15 @@ def build_web_server(
 
             length = int(self.headers.get("Content-Length", "0") or "0")
             body = self.rfile.read(length) if length > 0 else b""
+
+            if agent_handler.handle(
+                method,
+                parsed.path,
+                parsed.query,
+                body,
+                self._json,
+            ):
+                return
 
             if method == "GET":
                 if static_handler.handle(method, parsed.path, self):

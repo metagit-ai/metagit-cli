@@ -1,8 +1,9 @@
 ---
 name: metagit-upstream-scan
 description: Use when a coding agent encounters likely upstream blockers and must find related workspace repositories, files, and probable root causes.
+metadata:
+  internal: true
 ---
-
 # Metagit Upstream Discovery Skill
 
 Use this skill when the current repo does not appear to contain the full fix and related repositories may hold the source issue.

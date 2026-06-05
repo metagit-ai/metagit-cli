@@ -1,0 +1,346 @@
+{
+  "$defs": {
+    "AgentArchetype": {
+      "description": "High-level agent role tier.",
+      "enum": [
+        "control_plane",
+        "specialist"
+      ],
+      "title": "AgentArchetype",
+      "type": "string"
+    },
+    "AgentExternalSkillRef": {
+      "additionalProperties": false,
+      "description": "Reference to a skill installed outside the metagit bundle.",
+      "properties": {
+        "name": {
+          "description": "Skill identifier",
+          "title": "Name",
+          "type": "string"
+        },
+        "note": {
+          "default": "",
+          "description": "When or why to install this skill for the agent",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "AgentExternalSkillRef",
+      "type": "object"
+    },
+    "AgentScopeLevel": {
+      "description": "Manifest scope the agent primarily operates in.",
+      "enum": [
+        "workspace",
+        "project",
+        "repo"
+      ],
+      "title": "AgentScopeLevel",
+      "type": "string"
+    },
+    "AgentTemplateStatus": {
+      "description": "Template maturity for catalog display.",
+      "enum": [
+        "stable",
+        "beta"
+      ],
+      "title": "AgentTemplateStatus",
+      "type": "string"
+    },
+    "AgentUiSpec": {
+      "additionalProperties": false,
+      "description": "Catalog presentation metadata.",
+      "properties": {
+        "category": {
+          "description": "Grouping label for UI card grids",
+          "title": "Category",
+          "type": "string"
+        },
+        "color": {
+          "default": "",
+          "description": "Optional theme color token",
+          "title": "Color",
+          "type": "string"
+        },
+        "icon": {
+          "default": "",
+          "description": "Optional icon token",
+          "title": "Icon",
+          "type": "string"
+        },
+        "sort_order": {
+          "default": 100,
+          "description": "Ascending sort in catalog lists",
+          "title": "Sort Order",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "category"
+      ],
+      "title": "AgentUiSpec",
+      "type": "object"
+    },
+    "AgentVendorSpec": {
+      "additionalProperties": false,
+      "description": "Vendor-specific output filename for an agent definition.",
+      "properties": {
+        "filename": {
+          "description": "Filename under the vendor agents directory, or skill dir name",
+          "title": "Filename",
+          "type": "string"
+        },
+        "install_as": {
+          "default": "agent",
+          "description": "Write to vendor agents dir or as a Hermes-style skill tree",
+          "enum": [
+            "agent",
+            "skill"
+          ],
+          "title": "Install As",
+          "type": "string"
+        },
+        "template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional alternate template source inside the template directory",
+          "title": "Template"
+        }
+      },
+      "required": [
+        "filename"
+      ],
+      "title": "AgentVendorSpec",
+      "type": "object"
+    },
+    "InitPromptSpec": {
+      "additionalProperties": false,
+      "description": "One copier-style prompt for template variable collection.",
+      "properties": {
+        "default": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Static default value",
+          "title": "Default"
+        },
+        "default_from": {
+          "anyOf": [
+            {
+              "enum": [
+                "directory_name",
+                "git_remote_url"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Built-in default resolver when default is not set",
+          "title": "Default From"
+        },
+        "label": {
+          "description": "Human-readable prompt label",
+          "title": "Label",
+          "type": "string"
+        },
+        "name": {
+          "description": "Template variable name",
+          "title": "Name",
+          "type": "string"
+        },
+        "required": {
+          "default": true,
+          "description": "Whether a non-empty value is required",
+          "title": "Required",
+          "type": "boolean"
+        },
+        "secret": {
+          "default": false,
+          "description": "Hide input in interactive prompts",
+          "title": "Secret",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "label"
+      ],
+      "title": "InitPromptSpec",
+      "type": "object"
+    },
+    "InitTemplateFileSpec": {
+      "additionalProperties": false,
+      "description": "Rendered file mapping for a template.",
+      "properties": {
+        "optional": {
+          "default": false,
+          "description": "When true, skip writing if rendered content is empty",
+          "title": "Optional",
+          "type": "boolean"
+        },
+        "output": {
+          "description": "Relative output path from init target directory",
+          "title": "Output",
+          "type": "string"
+        },
+        "template": {
+          "description": "Source filename inside the template directory",
+          "title": "Template",
+          "type": "string"
+        }
+      },
+      "required": [
+        "template",
+        "output"
+      ],
+      "title": "InitTemplateFileSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Manifest for a bundled or overlay agent template.",
+  "properties": {
+    "archetype": {
+      "$ref": "#/$defs/AgentArchetype",
+      "default": "specialist",
+      "description": "Control-plane vs specialist role"
+    },
+    "delegated_by": {
+      "description": "Parent template IDs (denormalized for UI)",
+      "items": {
+        "type": "string"
+      },
+      "title": "Delegated By",
+      "type": "array"
+    },
+    "delegates_to": {
+      "description": "Other template IDs this role may spawn",
+      "items": {
+        "type": "string"
+      },
+      "title": "Delegates To",
+      "type": "array"
+    },
+    "description": {
+      "description": "Longer description of the agent role",
+      "title": "Description",
+      "type": "string"
+    },
+    "external_skills": {
+      "description": "Non-bundled skills the agent should use when available",
+      "items": {
+        "$ref": "#/$defs/AgentExternalSkillRef"
+      },
+      "title": "External Skills",
+      "type": "array"
+    },
+    "files": {
+      "items": {
+        "$ref": "#/$defs/InitTemplateFileSpec"
+      },
+      "title": "Files",
+      "type": "array"
+    },
+    "id": {
+      "description": "Template identifier for --template",
+      "title": "Id",
+      "type": "string"
+    },
+    "label": {
+      "description": "Short label for list output",
+      "title": "Label",
+      "type": "string"
+    },
+    "mcp_tools": {
+      "description": "Metagit MCP tool names documented for this role",
+      "items": {
+        "type": "string"
+      },
+      "title": "Mcp Tools",
+      "type": "array"
+    },
+    "prompt_kinds": {
+      "description": "Built-in metagit prompt kinds referenced by the template",
+      "items": {
+        "type": "string"
+      },
+      "title": "Prompt Kinds",
+      "type": "array"
+    },
+    "prompts": {
+      "items": {
+        "$ref": "#/$defs/InitPromptSpec"
+      },
+      "title": "Prompts",
+      "type": "array"
+    },
+    "recommended_skills": {
+      "description": "Bundled metagit skills to install with --install-skills",
+      "items": {
+        "type": "string"
+      },
+      "title": "Recommended Skills",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "1.0",
+      "description": "Manifest schema version (major.minor)",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope": {
+      "$ref": "#/$defs/AgentScopeLevel",
+      "default": "workspace",
+      "description": "Primary operating scope"
+    },
+    "status": {
+      "$ref": "#/$defs/AgentTemplateStatus",
+      "default": "stable",
+      "description": "Template maturity"
+    },
+    "ui": {
+      "$ref": "#/$defs/AgentUiSpec",
+      "description": "Catalog presentation metadata"
+    },
+    "vendors": {
+      "additionalProperties": {
+        "$ref": "#/$defs/AgentVendorSpec"
+      },
+      "description": "Per-vendor output filename overrides",
+      "title": "Vendors",
+      "type": "object"
+    },
+    "version": {
+      "default": "1.0.0",
+      "description": "Template content semver",
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "label",
+    "description"
+  ],
+  "title": "AgentTemplateManifest",
+  "type": "object"
+}

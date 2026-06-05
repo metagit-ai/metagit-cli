@@ -95,6 +95,17 @@ curl -sS -X POST http://127.0.0.1:8787/v3/ops/open \
   -d '{"path":"/absolute/path/to/managed/repo"}'
 ```
 
+### Agents catalog
+
+**Agents** (`/agents`) lists bundled agent archetypes from `GET /v3/agents/catalog`.
+Cards group by `ui.category` and badge `source` (`bundled`, `overlay`, `merged`).
+Select a template for metadata, vendor preview (`GET /v3/agents/templates/{id}/preview`),
+and a read-only install command (`metagit agent create …`). Bundled templates expose
+**Create team overlay** (`POST /v3/agents/templates/{id}/overlay/init`) to scaffold
+`.metagit-agents/<id>/` for git-committed editing (use CLI `--local` for personal overrides).
+**Dispatch plan** (`GET /v3/agents/templates/{id}/dispatch-plan?vendor=&project=&repo=&task=`)
+returns install, per-vendor launch hints, and handoff CLI commands for overseer subagent routing.
+
 ### Workspace Console
 
 The **Workspace Console** is **Workspace** in the chrome (`/workspace`): catalog-level context (projects/repos index, search/filter) plus the **workspace operations** side panel (health/prune/sync style actions routed through `/v3/ops`). This is meant for situational awareness and lightweight maintenance; destructive actions remain gated as in the CLI and API.

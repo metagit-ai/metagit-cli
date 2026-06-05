@@ -1,0 +1,69 @@
+schema_version: "1.0"
+id: release-auditor
+label: Release auditor
+description: |
+  Runs release-audit workflows, objectives tracking, and prepush gate checks.
+archetype: specialist
+scope: workspace
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - health-preflight
+  - sync-safe
+mcp_tools:
+  - metagit_workspace_health_check
+delegates_to: []
+delegated_by:
+  - orchestration-overseer
+ui:
+  category: Quality
+  sort_order: 70
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-release-audit
+  - metagit-control-center
+vendors:
+  claude_code:
+    filename: release-auditor.md
+  cursor:
+    filename: release-auditor.md
+    template: release-auditor.cursor.md.tpl
+  github_copilot:
+    filename: release-auditor.agent.md
+    template: release-auditor.github-copilot.agent.md.tpl
+  hermes:
+    filename: release-auditor
+    install_as: skill
+    template: release-auditor.skill.md.tpl
+  openclaw:
+    filename: release-auditor
+    install_as: skill
+    template: release-auditor.skill.md.tpl
+  opencode:
+    filename: release-auditor.md
+    template: release-auditor.opencode.md.tpl
+  windsurf:
+    filename: release-auditor
+    install_as: skill
+    template: release-auditor.skill.md.tpl
+  codex:
+    filename: release-auditor
+    install_as: skill
+    template: release-auditor.skill.md.tpl
+files:
+  - template: release-auditor.md.tpl
+    output: release-auditor.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

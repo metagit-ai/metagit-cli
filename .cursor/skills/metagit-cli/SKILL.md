@@ -1,8 +1,9 @@
 ---
 name: metagit-cli
 description: CLI-only shortcuts for metagit agents — workspace catalog, discovery, prompts, sync, layout, and config. Use instead of MCP or HTTP API when operating from a shell or agent_mode session.
+metadata:
+  internal: true
 ---
-
 # Metagit CLI (agent shortcuts)
 
 Use this skill when an agent should drive metagit **only through the `metagit` command**. Do not call MCP tools or `metagit api` from workflows covered here unless the user explicitly asks.
@@ -116,17 +117,20 @@ metagit config providers --show
 2. `metagit workspace list -c .metagit.yml --json` (sanity-check catalog)
 3. If repos changed on disk: `metagit project sync` or `metagit project sync --hydrate`
 
-### Export manual graph to GitNexus (Cypher)
+### Graph relationships (suggest, apply, export)
 
 | Task | Command |
 |------|---------|
+| First-time graph discovery (report only) | `metagit prompt workspace -k graph-discover -c .metagit.yml --text-only` |
+| Suggest candidates from inferred deps | `metagit config graph suggest -c .metagit.yml --json` |
+| Apply suggestions to manifest | `metagit config graph suggest -c .metagit.yml --apply` |
+| Agent playbook (apply + ingest) | `metagit prompt workspace -k graph-maintain -c .metagit.yml --text-only` |
+| MCP suggest / apply | `metagit_suggest_graph_relationships` / `metagit_apply_graph_relationships` |
 | Full export bundle (JSON) | `metagit config graph export -c .metagit.yml --json` |
-| Raw Cypher script | `metagit config graph export -c .metagit.yml --format cypher -o graph.cypher` |
 | MCP tool_calls only | `metagit config graph export -c .metagit.yml --format tool-calls` |
-| Manual edges only | `metagit config graph export -c .metagit.yml --manual-only --format tool-calls` |
-| MCP from agent | `metagit_export_workspace_graph_cypher` |
+| Ingest overlay into GitNexus | `./skills/metagit-gitnexus/scripts/ingest-workspace-graph.sh -c .metagit.yml` |
 
-Ingest workflow: run `schema_statements` once via `gitnexus_cypher`, then each statement in `tool_calls` (or pipe `--format cypher`). Overlay tables: `MetagitEntity`, `MetagitLink`.
+See bundled `metagit-graph-maintain` skill for the full promote → validate → ingest loop. Overlay tables: `MetagitEntity`, `MetagitLink`.
 
 ---
 

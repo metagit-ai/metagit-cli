@@ -1,0 +1,66 @@
+schema_version: "1.0"
+id: agent-access-optimizer
+label: Agent access optimizer
+description: |
+  Optimizes agent onboarding artifacts (llms.txt, AGENTS.md) for one repo.
+archetype: specialist
+scope: repo
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - repo-enrich
+mcp_tools: []
+delegates_to: []
+delegated_by:
+  - repo-implementer
+ui:
+  category: Catalog
+  sort_order: 90
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-agent-access
+vendors:
+  claude_code:
+    filename: agent-access-optimizer.md
+  cursor:
+    filename: agent-access-optimizer.md
+    template: agent-access-optimizer.cursor.md.tpl
+  github_copilot:
+    filename: agent-access-optimizer.agent.md
+    template: agent-access-optimizer.github-copilot.agent.md.tpl
+  hermes:
+    filename: agent-access-optimizer
+    install_as: skill
+    template: agent-access-optimizer.skill.md.tpl
+  openclaw:
+    filename: agent-access-optimizer
+    install_as: skill
+    template: agent-access-optimizer.skill.md.tpl
+  opencode:
+    filename: agent-access-optimizer.md
+    template: agent-access-optimizer.opencode.md.tpl
+  windsurf:
+    filename: agent-access-optimizer
+    install_as: skill
+    template: agent-access-optimizer.skill.md.tpl
+  codex:
+    filename: agent-access-optimizer
+    install_as: skill
+    template: agent-access-optimizer.skill.md.tpl
+files:
+  - template: agent-access-optimizer.md.tpl
+    output: agent-access-optimizer.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

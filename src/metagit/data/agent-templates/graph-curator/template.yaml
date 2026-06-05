@@ -1,0 +1,72 @@
+schema_version: "1.0"
+id: graph-curator
+label: Graph curator
+description: |
+  Maintains cross-repository graph relationships, GitNexus ingest, and group sync for workspace-wide code intelligence.
+archetype: specialist
+scope: workspace
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - graph-discover
+  - graph-maintain
+mcp_tools:
+  - metagit_suggest_graph_relationships
+  - metagit_apply_graph_relationships
+  - metagit_gitnexus_group_sync
+delegates_to: []
+delegated_by:
+  - orchestration-overseer
+ui:
+  category: Graph
+  sort_order: 30
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-graph-maintain
+  - metagit-gitnexus
+  - metagit-repo-impact
+vendors:
+  claude_code:
+    filename: graph-curator.md
+  cursor:
+    filename: graph-curator.md
+    template: graph-curator.cursor.md.tpl
+  github_copilot:
+    filename: graph-curator.agent.md
+    template: graph-curator.github-copilot.agent.md.tpl
+  hermes:
+    filename: graph-curator
+    install_as: skill
+    template: graph-curator.skill.md.tpl
+  openclaw:
+    filename: graph-curator
+    install_as: skill
+    template: graph-curator.skill.md.tpl
+  opencode:
+    filename: graph-curator.md
+    template: graph-curator.opencode.md.tpl
+  windsurf:
+    filename: graph-curator
+    install_as: skill
+    template: graph-curator.skill.md.tpl
+  codex:
+    filename: graph-curator
+    install_as: skill
+    template: graph-curator.skill.md.tpl
+files:
+  - template: graph-curator.md.tpl
+    output: graph-curator.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

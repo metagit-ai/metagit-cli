@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import ThemeProvider from './theme/ThemeProvider'
 import AppconfigPage from './pages/AppconfigPage'
 import MetagitConfigPage from './pages/MetagitConfigPage'
+import AgentsPage from './pages/AgentsPage'
 import WorkspacePage from './pages/WorkspacePage'
 import './App.css'
 
@@ -25,6 +26,7 @@ export default function App() {
             <Route element={<Layout />}>
               <Route index element={<Navigate to="/workspace" replace />} />
               <Route path="/workspace" element={<WorkspacePage />} />
+              <Route path="/agents" element={<AgentsPage />} />
               <Route path="/config/metagit" element={<MetagitConfigPage />} />
               <Route path="/config/appconfig" element={<AppconfigPage />} />
             </Route>

@@ -36,6 +36,41 @@ def test_catalog_lists_instructions_kind() -> None:
     assert "instructions" in kinds
     assert "session-start" in kinds
     assert "context-pack" in kinds
+    assert "graph-discover" in kinds
+    assert "graph-maintain" in kinds
+
+
+def test_emit_graph_discover_workspace() -> None:
+    result = PromptService().emit(
+        _sample_config(),
+        kind="graph-discover",
+        scope="workspace",
+        definition_path="/tmp/.metagit.yml",
+        workspace_root="/tmp/sync",
+        include_instructions=False,
+    )
+    assert result.ok
+    assert "graph discovery report" in result.text.lower()
+    assert "do not apply" in result.text.lower()
+
+
+def test_emit_graph_maintain_workspace() -> None:
+    result = PromptService().emit(
+        _sample_config(),
+        kind="graph-maintain",
+        scope="workspace",
+        definition_path="/tmp/.metagit.yml",
+        workspace_root="/tmp/sync",
+        include_instructions=False,
+    )
+    assert result.ok
+    assert "graph suggest" in result.text.lower()
+
+
+def test_graph_discover_workspace_scope_only() -> None:
+    assert is_kind_allowed("graph-discover", "workspace")
+    assert not is_kind_allowed("graph-discover", "project")
+    assert not is_kind_allowed("graph-discover", "repo")
 
 
 def test_emit_context_pack_workspace() -> None:

@@ -1,8 +1,9 @@
 ---
 name: metagit-upstream-triage
 description: Triage cross-repository blockers by ranking likely upstream repositories and files with metagit search and hinting tools. Use when local fixes appear incomplete.
+metadata:
+  internal: true
 ---
-
 # Triaging Upstream Blockers
 
 Use this skill for failures likely rooted in another repository.

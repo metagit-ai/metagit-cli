@@ -1,11 +1,12 @@
 ---
 name: api
-description: "Skill for the Api area of metagit-cli. 48 symbols across 14 files."
+description: "Skill for the Api area of metagit-cli. 58 symbols across 16 files."
+metadata:
+  internal: true
 ---
-
 # Api
 
-48 symbols | 14 files | Cohesion: 78%
+58 symbols | 16 files | Cohesion: 82%
 
 ## When to Use
 
@@ -17,16 +18,16 @@ description: "Skill for the Api area of metagit-cli. 48 symbols across 14 files.
 
 | File | Symbols |
 |------|---------|
-| `web/src/api/client.ts` | ApiError, requestJson, patchMetagitConfig, patchAppconfig, postConfigPreview (+5) |
+| `web/src/api/client.ts` | ApiError, requestJson, patchMetagitConfig, patchAppconfig, postConfigPreview (+9) |
 | `src/metagit/core/api/server.py` | _parse_tag_filters_from_query, _first, do_GET, do_POST, do_DELETE (+1) |
 | `src/metagit/core/api/layout_handler.py` | handle, _layout_flags, _bool_param, _load_config, _respond_layout (+1) |
 | `src/metagit/core/api/catalog_handler.py` | handle, _load_config, _parse_body, _respond_mutation, _first |
+| `web/src/pages/agentQueries.ts` | fetchAgentCatalog, fetchAgentTemplate, fetchAgentPreview, initAgentOverlay |
 | `src/metagit/core/api/grep_handler.py` | handle, _load_config, _first, _bounded_int |
 | `tests/api/test_grep_api.py` | _write_grep_fixture, test_workspace_grep_requires_query, test_workspace_grep_info_returns_ripgrep_status, test_workspace_grep_returns_enriched_hits |
 | `web/src/pages/configQueries.ts` | patchConfigTree, fetchConfigPreview, fetchConfigTree |
 | `web/src/components/SchemaTree.tsx` | mergePendingOp, mutationFn, queryFn |
 | `web/src/components/FieldEditor.tsx` | mutationFn, queryFn |
-| `web/src/pages/grepQueries.ts` | fetchWorkspaceGrepInfo |
 
 ## Entry Points
 
@@ -50,18 +51,18 @@ Start here when exploring this area:
 | `getWorkspace` | Function | `web/src/api/client.ts` | 217 |
 | `postOpenPath` | Function | `web/src/api/client.ts` | 331 |
 | `getWorkspaceGrepInfo` | Function | `web/src/api/client.ts` | 411 |
+| `getAgentCatalog` | Function | `web/src/api/client.ts` | 479 |
+| `getAgentTemplate` | Function | `web/src/api/client.ts` | 483 |
+| `getAgentPreview` | Function | `web/src/api/client.ts` | 489 |
+| `postAgentOverlayInit` | Function | `web/src/api/client.ts` | 519 |
+| `fetchAgentCatalog` | Function | `web/src/pages/agentQueries.ts` | 15 |
+| `fetchAgentTemplate` | Function | `web/src/pages/agentQueries.ts` | 23 |
+| `fetchAgentPreview` | Function | `web/src/pages/agentQueries.ts` | 31 |
+| `initAgentOverlay` | Function | `web/src/pages/agentQueries.ts` | 38 |
 | `patchConfigTree` | Function | `web/src/pages/configQueries.ts` | 21 |
 | `fetchConfigPreview` | Function | `web/src/pages/configQueries.ts` | 32 |
 | `fetchWorkspaceGrepInfo` | Function | `web/src/pages/grepQueries.ts` | 35 |
 | `fetchWorkspace` | Function | `web/src/pages/workspaceQueries.ts` | 4 |
-| `queryFn` | Function | `web/src/components/ConfigPreview.tsx` | 21 |
-| `mutationFn` | Function | `web/src/components/FieldEditor.tsx` | 122 |
-| `mutationFn` | Function | `web/src/components/SchemaTree.tsx` | 61 |
-| `handleServerOpen` | Function | `web/src/components/WorkspaceExplorer.tsx` | 50 |
-| `getMetagitConfigTree` | Function | `web/src/api/client.ts` | 108 |
-| `getAppconfigTree` | Function | `web/src/api/client.ts` | 112 |
-| `fetchConfigTree` | Function | `web/src/pages/configQueries.ts` | 17 |
-| `queryFn` | Function | `web/src/components/FieldEditor.tsx` | 98 |
 
 ## Execution Flows
 
@@ -71,12 +72,12 @@ Start here when exploring this area:
 | `OpsPanel → ApiError` | cross_community | 5 |
 | `SyncDialog → ApiError` | cross_community | 5 |
 | `MutationFn → ApiError` | intra_community | 5 |
+| `MutationFn → ApiError` | intra_community | 5 |
+| `QueryFn → ApiError` | intra_community | 5 |
 | `QueryFn → ApiError` | cross_community | 5 |
 | `Do_GET → Load_config` | cross_community | 4 |
 | `Do_POST → Load_config` | cross_community | 4 |
 | `Do_POST → _bool_param` | cross_community | 4 |
-| `Do_DELETE → Load_config` | cross_community | 4 |
-| `FetchWorkspaceGrepInfo → ApiError` | intra_community | 4 |
 
 ## Connected Areas
 

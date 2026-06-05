@@ -1,8 +1,9 @@
 ---
 name: workspace
 description: "Skill for the Workspace area of metagit-cli. 98 symbols across 25 files."
+metadata:
+  internal: true
 ---
-
 # Workspace
 
 98 symbols | 25 files | Cohesion: 78%
@@ -83,10 +84,11 @@ Start here when exploring this area:
 | Area | Connections |
 |------|-------------|
 | Config | 8 calls |
-| Commands | 6 calls |
+| Commands | 5 calls |
 | Services | 3 calls |
 | Tests | 1 calls |
 | Providers | 1 calls |
+| Web | 1 calls |
 
 ## How to Explore
 

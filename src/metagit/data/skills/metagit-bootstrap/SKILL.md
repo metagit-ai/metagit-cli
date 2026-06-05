@@ -1,8 +1,9 @@
 ---
 name: metagit-bootstrap
 description: Use when generating or refining local .metagit.yml files using deterministic discovery plus MCP sampling or CLI-only fallbacks.
+metadata:
+  internal: true
 ---
-
 # Metagit MCP Bootstrap Skill
 
 Use this skill to create a local `.metagit.yml` using discovery-driven prompts and MCP sampling.

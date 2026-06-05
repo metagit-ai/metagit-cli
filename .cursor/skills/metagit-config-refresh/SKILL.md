@@ -1,8 +1,9 @@
 ---
 name: metagit-config-refresh
 description: Refresh or bootstrap `.metagit.yml` using deterministic discovery and validation flows. Use when configuration is missing, stale, or incomplete for workspace operations.
+metadata:
+  internal: true
 ---
-
 # Refreshing Project Config
 
 Use this skill to keep `.metagit.yml` accurate and operational.

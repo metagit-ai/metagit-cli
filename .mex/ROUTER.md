@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-06-04
+last_updated: 2026-06-05
 ---
 
 # Session Bootstrap
@@ -46,6 +46,10 @@ Then read this file fully before doing anything else in this session.
 - Provider source sync is available via `metagit project source sync` for GitHub org/user and GitLab group recursive discovery with discover/additive/reconcile modes.
 - Fuzzy finder repo selection UX now shows result counters, keeps full scrollable match sets, respects project `.gitignore` entries during filesystem candidate discovery, and provides richer repo metadata in preview.
 - New `skills` CLI command (`list`, `show`, `install`) plus `mcp install` now support auto-detected agent targets across project/user scopes, with bundled package skills deployed from `src/metagit/data/skills`.
+- **`metagit agent`:** schema v1 catalog (10 archetypes), `list`/`show`/`validate`/`schema`/`preview`/`export`/`create`, **`dispatch-plan`** (install/launch/handoff envelope), **`overlay init`/`overlay path`** to scaffold editable overlays from bundled templates; two-tier overlays: committed `.metagit-agents/<id>/` (git) + optional local `.metagit/.agent-templates/<id>/` (gitignored); shared partials under `agent-templates/_shared/`; vendors: Claude Code, Cursor, **GitHub Copilot**, Hermes/OpenClaw/Windsurf/Codex as skills, OpenCode subagent markdown; optional `--install-skills` / `--install-mcp`; MCP **`metagit_agent_catalog`** / **`metagit_agent_dispatch_plan`**; web **`GET/POST /v3/agents/*`** + **`GET …/dispatch-plan`** + SPA `/agents` (overlay init button); docs `docs/reference/metagit-agent.md`.
+- **Skill metadata:** public bundled skills under `skills/` stay publishable (no `metadata.internal`); copies elsewhere (`.cursor/skills/`, `src/metagit/data/skills/`, GitNexus-generated skills) carry `metadata.internal: true` via `scripts/tag_internal_skills.py` (`task skills:tag-internal`, wired into `skills:sync` and `gitnexus:analyze`).
+- **Graph relationship automation:** `metagit config graph suggest` promotes inferred cross-project edges into `graph.relationships`; MCP `metagit_suggest_graph_relationships` / `metagit_apply_graph_relationships`; prompt kinds `graph-discover` (first-time report + interview, no apply) and `graph-maintain` (promote/ingest); bundled `metagit-graph-maintain` skill; `ingest-workspace-graph.sh` runs exported Cypher via `gitnexus cypher`.
+- **GitNexus group sync:** `metagit gitnexus group sync` and MCP `metagit_gitnexus_group_sync` register `workspace.projects[]` repos into `~/.gitnexus/groups/<name>/` (`<project>/<repo>` paths, registry names from global index) and run `gitnexus group sync` contract linking; script `skills/metagit-gitnexus/scripts/sync-group.sh`.
 - Focused `graphify` runs on subtrees produce `graphify-out/` HTML/report artifacts quickly enough to use for local command-surface exploration without analyzing the entire repository.
 - **Workspace dedupe:** `workspace.dedupe` in app config (default disabled); optional per-project `workspace.projects[].dedupe.enabled` in `.metagit.yml` overrides the flag. `metagit project sync --hydrate` materializes symlink mounts into full copies.
 - **`metagit config example`:** generates `docs/reference/metagit-config.full-example.yml` (via `task generate:schema`) with field-description comments.

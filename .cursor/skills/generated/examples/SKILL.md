@@ -1,8 +1,9 @@
 ---
 name: examples
 description: "Skill for the Examples area of metagit-cli. 90 symbols across 26 files."
+metadata:
+  internal: true
 ---
-
 # Examples
 
 90 symbols | 26 files | Cohesion: 94%

@@ -1,11 +1,12 @@
 ---
 name: mcp
-description: "Skill for the Mcp area of metagit-cli. 53 symbols across 13 files."
+description: "Skill for the Mcp area of metagit-cli. 54 symbols across 13 files."
+metadata:
+  internal: true
 ---
-
 # Mcp
 
-53 symbols | 13 files | Cohesion: 80%
+54 symbols | 13 files | Cohesion: 78%
 
 ## When to Use
 
@@ -17,16 +18,16 @@ description: "Skill for the Mcp area of metagit-cli. 53 symbols across 13 files.
 
 | File | Symbols |
 |------|---------|
+| `src/metagit/core/mcp/runtime.py` | _handle_request, _handle_initialize, _error_response, _dispatch_tool, _catalog_paths (+13) |
 | `tests/core/mcp/test_runtime.py` | test_initialize_request_returns_capabilities, test_tools_list_returns_inactive_tools_without_config, test_tools_call_workspace_status_returns_text_payload, test_resources_read_ops_log_returns_json_content, test_tools_call_invalid_arguments_returns_mcp_invalid_params (+13) |
-| `src/metagit/core/mcp/runtime.py` | _handle_request, _handle_initialize, _error_response, status_snapshot, run_stdio (+12) |
 | `tests/core/mcp/test_gate.py` | test_missing_root_is_inactive_missing, test_missing_config_file_is_inactive_missing, test_invalid_config_file_is_inactive_invalid, test_valid_config_file_is_active |
 | `tests/core/mcp/test_root_resolver.py` | test_env_root_has_highest_precedence, test_cli_root_used_when_env_unset, test_walk_up_finds_workspace_root |
 | `src/metagit/core/mcp/root_resolver.py` | resolve, _walk_for_config |
 | `tests/core/mcp/test_tool_registry.py` | test_inactive_registry_exposes_only_safe_tools, test_active_registry_exposes_full_toolset |
 | `tests/integration/test_mcp_workspace_flow.py` | test_end_to_end_workspace_activation_and_discovery |
-| `src/metagit/cli/commands/mcp.py` | serve |
 | `src/metagit/core/mcp/tools/bootstrap_plan_only.py` | metagit_bootstrap_config_plan_only |
 | `src/metagit/core/mcp/tools/workspace_status.py` | metagit_workspace_status |
+| `src/metagit/core/workspace/root_resolver.py` | resolve_sync_root |
 
 ## Entry Points
 
@@ -61,7 +62,7 @@ Start here when exploring this area:
 | `test_tools_call_metagit_context_pack_invalid_args_returns_invalid_arguments` | Function | `tests/core/mcp/test_runtime.py` | 460 |
 | `test_tools_call_metagit_objective_list` | Function | `tests/core/mcp/test_runtime.py` | 510 |
 | `test_end_to_end_workspace_activation_and_discovery` | Function | `tests/integration/test_mcp_workspace_flow.py` | 13 |
-| `serve` | Function | `src/metagit/cli/commands/mcp.py` | 31 |
+| `metagit_bootstrap_config_plan_only` | Function | `src/metagit/core/mcp/tools/bootstrap_plan_only.py` | 8 |
 
 ## Execution Flows
 
@@ -69,7 +70,6 @@ Start here when exploring this area:
 |------|------|-------|
 | `Pack_cmd → Resolve_sync_root` | cross_community | 3 |
 | `Repomix_cmd → Resolve_sync_root` | cross_community | 3 |
-| `Repo_card_cmd → Resolve_sync_root` | cross_community | 3 |
 
 ## Connected Areas
 
@@ -78,6 +78,7 @@ Start here when exploring this area:
 | Context | 6 calls |
 | Services | 2 calls |
 | Tests | 2 calls |
+| Agent | 2 calls |
 | Config | 2 calls |
 | Workspace | 1 calls |
 

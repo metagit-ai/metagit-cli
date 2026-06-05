@@ -115,3 +115,34 @@ class OpenPathRequest(BaseModel):
 
     path: str
     editor: str | None = None
+
+
+class AgentTemplatePathParams(BaseModel):
+    """Path parameter validation for agent template routes."""
+
+    template_id: str = Field(..., min_length=1)
+
+
+class AgentPreviewQuery(BaseModel):
+    """Query parameters for agent template preview."""
+
+    vendor: str = Field(default="claude_code", min_length=1)
+
+
+class AgentOverlayInitRequest(BaseModel):
+    """Body for POST `/v3/agents/templates/{id}/overlay/init`."""
+
+    mode: Literal["minimal", "full"] = "full"
+    scope: Literal["committed", "local"] = "committed"
+    force: bool = False
+    dry_run: bool = False
+
+
+class AgentDispatchQuery(BaseModel):
+    """Query parameters for agent template dispatch-plan."""
+
+    vendor: str = Field(default="claude_code", min_length=1)
+    scope: Literal["project", "user"] = "project"
+    project: str | None = None
+    repo: str | None = None
+    task: str | None = None

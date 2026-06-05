@@ -1,8 +1,9 @@
 ---
 name: cli
 description: "Skill for the Cli area of metagit-cli. 33 symbols across 8 files."
+metadata:
+  internal: true
 ---
-
 # Cli
 
 33 symbols | 8 files | Cohesion: 86%

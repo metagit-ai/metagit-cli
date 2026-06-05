@@ -1,8 +1,9 @@
 ---
 name: commands
 description: "Skill for the Commands area of metagit-cli. 88 symbols across 21 files."
+metadata:
+  internal: true
 ---
-
 # Commands
 
 88 symbols | 21 files | Cohesion: 72%
