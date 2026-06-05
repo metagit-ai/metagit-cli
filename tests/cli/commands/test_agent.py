@@ -10,6 +10,11 @@ from click.testing import CliRunner
 from metagit.cli.main import cli
 
 
+def _normalize_cli_output(text: str) -> str:
+    """Collapse soft-wrapped log lines and normalize Windows path separators."""
+    return text.replace("\n", "").replace("\\", "/")
+
+
 def test_agent_list() -> None:
     runner = CliRunner()
     result = runner.invoke(cli, ["agent", "list"])
@@ -114,8 +119,9 @@ def test_agent_create_vendor_dry_run(vendor: str, path_suffix: str) -> None:
             ],
         )
         assert result.exit_code == 0, result.output
-        assert "Would write agent" in result.output
-        assert Path(path_suffix).name in result.output
+        normalized = _normalize_cli_output(result.output)
+        assert "Would write agent" in normalized
+        assert path_suffix in normalized
 
 
 def test_agent_create_claude_code_dry_run() -> None:
@@ -134,5 +140,6 @@ def test_agent_create_claude_code_dry_run() -> None:
             ],
         )
         assert result.exit_code == 0, result.output
-        assert "Would write agent" in result.output
-        assert "orchestration-overseer.md" in result.output
+        normalized = _normalize_cli_output(result.output)
+        assert "Would write agent" in normalized
+        assert ".claude/agents/orchestration-overseer.md" in normalized
