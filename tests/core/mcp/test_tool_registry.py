@@ -46,6 +46,9 @@ def test_active_registry_exposes_full_toolset() -> None:
     assert "metagit_workspace_state_restore" in tools
     assert "metagit_session_update" in tools
     assert "metagit_cross_project_dependencies" in tools
+    assert "metagit_suggest_graph_relationships" in tools
+    assert "metagit_apply_graph_relationships" in tools
+    assert "metagit_gitnexus_group_sync" in tools
     assert "metagit_workspace_health_check" in tools
     assert "metagit_workspace_semantic_search" in tools
     assert "metagit_workspace_discover" in tools

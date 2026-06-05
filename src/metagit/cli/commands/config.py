@@ -19,6 +19,7 @@ from metagit.cli.json_output import emit_json
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
+from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
 
@@ -765,6 +766,152 @@ def config_graph_export(
     if result.warnings:
         for warning in result.warnings:
             logger.warning(warning)
+
+
+@config_graph.command("suggest")
+@click.option(
+    "--workspace-root",
+    default=None,
+    help="Workspace root (default: appconfig workspace.path)",
+)
+@click.option(
+    "--dependency-type",
+    "dependency_types",
+    multiple=True,
+    type=click.Choice(
+        ["imports", "shared_config", "url_match", "declared", "ref"],
+        case_sensitive=False,
+    ),
+    help="Inferred edge collectors to consider (repeatable). Default: imports, shared_config, url_match",
+)
+@click.option(
+    "--depth",
+    default=3,
+    show_default=True,
+    type=int,
+    help="Project-hop depth when scanning dependencies",
+)
+@click.option(
+    "--min-confidence",
+    type=click.Choice(["high", "medium", "all"], case_sensitive=False),
+    default="medium",
+    show_default=True,
+    help="Minimum confidence for candidates (high | medium | all)",
+)
+@click.option(
+    "--include-declared",
+    is_flag=True,
+    default=False,
+    help="Also consider declared/ref edges (usually low confidence)",
+)
+@click.option(
+    "--candidate-id",
+    "candidate_ids",
+    multiple=True,
+    help="Apply only these candidate ids (repeatable)",
+)
+@click.option(
+    "--apply",
+    "do_apply",
+    is_flag=True,
+    default=False,
+    help="Patch graph.relationships on disk (default: suggest only)",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="With --apply, build operations without saving",
+)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON")
+@click.option(
+    "--output",
+    "output_path",
+    default=None,
+    help="Write JSON result or operations file",
+)
+@click.pass_context
+def config_graph_suggest(
+    ctx: click.Context,
+    workspace_root: str | None,
+    dependency_types: tuple[str, ...],
+    depth: int,
+    min_confidence: str,
+    include_declared: bool,
+    candidate_ids: tuple[str, ...],
+    do_apply: bool,
+    dry_run: bool,
+    as_json: bool,
+    output_path: str | None,
+) -> None:
+    """
+    Suggest graph.relationships entries from inferred cross-project dependencies.
+
+    Returns candidates, diff against existing manual edges, and config patch operations.
+    Use --apply to persist selected candidates (all by default, or --candidate-id).
+    """
+    logger = ctx.obj["logger"]
+    config_path = ctx.obj["config_path"]
+    app_config = ctx.obj.get("config")
+    if app_config is None:
+        logger.error("App config missing from CLI context")
+        ctx.abort()
+
+    try:
+        manager = MetagitConfigManager(config_path=config_path)
+        loaded = manager.load_config()
+        if isinstance(loaded, Exception):
+            raise loaded
+        root = workspace_root or str(
+            Path(app_config.workspace.path).expanduser().resolve()
+        )
+        service = GraphRelationshipSuggestService()
+        selected_types = list(dependency_types) if dependency_types else None
+        selected_ids = list(candidate_ids) if candidate_ids else None
+        if do_apply:
+            result = service.suggest_and_apply(
+                loaded,
+                root,
+                config_path,
+                dependency_types=selected_types,
+                depth=depth,
+                min_confidence=min_confidence,
+                include_declared=include_declared,
+                candidate_ids=selected_ids,
+                dry_run=dry_run,
+                save=not dry_run,
+            )
+        else:
+            result = service.suggest(
+                loaded,
+                root,
+                dependency_types=selected_types,
+                depth=depth,
+                min_confidence=min_confidence,
+                include_declared=include_declared,
+                candidate_ids=selected_ids,
+            )
+    except Exception as exc:
+        logger.error(f"Failed to suggest graph relationships: {exc}")
+        ctx.abort()
+
+    payload = result.model_dump(mode="json")
+    rendered = json.dumps(payload, indent=2)
+
+    if output_path:
+        Path(output_path).write_text(rendered, encoding="utf-8")
+        logger.success(f"Graph suggest result written to {output_path}")
+    elif as_json:
+        emit_json(payload)
+    else:
+        click.echo(rendered)
+
+    if result.warnings:
+        for warning in result.warnings:
+            logger.warning(warning)
+    if result.apply and result.apply.validation_errors:
+        for item in result.apply.validation_errors:
+            logger.error(str(item))
 
 
 @config.command("schema")

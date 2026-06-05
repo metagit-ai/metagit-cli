@@ -17,6 +17,9 @@ export default function Layout() {
           <NavLink to="/workspace" className={navLinkClass}>
             Workspace
           </NavLink>
+          <NavLink to="/agents" className={navLinkClass}>
+            Agents
+          </NavLink>
           <NavLink to="/config/metagit" className={navLinkClass}>
             Metagit config
           </NavLink>

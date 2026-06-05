@@ -1,8 +1,9 @@
 ---
 name: init
 description: "Skill for the Init area of metagit-cli. 18 symbols across 5 files."
+metadata:
+  internal: true
 ---
-
 # Init
 
 18 symbols | 5 files | Cohesion: 92%

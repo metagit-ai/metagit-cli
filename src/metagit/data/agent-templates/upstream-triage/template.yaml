@@ -1,0 +1,71 @@
+schema_version: "1.0"
+id: upstream-triage
+label: Upstream triage
+description: |
+  Triages cross-repo blockers by ranking likely upstream repositories and files.
+archetype: specialist
+scope: workspace
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - health-preflight
+  - sync-safe
+mcp_tools:
+  - metagit_workspace_search
+  - metagit_workspace_grep
+delegates_to: []
+delegated_by:
+  - orchestration-overseer
+ui:
+  category: Workspace ops
+  sort_order: 50
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-upstream-scan
+  - metagit-upstream-triage
+  - metagit-multi-repo
+vendors:
+  claude_code:
+    filename: upstream-triage.md
+  cursor:
+    filename: upstream-triage.md
+    template: upstream-triage.cursor.md.tpl
+  github_copilot:
+    filename: upstream-triage.agent.md
+    template: upstream-triage.github-copilot.agent.md.tpl
+  hermes:
+    filename: upstream-triage
+    install_as: skill
+    template: upstream-triage.skill.md.tpl
+  openclaw:
+    filename: upstream-triage
+    install_as: skill
+    template: upstream-triage.skill.md.tpl
+  opencode:
+    filename: upstream-triage.md
+    template: upstream-triage.opencode.md.tpl
+  windsurf:
+    filename: upstream-triage
+    install_as: skill
+    template: upstream-triage.skill.md.tpl
+  codex:
+    filename: upstream-triage
+    install_as: skill
+    template: upstream-triage.skill.md.tpl
+files:
+  - template: upstream-triage.md.tpl
+    output: upstream-triage.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

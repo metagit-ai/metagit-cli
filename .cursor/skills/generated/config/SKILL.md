@@ -1,8 +1,9 @@
 ---
 name: config
 description: "Skill for the Config area of metagit-cli. 88 symbols across 14 files."
+metadata:
+  internal: true
 ---
-
 # Config
 
 88 symbols | 14 files | Cohesion: 90%

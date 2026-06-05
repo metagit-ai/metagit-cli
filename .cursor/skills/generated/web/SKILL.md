@@ -1,8 +1,9 @@
 ---
 name: web
 description: "Skill for the Web area of metagit-cli. 111 symbols across 13 files."
+metadata:
+  internal: true
 ---
-
 # Web
 
 111 symbols | 13 files | Cohesion: 82%

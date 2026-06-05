@@ -1,8 +1,9 @@
 ---
 name: components
 description: "Skill for the Components area of metagit-cli. 38 symbols across 9 files."
+metadata:
+  internal: true
 ---
-
 # Components
 
 38 symbols | 9 files | Cohesion: 87%

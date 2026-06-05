@@ -1,8 +1,9 @@
 ---
 name: context
 description: "Skill for the Context area of metagit-cli. 99 symbols across 19 files."
+metadata:
+  internal: true
 ---
-
 # Context
 
 99 symbols | 19 files | Cohesion: 86%

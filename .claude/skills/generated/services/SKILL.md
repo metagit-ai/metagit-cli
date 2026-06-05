@@ -1,8 +1,9 @@
 ---
 name: services
 description: "Skill for the Services area of metagit-cli. 166 symbols across 36 files."
+metadata:
+  internal: true
 ---
-
 # Services
 
 166 symbols | 36 files | Cohesion: 81%

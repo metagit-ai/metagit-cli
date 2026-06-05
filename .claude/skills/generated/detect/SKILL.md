@@ -1,8 +1,9 @@
 ---
 name: detect
 description: "Skill for the Detect area of metagit-cli. 26 symbols across 7 files."
+metadata:
+  internal: true
 ---
-
 # Detect
 
 26 symbols | 7 files | Cohesion: 94%

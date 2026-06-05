@@ -71,6 +71,24 @@ _CATALOG: list[PromptCatalogEntry] = [
         ),
         scopes=["workspace", "project", "repo"],
     ),
+    PromptCatalogEntry(
+        kind="graph-discover",
+        title="Workspace graph discovery",
+        description=(
+            "Guided first-time discovery of cross-repo graph.relationships: "
+            "machine inference, gap analysis, operator interview, draft report."
+        ),
+        scopes=["workspace"],
+    ),
+    PromptCatalogEntry(
+        kind="graph-maintain",
+        title="Workspace graph maintenance",
+        description=(
+            "Suggest, promote, and ingest cross-repo graph.relationships "
+            "for GitNexus overlay and dependency maps."
+        ),
+        scopes=["workspace"],
+    ),
 ]
 
 _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
@@ -83,6 +101,8 @@ _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
             "sync-safe",
             "layout-change",
             "context-pack",
+            "graph-discover",
+            "graph-maintain",
         }
     ),
     "project": frozenset(
@@ -218,6 +238,72 @@ Persist by editing the umbrella `.metagit.yml` or `metagit workspace repo remove
 - `metagit workspace repo list --project <project> --json` — verify enriched fields.
 
 Use `METAGIT_AGENT_MODE=true` for non-interactive runs; never use `detect repository --save` against the workspace file without explicit approval.""",
+        "graph-discover": """Build an initial cross-repo relationship model for a metagit workspace. **Report first — do not apply** until the operator approves.
+
+## 1. Inventory
+- `metagit workspace list -c <definition> --json` — projects, repos, clone status.
+- `metagit config info -c <definition>` — confirm whether `graph.relationships` is empty or partial.
+- MCP `metagit_workspace_health_check` — surface missing clones before inferring edges.
+
+## 2. Machine discovery (read-only)
+For each workspace project:
+- MCP `metagit_cross_project_dependencies` with `dependency_types: ["imports", "shared_config", "url_match", "declared", "ref"]` and `depth: 3`.
+- `metagit config graph suggest -c <definition> --json --include-declared --min-confidence all` — candidates with evidence (do **not** pass `--apply`).
+
+Group results into:
+- **inferred_high** — import edges with file/manifest evidence
+- **inferred_medium** — url_match, shared_config
+- **inferred_low** — declared tags, ref-only hints
+- **already_manual** — edges already in `graph.relationships`
+
+## 3. Gap analysis
+List project and repo pairs with **no** inferred or manual path. For each gap, note what code cannot see (ownership, docs, deploy order, shared secrets, API contracts).
+
+## 4. Guided interview (operator)
+For each gap (and any low-confidence inferred edge), ask the operator:
+1. Source project/repo and target project/repo?
+2. Relationship type: `depends_on`, `consumes`, `owns`, `documents`, `related`, or other?
+3. Short `label` and one-line `description` for agents?
+4. Optional `tags` (layer, team, environment)?
+
+Use AskUserQuestion or an equivalent approval step. Do not invent semantic edges without answers.
+
+## 5. Draft report (required output)
+Emit a **Graph Discovery Report** with:
+- `summary` — project/repo counts, candidate counts by confidence
+- `proposed_machine_edges[]` — from suggest output (id, from, to, type, confidence, evidence)
+- `proposed_manual_edges[]` — from interview (same shape as graph.relationships entries)
+- `open_questions[]` — unresolved gaps
+- `operations_preview` — merged patch ops JSON (from suggest + manual), **not applied**
+
+Hand off apply/validate/ingest to `metagit prompt workspace -k graph-maintain` after operator sign-off.""",
+        "graph-maintain": """Maintain durable cross-repo edges in `.metagit.yml` `graph.relationships` and sync them into GitNexus.
+
+## 1. Discover inferred dependencies
+- `metagit workspace list -c <definition> --json` — confirm projects/repos exist locally.
+- MCP `metagit_cross_project_dependencies` per project (or CLI-equivalent scope) for imports, url_match, shared_config.
+- `metagit config graph suggest -c <definition> --json` — candidates, evidence, and patch `operations`.
+
+## 2. Promote with approval
+- Review `candidates[]` confidence (`high` > `medium` > `low`) and `evidence`.
+- Default promote: `imports`, `shared_config`, `url_match` at `--min-confidence medium`.
+- Preview patch: `metagit config preview -c <definition> --file ops.json` using `operations` from suggest output.
+- Apply: `metagit config graph suggest -c <definition> --apply` or MCP `metagit_apply_graph_relationships`.
+- Validate: `metagit config validate -c <definition>`.
+
+## 3. Export and ingest GitNexus overlay
+- `metagit config graph export -c <definition> --format tool-calls` or MCP `metagit_export_workspace_graph_cypher`.
+- Run schema statements once, then each Cypher statement via `gitnexus_cypher` or `./skills/metagit-gitnexus/scripts/ingest-workspace-graph.sh`.
+- Pass `--gitnexus-repo` when the umbrella index name differs from manifest `name`.
+
+## 4. Refresh per-repo code graphs
+- `npx gitnexus analyze` on repos with `graph_status` stale/missing (see `metagit-gitnexus` skill).
+
+## 5. GitNexus group sync (cross-index)
+- `metagit gitnexus group sync -c <definition> --json` or MCP `metagit_gitnexus_group_sync` after repos are indexed.
+- Then `npx gitnexus group query <group> "…"` / `group impact` for cross-repo symbol analysis.
+
+Safety: do not promote edges without evidence; do not overwrite existing manual relationships; fetch operator approval before `--apply`.""",
     }
     if kind == "instructions":
         return ""

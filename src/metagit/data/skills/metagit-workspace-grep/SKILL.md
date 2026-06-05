@@ -1,8 +1,9 @@
 ---
 name: metagit-workspace-grep
 description: Search on-disk file contents across managed workspace repos via ripgrep (or Python fallback). Use when hunting code strings, configs, or Terraform/Docker patterns — not for manifest metadata.
+metadata:
+  internal: true
 ---
-
 # Workspace content grep
 
 Use this skill when you need **file contents** inside managed repos. Use `metagit search` / `metagit_repo_search` only for **catalog metadata** (names, URLs, tags).

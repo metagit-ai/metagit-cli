@@ -1,0 +1,68 @@
+schema_version: "1.0"
+id: repo-enricher
+label: Repo enricher
+description: |
+  Enriches a single repo catalog entry via detect/source sync and repo-enrich prompt workflows.
+archetype: specialist
+scope: repo
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - repo-enrich
+mcp_tools:
+  - metagit_workspace_search
+delegates_to: []
+delegated_by:
+  - catalog-bootstrapper
+ui:
+  category: Catalog
+  sort_order: 60
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-config-refresh
+  - metagit-cli
+vendors:
+  claude_code:
+    filename: repo-enricher.md
+  cursor:
+    filename: repo-enricher.md
+    template: repo-enricher.cursor.md.tpl
+  github_copilot:
+    filename: repo-enricher.agent.md
+    template: repo-enricher.github-copilot.agent.md.tpl
+  hermes:
+    filename: repo-enricher
+    install_as: skill
+    template: repo-enricher.skill.md.tpl
+  openclaw:
+    filename: repo-enricher
+    install_as: skill
+    template: repo-enricher.skill.md.tpl
+  opencode:
+    filename: repo-enricher.md
+    template: repo-enricher.opencode.md.tpl
+  windsurf:
+    filename: repo-enricher
+    install_as: skill
+    template: repo-enricher.skill.md.tpl
+  codex:
+    filename: repo-enricher
+    install_as: skill
+    template: repo-enricher.skill.md.tpl
+files:
+  - template: repo-enricher.md.tpl
+    output: repo-enricher.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

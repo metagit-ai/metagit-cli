@@ -1,8 +1,9 @@
 ---
 name: metagit-projects
 description: Ongoing workspace and project management for OpenClaw and Hermes agents. Use when starting work, organizing repos, or before creating a new project folder so existing metagit projects are reused instead of duplicated.
+metadata:
+  internal: true
 ---
-
 # Ongoing Project Management
 
 Use this skill when the user starts new work, reorganizes repositories, or asks you to create a project folder. Metagit is the source of truth for what already exists in the workspace.

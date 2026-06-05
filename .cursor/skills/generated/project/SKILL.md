@@ -1,8 +1,9 @@
 ---
 name: project
 description: "Skill for the Project area of metagit-cli. 38 symbols across 8 files."
+metadata:
+  internal: true
 ---
-
 # Project
 
 38 symbols | 8 files | Cohesion: 88%

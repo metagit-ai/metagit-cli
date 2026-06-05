@@ -1,8 +1,9 @@
 ---
 name: api
 description: "Skill for the Api area of metagit-cli. 21 symbols across 6 files."
+metadata:
+  internal: true
 ---
-
 # Api
 
 21 symbols | 6 files | Cohesion: 75%

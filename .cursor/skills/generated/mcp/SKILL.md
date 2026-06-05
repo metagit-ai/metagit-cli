@@ -1,8 +1,9 @@
 ---
 name: mcp
 description: "Skill for the Mcp area of metagit-cli. 13 symbols across 6 files."
+metadata:
+  internal: true
 ---
-
 # Mcp
 
 13 symbols | 6 files | Cohesion: 96%

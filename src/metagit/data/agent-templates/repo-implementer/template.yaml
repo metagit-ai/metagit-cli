@@ -1,0 +1,73 @@
+schema_version: "1.0"
+id: repo-implementer
+label: Repo implementer
+description: |
+  Single-repo implementation specialist dispatched by the orchestration overseer. Focuses on scoped code changes, guarded sync, and handoff prompts.
+archetype: specialist
+scope: repo
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - subagent-handoff
+  - sync-safe
+  - context-pack
+mcp_tools:
+  - metagit_project_context_switch
+  - metagit_workspace_search
+delegates_to:
+  - agent-access-optimizer
+delegated_by:
+  - orchestration-overseer
+ui:
+  category: Execution
+  sort_order: 20
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-cli
+  - metagit-workspace-sync
+  - metagit-repo-impact
+vendors:
+  claude_code:
+    filename: repo-implementer.md
+  cursor:
+    filename: repo-implementer.md
+    template: repo-implementer.cursor.md.tpl
+  github_copilot:
+    filename: repo-implementer.agent.md
+    template: repo-implementer.github-copilot.agent.md.tpl
+  hermes:
+    filename: repo-implementer
+    install_as: skill
+    template: repo-implementer.skill.md.tpl
+  openclaw:
+    filename: repo-implementer
+    install_as: skill
+    template: repo-implementer.skill.md.tpl
+  opencode:
+    filename: repo-implementer.md
+    template: repo-implementer.opencode.md.tpl
+  windsurf:
+    filename: repo-implementer
+    install_as: skill
+    template: repo-implementer.skill.md.tpl
+  codex:
+    filename: repo-implementer
+    install_as: skill
+    template: repo-implementer.skill.md.tpl
+files:
+  - template: repo-implementer.md.tpl
+    output: repo-implementer.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

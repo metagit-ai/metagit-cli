@@ -1,0 +1,95 @@
+schema_version: "1.0"
+id: orchestration-overseer
+label: Orchestration overseer
+description: |
+  Control-plane agent that oversees managed workspaces through Metagit MCP. Dispatches
+  subagents across workspace projects, maintains cross-repository graphs, connects
+  operators to SecretZero bootstrap flows, and refreshes environment wikis from
+  manifest documentation links.
+archetype: control_plane
+scope: workspace
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - session-start
+  - graph-discover
+  - sync-safe
+mcp_tools:
+  - metagit_project_context_switch
+  - metagit_workspace_health_check
+  - metagit_suggest_graph_relationships
+  - metagit_apply_graph_relationships
+  - metagit_gitnexus_group_sync
+delegates_to:
+  - repo-implementer
+  - graph-curator
+  - catalog-bootstrapper
+  - upstream-triage
+  - secret-bootstrapper
+  - release-auditor
+  - iac-coordinator
+delegated_by: []
+ui:
+  category: Control plane
+  sort_order: 10
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-control-center
+  - metagit-context-pack
+  - metagit-graph-maintain
+  - metagit-gitnexus
+  - metagit-cli
+external_skills:
+  - name: secretzero
+    note: |
+      Install when any managed repo contains Secretfile.yml. Use SecretZero MCP and
+      skills to guide the operator through bootstrap secret requirements.
+  - name: gitnexus-cli
+    note: |
+      Use for per-repo wiki generation (`npx gitnexus wiki`) after graph ingest and
+      group sync keep indexes current.
+vendors:
+  claude_code:
+    filename: orchestration-overseer.md
+  cursor:
+    filename: orchestration-overseer.md
+    template: orchestration-overseer.cursor.md.tpl
+  github_copilot:
+    filename: orchestration-overseer.agent.md
+    template: orchestration-overseer.github-copilot.agent.md.tpl
+  hermes:
+    filename: orchestration-overseer
+    install_as: skill
+    template: orchestration-overseer.hermes.skill.md.tpl
+  openclaw:
+    filename: orchestration-overseer
+    install_as: skill
+    template: orchestration-overseer.hermes.skill.md.tpl
+  opencode:
+    filename: orchestration-overseer.md
+    template: orchestration-overseer.opencode.md.tpl
+  windsurf:
+    filename: orchestration-overseer
+    install_as: skill
+    template: orchestration-overseer.hermes.skill.md.tpl
+  codex:
+    filename: orchestration-overseer
+    install_as: skill
+    template: orchestration-overseer.hermes.skill.md.tpl
+files:
+  - template: orchestration-overseer.md.tpl
+    output: orchestration-overseer.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

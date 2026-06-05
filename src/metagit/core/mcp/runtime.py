@@ -28,6 +28,8 @@ from metagit.core.mcp.services.workspace_semantic_search import (
     WorkspaceSemanticSearchService,
 )
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
+from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
+from metagit.core.gitnexus.group_sync import GitNexusGroupSyncService
 from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
@@ -46,6 +48,7 @@ from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.mcp.services.workspace_template import WorkspaceTemplateService
 from metagit.core.mcp.tool_registry import ToolRegistry
 from metagit.core.project.search_service import ManagedRepoSearchService
+from metagit.core.agent.service import AgentService
 from metagit.core.mcp.tools.bootstrap_plan_only import (
     metagit_bootstrap_config_plan_only,
 )
@@ -70,6 +73,8 @@ class MetagitMcpRuntime:
         self._workspace_sync = WorkspaceSyncService()
         self._cross_project_deps = CrossProjectDependencyService()
         self._graph_cypher_export = GraphCypherExportService()
+        self._graph_suggest = GraphRelationshipSuggestService()
+        self._gitnexus_group_sync = GitNexusGroupSyncService()
         self._workspace_health = WorkspaceHealthService()
         self._context_pack = ContextPackService()
         self._repo_card = RepoCardService()
@@ -266,6 +271,62 @@ class MetagitMcpRuntime:
                     "include_documentation": {"type": "boolean"},
                     "manual_only": {"type": "boolean"},
                     "with_schema": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_suggest_graph_relationships": {
+                "type": "object",
+                "properties": {
+                    "dependency_types": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "depth": {"type": "integer", "minimum": 1},
+                    "min_confidence": {
+                        "type": "string",
+                        "enum": ["high", "medium", "all"],
+                    },
+                    "include_declared": {"type": "boolean"},
+                    "candidate_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_apply_graph_relationships": {
+                "type": "object",
+                "properties": {
+                    "dependency_types": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "depth": {"type": "integer", "minimum": 1},
+                    "min_confidence": {
+                        "type": "string",
+                        "enum": ["high", "medium", "all"],
+                    },
+                    "include_declared": {"type": "boolean"},
+                    "candidate_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "dry_run": {"type": "boolean"},
+                    "save": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_gitnexus_group_sync": {
+                "type": "object",
+                "properties": {
+                    "group_name": {"type": "string"},
+                    "create_group": {"type": "boolean"},
+                    "prune": {"type": "boolean"},
+                    "run_contract_sync": {"type": "boolean"},
+                    "allow_stale": {"type": "boolean"},
+                    "skip_embeddings": {"type": "boolean"},
+                    "exact_only": {"type": "boolean"},
+                    "verbose": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -510,6 +571,27 @@ class MetagitMcpRuntime:
                     "dry_run": {"type": "boolean"},
                     "move_disk": {"type": "boolean"},
                     "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_agent_catalog": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
+            "metagit_agent_dispatch_plan": {
+                "type": "object",
+                "required": ["template_id"],
+                "properties": {
+                    "template_id": {"type": "string"},
+                    "vendor": {"type": "string"},
+                    "scope": {
+                        "type": "string",
+                        "enum": ["project", "user"],
+                    },
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                    "task": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -1290,6 +1372,55 @@ class MetagitMcpRuntime:
                 with_schema=bool(arguments.get("with_schema", True)),
             ).model_dump(mode="json")
 
+        if name in {
+            "metagit_suggest_graph_relationships",
+            "metagit_apply_graph_relationships",
+        }:
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "graph relationship tools require an active workspace"
+                )
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            suggest_args = self._graph_suggest_tool_args(arguments)
+            if name == "metagit_suggest_graph_relationships":
+                return self._graph_suggest.suggest(
+                    config=config,
+                    workspace_root=status.root_path,
+                    **suggest_args,
+                ).model_dump(mode="json")
+            return self._graph_suggest.suggest_and_apply(
+                config=config,
+                workspace_root=status.root_path,
+                config_path=config_path,
+                dry_run=bool(arguments.get("dry_run", False)),
+                save=bool(arguments.get("save", True)),
+                **suggest_args,
+            ).model_dump(mode="json")
+
+        if name == "metagit_gitnexus_group_sync":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "gitnexus group sync requires an active workspace"
+                )
+            group_name = arguments.get("group_name")
+            resolved_group = (
+                str(group_name).strip()
+                if isinstance(group_name, str) and group_name.strip()
+                else None
+            )
+            return self._gitnexus_group_sync.sync_workspace(
+                config=config,
+                workspace_root=status.root_path,
+                group_name=resolved_group,
+                create_group=bool(arguments.get("create_group", True)),
+                prune=bool(arguments.get("prune", False)),
+                run_contract_sync=bool(arguments.get("run_contract_sync", True)),
+                allow_stale=bool(arguments.get("allow_stale", False)),
+                skip_embeddings=bool(arguments.get("skip_embeddings", False)),
+                exact_only=bool(arguments.get("exact_only", False)),
+                verbose=bool(arguments.get("verbose", False)),
+            ).model_dump(mode="json")
+
         if name == "metagit_workspace_list":
             config_path, workspace_root = self._catalog_paths(
                 status=status, config=config
@@ -1461,6 +1592,67 @@ class MetagitMcpRuntime:
             except ValueError as exc:
                 raise InvalidToolArgumentsError(str(exc)) from exc
 
+        if name == "metagit_agent_catalog":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "agent catalog requires an active workspace"
+                )
+            service = AgentService(manifest_root=Path(status.root_path))
+            envelope = service.catalog.list_catalog(
+                manifest_root=Path(status.root_path),
+            )
+            return envelope.model_dump(mode="json")
+
+        if name == "metagit_agent_dispatch_plan":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "agent dispatch plan requires an active workspace"
+                )
+            template_id = str(arguments.get("template_id", "")).strip()
+            if not template_id:
+                raise InvalidToolArgumentsError("template_id is required")
+            vendor = str(arguments.get("vendor", "claude_code")).strip()
+            scope_raw = arguments.get("scope", "project")
+            scope_val = (
+                str(scope_raw).strip()
+                if isinstance(scope_raw, str) and scope_raw.strip()
+                else "project"
+            )
+            if scope_val not in {"project", "user"}:
+                raise InvalidToolArgumentsError("scope must be project or user")
+            project_raw = arguments.get("project_name")
+            repo_raw = arguments.get("repo_name")
+            task_raw = arguments.get("task")
+            project_opt = (
+                str(project_raw).strip()
+                if isinstance(project_raw, str) and project_raw.strip()
+                else None
+            )
+            repo_opt = (
+                str(repo_raw).strip()
+                if isinstance(repo_raw, str) and repo_raw.strip()
+                else None
+            )
+            task_opt = (
+                str(task_raw).strip()
+                if isinstance(task_raw, str) and task_raw.strip()
+                else None
+            )
+            service = AgentService(manifest_root=Path(status.root_path))
+            try:
+                plan = service.dispatch_plan(
+                    template_id,
+                    vendor=vendor,
+                    scope=scope_val,  # type: ignore[arg-type]
+                    project=project_opt,
+                    repo=repo_opt,
+                    task=task_opt,
+                    config=config,
+                )
+            except Exception as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return plan.model_dump(mode="json")
+
         if name == "metagit_bootstrap_config":
             root = status.root_path or str(Path.cwd())
             context = self._discovery_service.build_context(repo_root=root)
@@ -1523,6 +1715,39 @@ class MetagitMcpRuntime:
             )
         config_path = str(Path(status.root_path) / ".metagit.yml")
         return config_path, status.root_path
+
+    def _graph_suggest_tool_args(
+        self,
+        arguments: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Normalize MCP arguments for graph relationship suggest/apply."""
+        dependency_types = arguments.get("dependency_types")
+        selected_types = (
+            [str(item) for item in dependency_types]
+            if isinstance(dependency_types, list)
+            else None
+        )
+        candidate_ids = arguments.get("candidate_ids")
+        selected_ids = (
+            [str(item) for item in candidate_ids]
+            if isinstance(candidate_ids, list)
+            else None
+        )
+        min_confidence = arguments.get("min_confidence", "medium")
+        confidence = (
+            str(min_confidence)
+            if min_confidence in {"high", "medium", "all"}
+            else "medium"
+        )
+        depth_raw = arguments.get("depth", 3)
+        depth = int(depth_raw) if isinstance(depth_raw, int) else 3
+        return {
+            "dependency_types": selected_types,
+            "depth": max(1, depth),
+            "min_confidence": confidence,
+            "include_declared": bool(arguments.get("include_declared", False)),
+            "candidate_ids": selected_ids,
+        }
 
     def _error_response(
         self,

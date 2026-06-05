@@ -1,8 +1,9 @@
 ---
 name: metagit-workspace-sync
 description: Sync workspace repositories safely using metagit with scoped fetch, pull, or clone actions. Use when repository content must be refreshed for implementation.
+metadata:
+  internal: true
 ---
-
 # Syncing Workspace Repositories
 
 Use this skill when repository state must be updated.
