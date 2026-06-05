@@ -137,7 +137,16 @@ def test_cli_overlay_init_committed(tmp_path: Path) -> None:
         ],
     )
     assert result.exit_code == 0, result.output
-    assert ".metagit-agents/repo-implementer" in result.output
+    # Logger may soft-wrap long paths across lines in CI terminals.
+    normalized_output = result.output.replace("\n", "")
+    assert ".metagit-agents/repo-implementer" in normalized_output
+    overlay_dir = overlay_path_for_template(
+        tmp_path,
+        "repo-implementer",
+        scope=AgentOverlayScope.COMMITTED,
+    )
+    assert overlay_dir.is_dir()
+    assert (overlay_dir / "template.yaml").is_file()
 
 
 def test_service_init_overlay_merged_source(tmp_path: Path) -> None:
