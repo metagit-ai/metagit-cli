@@ -9,12 +9,19 @@ from click.testing import CliRunner
 from metagit.cli.main import cli
 from metagit.core.agent.models import AgentOverlayInitMode, AgentOverlayScope
 from metagit.core.agent.overlay import (
+    COMMITTED_OVERLAY_RELATIVE,
+    LOCAL_OVERLAY_RELATIVE,
     init_overlay_from_bundled,
     overlay_has_files,
     overlay_path_for_template,
 )
 from metagit.core.agent.registry import AgentTemplateRegistry
 from metagit.core.agent.service import AgentService
+
+
+def _normalize_path_text(text: str) -> str:
+    """Normalize path separators for cross-platform CLI output assertions."""
+    return text.replace("\n", "").replace("\\", "/")
 
 
 def _write_manifest_root(path: Path) -> None:
@@ -39,8 +46,9 @@ def test_init_overlay_committed_default_path(tmp_path: Path) -> None:
         "repo-implementer",
         scope=AgentOverlayScope.COMMITTED,
     )
+    expected = (tmp_path / COMMITTED_OVERLAY_RELATIVE / "repo-implementer").resolve()
+    assert overlay_dir == expected
     assert overlay_dir.is_dir()
-    assert ".metagit-agents" in str(overlay_dir)
     assert (overlay_dir / "template.yaml").is_file()
     assert result.scope == AgentOverlayScope.COMMITTED
 
@@ -60,7 +68,8 @@ def test_init_overlay_local_path(tmp_path: Path) -> None:
         "repo-implementer",
         scope=AgentOverlayScope.LOCAL,
     )
-    assert ".metagit/.agent-templates" in str(overlay_dir)
+    expected = (tmp_path / LOCAL_OVERLAY_RELATIVE / "repo-implementer").resolve()
+    assert overlay_dir == expected
     assert result.scope == AgentOverlayScope.LOCAL
 
 
@@ -138,7 +147,7 @@ def test_cli_overlay_init_committed(tmp_path: Path) -> None:
     )
     assert result.exit_code == 0, result.output
     # Logger may soft-wrap long paths across lines in CI terminals.
-    normalized_output = result.output.replace("\n", "")
+    normalized_output = _normalize_path_text(result.output)
     assert ".metagit-agents/repo-implementer" in normalized_output
     overlay_dir = overlay_path_for_template(
         tmp_path,
