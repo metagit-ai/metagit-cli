@@ -79,8 +79,7 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Cluster_311 | 8 calls |
-| Commands | 5 calls |
+| Commands | 13 calls |
 | Workspace | 4 calls |
 | Cli | 3 calls |
 | Examples | 1 calls |

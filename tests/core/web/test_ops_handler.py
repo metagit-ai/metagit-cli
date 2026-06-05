@@ -121,3 +121,71 @@ def test_sync_dry_run_job_completes(tmp_path: Path) -> None:
     assert final_state == "completed"
   finally:
     thread.join(timeout=0.1)
+
+
+def test_open_rejects_unknown_path(tmp_path: Path) -> None:
+  thread, base = _start_server(tmp_path)
+  try:
+    status, payload = _post_json(
+      f"{base}/v3/ops/open",
+      {"path": str(tmp_path / "not-a-managed-repo")},
+    )
+    assert status == 403
+    assert payload["ok"] is False
+    assert payload["error"]["kind"] == "forbidden_path"
+  finally:
+    thread.join(timeout=0.1)
+
+
+def test_open_managed_repo_uses_echo_editor(tmp_path: Path) -> None:
+  sync_root = tmp_path / "sync" / "demo"
+  sync_root.mkdir(parents=True)
+  (tmp_path / ".metagit.yml").write_text(
+    "\n".join(
+      [
+        "name: workspace",
+        "kind: application",
+        "workspace:",
+        "  projects:",
+        "    - name: platform",
+        "      repos:",
+        "        - name: demo",
+        "          path: ./demo",
+      ]
+    )
+    + "\n",
+    encoding="utf-8",
+  )
+  (tmp_path / "metagit.config.yaml").write_text(
+    "\n".join(
+      [
+        "config:",
+        "  editor: echo",
+        "  workspace:",
+        "    path: ./sync",
+      ]
+    )
+    + "\n",
+    encoding="utf-8",
+  )
+  server = build_web_server(
+    root=str(tmp_path),
+    appconfig_path=str(tmp_path / "metagit.config.yaml"),
+    host="127.0.0.1",
+    port=0,
+  )
+  thread = threading.Thread(target=server.serve_forever, daemon=True)
+  thread.start()
+  base = f"http://127.0.0.1:{server.server_address[1]}"
+  try:
+    status, payload = _post_json(
+      f"{base}/v3/ops/open",
+      {"path": str(sync_root.resolve())},
+    )
+    assert status == 200
+    assert payload["ok"] is True
+    assert payload["editor"] == "echo"
+    assert payload["path"] == str(sync_root.resolve())
+  finally:
+    server.server_close()
+    thread.join(timeout=0.1)

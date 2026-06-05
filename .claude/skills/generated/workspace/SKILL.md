@@ -1,11 +1,11 @@
 ---
 name: workspace
-description: "Skill for the Workspace area of metagit-cli. 94 symbols across 22 files."
+description: "Skill for the Workspace area of metagit-cli. 98 symbols across 25 files."
 ---
 
 # Workspace
 
-94 symbols | 22 files | Cohesion: 79%
+98 symbols | 25 files | Cohesion: 78%
 
 ## When to Use
 
@@ -70,21 +70,22 @@ Start here when exploring this area:
 | `Project_sync → Collect_file_copy_jobs` | cross_community | 5 |
 | `Project_sync → Create_vscode_workspace` | cross_community | 4 |
 | `Workspace_project_rename → Find_project` | cross_community | 4 |
+| `Workspace_project_rename → Resolve_effective_dedupe` | cross_community | 4 |
 | `Workspace_repo_rename → Find_project` | cross_community | 4 |
+| `Workspace_repo_rename → Resolve_effective_dedupe` | cross_community | 4 |
 | `Workspace_repo_move → Find_project` | cross_community | 4 |
+| `Workspace_repo_move → Resolve_effective_dedupe` | cross_community | 4 |
 | `Show → Validate_env_value` | cross_community | 4 |
 | `Repo_add → _find_project` | cross_community | 3 |
-| `Repo_add → _mutation_error` | cross_community | 3 |
-| `Repo_select → List_project_names` | cross_community | 3 |
-| `Repo_select → Find_project` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Config | 7 calls |
+| Config | 8 calls |
 | Commands | 6 calls |
 | Services | 3 calls |
+| Tests | 1 calls |
 | Providers | 1 calls |
 
 ## How to Explore

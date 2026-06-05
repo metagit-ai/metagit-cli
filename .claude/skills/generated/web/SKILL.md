@@ -1,11 +1,11 @@
 ---
 name: web
-description: "Skill for the Web area of metagit-cli. 111 symbols across 13 files."
+description: "Skill for the Web area of metagit-cli. 119 symbols across 15 files."
 ---
 
 # Web
 
-111 symbols | 13 files | Cohesion: 73%
+119 symbols | 15 files | Cohesion: 73%
 
 ## When to Use
 
@@ -19,14 +19,14 @@ description: "Skill for the Web area of metagit-cli. 111 symbols across 13 files
 |------|---------|
 | `src/metagit/core/web/schema_tree.py` | _disable_at_path, _enable_at_path, _append_at_path, _remove_at_path, _materialize_field (+25) |
 | `src/metagit/core/web/config_handler.py` | handle, _respond_metagit_tree, _patch_metagit, _preview_metagit, _preview_appconfig (+12) |
-| `src/metagit/core/web/ops_handler.py` | sync_events_job_id, stream_sync_events, _stream_sync_events, handle, _post_objectives (+9) |
+| `src/metagit/core/web/ops_handler.py` | handle, _post_objectives, _post_open, _post_health, _get_graph (+10) |
 | `tests/core/web/test_schema_tree.py` | test_remove_workspace_project_when_projects_null, test_disable_optional_field_removes_key, test_enable_optional_field_adds_default, test_set_field_updates_value, test_apply_operations_returns_original_instance_on_validation_error (+8) |
 | `tests/core/web/test_config_handler.py` | _start_server, _patch_json, test_get_metagit_config_tree, test_patch_metagit_set_name_without_save, test_patch_metagit_set_name_with_save (+3) |
+| `tests/core/web/test_ops_handler.py` | _start_server, _post_json, test_health_endpoint_returns_ok, test_prune_preview_empty, test_sync_dry_run_job_completes (+2) |
 | `src/metagit/core/web/job_store.py` | create_job, append_event, drain_events, mark_running, complete (+2) |
 | `src/metagit/core/web/server.py` | do_GET, do_PATCH, do_POST, do_DELETE, _dispatch (+1) |
-| `tests/core/web/test_ops_handler.py` | _start_server, _post_json, test_health_endpoint_returns_ok, test_prune_preview_empty, test_sync_dry_run_job_completes |
 | `src/metagit/core/web/static_handler.py` | handle, _resolve_file, _send_file, is_api_path |
-| `src/metagit/core/web/graph_service.py` | build_view, _append_manual_edges, _append_inferred_edges, _append_edge |
+| `src/metagit/core/web/config_preview.py` | read_disk_text, redact_secrets, render_metagit_yaml, render_appconfig_yaml |
 
 ## Entry Points
 
@@ -61,7 +61,7 @@ Start here when exploring this area:
 | `test_health_endpoint_returns_ok` | Function | `tests/core/web/test_ops_handler.py` | 72 |
 | `test_prune_preview_empty` | Function | `tests/core/web/test_ops_handler.py` | 82 |
 | `test_sync_dry_run_job_completes` | Function | `tests/core/web/test_ops_handler.py` | 96 |
-| `test_job_lifecycle_and_events` | Function | `tests/core/web/test_job_store.py` | 6 |
+| `test_open_rejects_unknown_path` | Function | `tests/core/web/test_ops_handler.py` | 125 |
 
 ## Execution Flows
 
@@ -71,16 +71,19 @@ Start here when exploring this area:
 | `Handle → Load_config` | cross_community | 4 |
 | `Handle → _parse_body` | intra_community | 4 |
 | `Handle → _tree_response` | cross_community | 4 |
+| `Preview → Dump_config_dict` | cross_community | 3 |
+| `Appconfig_show → Dump_config_dict` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Commands | 8 calls |
+| Commands | 9 calls |
+| Config | 6 calls |
 | Api | 5 calls |
 | Context | 5 calls |
-| Config | 5 calls |
 | Tests | 1 calls |
+| Project | 1 calls |
 | Appconfig | 1 calls |
 
 ## How to Explore

@@ -75,13 +75,35 @@ metagit appconfig patch --op set --path workspace.dedupe.enabled --value false -
 
 See [metagit-config.md](metagit-config.md#schema-backed-editing-cli) for operation shapes and path examples.
 
+### Workspace Explorer
+
+Use the **Explorer** tab on the workspace toolbar for a tree view of projects and repositories with tag-aware filtering.
+
+| Filter syntax | Example | Matches |
+|---------------|---------|---------|
+| Free text | `api billing` | Name, path, description, tag text |
+| Tag key | `tag:backend` or `#backend` | Project or repo tags |
+| Tag key=value | `tag:team=platform` | Exact tag value |
+| Project scope | `project:hermes` | Repositories under one project |
+| Sync status | `status:synced` or `status:missing` | Clone presence |
+
+Each synced repository shows **VS Code**, **Cursor**, and **Default** open actions. Protocol links use `vscode://file/…` and `cursor://file/…`. **Default** calls `POST /v3/ops/open`, which runs the configured CLI editor (`config.editor` in app config, usually `code`). Paths must be managed workspace repositories that exist on disk; arbitrary paths are rejected.
+
+```bash
+curl -sS -X POST http://127.0.0.1:8787/v3/ops/open \
+  -H 'Content-Type: application/json' \
+  -d '{"path":"/absolute/path/to/managed/repo"}'
+```
+
 ### Workspace Console
 
 The **Workspace Console** is **Workspace** in the chrome (`/workspace`): catalog-level context (projects/repos index, search/filter) plus the **workspace operations** side panel (health/prune/sync style actions routed through `/v3/ops`). This is meant for situational awareness and lightweight maintenance; destructive actions remain gated as in the CLI and API.
 
-Use the **Repositories | Graph** toggle on the workspace toolbar:
+Use the **Repositories | Explorer | Search | Graph** toggle on the workspace toolbar:
 
 - **Repositories** — filterable table of projects and repos (synced / missing) with per-repo sync actions.
+- **Explorer** — nested tree of projects and repositories with tag chips, filter syntax (see above), and open-in-editor actions.
+- **Search** — ripgrep across repository file contents.
 - **Graph** — SVG diagram of workspace relationships: manual edges from `.metagit.yml` `graph.relationships`, optional inferred cross-project dependencies, and project → repo structure edges. Checkboxes control inferred and structure layers.
 
 Graph data is loaded from `GET /v3/ops/graph`:

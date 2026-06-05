@@ -1,15 +1,15 @@
 ---
 name: api
-description: "Skill for the Api area of metagit-cli. 48 symbols across 15 files."
+description: "Skill for the Api area of metagit-cli. 48 symbols across 14 files."
 ---
 
 # Api
 
-48 symbols | 15 files | Cohesion: 75%
+48 symbols | 14 files | Cohesion: 78%
 
 ## When to Use
 
-- Working with code in `src/`
+- Working with code in `web/`
 - Understanding how requestJson, patchMetagitConfig, patchAppconfig work
 - Modifying api-related functionality
 
@@ -17,7 +17,7 @@ description: "Skill for the Api area of metagit-cli. 48 symbols across 15 files.
 
 | File | Symbols |
 |------|---------|
-| `web/src/api/client.ts` | ApiError, requestJson, patchMetagitConfig, patchAppconfig, postConfigPreview (+4) |
+| `web/src/api/client.ts` | ApiError, requestJson, patchMetagitConfig, patchAppconfig, postConfigPreview (+5) |
 | `src/metagit/core/api/server.py` | _parse_tag_filters_from_query, _first, do_GET, do_POST, do_DELETE (+1) |
 | `src/metagit/core/api/layout_handler.py` | handle, _layout_flags, _bool_param, _load_config, _respond_layout (+1) |
 | `src/metagit/core/api/catalog_handler.py` | handle, _load_config, _parse_body, _respond_mutation, _first |
@@ -36,7 +36,7 @@ Start here when exploring this area:
 - **`patchMetagitConfig`** (Function) — `web/src/api/client.ts:116`
 - **`patchAppconfig`** (Function) — `web/src/api/client.ts:127`
 - **`postConfigPreview`** (Function) — `web/src/api/client.ts:138`
-- **`getWorkspace`** (Function) — `web/src/api/client.ts:215`
+- **`getWorkspace`** (Function) — `web/src/api/client.ts:217`
 
 ## Key Symbols
 
@@ -47,8 +47,9 @@ Start here when exploring this area:
 | `patchMetagitConfig` | Function | `web/src/api/client.ts` | 116 |
 | `patchAppconfig` | Function | `web/src/api/client.ts` | 127 |
 | `postConfigPreview` | Function | `web/src/api/client.ts` | 138 |
-| `getWorkspace` | Function | `web/src/api/client.ts` | 215 |
-| `getWorkspaceGrepInfo` | Function | `web/src/api/client.ts` | 390 |
+| `getWorkspace` | Function | `web/src/api/client.ts` | 217 |
+| `postOpenPath` | Function | `web/src/api/client.ts` | 331 |
+| `getWorkspaceGrepInfo` | Function | `web/src/api/client.ts` | 411 |
 | `patchConfigTree` | Function | `web/src/pages/configQueries.ts` | 21 |
 | `fetchConfigPreview` | Function | `web/src/pages/configQueries.ts` | 32 |
 | `fetchWorkspaceGrepInfo` | Function | `web/src/pages/grepQueries.ts` | 35 |
@@ -56,8 +57,7 @@ Start here when exploring this area:
 | `queryFn` | Function | `web/src/components/ConfigPreview.tsx` | 21 |
 | `mutationFn` | Function | `web/src/components/FieldEditor.tsx` | 122 |
 | `mutationFn` | Function | `web/src/components/SchemaTree.tsx` | 61 |
-| `resolve_effective_dedupe_for_project` | Function | `src/metagit/core/workspace/dedupe_resolver.py` | 34 |
-| `resolve_sync_context` | Function | `src/metagit/core/workspace/layout_context.py` | 15 |
+| `handleServerOpen` | Function | `web/src/components/WorkspaceExplorer.tsx` | 50 |
 | `getMetagitConfigTree` | Function | `web/src/api/client.ts` | 108 |
 | `getAppconfigTree` | Function | `web/src/api/client.ts` | 112 |
 | `fetchConfigTree` | Function | `web/src/pages/configQueries.ts` | 17 |
@@ -76,19 +76,17 @@ Start here when exploring this area:
 | `Do_POST → Load_config` | cross_community | 4 |
 | `Do_POST → _bool_param` | cross_community | 4 |
 | `Do_DELETE → Load_config` | cross_community | 4 |
-| `Workspace_project_rename → Find_project` | cross_community | 4 |
+| `FetchWorkspaceGrepInfo → ApiError` | intra_community | 4 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Config | 5 calls |
-| Tests | 1 calls |
+| Config | 4 calls |
 | Project | 1 calls |
 | Commands | 1 calls |
 | Services | 1 calls |
 | Workspace | 1 calls |
-| Prompt | 1 calls |
 
 ## How to Explore
 

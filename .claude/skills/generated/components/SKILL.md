@@ -1,11 +1,11 @@
 ---
 name: components
-description: "Skill for the Components area of metagit-cli. 41 symbols across 8 files."
+description: "Skill for the Components area of metagit-cli. 55 symbols across 11 files."
 ---
 
 # Components
 
-41 symbols | 8 files | Cohesion: 90%
+55 symbols | 11 files | Cohesion: 92%
 
 ## When to Use
 
@@ -18,21 +18,23 @@ description: "Skill for the Components area of metagit-cli. 41 symbols across 8 
 | File | Symbols |
 |------|---------|
 | `web/src/components/FieldEditor.tsx` | scalarTypes, isMaskedSensitiveValue, normalizeDraftValue, FieldEditor, shouldSkipSensitiveSet (+5) |
+| `web/src/lib/explorerFilter.ts` | explorerQueryHint, parseExplorerQuery, tagEntries, matchesTagFilters, matchesTextTokens (+2) |
 | `web/src/components/RepoTable.tsx` | RepoTable, toggleProject, selectors, ProjectSection, matchesFilter (+2) |
+| `web/src/components/WorkspaceExplorer.tsx` | formatTag, WorkspaceExplorer, toggleProject, ProjectBranch, RepoLeaf (+1) |
 | `web/src/api/client.ts` | postHealth, postPrunePreview, postPrune, postSync, getSyncJob |
 | `web/src/components/SyncDialog.tsx` | SyncDialog, reset, poll, timer, handleSubmit |
 | `web/src/components/GraphDiagram.tsx` | edgeStroke, center, GraphDiagram, computeLayout, layout |
 | `web/src/components/OpsPanel.tsx` | OpsPanel, runHealth, runPrunePreview, runPruneExecute |
 | `web/src/components/SchemaTree.tsx` | isOptionalToggleable, displayType, isListItemNode, TreeNode |
-| `web/src/pages/workspaceQueries.ts` | repoSelector |
+| `web/src/lib/editorLinks.ts` | editorProtocolUrl |
 
 ## Entry Points
 
 Start here when exploring this area:
 
-- **`postHealth`** (Function) — `web/src/api/client.ts:261`
-- **`postPrunePreview`** (Function) — `web/src/api/client.ts:295`
-- **`postPrune`** (Function) — `web/src/api/client.ts:305`
+- **`postHealth`** (Function) — `web/src/api/client.ts:263`
+- **`postPrunePreview`** (Function) — `web/src/api/client.ts:297`
+- **`postPrune`** (Function) — `web/src/api/client.ts:307`
 - **`OpsPanel`** (Function) — `web/src/components/OpsPanel.tsx:17`
 - **`runHealth`** (Function) — `web/src/components/OpsPanel.tsx:37`
 
@@ -40,26 +42,26 @@ Start here when exploring this area:
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `postHealth` | Function | `web/src/api/client.ts` | 261 |
-| `postPrunePreview` | Function | `web/src/api/client.ts` | 295 |
-| `postPrune` | Function | `web/src/api/client.ts` | 305 |
+| `postHealth` | Function | `web/src/api/client.ts` | 263 |
+| `postPrunePreview` | Function | `web/src/api/client.ts` | 297 |
+| `postPrune` | Function | `web/src/api/client.ts` | 307 |
 | `OpsPanel` | Function | `web/src/components/OpsPanel.tsx` | 17 |
 | `runHealth` | Function | `web/src/components/OpsPanel.tsx` | 37 |
 | `runPrunePreview` | Function | `web/src/components/OpsPanel.tsx` | 53 |
 | `runPruneExecute` | Function | `web/src/components/OpsPanel.tsx` | 78 |
-| `postSync` | Function | `web/src/api/client.ts` | 270 |
-| `getSyncJob` | Function | `web/src/api/client.ts` | 277 |
+| `postSync` | Function | `web/src/api/client.ts` | 272 |
+| `getSyncJob` | Function | `web/src/api/client.ts` | 279 |
 | `SyncDialog` | Function | `web/src/components/SyncDialog.tsx` | 20 |
 | `reset` | Function | `web/src/components/SyncDialog.tsx` | 34 |
 | `poll` | Function | `web/src/components/SyncDialog.tsx` | 56 |
 | `timer` | Function | `web/src/components/SyncDialog.tsx` | 87 |
 | `handleSubmit` | Function | `web/src/components/SyncDialog.tsx` | 97 |
-| `repoSelector` | Function | `web/src/pages/workspaceQueries.ts` | 15 |
-| `RepoTable` | Function | `web/src/components/RepoTable.tsx` | 43 |
-| `toggleProject` | Function | `web/src/components/RepoTable.tsx` | 75 |
-| `selectors` | Function | `web/src/components/RepoTable.tsx` | 97 |
-| `FieldEditor` | Function | `web/src/components/FieldEditor.tsx` | 88 |
-| `queueSetOp` | Function | `web/src/components/FieldEditor.tsx` | 172 |
+| `editorProtocolUrl` | Function | `web/src/lib/editorLinks.ts` | 2 |
+| `explorerQueryHint` | Function | `web/src/lib/explorerFilter.ts` | 187 |
+| `WorkspaceExplorer` | Function | `web/src/components/WorkspaceExplorer.tsx` | 27 |
+| `toggleProject` | Function | `web/src/components/WorkspaceExplorer.tsx` | 46 |
+| `filterExplorerGroups` | Function | `web/src/lib/explorerFilter.ts` | 142 |
+| `groups` | Function | `web/src/components/WorkspaceExplorer.tsx` | 41 |
 
 ## Execution Flows
 
@@ -67,13 +69,14 @@ Start here when exploring this area:
 |------|------|-------|
 | `OpsPanel → ApiError` | cross_community | 5 |
 | `SyncDialog → ApiError` | cross_community | 5 |
+| `WorkspaceExplorer → FormatTag` | intra_community | 4 |
+| `WorkspaceExplorer → EditorProtocolUrl` | intra_community | 4 |
 | `SchemaTree → IsOptionalToggleable` | cross_community | 4 |
 | `SchemaTree → IsListItemNode` | cross_community | 4 |
 | `SchemaTree → DisplayType` | cross_community | 4 |
 | `FieldEditor → IsMaskedSensitiveValue` | intra_community | 3 |
 | `FieldEditor → ShouldSkipSensitiveSet` | cross_community | 3 |
 | `FieldEditor → ParseDraftValue` | cross_community | 3 |
-| `SyncDialog → Reset` | intra_community | 3 |
 
 ## Connected Areas
 
