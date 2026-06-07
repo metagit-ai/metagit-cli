@@ -31,5 +31,6 @@ site
 
 graphify-*
 docs/superpowers
+docs/changelog.md
 web/node_modules
 .gitnexus

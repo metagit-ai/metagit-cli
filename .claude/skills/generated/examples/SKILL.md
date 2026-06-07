@@ -1,17 +1,17 @@
 ---
 name: examples
-description: "Skill for the Examples area of metagit-cli. 106 symbols across 31 files."
+description: "Skill for the Examples area of metagit-cli. 81 symbols across 24 files."
 metadata:
   internal: true
 ---
 # Examples
 
-106 symbols | 31 files | Cohesion: 83%
+81 symbols | 24 files | Cohesion: 79%
 
 ## When to Use
 
 - Working with code in `examples/`
-- Understanding how demonstrate_datetime_serialization_fix, demonstrate_record_creation, main work
+- Understanding how main, create_sample_files, run_fuzzyfinder_test work
 - Modifying examples-related functionality
 
 ## Key Files
@@ -19,50 +19,50 @@ metadata:
 | File | Symbols |
 |------|---------|
 | `examples/fuzzyfinder_custom_colors_demo.py` | test_fuzzyfindertarget_with_colors, test_mixed_object_types, test_priority_demonstration, test_string_items_with_colors, test_object_items_with_colors (+4) |
-| `examples/detection_manager_example.py` | example_local_repository_analysis, example_configuration_options, example_metagit_record_integration, example_output_formats, example_specific_analysis_methods (+3) |
+| `examples/detection_manager_example.py` | example_local_repository_analysis, example_metagit_record_integration, example_output_formats, example_specific_analysis_methods, example_repository_analysis_access (+3) |
 | `examples/provider_example.py` | analyze_remote_repo, setup_providers_from_appconfig, setup_providers_from_environment, setup_providers_manually, analyze_local_repo (+2) |
-| `examples/test_record_manager_simple.py` | test_basic_functionality, store_record, get_record, list_records, test_error_handling (+1) |
-| `src/metagit/core/record/manager.py` | create_record_from_config, _get_git_info, store_record, get_record, list_records (+1) |
-| `examples/detection_manager_config_example.py` | example_basic_usage, example_custom_config, example_preset_configs, example_specific_method, example_config_serialization (+1) |
-| `examples/repository_analysis_example.py` | example_configuration, example_local_repository_analysis, example_remote_repository_analysis, example_specific_analysis, main |
+| `examples/detection_manager_config_example.py` | example_basic_usage, example_specific_method, example_metagit_record_integration, example_custom_config, example_preset_configs (+1) |
 | `src/metagit/core/gitcache/manager.py` | get_cached_repository, list_cache_entries, refresh_cache_entry, refresh_cache_entry_async, get_cache_stats |
-| `examples/record_manager_example.py` | example_local_file_storage, example_opensearch_storage, example_file_operations, main |
+| `examples/repository_analysis_example.py` | example_configuration, example_local_repository_analysis, example_remote_repository_analysis, example_specific_analysis, main |
+| `examples/gitcache_example.py` | create_sample_local_directory, sync_example, async_example, main |
+| `src/metagit/cli/commands/gitcache.py` | list, refresh, path, stats |
 | `src/metagit/core/detect/manager.py` | from_path, from_url, _load_existing_config, summary |
+| `examples/fuzzyfinder_comprehensive_test.py` | create_sample_files, run_fuzzyfinder_test, main |
 
 ## Entry Points
 
 Start here when exploring this area:
 
-- **`demonstrate_datetime_serialization_fix`** (Function) — `examples/datetime_serialization_fix_example.py:19`
-- **`demonstrate_record_creation`** (Function) — `examples/datetime_serialization_fix_example.py:66`
-- **`main`** (Function) — `examples/datetime_serialization_fix_example.py:160`
-- **`example_local_file_storage`** (Function) — `examples/record_manager_example.py:23`
-- **`example_opensearch_storage`** (Function) — `examples/record_manager_example.py:105`
+- **`main`** (Function) — `examples/enhanced_fuzzyfinder_demo.py:17`
+- **`create_sample_files`** (Function) — `examples/fuzzyfinder_comprehensive_test.py:49`
+- **`run_fuzzyfinder_test`** (Function) — `examples/fuzzyfinder_comprehensive_test.py:175`
+- **`main`** (Function) — `examples/fuzzyfinder_comprehensive_test.py:201`
+- **`test_fuzzyfindertarget_with_colors`** (Function) — `examples/fuzzyfinder_custom_colors_demo.py:22`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `demonstrate_datetime_serialization_fix` | Function | `examples/datetime_serialization_fix_example.py` | 19 |
-| `demonstrate_record_creation` | Function | `examples/datetime_serialization_fix_example.py` | 66 |
-| `main` | Function | `examples/datetime_serialization_fix_example.py` | 160 |
-| `example_local_file_storage` | Function | `examples/record_manager_example.py` | 23 |
-| `example_opensearch_storage` | Function | `examples/record_manager_example.py` | 105 |
-| `example_file_operations` | Function | `examples/record_manager_example.py` | 180 |
-| `main` | Function | `examples/record_manager_example.py` | 235 |
-| `test_basic_functionality` | Function | `examples/test_record_manager_simple.py` | 16 |
-| `store_record` | Function | `examples/test_record_manager_simple.py` | 64 |
-| `get_record` | Function | `examples/test_record_manager_simple.py` | 74 |
-| `list_records` | Function | `examples/test_record_manager_simple.py` | 94 |
-| `test_error_handling` | Function | `examples/test_record_manager_simple.py` | 116 |
-| `test_no_backend` | Function | `examples/test_record_manager_simple.py` | 124 |
-| `config_create` | Function | `src/metagit/cli/commands/config.py` | 125 |
-| `create_metagit_config` | Function | `src/metagit/core/config/manager.py` | 183 |
 | `main` | Function | `examples/enhanced_fuzzyfinder_demo.py` | 17 |
 | `create_sample_files` | Function | `examples/fuzzyfinder_comprehensive_test.py` | 49 |
 | `run_fuzzyfinder_test` | Function | `examples/fuzzyfinder_comprehensive_test.py` | 175 |
 | `main` | Function | `examples/fuzzyfinder_comprehensive_test.py` | 201 |
 | `test_fuzzyfindertarget_with_colors` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 22 |
+| `test_mixed_object_types` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 105 |
+| `test_priority_demonstration` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 172 |
+| `test_string_items_with_colors` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 232 |
+| `test_object_items_with_colors` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 286 |
+| `test_mixed_color_formats` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 347 |
+| `test_preview_with_colors` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 391 |
+| `test_fuzzyfindertarget_with_preview` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 461 |
+| `main` | Function | `examples/fuzzyfinder_custom_colors_demo.py` | 529 |
+| `main` | Function | `examples/fuzzyfinder_debug_test.py` | 16 |
+| `create_sample_project_files` | Function | `examples/fuzzyfinder_preview_test.py` | 34 |
+| `main` | Function | `examples/fuzzyfinder_preview_test.py` | 156 |
+| `main` | Function | `examples/fuzzyfinder_simple_colors.py` | 15 |
+| `create_sample_strings` | Function | `examples/fuzzyfinder_simple_test.py` | 17 |
+| `main` | Function | `examples/fuzzyfinder_simple_test.py` | 57 |
+| `create_sample_local_directory` | Function | `examples/gitcache_example.py` | 15 |
 
 ## Execution Flows
 
@@ -84,15 +84,14 @@ Start here when exploring this area:
 | Area | Connections |
 |------|-------------|
 | Gitcache | 11 calls |
-| Commands | 7 calls |
-| Cli | 4 calls |
+| Cli | 3 calls |
 | Tests | 1 calls |
 | Detect | 1 calls |
-| Config | 1 calls |
+| Commands | 1 calls |
 | Providers | 1 calls |
 
 ## How to Explore
 
-1. `gitnexus_context({name: "demonstrate_datetime_serialization_fix"})` — see callers and callees
+1. `gitnexus_context({name: "main"})` — see callers and callees
 2. `gitnexus_query({query: "examples"})` — find related execution flows
 3. Read key files listed above for implementation details

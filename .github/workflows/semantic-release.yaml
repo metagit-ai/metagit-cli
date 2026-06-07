@@ -113,6 +113,46 @@ jobs:
             echo "tag_exists=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Install uv
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Promote changelog and write release notes
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        id: changelog
+        run: |
+          PREV_TAG=${{ steps.prev_tag.outputs.tag }}
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          RANGE=""
+          if git rev-parse "$PREV_TAG" >/dev/null 2>&1; then
+            RANGE="$PREV_TAG..HEAD"
+          fi
+
+          uv venv
+          uv pip install -e .
+          uv run python scripts/release_changelog.py \
+            --version "$NEW_VERSION" \
+            --range "$RANGE" \
+            --body-out /tmp/release_body.md
+
+          {
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${NEW_VERSION}"
+          } >> /tmp/release_body.md
+
+      - name: Commit promoted changelog
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "No changelog promotion changes to commit"
+          else
+            git commit -m "chore: promote CHANGELOG for ${{ steps.version.outputs.new_version }}"
+            git push origin main
+          fi
+
       - name: Create and push tag
         if: steps.check_tag.outputs.tag_exists == 'false'
         run: |
@@ -120,35 +160,13 @@ jobs:
           git push origin "${{ steps.version.outputs.new_version }}"
           echo "Created and pushed tag: ${{ steps.version.outputs.new_version }}"
 
-      - name: Create Release Notes
-        if: steps.check_tag.outputs.tag_exists == 'false'
-        id: release_notes
-        run: |
-          PREV_TAG=${{ steps.prev_tag.outputs.tag }}
-          NEW_VERSION="${{ steps.version.outputs.new_version }}"
-
-          if git rev-parse "$PREV_TAG" >/dev/null 2>&1; then
-            CHANGELOG=$(git log "$PREV_TAG..HEAD" --pretty=format:"- %s (%h)")
-          else
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)")
-          fi
-
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Create GitHub Release
         if: steps.check_tag.outputs.tag_exists == 'false'
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           tag_name: ${{ steps.version.outputs.new_version }}
           name: Release ${{ steps.version.outputs.new_version }}
-          body: |
-            ## What's Changed
-
-            ${{ steps.release_notes.outputs.changelog }}
-
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.prev_tag.outputs.tag }}...${{ steps.version.outputs.new_version }}
+          body_path: /tmp/release_body.md
           draft: false
           prerelease: false
 

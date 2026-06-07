@@ -12,6 +12,7 @@ nav:
   - 'Development': 'development.md'
   - 'Secrets': 'secrets.analysis.md'
   - 'CLI Reference': 'cli_reference.md'
+  - 'Changelog': 'changelog.md'
   - 'Features':
     - 'Repository Detection': 'repository_detection.md'
     - 'Hermes & org IaC guide': 'hermes-iac-workspace-guide.md'

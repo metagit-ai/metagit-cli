@@ -24,6 +24,8 @@ from metagit.core.mcp.services.workspace_snapshot import WorkspaceSnapshotServic
 from metagit.core.mcp.services.upstream_hints import UpstreamHintService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
+from metagit.core.release.release_check_service import ReleaseCheckService
+from metagit.core.release.upgrade_service import VersionUpgradeService
 from metagit.core.mcp.services.workspace_semantic_search import (
     WorkspaceSemanticSearchService,
 )
@@ -115,6 +117,20 @@ class MetagitMcpRuntime:
                 "additionalProperties": False,
             },
             "metagit_workspace_grep_info": {"type": "object", "properties": {}},
+            "metagit_version_check": {
+                "type": "object",
+                "properties": {
+                    "include_notes": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_version_upgrade": {
+                "type": "object",
+                "properties": {
+                    "apply": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_workspace_semantic_search": {
                 "type": "object",
                 "required": ["query"],
@@ -827,6 +843,16 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_grep_info":
             return WorkspaceSearchService.ripgrep_status()
+
+        if name == "metagit_version_check":
+            include_notes = bool(arguments.get("include_notes", True))
+            result = ReleaseCheckService().check(include_notes=include_notes)
+            return result.model_dump(mode="json")
+
+        if name == "metagit_version_upgrade":
+            apply = bool(arguments.get("apply", False))
+            result = VersionUpgradeService().upgrade(apply=apply)
+            return result.model_dump(mode="json")
 
         if name == "metagit_workspace_semantic_search":
             if not config or not status.root_path:

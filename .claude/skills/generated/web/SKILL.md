@@ -1,17 +1,17 @@
 ---
 name: web
-description: "Skill for the Web area of metagit-cli. 136 symbols across 20 files."
+description: "Skill for the Web area of metagit-cli. 126 symbols across 15 files."
 metadata:
   internal: true
 ---
 # Web
 
-136 symbols | 20 files | Cohesion: 73%
+126 symbols | 15 files | Cohesion: 74%
 
 ## When to Use
 
 - Working with code in `src/`
-- Understanding how repo_select, repo_prune, project_manager_from_app work
+- Understanding how test_remove_workspace_project_when_projects_null, test_ops_objectives_get_post_patch, read_disk_text work
 - Modifying web-related functionality
 
 ## Key Files
@@ -33,22 +33,18 @@ metadata:
 
 Start here when exploring this area:
 
-- **`repo_select`** (Function) — `src/metagit/cli/commands/project_repo.py:43`
-- **`repo_prune`** (Function) — `src/metagit/cli/commands/project_repo.py:403`
-- **`project_manager_from_app`** (Function) — `src/metagit/core/project/manager.py:41`
-- **`open_editor`** (Function) — `src/metagit/core/utils/common.py:89`
+- **`test_remove_workspace_project_when_projects_null`** (Function) — `tests/core/web/test_schema_tree.py:167`
 - **`test_ops_objectives_get_post_patch`** (Function) — `tests/core/web/test_ops_objectives.py:9`
+- **`read_disk_text`** (Function) — `src/metagit/core/web/config_preview.py:19`
+- **`test_disable_optional_field_removes_key`** (Function) — `tests/core/web/test_schema_tree.py:35`
+- **`test_enable_optional_field_adds_default`** (Function) — `tests/core/web/test_schema_tree.py:48`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `repo_select` | Function | `src/metagit/cli/commands/project_repo.py` | 43 |
-| `repo_prune` | Function | `src/metagit/cli/commands/project_repo.py` | 403 |
-| `project_manager_from_app` | Function | `src/metagit/core/project/manager.py` | 41 |
-| `open_editor` | Function | `src/metagit/core/utils/common.py` | 89 |
-| `test_ops_objectives_get_post_patch` | Function | `tests/core/web/test_ops_objectives.py` | 9 |
 | `test_remove_workspace_project_when_projects_null` | Function | `tests/core/web/test_schema_tree.py` | 167 |
+| `test_ops_objectives_get_post_patch` | Function | `tests/core/web/test_ops_objectives.py` | 9 |
 | `read_disk_text` | Function | `src/metagit/core/web/config_preview.py` | 19 |
 | `test_disable_optional_field_removes_key` | Function | `tests/core/web/test_schema_tree.py` | 35 |
 | `test_enable_optional_field_adds_default` | Function | `tests/core/web/test_schema_tree.py` | 48 |
@@ -63,6 +59,10 @@ Start here when exploring this area:
 | `test_patch_metagit_save_true_invalid_op_returns_422_and_does_not_write` | Function | `tests/core/web/test_config_handler.py` | 147 |
 | `test_get_metagit_preview_normalized` | Function | `tests/core/web/test_config_handler.py` | 176 |
 | `test_post_metagit_preview_draft_operations` | Function | `tests/core/web/test_config_handler.py` | 193 |
+| `test_health_endpoint_returns_ok` | Function | `tests/core/web/test_ops_handler.py` | 72 |
+| `test_prune_preview_empty` | Function | `tests/core/web/test_ops_handler.py` | 82 |
+| `test_sync_dry_run_job_completes` | Function | `tests/core/web/test_ops_handler.py` | 96 |
+| `test_open_rejects_unknown_path` | Function | `tests/core/web/test_ops_handler.py` | 125 |
 
 ## Execution Flows
 
@@ -72,28 +72,21 @@ Start here when exploring this area:
 | `Handle → Load_config` | cross_community | 4 |
 | `Handle → _parse_body` | intra_community | 4 |
 | `Handle → _tree_response` | cross_community | 4 |
-| `Repo_prune → Parse_gitignore` | cross_community | 3 |
-| `Repo_prune → Should_ignore_path` | cross_community | 3 |
-| `Preview → Dump_config_dict` | cross_community | 3 |
-| `Repo_select → _build_preview_sections` | cross_community | 3 |
-| `Repo_select → _build_project_repo_summary` | cross_community | 3 |
-| `Repo_select → _append_preview_lines` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Commands | 7 calls |
-| Config | 6 calls |
+| Commands | 10 calls |
 | Api | 5 calls |
 | Context | 5 calls |
+| Config | 5 calls |
 | Agent | 5 calls |
-| Workspace | 4 calls |
-| Cli | 3 calls |
-| Tests | 2 calls |
+| Tests | 1 calls |
+| Appconfig | 1 calls |
 
 ## How to Explore
 
-1. `gitnexus_context({name: "repo_select"})` — see callers and callees
+1. `gitnexus_context({name: "test_remove_workspace_project_when_projects_null"})` — see callers and callees
 2. `gitnexus_query({query: "web"})` — find related execution flows
 3. Read key files listed above for implementation details

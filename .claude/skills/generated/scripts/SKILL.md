@@ -1,24 +1,24 @@
 ---
 name: scripts
-description: "Skill for the Scripts area of metagit-cli. 53 symbols across 13 files."
+description: "Skill for the Scripts area of metagit-cli. 54 symbols across 13 files."
 metadata:
   internal: true
 ---
 # Scripts
 
-53 symbols | 13 files | Cohesion: 98%
+54 symbols | 13 files | Cohesion: 98%
 
 ## When to Use
 
 - Working with code in `scripts/`
-- Understanding how run_step, resolve_manifest_fixture_cmd, resolve_agent_template_fixture_cmd work
+- Understanding how run_step, resolve_manifest_fixture_cmd, resolve_changelog_check_cmd work
 - Modifying scripts-related functionality
 
 ## Key Files
 
 | File | Symbols |
 |------|---------|
-| `scripts/prepush-gate.py` | run_step, resolve_manifest_fixture_cmd, resolve_agent_template_fixture_cmd, resolve_pytest_cmd, _git_lines (+4) |
+| `scripts/prepush-gate.py` | run_step, resolve_manifest_fixture_cmd, resolve_changelog_check_cmd, resolve_agent_template_fixture_cmd, resolve_pytest_cmd (+5) |
 | `skills/metagit-agent-access/scripts/optimize_agent_access.py` | _read_text, _detect_project, _fill_template, _html_comment_block, audit (+2) |
 | `src/metagit/data/skills/metagit-agent-access/scripts/optimize_agent_access.py` | _read_text, _detect_project, _fill_template, _html_comment_block, audit (+2) |
 | `scripts/tag_internal_skills.py` | is_public_skill, find_skill_files, has_internal_metadata, add_internal_metadata, tag_internal_skills (+1) |
@@ -35,9 +35,9 @@ Start here when exploring this area:
 
 - **`run_step`** (Function) — `scripts/prepush-gate.py:12`
 - **`resolve_manifest_fixture_cmd`** (Function) — `scripts/prepush-gate.py:37`
-- **`resolve_agent_template_fixture_cmd`** (Function) — `scripts/prepush-gate.py:43`
-- **`resolve_pytest_cmd`** (Function) — `scripts/prepush-gate.py:49`
-- **`changed_paths_for_security`** (Function) — `scripts/prepush-gate.py:73`
+- **`resolve_changelog_check_cmd`** (Function) — `scripts/prepush-gate.py:43`
+- **`resolve_agent_template_fixture_cmd`** (Function) — `scripts/prepush-gate.py:49`
+- **`resolve_pytest_cmd`** (Function) — `scripts/prepush-gate.py:55`
 
 ## Key Symbols
 
@@ -45,12 +45,13 @@ Start here when exploring this area:
 |--------|------|------|------|
 | `run_step` | Function | `scripts/prepush-gate.py` | 12 |
 | `resolve_manifest_fixture_cmd` | Function | `scripts/prepush-gate.py` | 37 |
-| `resolve_agent_template_fixture_cmd` | Function | `scripts/prepush-gate.py` | 43 |
-| `resolve_pytest_cmd` | Function | `scripts/prepush-gate.py` | 49 |
-| `changed_paths_for_security` | Function | `scripts/prepush-gate.py` | 73 |
-| `security_scan_plan` | Function | `scripts/prepush-gate.py` | 93 |
-| `run_security_scan` | Function | `scripts/prepush-gate.py` | 106 |
-| `main` | Function | `scripts/prepush-gate.py` | 132 |
+| `resolve_changelog_check_cmd` | Function | `scripts/prepush-gate.py` | 43 |
+| `resolve_agent_template_fixture_cmd` | Function | `scripts/prepush-gate.py` | 49 |
+| `resolve_pytest_cmd` | Function | `scripts/prepush-gate.py` | 55 |
+| `changed_paths_for_security` | Function | `scripts/prepush-gate.py` | 79 |
+| `security_scan_plan` | Function | `scripts/prepush-gate.py` | 99 |
+| `run_security_scan` | Function | `scripts/prepush-gate.py` | 112 |
+| `main` | Function | `scripts/prepush-gate.py` | 138 |
 | `audit` | Function | `skills/metagit-agent-access/scripts/optimize_agent_access.py` | 123 |
 | `apply` | Function | `skills/metagit-agent-access/scripts/optimize_agent_access.py` | 137 |
 | `main` | Function | `skills/metagit-agent-access/scripts/optimize_agent_access.py` | 180 |
@@ -62,7 +63,6 @@ Start here when exploring this area:
 | `has_internal_metadata` | Function | `scripts/tag_internal_skills.py` | 44 |
 | `add_internal_metadata` | Function | `scripts/tag_internal_skills.py` | 48 |
 | `tag_internal_skills` | Function | `scripts/tag_internal_skills.py` | 70 |
-| `main` | Function | `scripts/tag_internal_skills.py` | 107 |
 
 ## Execution Flows
 

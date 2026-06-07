@@ -39,6 +39,7 @@ from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
 from metagit.cli.commands.search import search
 from metagit.cli.commands.skills import skills
+from metagit.cli.commands.version_cmd import version_group
 from metagit.cli.commands.web import web
 from metagit.cli.commands.workspace import workspace
 from metagit.core.appconfig import load_config, resolve_agent_mode
@@ -126,14 +127,7 @@ def info(ctx: click.Context) -> None:
     logger.config_element(name="verbose", value=ctx.obj["verbose"], console=True)
 
 
-@cli.command()
-@click.pass_context
-def version(ctx: click.Context) -> None:
-    """Get the application version."""
-    logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
-    logger.config_element(name="version", value=__version__, console=True)
-
-
+cli.add_command(version_group)
 cli.add_command(detect)
 cli.add_command(appconfig)
 cli.add_command(project)

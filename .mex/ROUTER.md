@@ -38,6 +38,9 @@ Then read this file fully before doing anything else in this session.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows, including `metagit-projects` for OpenClaw/Hermes workspace project lifecycle (check-before-create, register in `.metagit.yml`).
 - `docs/skills.md` documents global install, `metagit skills install`, and bundled skill overview.
 - Runtime packaging compatibility path for version lookup and `python -m metagit` entrypoint behavior in minimal Python environments.
+- **Release check for agents:** `metagit version check --json` and MCP `metagit_version_check` compare installed `metagit-cli` to latest GitHub release notes and PyPI (no workspace gate required).
+- **Self-update:** `metagit version upgrade` and MCP `metagit_version_upgrade` detect install method and upgrade from PyPI (`--apply` / `apply: true`; dry-run by default; refuses editable installs).
+- **Changelog pipeline:** root `CHANGELOG.md` is enforced on product diffs (`scripts/validate_changelog.py`), published on the docs site (`/changelog/`), and promoted into GitHub Release notes by semantic-release.
 - Docs build path resolves CLI imports correctly in CI by including interactive prompt runtime dependency.
 - **`task docs:links`** validates markdown links in `README.md` and `docs/**/*.md` via lychee (`scripts/check-doc-links.zsh`, `lychee.toml`); CI runs the same check on Ubuntu in `.github/workflows/test.yaml`. `docs/index.md` is a separate MkDocs home page (not a symlink to README) with docs-relative asset paths.
 - A semantic-release workflow now computes and pushes tags from conventional commits on `main`, and tag pushes drive PyPI/TestPyPI publish workflows.

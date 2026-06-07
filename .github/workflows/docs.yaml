@@ -43,6 +43,9 @@ jobs:
           cp ./schemas/metagit_appconfig.schema.json docs/reference/schemas/metagit_appconfig.schema.json
           uv run metagit config example --output docs/reference/metagit-config.full-example.yml
 
+      - name: Sync changelog into docs
+        run: uv run python scripts/sync_docs_changelog.py
+
       - name: Build docs
         run: mkdocs build --strict
 

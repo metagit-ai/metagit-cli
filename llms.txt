@@ -39,6 +39,8 @@ metagit prompt workspace --kind session-start --text-only
 | Prompts | `metagit prompt list` |
 | Skills | `metagit skills install --scope user` |
 | MCP | `metagit mcp install --scope user` |
+| Latest release / notes | `metagit version check --json` |
+| Self-update | `metagit version upgrade --apply --json` |
 
 ## Bundled skills (after install)
 

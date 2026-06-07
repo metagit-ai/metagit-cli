@@ -1,12 +1,12 @@
 ---
 name: agent
-description: "Skill for the Agent area of metagit-cli. 118 symbols across 17 files."
+description: "Skill for the Agent area of metagit-cli. 119 symbols across 17 files."
 metadata:
   internal: true
 ---
 # Agent
 
-118 symbols | 17 files | Cohesion: 74%
+119 symbols | 17 files | Cohesion: 74%
 
 ## When to Use
 
@@ -23,7 +23,7 @@ metadata:
 | `src/metagit/core/agent/service.py` | init_overlay, template_detail, create, __post_init__, render_template (+10) |
 | `src/metagit/core/agent/dispatch.py` | _build_install, _install_command, build_plan, _validate_scope_inputs, _resolve_project_repo (+7) |
 | `tests/core/agent/test_agent_service.py` | test_create_writes_claude_code_agent, test_create_refuses_overwrite_without_force, test_create_hermes_installs_skill, test_create_opencode_uses_subagent_frontmatter, test_create_cursor_agent (+6) |
-| `tests/core/agent/test_agent_overlay.py` | _write_manifest_root, test_init_overlay_committed_default_path, test_init_overlay_local_path, test_local_overlay_overrides_committed_manifest, test_init_overlay_refuses_without_force (+2) |
+| `tests/core/agent/test_agent_overlay.py` | _normalize_path_text, _write_manifest_root, test_init_overlay_committed_default_path, test_init_overlay_local_path, test_local_overlay_overrides_committed_manifest (+3) |
 | `tests/core/agent/test_agent_dispatch.py` | _workspace_manifest, test_dispatch_plan_repo_implementer_handoff, test_dispatch_plan_detects_installed_artifact, test_dispatch_plan_requires_repo_scope_inputs, test_dispatch_plan_cli_json (+2) |
 | `src/metagit/core/agent/paths.py` | expand_agent_path, autodetect_agent_targets, resolve_skills_directory, resolve_agents_directory, resolve_vendor_artifact_path |
 | `src/metagit/core/init/prompts.py` | load_answers_file, build_builtin_defaults, resolve_prompt_default, collect_answers |
@@ -33,11 +33,11 @@ metadata:
 
 Start here when exploring this area:
 
-- **`test_init_overlay_committed_default_path`** (Function) — `tests/core/agent/test_agent_overlay.py:26`
-- **`test_init_overlay_local_path`** (Function) — `tests/core/agent/test_agent_overlay.py:47`
-- **`test_local_overlay_overrides_committed_manifest`** (Function) — `tests/core/agent/test_agent_overlay.py:66`
-- **`test_init_overlay_refuses_without_force`** (Function) — `tests/core/agent/test_agent_overlay.py:105`
-- **`test_cli_overlay_init_committed`** (Function) — `tests/core/agent/test_agent_overlay.py:122`
+- **`test_init_overlay_committed_default_path`** (Function) — `tests/core/agent/test_agent_overlay.py:33`
+- **`test_init_overlay_local_path`** (Function) — `tests/core/agent/test_agent_overlay.py:55`
+- **`test_local_overlay_overrides_committed_manifest`** (Function) — `tests/core/agent/test_agent_overlay.py:75`
+- **`test_init_overlay_refuses_without_force`** (Function) — `tests/core/agent/test_agent_overlay.py:114`
+- **`test_cli_overlay_init_committed`** (Function) — `tests/core/agent/test_agent_overlay.py:131`
 
 ## Key Symbols
 
@@ -45,12 +45,12 @@ Start here when exploring this area:
 |--------|------|------|------|
 | `AgentTemplateRenderer` | Class | `src/metagit/core/agent/renderer.py` | 16 |
 | `InitTemplateRenderer` | Class | `src/metagit/core/init/renderer.py` | 44 |
-| `test_init_overlay_committed_default_path` | Function | `tests/core/agent/test_agent_overlay.py` | 26 |
-| `test_init_overlay_local_path` | Function | `tests/core/agent/test_agent_overlay.py` | 47 |
-| `test_local_overlay_overrides_committed_manifest` | Function | `tests/core/agent/test_agent_overlay.py` | 66 |
-| `test_init_overlay_refuses_without_force` | Function | `tests/core/agent/test_agent_overlay.py` | 105 |
-| `test_cli_overlay_init_committed` | Function | `tests/core/agent/test_agent_overlay.py` | 122 |
-| `test_service_init_overlay_merged_source` | Function | `tests/core/agent/test_agent_overlay.py` | 142 |
+| `test_init_overlay_committed_default_path` | Function | `tests/core/agent/test_agent_overlay.py` | 33 |
+| `test_init_overlay_local_path` | Function | `tests/core/agent/test_agent_overlay.py` | 55 |
+| `test_local_overlay_overrides_committed_manifest` | Function | `tests/core/agent/test_agent_overlay.py` | 75 |
+| `test_init_overlay_refuses_without_force` | Function | `tests/core/agent/test_agent_overlay.py` | 114 |
+| `test_cli_overlay_init_committed` | Function | `tests/core/agent/test_agent_overlay.py` | 131 |
+| `test_service_init_overlay_merged_source` | Function | `tests/core/agent/test_agent_overlay.py` | 160 |
 | `agent_show` | Function | `src/metagit/cli/commands/agent.py` | 95 |
 | `overlay_template_dir` | Function | `src/metagit/core/agent/overlay.py` | 231 |
 | `resolve_template_source` | Function | `src/metagit/core/agent/overlay.py` | 316 |
@@ -85,8 +85,8 @@ Start here when exploring this area:
 |------|-------------|
 | Mcp | 2 calls |
 | Web | 2 calls |
-| Skills | 2 calls |
 | Commands | 2 calls |
+| Skills | 2 calls |
 | Init | 1 calls |
 
 ## How to Explore

@@ -217,6 +217,94 @@ def test_tools_call_workspace_grep_info_returns_backend(tmp_path: Path) -> None:
     assert payload["search_backend"] in {"ripgrep", "python_walk"}
 
 
+def test_tools_call_version_check_returns_structured_payload(
+    tmp_path: Path, monkeypatch: object
+) -> None:
+    from datetime import datetime, timezone
+    from unittest.mock import MagicMock
+
+    from metagit.core.release.models import LatestReleaseInfo, VersionCheckResult
+
+    fake_result = VersionCheckResult(
+        installed_version="1.0.0",
+        latest_release=LatestReleaseInfo(
+            version="2.0.0",
+            tag_name="v2.0.0",
+            published_at=datetime(2026, 5, 1, tzinfo=timezone.utc),
+            html_url="https://github.com/metagit-ai/metagit-cli/releases/tag/v2.0.0",
+            body="notes",
+            source="github",
+        ),
+        pypi_version="2.0.0",
+        update_available=True,
+        is_latest=False,
+    )
+    fake_service = MagicMock()
+    fake_service.check.return_value = fake_result
+    monkeypatch.setattr(
+        "metagit.core.mcp.runtime.ReleaseCheckService",
+        lambda *args, **kwargs: fake_service,
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_version_check",
+                "arguments": {"include_notes": True},
+            },
+        }
+    )
+
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["installed_version"] == "1.0.0"
+    assert payload["latest_release"]["version"] == "2.0.0"
+    assert payload["update_available"] is True
+    fake_service.check.assert_called_once_with(include_notes=True)
+
+
+def test_tools_call_version_upgrade_dry_run_by_default(
+    tmp_path: Path, monkeypatch: object
+) -> None:
+    from unittest.mock import MagicMock
+
+    from metagit.core.release.models import VersionCheckResult, VersionUpgradeResult
+
+    fake_result = VersionUpgradeResult(
+        ok=True,
+        dry_run=True,
+        install_method="uv_tool",
+        command="uv tool upgrade metagit-cli",
+        check=VersionCheckResult(installed_version="1.0.0"),
+        message="dry-run",
+    )
+    fake_service = MagicMock()
+    fake_service.upgrade.return_value = fake_result
+    monkeypatch.setattr(
+        "metagit.core.mcp.runtime.VersionUpgradeService",
+        lambda *args, **kwargs: fake_service,
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "method": "tools/call",
+            "params": {"name": "metagit_version_upgrade", "arguments": {}},
+        }
+    )
+
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["dry_run"] is True
+    fake_service.upgrade.assert_called_once_with(apply=False)
+
+
 def test_tools_list_includes_repo_search_for_active_workspace(tmp_path: Path) -> None:
     (tmp_path / ".metagit.yml").write_text(
         "\n".join(

@@ -51,6 +51,10 @@ jobs:
         uses: lycheeverse/lychee-action@7cd0af4c74a61395d455af97419279d86aafaede # v2.0.2
         with:
           args: --config lychee.toml README.md 'docs/**/*.md'
+
+      - name: Validate changelog updates
+        if: matrix.os == 'ubuntu-latest'
+        run: uv run python scripts/validate_changelog.py
       # - name: Type Checking
       #   if: matrix.os != 'windows-latest'
       #   run: |

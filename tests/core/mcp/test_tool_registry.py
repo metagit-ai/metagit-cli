@@ -20,6 +20,8 @@ def test_inactive_registry_exposes_only_safe_tools() -> None:
     assert tools == [
         "metagit_workspace_status",
         "metagit_bootstrap_config_plan_only",
+        "metagit_version_check",
+        "metagit_version_upgrade",
     ]
 
 
@@ -53,4 +55,8 @@ def test_active_registry_exposes_full_toolset() -> None:
     assert "metagit_workspace_semantic_search" in tools
     assert "metagit_workspace_discover" in tools
     assert "metagit_project_template_apply" in tools
+    assert "metagit_agent_catalog" in tools
+    assert "metagit_agent_dispatch_plan" in tools
+    assert "metagit_version_check" in tools
+    assert "metagit_version_upgrade" in tools
     assert "metagit_bootstrap_config_plan_only" not in tools
