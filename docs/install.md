@@ -27,6 +27,13 @@ Upgrade later:
 uv tool install -U metagit-cli
 ```
 
+Or let Metagit upgrade itself (dry-run by default):
+
+```bash
+metagit version upgrade
+metagit version upgrade --apply
+```
+
 Verify:
 
 ```bash

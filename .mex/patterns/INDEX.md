@@ -31,6 +31,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [mcp-cross-project-dependencies.md](mcp-cross-project-dependencies.md) | Cross-project dependency graph MCP tool and collectors |
 | [metagit-web-api.md](metagit-web-api.md) | Adding or changing Pydantic models and routes for `metagit web serve` |
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |
+| [changelog-release.md](changelog-release.md) | Updating `CHANGELOG.md`, docs publishing, and semantic-release note promotion |
 | [context-pack-repo-cards.md](context-pack-repo-cards.md) | Tier-1 context pack repo cards (`RepoCardService`, index + `inspect_repo_state`) |
 | [optimize-agent-access.md](optimize-agent-access.md) | Scaffold llms.txt, AGENTS.md, hidden README agent HTML via `metagit-agent-access` skill |
 | [debug-mcp-runtime.md](debug-mcp-runtime.md) | Diagnosing MCP runtime protocol, framing, gating, and tool/resource failures |

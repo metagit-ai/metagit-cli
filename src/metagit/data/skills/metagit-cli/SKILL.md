@@ -362,8 +362,13 @@ metagit skills list
 metagit skills show metagit-cli
 metagit skills install --skill metagit-cli
 metagit version
+metagit version check --json
+metagit version upgrade --json
+metagit version upgrade --apply --json
 metagit info
 ```
+
+`version check` compares the installed package to the latest GitHub release (release notes) and PyPI. `version upgrade` plans or runs a self-update via the detected package manager (`uv tool upgrade metagit-cli` when installed with `uv tool`). Default is dry-run; pass `--apply` to execute. MCP: `metagit_version_check`, `metagit_version_upgrade` (`apply: true` to upgrade). Both work without an active workspace gate. Editable dev installs cannot self-update.
 
 ---
 

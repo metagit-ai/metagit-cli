@@ -12,6 +12,8 @@ class ToolRegistry:
     _inactive_tools: list[str] = [
         "metagit_workspace_status",
         "metagit_bootstrap_config_plan_only",
+        "metagit_version_check",
+        "metagit_version_upgrade",
     ]
     _active_tools: list[str] = [
         "metagit_workspace_status",
@@ -51,6 +53,8 @@ class ToolRegistry:
         "metagit_workspace_repo_rename",
         "metagit_workspace_repo_move",
         "metagit_project_template_apply",
+        "metagit_version_check",
+        "metagit_version_upgrade",
     ]
 
     def list_tools(self, status: WorkspaceStatus) -> list[str]:

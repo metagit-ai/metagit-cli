@@ -155,6 +155,7 @@ tasks:
     desc: Build the docs
     cmds:
       - task: generate:schema
+      - uv run python scripts/sync_docs_changelog.py
       - |
         uv pip install -e ".[docs]"
         #gemini -y -p 'You are an expert devops and software engineer. Explore this project for its use of secrets and variables paying special attention to only those affecting the runtime behavior of the code and the cicd workflows used to release the projects artifacts. Create a report in ./docs/secrets.analysis.md on each of the secrets found and were they are sourced from. Using this data create a yaml file at ./docs/secrets.definitions.yml that represents the secrets, their provenance, and where they should be placed.'

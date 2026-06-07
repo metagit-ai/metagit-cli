@@ -41,6 +41,12 @@ def resolve_manifest_fixture_cmd() -> list[str]:
     return [sys.executable, "scripts/validate-manifest-fixtures.py"]
 
 
+def resolve_changelog_check_cmd() -> list[str]:
+    if shutil.which("uv"):
+        return ["uv", "run", "python", "scripts/validate_changelog.py"]
+    return [sys.executable, "scripts/validate_changelog.py"]
+
+
 def resolve_pytest_cmd() -> list[str]:
     if shutil.which("uv"):
         return ["uv", "run", "pytest", "tests/integration", "-v"]
@@ -155,6 +161,11 @@ def main() -> int:
         failed |= not run_step(
             "manifest_fixtures",
             resolve_manifest_fixture_cmd(),
+            logs_dir,
+        )
+        failed |= not run_step(
+            "changelog_check",
+            resolve_changelog_check_cmd(),
             logs_dir,
         )
         failed |= not run_step("unit_tests", ["task", "test"], logs_dir)

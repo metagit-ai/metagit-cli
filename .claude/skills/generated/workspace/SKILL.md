@@ -1,11 +1,11 @@
 ---
 name: workspace
-description: "Skill for the Workspace area of metagit-cli. 98 symbols across 25 files."
+description: "Skill for the Workspace area of metagit-cli. 99 symbols across 25 files."
 ---
 
 # Workspace
 
-98 symbols | 25 files | Cohesion: 78%
+99 symbols | 25 files | Cohesion: 78%
 
 ## When to Use
 
@@ -56,12 +56,12 @@ Start here when exploring this area:
 | `test_add_project_ensure_noop` | Function | `tests/core/workspace/test_catalog_service.py` | 194 |
 | `test_remove_protected_project_requires_force` | Function | `tests/core/workspace/test_workspace_project_protected.py` | 26 |
 | `test_add_repo_to_protected_project_requires_force` | Function | `tests/core/workspace/test_workspace_project_protected.py` | 36 |
-| `create_vscode_workspace` | Function | `src/metagit/core/utils/common.py` | 34 |
+| `workspace_repo_add` | Function | `src/metagit/cli/commands/workspace.py` | 361 |
 | `test_add_and_remove_repo` | Function | `tests/core/workspace/test_catalog_service.py` | 59 |
 | `test_add_repo_rejects_duplicate_identity` | Function | `tests/core/workspace/test_catalog_service.py` | 93 |
 | `test_add_repo_ensure_noop_when_matching` | Function | `tests/core/workspace/test_catalog_service.py` | 129 |
 | `test_add_repo_ensure_conflict_on_url_mismatch` | Function | `tests/core/workspace/test_catalog_service.py` | 161 |
-| `collect_file_copy_jobs` | Function | `src/metagit/core/workspace/hydrate.py` | 15 |
+| `create_vscode_workspace` | Function | `src/metagit/core/utils/common.py` | 34 |
 
 ## Execution Flows
 
@@ -83,7 +83,7 @@ Start here when exploring this area:
 | Area | Connections |
 |------|-------------|
 | Config | 8 calls |
-| Commands | 6 calls |
+| Commands | 8 calls |
 | Services | 3 calls |
 | Tests | 1 calls |
 | Providers | 1 calls |

@@ -10,6 +10,7 @@ Compact guide for agents told to install and use **Metagit** across Git reposito
 uv tool install metagit-cli
 export METAGIT_AGENT_MODE=true   # non-interactive CLI (no fuzzy finder / prompts)
 metagit version
+metagit version check --json
 ```
 
 Optional — install bundled playbooks into your agent host:
@@ -52,6 +53,9 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Update objective (merge) | `echo '{"id":"…","status":"in_progress","notes":"progress"}' \| metagit context objective set` — title/repos optional when id exists |
 | Request approval (CLI) | `echo '{"action":"repo_sync","requested_by":"agent","payload":{}}' \| metagit context approval request` |
 | List pending approvals | `metagit context approval list --json` |
+| Installed vs latest release | `metagit version check --json` |
+| Self-update (dry-run) | `metagit version upgrade --json` |
+| Self-update (apply) | `metagit version upgrade --apply --json` |
 
 Set `--definition path/to/.metagit.yml` when not in the manifest repo root.
 
@@ -79,6 +83,8 @@ metagit prompt project --kind sync-safe --project myproj --text-only
 | `METAGIT_AGENT_MODE=true` | Gate active (valid `.metagit.yml` in workspace) |
 
 Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_repo_search`, `metagit_workspace_search`, `metagit_workspace_grep_info`, `metagit_workspace_discover`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`.
+
+`metagit_version_check` and `metagit_version_upgrade` are available even when the workspace gate is inactive. Use `version check` (or `metagit_version_check`) to compare against the latest GitHub release and PyPI. Use `version upgrade` (or `metagit_version_upgrade` with `apply: true`) to run the detected package-manager upgrade (`uv tool upgrade metagit-cli` by default). Upgrades default to dry-run; pass `--apply` or `apply: true` explicitly.
 
 Start MCP: `metagit mcp serve` (stdio). Install config: `metagit mcp install --scope user`.
 

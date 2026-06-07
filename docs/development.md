@@ -24,12 +24,19 @@ Use source sync to discover repositories from GitHub/GitLab and plan/apply works
 - Additive apply: `metagit project source sync --provider github --org <org> --mode additive --apply`
 - Reconcile apply: `metagit project source sync --provider gitlab --group <group> --mode reconcile --apply --yes`
 
+## Changelog and releases
+
+- Maintain user-facing changes under `## Unreleased` in root `CHANGELOG.md`.
+- `task qa:prepush` and CI run `scripts/validate_changelog.py` when `src/`, `schemas/`, or `web/` change. Set `SKIP_CHANGELOG_CHECK=1` to bypass locally.
+- The docs site publishes the same file at `/changelog/` — `task docs` and the docs workflow sync `CHANGELOG.md` into `docs/changelog.md` before `mkdocs build`.
+
 ## Semantic Release Tags
 
-`release-please` runs on merges to `main` and uses conventional commit prefixes to prepare/version releases.
+`.github/workflows/semantic-release.yaml` runs on merges to `main` and uses conventional commit prefixes to compute the next version.
 
-- It opens/updates a release PR with computed next version + changelog.
-- When that PR is merged, it creates the semantic tag (`vX.Y.Z`) and GitHub release.
+- Promotes `## Unreleased` into a dated version section in `CHANGELOG.md`, commits to `main`, then tags.
+- GitHub Release notes use the promoted changelog body (commit-log fallback only when `Unreleased` is empty).
+- Release automation is deterministic (no LLM). GitHub Copilot AI credits are not a free pipeline for custom workflows; they meter Copilot Chat/agents/review features instead.
 
 - `fix:` -> patch release (`X.Y.Z+1`) **default for most updates**
 - `feat:` -> minor release (`X.Y+1.0`)
