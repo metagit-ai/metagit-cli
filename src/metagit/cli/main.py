@@ -23,10 +23,12 @@ from pathlib import Path
 import click
 
 from metagit import DEFAULT_CONFIG, __version__
+from metagit.cli.commands.agent import agent
 from metagit.cli.commands.api import api
 from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.completion_cmd import completion_group
 from metagit.cli.commands.fmt import fmt_cmd
+from metagit.cli.commands.gitnexus import gitnexus
 from metagit.cli.commands.config import config
 from metagit.cli.commands.context import context
 from metagit.cli.commands.detect import detect
@@ -133,8 +135,10 @@ cli.add_command(workspace)
 cli.add_command(config)
 cli.add_command(record)
 cli.add_command(skills)
+cli.add_command(agent)
 cli.add_command(init)
 cli.add_command(mcp)
+cli.add_command(gitnexus)
 cli.add_command(api)
 cli.add_command(web)
 cli.add_command(search)

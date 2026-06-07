@@ -1,8 +1,9 @@
 ---
 name: record
 description: "Skill for the Record area of metagit-cli. 26 symbols across 4 files."
+metadata:
+  internal: true
 ---
-
 # Record
 
 26 symbols | 4 files | Cohesion: 100%

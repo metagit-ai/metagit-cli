@@ -1,8 +1,9 @@
 ---
 name: metagit-control-center
 description: Use when running metagit as an MCP control center for multi-repo awareness, guarded sync, and operational knowledge across ongoing agent tasks.
+metadata:
+  internal: true
 ---
-
 # Metagit Control Center Skill
 
 Use this skill when an agent should actively coordinate repository context and task execution across a workspace.

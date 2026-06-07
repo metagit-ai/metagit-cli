@@ -33,6 +33,9 @@ class ToolRegistry:
         "metagit_session_update",
         "metagit_cross_project_dependencies",
         "metagit_export_workspace_graph_cypher",
+        "metagit_suggest_graph_relationships",
+        "metagit_apply_graph_relationships",
+        "metagit_gitnexus_group_sync",
         "metagit_workspace_health_check",
         "metagit_context_pack",
         "metagit_objective_list",
@@ -53,6 +56,8 @@ class ToolRegistry:
         "metagit_workspace_repo_rename",
         "metagit_workspace_repo_move",
         "metagit_project_template_apply",
+        "metagit_agent_catalog",
+        "metagit_agent_dispatch_plan",
         "metagit_version_check",
         "metagit_version_upgrade",
     ]

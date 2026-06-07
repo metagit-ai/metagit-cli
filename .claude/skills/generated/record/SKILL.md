@@ -1,8 +1,9 @@
 ---
 name: record
 description: "Skill for the Record area of metagit-cli. 30 symbols across 5 files."
+metadata:
+  internal: true
 ---
-
 # Record
 
 30 symbols | 5 files | Cohesion: 89%
@@ -63,8 +64,6 @@ Start here when exploring this area:
 | Flow | Type | Steps |
 |------|------|-------|
 | `Main → _convert_model_data` | intra_community | 3 |
-| `Main → _get_common_fields` | intra_community | 3 |
-| `Main → _convert_model_data` | cross_community | 3 |
 
 ## Connected Areas
 

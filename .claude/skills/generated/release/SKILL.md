@@ -1,8 +1,9 @@
 ---
 name: release
 description: "Skill for the Release area of metagit-cli. 36 symbols across 7 files."
+metadata:
+  internal: true
 ---
-
 # Release
 
 36 symbols | 7 files | Cohesion: 74%

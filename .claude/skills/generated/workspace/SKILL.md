@@ -1,8 +1,9 @@
 ---
 name: workspace
 description: "Skill for the Workspace area of metagit-cli. 99 symbols across 25 files."
+metadata:
+  internal: true
 ---
-
 # Workspace
 
 99 symbols | 25 files | Cohesion: 78%

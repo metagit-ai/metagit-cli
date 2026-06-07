@@ -1,0 +1,77 @@
+schema_version: "1.0"
+id: iac-coordinator
+label: IaC coordinator
+description: |
+  Control-plane agent for platform/IaC documentation, multi-repo coordination, and infrastructure project focus.
+archetype: control_plane
+scope: workspace
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - session-start
+  - catalog-edit
+  - sync-safe
+mcp_tools:
+  - metagit_project_context_switch
+  - metagit_workspace_health_check
+  - metagit_gitnexus_group_sync
+delegates_to:
+  - repo-implementer
+  - graph-curator
+  - catalog-bootstrapper
+delegated_by:
+  - orchestration-overseer
+ui:
+  category: Control plane
+  sort_order: 15
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-control-center
+  - metagit-multi-repo
+  - metagit-gitnexus
+  - metagit-cli
+vendors:
+  claude_code:
+    filename: iac-coordinator.md
+  cursor:
+    filename: iac-coordinator.md
+    template: iac-coordinator.cursor.md.tpl
+  github_copilot:
+    filename: iac-coordinator.agent.md
+    template: iac-coordinator.github-copilot.agent.md.tpl
+  hermes:
+    filename: iac-coordinator
+    install_as: skill
+    template: iac-coordinator.skill.md.tpl
+  openclaw:
+    filename: iac-coordinator
+    install_as: skill
+    template: iac-coordinator.skill.md.tpl
+  opencode:
+    filename: iac-coordinator.md
+    template: iac-coordinator.opencode.md.tpl
+  windsurf:
+    filename: iac-coordinator
+    install_as: skill
+    template: iac-coordinator.skill.md.tpl
+  codex:
+    filename: iac-coordinator
+    install_as: skill
+    template: iac-coordinator.skill.md.tpl
+files:
+  - template: iac-coordinator.md.tpl
+    output: iac-coordinator.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

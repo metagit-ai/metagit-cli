@@ -4,8 +4,9 @@ description: >-
   Token-efficient workspace onboarding via tiered context packs — map, repo cards,
   session digest, objectives, approvals, repomix profiles. Use at session start or
   when scoping work in a metagit-managed workspace.
+metadata:
+  internal: true
 ---
-
 # Metagit context packs
 
 Use this skill for the **most token-efficient** way to onboard into a metagit workspace.

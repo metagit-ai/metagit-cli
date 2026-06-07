@@ -1,8 +1,9 @@
 ---
 name: metagit-cli
 description: CLI-only shortcuts for metagit agents — workspace catalog, discovery, prompts, sync, layout, and config. Use instead of MCP or HTTP API when operating from a shell or agent_mode session.
+metadata:
+  internal: true
 ---
-
 # Metagit CLI (agent shortcuts)
 
 Use this skill when an agent should drive metagit **only through the `metagit` command**. Do not call MCP tools or `metagit api` from workflows covered here unless the user explicitly asks.

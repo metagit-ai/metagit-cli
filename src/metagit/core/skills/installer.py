@@ -24,7 +24,10 @@ SUPPORTED_TARGETS = [
     "hermes",
     "openclaw",
     "claude_code",
+    "cursor",
     "github_copilot",
+    "windsurf",
+    "codex",
 ]
 
 
@@ -37,6 +40,14 @@ class TargetPaths(BaseModel):
     user_skills_path: str = Field(..., description="User-global skills destination")
     project_mcp_path: str = Field(..., description="Project-local MCP config path")
     user_mcp_path: str = Field(..., description="User-global MCP config path")
+    project_mcp_root_key: str = Field(
+        default="mcpServers",
+        description="JSON root key for project-scope MCP config",
+    )
+    user_mcp_root_key: str = Field(
+        default="mcpServers",
+        description="JSON root key for user-scope MCP config",
+    )
 
 
 class InstallResult(BaseModel):
@@ -78,11 +89,31 @@ TARGET_PATHS: Dict[str, TargetPaths] = {
         project_mcp_path=".claude/mcp.json",
         user_mcp_path="~/.claude/mcp.json",
     ),
+    "cursor": TargetPaths(
+        project_skills_path=".cursor/skills",
+        user_skills_path="~/.cursor/skills",
+        project_mcp_path=".cursor/mcp.json",
+        user_mcp_path="~/.cursor/mcp.json",
+    ),
     "github_copilot": TargetPaths(
-        project_skills_path=".github/copilot/skills",
-        user_skills_path="~/.config/github-copilot/skills",
-        project_mcp_path=".github/copilot/mcp.json",
-        user_mcp_path="~/.config/github-copilot/mcp.json",
+        project_skills_path=".github/skills",
+        user_skills_path="~/.copilot/skills",
+        project_mcp_path=".vscode/mcp.json",
+        user_mcp_path="~/.copilot/mcp-config.json",
+        project_mcp_root_key="servers",
+        user_mcp_root_key="mcpServers",
+    ),
+    "windsurf": TargetPaths(
+        project_skills_path=".windsurf/skills",
+        user_skills_path="~/.codeium/windsurf/skills",
+        project_mcp_path=".windsurf/mcp_config.json",
+        user_mcp_path="~/.codeium/windsurf/mcp_config.json",
+    ),
+    "codex": TargetPaths(
+        project_skills_path=".agents/skills",
+        user_skills_path="~/.agents/skills",
+        project_mcp_path=".codex/mcp.json",
+        user_mcp_path="~/.codex/mcp.json",
     ),
 }
 
@@ -258,14 +289,19 @@ def install_mcp_for_targets(
         config_data = _read_json_with_comments(config_path)
         if not isinstance(config_data, dict):
             config_data = {}
-        mcp_servers = config_data.get("mcpServers")
+        root_key = (
+            target_paths.project_mcp_root_key
+            if scope == "project"
+            else target_paths.user_mcp_root_key
+        )
+        mcp_servers = config_data.get(root_key)
         if not isinstance(mcp_servers, dict):
             mcp_servers = {}
         mcp_servers[server_name] = {
             "command": "uvx",
             "args": ["metagit-cli", "mcp", "serve"],
         }
-        config_data["mcpServers"] = mcp_servers
+        config_data[root_key] = mcp_servers
         config_path.write_text(
             json.dumps(config_data, indent=2, sort_keys=False) + "\n",
             encoding="utf-8",

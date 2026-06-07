@@ -22,6 +22,8 @@ PromptKind = Literal[
     "layout-change",
     "repo-enrich",
     "context-pack",
+    "graph-discover",
+    "graph-maintain",
 ]
 
 

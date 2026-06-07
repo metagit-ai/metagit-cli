@@ -1,8 +1,9 @@
 ---
 name: metagit-workspace-scope
 description: Discover active metagit workspace scope, project boundaries, and repository status. Use when an agent starts work in a multi-repo workspace and needs fast, scoped context before editing.
+metadata:
+  internal: true
 ---
-
 # Discovering Workspace Scope
 
 Use this skill at session start for workspace-aware tasks. Prefer **`metagit-context-pack`**

@@ -1,8 +1,9 @@
 ---
 name: scripts
 description: "Skill for the Scripts area of metagit-cli. 28 symbols across 5 files."
+metadata:
+  internal: true
 ---
-
 # Scripts
 
 28 symbols | 5 files | Cohesion: 100%

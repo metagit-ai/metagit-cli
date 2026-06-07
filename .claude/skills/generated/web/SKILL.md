@@ -1,11 +1,12 @@
 ---
 name: web
-description: "Skill for the Web area of metagit-cli. 119 symbols across 15 files."
+description: "Skill for the Web area of metagit-cli. 126 symbols across 15 files."
+metadata:
+  internal: true
 ---
-
 # Web
 
-119 symbols | 15 files | Cohesion: 73%
+126 symbols | 15 files | Cohesion: 74%
 
 ## When to Use
 
@@ -23,10 +24,10 @@ description: "Skill for the Web area of metagit-cli. 119 symbols across 15 files
 | `tests/core/web/test_schema_tree.py` | test_remove_workspace_project_when_projects_null, test_disable_optional_field_removes_key, test_enable_optional_field_adds_default, test_set_field_updates_value, test_apply_operations_returns_original_instance_on_validation_error (+8) |
 | `tests/core/web/test_config_handler.py` | _start_server, _patch_json, test_get_metagit_config_tree, test_patch_metagit_set_name_without_save, test_patch_metagit_set_name_with_save (+3) |
 | `tests/core/web/test_ops_handler.py` | _start_server, _post_json, test_health_endpoint_returns_ok, test_prune_preview_empty, test_sync_dry_run_job_completes (+2) |
+| `src/metagit/core/web/agent_handler.py` | handle, _service, _respond_catalog, _respond_preview, _respond_dispatch_plan (+2) |
 | `src/metagit/core/web/job_store.py` | create_job, append_event, drain_events, mark_running, complete (+2) |
 | `src/metagit/core/web/server.py` | do_GET, do_PATCH, do_POST, do_DELETE, _dispatch (+1) |
-| `src/metagit/core/web/static_handler.py` | handle, _resolve_file, _send_file, is_api_path |
-| `src/metagit/core/web/config_preview.py` | read_disk_text, redact_secrets, render_metagit_yaml, render_appconfig_yaml |
+| `tests/core/web/test_agent_web.py` | _start_server, test_agent_catalog_route, test_agent_overlay_init_route, test_agent_dispatch_plan_route, test_agent_preview_route |
 
 ## Entry Points
 
@@ -71,19 +72,17 @@ Start here when exploring this area:
 | `Handle → Load_config` | cross_community | 4 |
 | `Handle → _parse_body` | intra_community | 4 |
 | `Handle → _tree_response` | cross_community | 4 |
-| `Preview → Dump_config_dict` | cross_community | 3 |
-| `Appconfig_show → Dump_config_dict` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Commands | 9 calls |
-| Config | 6 calls |
+| Commands | 10 calls |
 | Api | 5 calls |
 | Context | 5 calls |
+| Config | 5 calls |
+| Agent | 5 calls |
 | Tests | 1 calls |
-| Project | 1 calls |
 | Appconfig | 1 calls |
 
 ## How to Explore

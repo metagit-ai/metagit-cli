@@ -1,8 +1,9 @@
 ---
 name: tests
 description: "Skill for the Tests area of metagit-cli. 39 symbols across 17 files."
+metadata:
+  internal: true
 ---
-
 # Tests
 
 39 symbols | 17 files | Cohesion: 87%

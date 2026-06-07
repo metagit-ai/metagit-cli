@@ -4,8 +4,9 @@ description: >-
   Optimize any repository for minimal-token agent onboarding — llms.txt, AGENTS.md,
   hidden HTML agent blocks, docs/agents.md. Use when asked to improve agentic access,
   agent metadata, llms.txt, or run the agent-access optimizer subagent on a project.
+metadata:
+  internal: true
 ---
-
 # Metagit agent access optimizer
 
 On-demand workflow to make a **target repository** easy for AI agents to grasp with **minimal tokens**, using conventions that stay **out of the human reading path** where possible.

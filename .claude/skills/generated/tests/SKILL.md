@@ -1,8 +1,9 @@
 ---
 name: tests
 description: "Skill for the Tests area of metagit-cli. 40 symbols across 14 files."
+metadata:
+  internal: true
 ---
-
 # Tests
 
 40 symbols | 14 files | Cohesion: 70%
@@ -47,7 +48,7 @@ Start here when exploring this area:
 | `test_prompt_for_model_skips_decorative_output_without_console` | Function | `tests/test_utils_userprompt.py` | 90 |
 | `test_prompt_for_model_validation_retry_reprompts_failed_field` | Function | `tests/test_utils_userprompt.py` | 114 |
 | `test_appconfig_env_loading` | Function | `examples/test_appconfig_env.py` | 12 |
-| `providers` | Function | `src/metagit/cli/commands/config.py` | 229 |
+| `providers` | Function | `src/metagit/cli/commands/config.py` | 230 |
 | `test_appconfig_load_and_save` | Function | `tests/test_appconfig_models.py` | 74 |
 | `test_appconfig_load_file_not_found` | Function | `tests/test_appconfig_models.py` | 104 |
 | `test_appconfig_load_ignores_legacy_version_key` | Function | `tests/test_appconfig_models.py` | 109 |
@@ -81,8 +82,8 @@ Start here when exploring this area:
 |------|-------------|
 | Project | 8 calls |
 | Record | 4 calls |
-| Cluster_328 | 4 calls |
-| Cluster_324 | 3 calls |
+| Cluster_385 | 4 calls |
+| Cluster_380 | 3 calls |
 | Commands | 2 calls |
 | Config | 1 calls |
 

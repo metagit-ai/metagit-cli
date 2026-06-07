@@ -1,8 +1,9 @@
 ---
 name: metagit-repo-impact
 description: Plan repository change impact before edits by combining metagit workspace context and graph-based dependency analysis. Use when a change may affect multiple repositories.
+metadata:
+  internal: true
 ---
-
 # Planning Repo Impact
 
 Use this skill before risky or cross-repo modifications.
@@ -20,7 +21,8 @@ Use this skill before risky or cross-repo modifications.
 - MCP `metagit_cross_project_dependencies` with `source_project` and `dependency_types` before large cross-project edits
 - MCP `metagit_project_context_switch` to bound scope to one workspace project
 - `npx gitnexus analyze` on affected repos when `graph_status` is `stale` or `missing`
-- `npx gitnexus query` / `gitnexus impact` for symbol-level analysis after indexes are fresh
+- `metagit gitnexus group sync -c .metagit.yml` when cross-repo symbol impact is needed (after per-repo analyze)
+- `npx gitnexus query` / `gitnexus impact` for single-repo symbol analysis; `gitnexus group impact` for cross-index
 
 ## Output Contract
 

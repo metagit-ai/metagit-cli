@@ -47,6 +47,12 @@ def resolve_changelog_check_cmd() -> list[str]:
     return [sys.executable, "scripts/validate_changelog.py"]
 
 
+def resolve_agent_template_fixture_cmd() -> list[str]:
+    if shutil.which("uv"):
+        return ["uv", "run", "python", "scripts/validate-agent-template-fixtures.py"]
+    return [sys.executable, "scripts/validate-agent-template-fixtures.py"]
+
+
 def resolve_pytest_cmd() -> list[str]:
     if shutil.which("uv"):
         return ["uv", "run", "pytest", "tests/integration", "-v"]
@@ -166,6 +172,11 @@ def main() -> int:
         failed |= not run_step(
             "changelog_check",
             resolve_changelog_check_cmd(),
+            logs_dir,
+        )
+        failed |= not run_step(
+            "agent_templates",
+            resolve_agent_template_fixture_cmd(),
             logs_dir,
         )
         failed |= not run_step("unit_tests", ["task", "test"], logs_dir)

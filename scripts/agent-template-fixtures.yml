@@ -1,0 +1,12 @@
+# Curated agent template manifests validated in prepush QA.
+fixtures:
+  - id: orchestration-overseer
+  - id: repo-implementer
+  - id: graph-curator
+  - id: catalog-bootstrapper
+  - id: upstream-triage
+  - id: repo-enricher
+  - id: release-auditor
+  - id: secret-bootstrapper
+  - id: agent-access-optimizer
+  - id: iac-coordinator

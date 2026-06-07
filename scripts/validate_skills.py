@@ -124,6 +124,12 @@ def validate_skill(skill_dir: Path) -> list[str]:
             f"minimum {MIN_BODY_LEN}); skill instructions should be substantive"
         )
 
+    metadata = frontmatter.get("metadata")
+    if isinstance(metadata, dict) and metadata.get("internal") is True:
+        errors.append(
+            "public bundled skills under skills/ must not set metadata.internal: true"
+        )
+
     return errors
 
 

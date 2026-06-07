@@ -98,6 +98,25 @@ graph:
 
 These edges are merged into cross-project dependency maps (`type: manual`) and available via `MetagitConfig.graph_export_payload()` for GitNexus-style exports. Request dependency type `manual` when calling `metagit_cross_project_dependencies` to focus on manifest-declared edges.
 
+### Discover and suggest relationships (agent automation)
+
+**First-time / empty graph** — guided discovery report (no auto-apply):
+
+```bash
+metagit prompt workspace -c .metagit.yml -k graph-discover --text-only
+metagit config graph suggest -c .metagit.yml --json --include-declared --min-confidence all
+```
+
+Promote inferred cross-project edges into durable `graph.relationships` entries:
+
+```bash
+metagit config graph suggest -c .metagit.yml --json
+metagit config graph suggest -c .metagit.yml --min-confidence high --apply
+metagit prompt workspace -c .metagit.yml -k graph-maintain --text-only
+```
+
+MCP: `metagit_suggest_graph_relationships`, `metagit_apply_graph_relationships`. Bundled skill: `metagit-graph-maintain`.
+
 ### Export to GitNexus (Cypher)
 
 Export manual relationships (and optional structure/documentation nodes) as Cypher for `gitnexus_cypher` MCP tool calls:
@@ -106,8 +125,21 @@ Export manual relationships (and optional structure/documentation nodes) as Cyph
 metagit config graph export -c .metagit.yml --format json
 metagit config graph export -c .metagit.yml --format cypher --output workspace-graph.cypher
 metagit config graph export -c .metagit.yml --format tool-calls --manual-only
+./skills/metagit-gitnexus/scripts/ingest-workspace-graph.sh -c .metagit.yml
 ```
 
 The exporter creates overlay tables `MetagitEntity` and `MetagitLink` (run `schema_statements` once per target GitNexus index), then `MERGE`/`CREATE` workspace nodes and manual edges. MCP: `metagit_export_workspace_graph_cypher`.
 
 Pass `--gitnexus-repo <name>` when the umbrella workspace is indexed under a different GitNexus repo name than the manifest `name` field.
+
+### GitNexus group sync (cross-index)
+
+Register all managed workspace repos in a GitNexus group for `group query`, `group impact`, and contract linking:
+
+```bash
+metagit gitnexus group sync -c .metagit.yml --json
+metagit gitnexus group sync -c .metagit.yml --group-name my-workspace --prune
+./skills/metagit-gitnexus/scripts/sync-group.sh -c .metagit.yml
+```
+
+MCP: `metagit_gitnexus_group_sync`. Requires each checkout to be analyzed (`gitnexus analyze`) and present in `~/.gitnexus/registry.json`. Group member paths use `<project>/<repo>`.

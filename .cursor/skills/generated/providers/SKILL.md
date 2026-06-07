@@ -1,8 +1,9 @@
 ---
 name: providers
 description: "Skill for the Providers area of metagit-cli. 16 symbols across 4 files."
+metadata:
+  internal: true
 ---
-
 # Providers
 
 16 symbols | 4 files | Cohesion: 100%

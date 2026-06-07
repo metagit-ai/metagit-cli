@@ -116,17 +116,22 @@ metagit config providers --show
 2. `metagit workspace list -c .metagit.yml --json` (sanity-check catalog)
 3. If repos changed on disk: `metagit project sync` or `metagit project sync --hydrate`
 
-### Export manual graph to GitNexus (Cypher)
+### Graph relationships (suggest, apply, export)
 
 | Task | Command |
 |------|---------|
+| First-time graph discovery (report only) | `metagit prompt workspace -k graph-discover -c .metagit.yml --text-only` |
+| Suggest candidates from inferred deps | `metagit config graph suggest -c .metagit.yml --json` |
+| Apply suggestions to manifest | `metagit config graph suggest -c .metagit.yml --apply` |
+| Agent playbook (apply + ingest) | `metagit prompt workspace -k graph-maintain -c .metagit.yml --text-only` |
+| MCP suggest / apply | `metagit_suggest_graph_relationships` / `metagit_apply_graph_relationships` |
 | Full export bundle (JSON) | `metagit config graph export -c .metagit.yml --json` |
-| Raw Cypher script | `metagit config graph export -c .metagit.yml --format cypher -o graph.cypher` |
 | MCP tool_calls only | `metagit config graph export -c .metagit.yml --format tool-calls` |
-| Manual edges only | `metagit config graph export -c .metagit.yml --manual-only --format tool-calls` |
-| MCP from agent | `metagit_export_workspace_graph_cypher` |
+| Ingest overlay into GitNexus | `./skills/metagit-gitnexus/scripts/ingest-workspace-graph.sh -c .metagit.yml` |
+| Sync GitNexus cross-index group | `metagit gitnexus group sync -c .metagit.yml --json` |
+| MCP group sync | `metagit_gitnexus_group_sync` |
 
-Ingest workflow: run `schema_statements` once via `gitnexus_cypher`, then each statement in `tool_calls` (or pipe `--format cypher`). Overlay tables: `MetagitEntity`, `MetagitLink`.
+See bundled `metagit-graph-maintain` skill for the full promote → validate → ingest loop. Overlay tables: `MetagitEntity`, `MetagitLink`.
 
 ---
 
@@ -338,13 +343,21 @@ metagit config providers --show
 
 ---
 
-## Records, skills, version
+## Records, skills, agents, version
 
 ```bash
 metagit record search "<query>"
 metagit skills list
 metagit skills show metagit-cli
 metagit skills install --skill metagit-cli
+metagit agent list
+metagit agent export orchestration-overseer -o ./agent-bundle --no-prompt
+metagit agent create orchestration-overseer --vendor cursor --install-skills --install-mcp
+metagit agent create orchestration-overseer --vendor github_copilot --scope project
+metagit agent create orchestration-overseer --vendor hermes --scope user
+metagit agent create orchestration-overseer --vendor opencode --scope project
+metagit agent create orchestration-overseer --vendor windsurf --scope project
+metagit agent create orchestration-overseer --vendor codex --scope project
 metagit version
 metagit version check --json
 metagit version upgrade --json

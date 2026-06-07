@@ -1,8 +1,9 @@
 ---
 name: gitcache
 description: "Skill for the Gitcache area of metagit-cli. 32 symbols across 5 files."
+metadata:
+  internal: true
 ---
-
 # Gitcache
 
 32 symbols | 5 files | Cohesion: 78%

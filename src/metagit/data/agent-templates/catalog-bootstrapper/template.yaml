@@ -1,0 +1,72 @@
+schema_version: "1.0"
+id: catalog-bootstrapper
+label: Catalog bootstrapper
+description: |
+  Registers projects and repos in the workspace manifest using search-before-create.
+archetype: specialist
+scope: workspace
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - catalog-edit
+  - session-start
+mcp_tools:
+  - metagit_workspace_search
+delegates_to:
+  - repo-enricher
+delegated_by:
+  - orchestration-overseer
+ui:
+  category: Workspace ops
+  sort_order: 40
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills:
+  - metagit-projects
+  - metagit-bootstrap
+  - metagit-config-refresh
+  - metagit-cli
+vendors:
+  claude_code:
+    filename: catalog-bootstrapper.md
+  cursor:
+    filename: catalog-bootstrapper.md
+    template: catalog-bootstrapper.cursor.md.tpl
+  github_copilot:
+    filename: catalog-bootstrapper.agent.md
+    template: catalog-bootstrapper.github-copilot.agent.md.tpl
+  hermes:
+    filename: catalog-bootstrapper
+    install_as: skill
+    template: catalog-bootstrapper.skill.md.tpl
+  openclaw:
+    filename: catalog-bootstrapper
+    install_as: skill
+    template: catalog-bootstrapper.skill.md.tpl
+  opencode:
+    filename: catalog-bootstrapper.md
+    template: catalog-bootstrapper.opencode.md.tpl
+  windsurf:
+    filename: catalog-bootstrapper
+    install_as: skill
+    template: catalog-bootstrapper.skill.md.tpl
+  codex:
+    filename: catalog-bootstrapper
+    install_as: skill
+    template: catalog-bootstrapper.skill.md.tpl
+files:
+  - template: catalog-bootstrapper.md.tpl
+    output: catalog-bootstrapper.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

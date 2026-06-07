@@ -1,8 +1,9 @@
 ---
 name: assets
 description: "Skill for the Assets area of metagit-cli. 603 symbols across 4 files."
+metadata:
+  internal: true
 ---
-
 # Assets
 
 603 symbols | 4 files | Cohesion: 71%

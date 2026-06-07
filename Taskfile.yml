@@ -211,6 +211,17 @@ tasks:
             shutil.copytree(src_dir, dst_dir)
             print(f"synced {src_dir} -> {dst_dir}")
         PY
+      - uv run python scripts/tag_internal_skills.py
+
+  skills:tag-internal:
+    desc: Ensure non-skills/ SKILL.md copies carry metadata.internal true
+    cmds:
+      - uv run python scripts/tag_internal_skills.py
+
+  skills:validate-internal:
+    desc: Validate internal SKILL.md metadata (excluding skills/)
+    cmds:
+      - uv run python scripts/tag_internal_skills.py --check
 
   typecheck:
     desc: Run the type checker
@@ -265,9 +276,11 @@ tasks:
         uv pip install -e .
         uv run metagit config schema --output-path ./schemas/metagit_config.schema.json
         uv run metagit appconfig schema --output-path ./schemas/metagit_appconfig.schema.json
+        uv run metagit agent schema --output-path ./schemas/agent_template.schema.json
         mkdir -p docs/reference/schemas
         cp ./schemas/metagit_config.schema.json docs/reference/schemas/metagit_config.schema.json
         cp ./schemas/metagit_appconfig.schema.json docs/reference/schemas/metagit_appconfig.schema.json
+        cp ./schemas/agent_template.schema.json docs/reference/schemas/agent_template.schema.json
         uv run metagit config example --output docs/reference/metagit-config.full-example.yml
 
   repomix:
@@ -357,3 +370,4 @@ tasks:
     desc: Run gitnexus analyze
     cmds:
       - npx gitnexus analyze --skip-agents-md --skills
+      - uv run python scripts/tag_internal_skills.py

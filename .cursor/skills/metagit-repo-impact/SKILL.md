@@ -1,8 +1,9 @@
 ---
 name: metagit-repo-impact
 description: Plan repository change impact before edits by combining metagit workspace context and graph-based dependency analysis. Use when a change may affect multiple repositories.
+metadata:
+  internal: true
 ---
-
 # Planning Repo Impact
 
 Use this skill before risky or cross-repo modifications.

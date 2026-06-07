@@ -1,8 +1,9 @@
 ---
 name: cli
 description: "Skill for the Cli area of metagit-cli. 33 symbols across 8 files."
+metadata:
+  internal: true
 ---
-
 # Cli
 
 33 symbols | 8 files | Cohesion: 79%
@@ -32,8 +33,8 @@ Start here when exploring this area:
 
 - **`appconfig_preview`** (Function) — `src/metagit/cli/commands/appconfig.py:276`
 - **`appconfig_patch`** (Function) — `src/metagit/cli/commands/appconfig.py:356`
-- **`config_preview`** (Function) — `src/metagit/cli/commands/config.py:529`
-- **`config_patch`** (Function) — `src/metagit/cli/commands/config.py:609`
+- **`config_preview`** (Function) — `src/metagit/cli/commands/config.py:530`
+- **`config_patch`** (Function) — `src/metagit/cli/commands/config.py:610`
 - **`parse_cli_value`** (Function) — `src/metagit/cli/config_patch_ops.py:16`
 
 ## Key Symbols
@@ -42,8 +43,8 @@ Start here when exploring this area:
 |--------|------|------|------|
 | `appconfig_preview` | Function | `src/metagit/cli/commands/appconfig.py` | 276 |
 | `appconfig_patch` | Function | `src/metagit/cli/commands/appconfig.py` | 356 |
-| `config_preview` | Function | `src/metagit/cli/commands/config.py` | 529 |
-| `config_patch` | Function | `src/metagit/cli/commands/config.py` | 609 |
+| `config_preview` | Function | `src/metagit/cli/commands/config.py` | 530 |
+| `config_patch` | Function | `src/metagit/cli/commands/config.py` | 610 |
 | `parse_cli_value` | Function | `src/metagit/cli/config_patch_ops.py` | 16 |
 | `load_operations_file` | Function | `src/metagit/cli/config_patch_ops.py` | 38 |
 | `resolve_operations` | Function | `src/metagit/cli/config_patch_ops.py` | 59 |
@@ -75,7 +76,8 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 8 calls |
+| Commands | 5 calls |
+| Cluster_384 | 3 calls |
 | Config | 2 calls |
 
 ## How to Explore

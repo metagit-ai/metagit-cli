@@ -22,6 +22,7 @@ Load `context/mcp-runtime.md`. Core logic: `cross_project_dependencies.py`, `imp
 2. **shared_config/url_match** — identical URLs or `configured_path` across projects
 3. **imports** — `package.json`, `pyproject.toml`, `go.mod`, terraform module paths between local repos
 4. **GitNexus status** — `~/.gitnexus/registry.json` + optional `npx gitnexus status` per repo (not full graph export)
+5. **GitNexus group sync** — `metagit gitnexus group sync` / MCP `metagit_gitnexus_group_sync` aligns `workspace.projects[]` with `~/.gitnexus/groups/<name>/` for cross-index `group query` / `group impact`
 
 ## Steps
 1. Extend collectors in `CrossProjectDependencyService._collect_edges`.

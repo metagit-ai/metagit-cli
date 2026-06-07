@@ -1,0 +1,68 @@
+schema_version: "1.0"
+id: secret-bootstrapper
+label: Secret bootstrapper
+description: |
+  Guides SecretZero bootstrap when Secretfile.yml is present. Never handles secret values.
+archetype: specialist
+scope: workspace
+status: stable
+version: 1.0.0
+prompt_kinds:
+  - session-start
+mcp_tools: []
+delegates_to: []
+delegated_by:
+  - orchestration-overseer
+ui:
+  category: Security
+  sort_order: 80
+prompts:
+  - name: workspace_name
+    label: Workspace / manifest name
+    default_from: directory_name
+  - name: manifest_path
+    label: Path to .metagit.yml (relative to coordinator root)
+    default: .metagit.yml
+  - name: coordinator_description
+    label: Short coordinator role description
+    default: Umbrella orchestrator for managed workspace projects.
+recommended_skills: []
+external_skills:
+  - name: secretzero
+    note: Install when any managed repo contains Secretfile.yml.
+vendors:
+  claude_code:
+    filename: secret-bootstrapper.md
+  cursor:
+    filename: secret-bootstrapper.md
+    template: secret-bootstrapper.cursor.md.tpl
+  github_copilot:
+    filename: secret-bootstrapper.agent.md
+    template: secret-bootstrapper.github-copilot.agent.md.tpl
+  hermes:
+    filename: secret-bootstrapper
+    install_as: skill
+    template: secret-bootstrapper.skill.md.tpl
+  openclaw:
+    filename: secret-bootstrapper
+    install_as: skill
+    template: secret-bootstrapper.skill.md.tpl
+  opencode:
+    filename: secret-bootstrapper.md
+    template: secret-bootstrapper.opencode.md.tpl
+  windsurf:
+    filename: secret-bootstrapper
+    install_as: skill
+    template: secret-bootstrapper.skill.md.tpl
+  codex:
+    filename: secret-bootstrapper
+    install_as: skill
+    template: secret-bootstrapper.skill.md.tpl
+files:
+  - template: secret-bootstrapper.md.tpl
+    output: secret-bootstrapper.md
+  - template: AGENTS.md.fragment.tpl
+    output: AGENTS.md.fragment
+    optional: true
+  - template: manifest.json.tpl
+    output: manifest.json

@@ -1,8 +1,9 @@
 ---
 name: metagit-multi-repo
 description: Coordinate implementation tasks across multiple repositories using metagit status, search, and scoped sync workflows. Use when one objective spans several repositories.
+metadata:
+  internal: true
 ---
-
 # Coordinating Multi-Repo Implementation
 
 Use this skill for cross-repository feature or fix delivery.
