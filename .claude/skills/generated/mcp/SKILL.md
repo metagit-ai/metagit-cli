@@ -80,7 +80,7 @@ Start here when exploring this area:
 | Tests | 2 calls |
 | Agent | 2 calls |
 | Config | 2 calls |
-| Workspace | 1 calls |
+| Api | 1 calls |
 
 ## How to Explore
 

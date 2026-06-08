@@ -37,6 +37,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [debug-mcp-runtime.md](debug-mcp-runtime.md) | Diagnosing MCP runtime protocol, framing, gating, and tool/resource failures |
 | [debug-workspace-discovery.md](debug-workspace-discovery.md) | Diagnosing empty/incorrect workspace index, search hits, or upstream hint ranking |
 | [project-cli-resolution.md](project-cli-resolution.md) | Fixing or extending `metagit project list/select` when app-config default ≠ manifest projects |
+| [repo-promote-local-to-git.md](repo-promote-local-to-git.md) | Migrating a path-based workspace repo entry to a git-managed clone (`project repo promote`) |
 | [github-gh-auth.md](github-gh-auth.md) | Creating PRs or running `gh` when `GH_TOKEN`/`GITHUB_TOKEN` cause 401 errors |
 | [run-graphify-analysis.md](run-graphify-analysis.md) | Running `graphify` on the repo or a focused subtree and turning the result into usable graph/report outputs |
 | [update-release-workflow.md](update-release-workflow.md) | Replacing or repairing GitHub release automation and tag-driven publish flow |

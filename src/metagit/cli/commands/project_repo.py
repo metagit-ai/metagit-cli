@@ -23,6 +23,7 @@ from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.layout_resolver import active_project_resolution_error
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace import workspace_dedupe
+from metagit.core.project.repo_promote_service import RepoPromoteService
 from metagit.core.workspace.dedupe_resolver import (
     resolve_dedupe_for_layout,
     resolve_effective_dedupe_for_project,
@@ -379,6 +380,111 @@ def repo_add(
 
     except Exception as e:
         logger.warning(f"Failed to add repository: {e}")
+
+
+@repo.command("promote")
+@click.option("--name", "-n", required=True, help="Repository name to promote")
+@click.option(
+    "--url",
+    default=None,
+    help="Remote git URL (default: manifest url or git origin on source path)",
+)
+@click.option(
+    "--remote",
+    default="origin",
+    show_default=True,
+    help="Remote name when discovering URL from the source git repo",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Show planned changes without updating manifest or cloning",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Promote protected repos",
+)
+@click.option(
+    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
+)
+@click.pass_context
+def repo_promote(
+    ctx: click.Context,
+    name: str,
+    url: str | None,
+    remote: str,
+    dry_run: bool,
+    force: bool,
+    as_json: bool,
+) -> None:
+    """
+    Promote a path-based repo entry to a git-managed clone under the sync folder.
+
+    Removes the existing symlink mount (if any), clears ``path`` in the manifest,
+    sets ``url``, and runs ``project sync`` to clone into the managed workspace.
+    """
+    logger: UnifiedLogger = ctx.obj["logger"]
+    project: str = ctx.obj["project"]
+    app_config: AppConfig = ctx.obj["config"]
+    local_config = ctx.obj["local_config"]
+    config_path = ctx.obj["config_path"]
+
+    if project == "local":
+        raise click.UsageError("The local project is not supported for this command")
+
+    try:
+        project_manager = project_manager_from_app(
+            app_config,
+            logger,
+            metagit_config=local_config,
+            project_name=project,
+        )
+    except Exception as exc:
+        logger.warning(f"Failed to initialize ProjectManager: {exc}")
+        ctx.abort()
+
+    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    result = RepoPromoteService().promote(
+        local_config,
+        config_path,
+        workspace_root=workspace_root,
+        project_name=project,
+        repo_name=name,
+        project_manager=project_manager,
+        url_override=url,
+        remote_name=remote,
+        dry_run=dry_run,
+        force=force,
+    )
+    if as_json:
+        emit_json(result)
+        if not result.ok:
+            ctx.exit(1)
+        return
+
+    if not result.ok:
+        message = result.error.message if result.error else "promote failed"
+        raise click.ClickException(message)
+
+    if result.dry_run:
+        click.echo("Dry run — promote plan:")
+        click.echo(f"  project: {result.project_name}")
+        click.echo(f"  repo: {result.repo_name}")
+        click.echo(f"  source path: {result.source_path}")
+        click.echo(f"  url: {result.url}")
+        click.echo(f"  mount path: {result.mount_path}")
+        if result.mount_removed:
+            click.echo("  would remove existing mount before clone")
+        click.echo("  would update manifest (clear path, set url) and run project sync")
+        return
+
+    logger.info(
+        f"Promoted '{result.repo_name}' in project '{result.project_name}' "
+        f"to git-managed clone at {result.mount_path}"
+    )
 
 
 @repo.command("prune")

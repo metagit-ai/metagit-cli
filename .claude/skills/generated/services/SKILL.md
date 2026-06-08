@@ -1,12 +1,12 @@
 ---
 name: services
-description: "Skill for the Services area of metagit-cli. 163 symbols across 36 files."
+description: "Skill for the Services area of metagit-cli. 165 symbols across 37 files."
 metadata:
   internal: true
 ---
 # Services
 
-163 symbols | 36 files | Cohesion: 81%
+165 symbols | 37 files | Cohesion: 81%
 
 ## When to Use
 
@@ -56,13 +56,13 @@ Start here when exploring this area:
 | `head_commit_age_days` | Function | `src/metagit/core/mcp/services/repo_git_stats.py` | 71 |
 | `merge_base_age_days` | Function | `src/metagit/core/mcp/services/repo_git_stats.py` | 86 |
 | `run_row` | Function | `src/metagit/core/mcp/services/workspace_sync.py` | 43 |
-| `test_path_has_scaffold_segment_detects_nested_dirs` | Function | `tests/core/mcp/services/test_workspace_search.py` | 123 |
-| `test_discover_files_returns_categorized_entries` | Function | `tests/core/mcp/services/test_workspace_search.py` | 202 |
-| `test_template_apply_dry_run_lists_files` | Function | `tests/core/mcp/services/test_workspace_template.py` | 13 |
-| `test_template_apply_requires_confirm_when_not_dry_run` | Function | `tests/core/mcp/services/test_workspace_template.py` | 50 |
-| `test_switch_sets_active_project_and_returns_repos` | Function | `tests/core/mcp/services/test_project_context.py` | 59 |
-| `test_switch_unknown_project_returns_error` | Function | `tests/core/mcp/services/test_project_context.py` | 82 |
-| `test_env_export_includes_metagit_and_config_variables` | Function | `tests/core/mcp/services/test_project_context.py` | 97 |
+| `resolve_git_remote_url` | Function | `src/metagit/core/project/repo_promote_service.py` | 44 |
+| `is_git_repository` | Function | `src/metagit/core/utils/common.py` | 330 |
+| `merge_project_repo_tags` | Function | `src/metagit/core/workspace/protection.py` | 19 |
+| `test_workspace_index_resolves_repo_paths` | Function | `tests/core/mcp/services/test_workspace_index.py` | 11 |
+| `test_build_index_synced_git_repo_with_tags_and_paths` | Function | `tests/test_workspace_index_service.py` | 11 |
+| `test_build_index_url_only_repo_uses_project_mount_path` | Function | `tests/test_workspace_index_service.py` | 54 |
+| `test_build_index_missing_path_is_configured_missing` | Function | `tests/test_workspace_index_service.py` | 90 |
 
 ## Execution Flows
 
