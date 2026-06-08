@@ -65,11 +65,11 @@ Start here when exploring this area:
 | `Pc → St` | cross_community | 7 |
 | `Pc → N` | cross_community | 7 |
 | `Pc → Fn` | cross_community | 7 |
-| `If → Ot` | cross_community | 7 |
 | `Mc → Ue` | cross_community | 6 |
 | `Mc → De` | cross_community | 6 |
 | `Mc → Ea` | intra_community | 6 |
 | `L → Rn` | cross_community | 6 |
+| `L → St` | cross_community | 6 |
 
 ## How to Explore
 

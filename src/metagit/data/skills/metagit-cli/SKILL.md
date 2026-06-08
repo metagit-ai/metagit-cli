@@ -277,6 +277,7 @@ metagit project sync --hydrate   # symlink mounts → full directory copies (per
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>
+metagit project repo promote --name <repo> --dry-run   # path entry → git clone under sync root
 metagit project repo remove --name <repo> --json
 metagit project repo rename --name <old> --new-name <new> --dry-run --json
 metagit project repo move --name <repo> --to-project <other> --dry-run --json

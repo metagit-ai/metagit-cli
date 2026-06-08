@@ -1,12 +1,12 @@
 ---
 name: api
-description: "Skill for the Api area of metagit-cli. 58 symbols across 16 files."
+description: "Skill for the Api area of metagit-cli. 60 symbols across 18 files."
 metadata:
   internal: true
 ---
 # Api
 
-58 symbols | 16 files | Cohesion: 82%
+60 symbols | 18 files | Cohesion: 80%
 
 ## When to Use
 
@@ -83,11 +83,13 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Config | 4 calls |
+| Config | 5 calls |
+| Tests | 1 calls |
 | Project | 1 calls |
 | Commands | 1 calls |
 | Services | 1 calls |
 | Workspace | 1 calls |
+| Prompt | 1 calls |
 
 ## How to Explore
 

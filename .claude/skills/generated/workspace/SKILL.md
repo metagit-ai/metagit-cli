@@ -1,12 +1,12 @@
 ---
 name: workspace
-description: "Skill for the Workspace area of metagit-cli. 99 symbols across 25 files."
+description: "Skill for the Workspace area of metagit-cli. 98 symbols across 24 files."
 metadata:
   internal: true
 ---
 # Workspace
 
-99 symbols | 25 files | Cohesion: 78%
+98 symbols | 24 files | Cohesion: 78%
 
 ## When to Use
 
@@ -68,26 +68,26 @@ Start here when exploring this area:
 
 | Flow | Type | Steps |
 |------|------|-------|
+| `Promote → Collect_file_copy_jobs` | cross_community | 5 |
 | `Project_sync → Collect_file_copy_jobs` | cross_community | 5 |
+| `Promote → Create_vscode_workspace` | cross_community | 4 |
 | `Project_sync → Create_vscode_workspace` | cross_community | 4 |
 | `Workspace_project_rename → Find_project` | cross_community | 4 |
-| `Workspace_project_rename → Resolve_effective_dedupe` | cross_community | 4 |
 | `Workspace_repo_rename → Find_project` | cross_community | 4 |
-| `Workspace_repo_rename → Resolve_effective_dedupe` | cross_community | 4 |
 | `Workspace_repo_move → Find_project` | cross_community | 4 |
-| `Workspace_repo_move → Resolve_effective_dedupe` | cross_community | 4 |
 | `Show → Validate_env_value` | cross_community | 4 |
 | `Repo_add → _find_project` | cross_community | 3 |
+| `Repo_add → _mutation_error` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Config | 8 calls |
-| Commands | 8 calls |
-| Services | 3 calls |
-| Tests | 1 calls |
+| Commands | 9 calls |
+| Config | 7 calls |
+| Services | 4 calls |
 | Providers | 1 calls |
+| Web | 1 calls |
 
 ## How to Explore
 

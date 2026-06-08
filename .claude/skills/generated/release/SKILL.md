@@ -1,17 +1,17 @@
 ---
 name: release
-description: "Skill for the Release area of metagit-cli. 36 symbols across 7 files."
+description: "Skill for the Release area of metagit-cli. 37 symbols across 8 files."
 metadata:
   internal: true
 ---
 # Release
 
-36 symbols | 7 files | Cohesion: 74%
+37 symbols | 8 files | Cohesion: 74%
 
 ## When to Use
 
 - Working with code in `src/`
-- Understanding how normalize_version, compare_versions, test_check_records_network_errors work
+- Understanding how version_check, normalize_version, compare_versions work
 - Modifying release-related functionality
 
 ## Key Files
@@ -24,22 +24,24 @@ metadata:
 | `tests/core/release/test_upgrade_service.py` | _check_result, test_upgrade_dry_run_when_update_available, test_upgrade_skips_when_already_latest, test_upgrade_refuses_editable_install, test_upgrade_applies_command |
 | `src/metagit/core/release/release_check_service.py` | check, _github_headers, _fetch_github_latest, _fetch_pypi_latest |
 | `src/metagit/core/release/version_compare.py` | _prerelease_key, normalize_version, compare_versions |
+| `src/metagit/cli/commands/version_cmd.py` | version_check |
 | `src/metagit/core/release/upgrade_service.py` | upgrade |
 
 ## Entry Points
 
 Start here when exploring this area:
 
+- **`version_check`** (Function) — `src/metagit/cli/commands/version_cmd.py:42`
 - **`normalize_version`** (Function) — `src/metagit/core/release/version_compare.py:21`
 - **`compare_versions`** (Function) — `src/metagit/core/release/version_compare.py:39`
 - **`test_check_records_network_errors`** (Function) — `tests/core/release/test_release_check_service.py:106`
 - **`build_upgrade_command`** (Function) — `src/metagit/core/release/install_detect.py:28`
-- **`test_upgrade_dry_run_when_update_available`** (Function) — `tests/core/release/test_upgrade_service.py:31`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
+| `version_check` | Function | `src/metagit/cli/commands/version_cmd.py` | 42 |
 | `normalize_version` | Function | `src/metagit/core/release/version_compare.py` | 21 |
 | `compare_versions` | Function | `src/metagit/core/release/version_compare.py` | 39 |
 | `test_check_records_network_errors` | Function | `tests/core/release/test_release_check_service.py` | 106 |
@@ -59,10 +61,15 @@ Start here when exploring this area:
 | `test_check_marks_installed_as_latest` | Function | `tests/core/release/test_release_check_service.py` | 64 |
 | `test_check_falls_back_to_pypi_when_github_missing` | Function | `tests/core/release/test_release_check_service.py` | 90 |
 | `test_check_retries_github_without_token_after_401` | Function | `tests/core/release/test_release_check_service.py` | 118 |
-| `sync_docs_changelog` | Function | `src/metagit/core/release/changelog_ops.py` | 66 |
+
+## Connected Areas
+
+| Area | Connections |
+|------|-------------|
+| Commands | 1 calls |
 
 ## How to Explore
 
-1. `gitnexus_context({name: "normalize_version"})` — see callers and callees
+1. `gitnexus_context({name: "version_check"})` — see callers and callees
 2. `gitnexus_query({query: "release"})` — find related execution flows
 3. Read key files listed above for implementation details
