@@ -51,6 +51,8 @@ export interface SyncJobRequest {
   dry_run?: boolean
   allow_mutation?: boolean
   max_parallel?: number
+  refresh_sources?: boolean
+  project_name?: string | null
 }
 
 export interface SyncJobStatus {
@@ -331,6 +333,62 @@ export interface OpenPathResponse {
 
 export function postOpenPath(body: OpenPathRequest): Promise<OpenPathResponse> {
   return requestJson<OpenPathResponse>('/v3/ops/open', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export interface ApprovalRequestRow {
+  id: string
+  action: string
+  status: 'pending' | 'approved' | 'denied'
+  requested_by: string
+  payload: Record<string, unknown>
+  created_at: string
+  resolved_at?: string | null
+  resolver_note?: string | null
+}
+
+export interface ApprovalListResponse {
+  ok: boolean
+  requests: ApprovalRequestRow[]
+}
+
+export function getApprovals(status: 'pending' | 'approved' | 'denied' | 'all' = 'pending'): Promise<ApprovalListResponse> {
+  const query = status === 'pending' ? '' : `?status=${encodeURIComponent(status)}`
+  return requestJson<ApprovalListResponse>(`/v3/ops/approvals${query}`)
+}
+
+export function resolveApproval(
+  id: string,
+  body: { decision: 'approved' | 'denied'; note?: string | null },
+): Promise<ApprovalRequestRow> {
+  return requestJson<ApprovalRequestRow>(`/v3/ops/approvals/${id}/resolve`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export interface SourceSyncRequest {
+  project_name: string
+  from_manifest?: boolean
+  source_id?: string | null
+  apply?: boolean
+  force?: boolean
+  sync?: boolean
+  requested_by?: string
+}
+
+export interface SourceSyncResponse {
+  ok: boolean
+  applied?: boolean
+  pending_approval_id?: string | null
+  plan?: Record<string, unknown>
+  errors?: Array<{ kind?: string; message?: string }>
+}
+
+export function postSourceSync(body: SourceSyncRequest): Promise<SourceSyncResponse> {
+  return requestJson<SourceSyncResponse>('/v3/ops/source-sync', {
     method: 'POST',
     body: JSON.stringify(body),
   })

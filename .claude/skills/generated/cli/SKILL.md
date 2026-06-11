@@ -76,8 +76,9 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 8 calls |
-| Cluster_397 | 2 calls |
+| Commands | 6 calls |
+| Config | 2 calls |
+| Cluster_401 | 2 calls |
 
 ## How to Explore
 

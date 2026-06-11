@@ -84,10 +84,11 @@ Start here when exploring this area:
 | Area | Connections |
 |------|-------------|
 | Gitcache | 11 calls |
-| Commands | 8 calls |
+| Commands | 7 calls |
 | Cli | 4 calls |
 | Tests | 1 calls |
 | Detect | 1 calls |
+| Config | 1 calls |
 | Providers | 1 calls |
 
 ## How to Explore

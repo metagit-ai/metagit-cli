@@ -1,12 +1,12 @@
 ---
 name: mcp
-description: "Skill for the Mcp area of metagit-cli. 58 symbols across 13 files."
+description: "Skill for the Mcp area of metagit-cli. 62 symbols across 17 files."
 metadata:
   internal: true
 ---
 # Mcp
 
-58 symbols | 13 files | Cohesion: 79%
+62 symbols | 17 files | Cohesion: 79%
 
 ## When to Use
 
@@ -78,8 +78,9 @@ Start here when exploring this area:
 | Context | 6 calls |
 | Services | 3 calls |
 | Tests | 3 calls |
-| Commands | 3 calls |
 | Agent | 2 calls |
+| Config | 2 calls |
+| Commands | 1 calls |
 
 ## How to Explore
 

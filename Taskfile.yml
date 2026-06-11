@@ -327,9 +327,14 @@ tasks:
     cmds:
       - npm ci || npm install
 
+  web:assets:
+    desc: Generate optimized web assets (header logo from docs/inc)
+    cmds:
+      - uv run python scripts/generate_web_logo.py
+
   web:build:
     desc: Build web UI into package data (not part of qa:prepush — run explicitly when changing web/)
-    deps: [web:install]
+    deps: [web:install, web:assets]
     dir: web
     cmds:
       - npm run build

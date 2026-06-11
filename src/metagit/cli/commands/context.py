@@ -15,6 +15,7 @@ import click
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.models import (
@@ -25,7 +26,6 @@ from metagit.core.context.models import (
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.repomix_profile_service import RepomixProfileService
-from metagit.core.project.source_approval_executor import SourceSyncApprovalExecutor
 from metagit.core.workspace.root_resolver import (
     resolve_definition_root,
     resolve_session_root,
@@ -600,22 +600,16 @@ def approval_approve_cmd(
 ) -> None:
     """Approve a pending request."""
     config, config_path, _, session_root, _ = _context_paths(ctx, definition_path)
-    try:
-        row = ApprovalService(workspace_root=session_root).resolve(
-            request_id=approval_id,
-            decision="approved",
-            note=resolver_note,
-        )
-    except ValueError as exc:
-        raise click.ClickException(str(exc)) from exc
-    if row.action == "source_sync_reconcile":
-        applied = SourceSyncApprovalExecutor().apply_if_approved(
-            approval=row,
-            config=config,
-            config_path=config_path,
-        )
-        if isinstance(applied, Exception):
-            raise click.ClickException(str(applied)) from applied
+    row = ApprovalResolveOrchestrator().resolve(
+        workspace_root=session_root,
+        config=config,
+        config_path=config_path,
+        request_id=approval_id,
+        decision="approved",
+        note=resolver_note,
+    )
+    if isinstance(row, Exception):
+        raise click.ClickException(str(row)) from row
     click.echo(row.model_dump_json(indent=2))
 
 

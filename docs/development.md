@@ -57,6 +57,17 @@ workspace:
 - Reconcile removals are deferred unless `--force`; pending removals enqueue `source_sync_reconcile` approvals — approve with `metagit context approval approve --id <id>`
 - Repos without `source_id` are manual entries and are never auto-removed during reconcile
 
+**Web:** Config Studio edits `sources[]`; Workspace Console Operations panel runs manifest sync and resolves approvals. See [metagit-web.md](../reference/metagit-web.md).
+
+## Modality parity
+
+Operator-facing features should share core services across CLI, MCP, and web. When adding capability:
+
+1. Put logic in `src/metagit/core/…` (not in Click handlers or React alone).
+2. Wire adapters for each modality in the same change when possible.
+3. Register markers in `scripts/modality-parity.yml`; `task qa:prepush` runs `scripts/check_modality_parity.py`.
+4. Follow `.mex/patterns/modality-parity.md`.
+
 GitHub org/user listing is flat (no nested subgroups). GitLab groups honor `--recursive` / `--no-recursive` for subgroups. Default manifest naming is `namespaced`; use `--name-strategy short` for legacy short names.
 
 | Flag combo | Re-run behavior |

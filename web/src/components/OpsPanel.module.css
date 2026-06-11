@@ -237,6 +237,12 @@
   text-transform: uppercase;
 }
 
+.approvalActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .modalActions {
   display: flex;
   justify-content: flex-end;

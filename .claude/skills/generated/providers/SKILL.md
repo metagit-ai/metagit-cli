@@ -83,7 +83,7 @@ Start here when exploring this area:
 | Area | Connections |
 |------|-------------|
 | Examples | 3 calls |
-| Commands | 1 calls |
+| Config | 1 calls |
 
 ## How to Explore
 

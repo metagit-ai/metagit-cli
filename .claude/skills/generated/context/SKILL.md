@@ -1,12 +1,12 @@
 ---
 name: context
-description: "Skill for the Context area of metagit-cli. 104 symbols across 17 files."
+description: "Skill for the Context area of metagit-cli. 104 symbols across 18 files."
 metadata:
   internal: true
 ---
 # Context
 
-104 symbols | 17 files | Cohesion: 84%
+104 symbols | 18 files | Cohesion: 83%
 
 ## When to Use
 
@@ -25,7 +25,7 @@ metadata:
 | `tests/core/context/test_context_pack_service.py` | _fixture, test_tier_zero_returns_map_no_cards, test_tier_one_single_repo_filter, test_token_estimate_excludes_estimate_field, test_tier_two_includes_digest_and_touches_session (+4) |
 | `tests/core/context/test_repomix_profile_service.py` | test_unknown_profile_raises, test_build_argv_include_comma_join, test_build_argv_exclude_when_present, test_build_argv_writes_file_not_stdout, test_run_repomix_injects_runner (+3) |
 | `src/metagit/core/context/repomix_profile_service.py` | get_profile, build_repomix_argv, _run_repomix_process, run_repomix, __init__ (+2) |
-| `tests/core/context/test_approval_service.py` | test_request_persists_hex_id_and_pending_status, test_list_optional_status_filter, test_resolve_sets_status_timestamp_and_note, test_resolve_unknown_id_raises, test_resolve_non_pending_raises (+1) |
+| `tests/core/context/test_approval_service.py` | test_reload_from_disk_shares_queue, test_list_optional_status_filter, test_resolve_unknown_id_raises, test_request_persists_hex_id_and_pending_status, test_resolve_sets_status_timestamp_and_note (+1) |
 | `tests/core/context/test_repo_card_service.py` | _load_config, test_build_one_git_repo_detects_pyproject_and_branch, test_build_one_missing_clone_sets_missing_clone_flag, test_health_flags_stale_head_via_mock, test_build_many_respects_max_cards |
 | `tests/core/context/test_workspace_map_service.py` | _write_single_project_workspace, _load_config, test_build_maps_catalog_to_workspace_map_result, test_build_passes_through_active_project, test_build_missing_repo_reports_configured_missing |
 
@@ -81,9 +81,10 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 7 calls |
 | Services | 7 calls |
-| Web | 2 calls |
+| Config | 5 calls |
+| Commands | 2 calls |
+| Web | 1 calls |
 
 ## How to Explore
 

@@ -75,6 +75,20 @@ class SyncJobRequest(BaseModel):
     dry_run: bool = False
     allow_mutation: bool = True
     max_parallel: int = 4
+    refresh_sources: bool = False
+    project_name: str | None = None
+
+
+class SourceSyncRequest(BaseModel):
+    """Body for POST `/v3/ops/source-sync` (manifest-first provider import)."""
+
+    project_name: str
+    from_manifest: bool = True
+    source_id: str | None = None
+    apply: bool = False
+    force: bool = False
+    sync: bool = False
+    requested_by: str = "web"
 
 
 class SyncJobStatus(BaseModel):
