@@ -57,7 +57,7 @@ workspace:
 - Reconcile removals are deferred unless `--force`; pending removals enqueue `source_sync_reconcile` approvals — approve with `metagit context approval approve --id <id>`
 - Repos without `source_id` are manual entries and are never auto-removed during reconcile
 
-**Web:** Config Studio edits `sources[]`; Workspace Console Operations panel runs manifest sync and resolves approvals. See [metagit-web.md](../reference/metagit-web.md).
+**Web:** Config Studio edits `sources[]`; Workspace Console Operations panel runs manifest sync and resolves approvals. See [metagit-web.md](reference/metagit-web.md).
 
 ## Modality parity
 
