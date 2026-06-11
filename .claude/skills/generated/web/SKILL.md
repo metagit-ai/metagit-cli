@@ -1,17 +1,17 @@
 ---
 name: web
-description: "Skill for the Web area of metagit-cli. 126 symbols across 15 files."
+description: "Skill for the Web area of metagit-cli. 128 symbols across 15 files."
 metadata:
   internal: true
 ---
 # Web
 
-126 symbols | 15 files | Cohesion: 74%
+128 symbols | 15 files | Cohesion: 74%
 
 ## When to Use
 
 - Working with code in `src/`
-- Understanding how test_remove_workspace_project_when_projects_null, test_ops_objectives_get_post_patch, read_disk_text work
+- Understanding how test_remove_workspace_project_when_projects_null, test_ops_objectives_get_post_patch, test_disable_optional_field_removes_key work
 - Modifying web-related functionality
 
 ## Key Files
@@ -20,8 +20,8 @@ metadata:
 |------|---------|
 | `src/metagit/core/web/schema_tree.py` | _disable_at_path, _enable_at_path, _append_at_path, _remove_at_path, _materialize_field (+25) |
 | `src/metagit/core/web/config_handler.py` | handle, _respond_metagit_tree, _patch_metagit, _preview_metagit, _preview_appconfig (+12) |
+| `tests/core/web/test_schema_tree.py` | test_remove_workspace_project_when_projects_null, test_disable_optional_field_removes_key, test_enable_optional_field_adds_default, test_set_field_updates_value, test_apply_operations_returns_original_instance_on_validation_error (+10) |
 | `src/metagit/core/web/ops_handler.py` | handle, _post_objectives, _post_open, _post_health, _get_graph (+10) |
-| `tests/core/web/test_schema_tree.py` | test_remove_workspace_project_when_projects_null, test_disable_optional_field_removes_key, test_enable_optional_field_adds_default, test_set_field_updates_value, test_apply_operations_returns_original_instance_on_validation_error (+8) |
 | `tests/core/web/test_config_handler.py` | _start_server, _patch_json, test_get_metagit_config_tree, test_patch_metagit_set_name_without_save, test_patch_metagit_set_name_with_save (+3) |
 | `tests/core/web/test_ops_handler.py` | _start_server, _post_json, test_health_endpoint_returns_ok, test_prune_preview_empty, test_sync_dry_run_job_completes (+2) |
 | `src/metagit/core/web/agent_handler.py` | handle, _service, _respond_catalog, _respond_preview, _respond_dispatch_plan (+2) |
@@ -35,9 +35,9 @@ Start here when exploring this area:
 
 - **`test_remove_workspace_project_when_projects_null`** (Function) — `tests/core/web/test_schema_tree.py:167`
 - **`test_ops_objectives_get_post_patch`** (Function) — `tests/core/web/test_ops_objectives.py:9`
-- **`read_disk_text`** (Function) — `src/metagit/core/web/config_preview.py:19`
 - **`test_disable_optional_field_removes_key`** (Function) — `tests/core/web/test_schema_tree.py:35`
 - **`test_enable_optional_field_adds_default`** (Function) — `tests/core/web/test_schema_tree.py:48`
+- **`test_set_field_updates_value`** (Function) — `tests/core/web/test_schema_tree.py:67`
 
 ## Key Symbols
 
@@ -45,7 +45,6 @@ Start here when exploring this area:
 |--------|------|------|------|
 | `test_remove_workspace_project_when_projects_null` | Function | `tests/core/web/test_schema_tree.py` | 167 |
 | `test_ops_objectives_get_post_patch` | Function | `tests/core/web/test_ops_objectives.py` | 9 |
-| `read_disk_text` | Function | `src/metagit/core/web/config_preview.py` | 19 |
 | `test_disable_optional_field_removes_key` | Function | `tests/core/web/test_schema_tree.py` | 35 |
 | `test_enable_optional_field_adds_default` | Function | `tests/core/web/test_schema_tree.py` | 48 |
 | `test_set_field_updates_value` | Function | `tests/core/web/test_schema_tree.py` | 67 |
@@ -53,6 +52,8 @@ Start here when exploring this area:
 | `test_sensitive_token_unchanged_after_masked_set` | Function | `tests/core/web/test_schema_tree.py` | 112 |
 | `test_enable_optional_list_defaults_empty` | Function | `tests/core/web/test_schema_tree.py` | 154 |
 | `test_remove_workspace_project_from_preview_batch` | Function | `tests/core/web/test_schema_tree.py` | 180 |
+| `test_append_workspace_project_validates_with_empty_sources` | Function | `tests/core/web/test_schema_tree.py` | 237 |
+| `read_disk_text` | Function | `src/metagit/core/web/config_preview.py` | 19 |
 | `test_get_metagit_config_tree` | Function | `tests/core/web/test_config_handler.py` | 67 |
 | `test_patch_metagit_set_name_without_save` | Function | `tests/core/web/test_config_handler.py` | 87 |
 | `test_patch_metagit_set_name_with_save` | Function | `tests/core/web/test_config_handler.py` | 117 |
@@ -62,7 +63,6 @@ Start here when exploring this area:
 | `test_health_endpoint_returns_ok` | Function | `tests/core/web/test_ops_handler.py` | 72 |
 | `test_prune_preview_empty` | Function | `tests/core/web/test_ops_handler.py` | 82 |
 | `test_sync_dry_run_job_completes` | Function | `tests/core/web/test_ops_handler.py` | 96 |
-| `test_open_rejects_unknown_path` | Function | `tests/core/web/test_ops_handler.py` | 125 |
 
 ## Execution Flows
 
