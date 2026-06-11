@@ -9,21 +9,83 @@ from typing import Optional
 import click
 
 from metagit.core.appconfig.models import AppConfig
-from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.source_models import (
     SourceSpec,
-    SourceSyncError,
     SourceSyncMode,
     SourceSyncResult,
 )
-from metagit.core.project.source_sync import SourceSyncService
+from metagit.core.project.source_sync_runner import (
+    SourceSyncRunRequest,
+    run_source_sync,
+)
 from metagit.core.utils.logging import UnifiedLogger
-from metagit.core.workspace.models import WorkspaceProject
 
 
-def _emit_json(result: SourceSyncResult) -> None:
+def emit_source_sync_json(result: SourceSyncResult) -> None:
+    """Print a source sync JSON envelope to stdout."""
     click.echo(json.dumps(result.model_dump(mode="json"), indent=2))
+
+
+def build_source_spec_from_cli(
+    *,
+    provider: str,
+    org: Optional[str],
+    user: Optional[str],
+    group: Optional[str],
+    recursive: bool,
+    include_archived: bool,
+    include_forks: bool,
+    path_prefix: Optional[str],
+    include_patterns: tuple[str, ...],
+    ignore_patterns: tuple[str, ...],
+    name_strategy: str,
+    ensure: bool,
+    refresh_metadata: bool,
+    enrich_topics: bool,
+) -> SourceSpec:
+    """Build ``SourceSpec`` from CLI flag values."""
+    return SourceSpec(
+        provider=provider,
+        org=org,
+        user=user,
+        group=group,
+        recursive=recursive,
+        include_archived=include_archived,
+        include_forks=include_forks,
+        path_prefix=path_prefix,
+        include_patterns=list(include_patterns),
+        ignore_patterns=list(ignore_patterns),
+        name_strategy=name_strategy,
+        ensure=ensure,
+        refresh_metadata=refresh_metadata,
+        enrich_topics=enrich_topics,
+    )
+
+
+def log_source_sync_plan(logger: UnifiedLogger, result: SourceSyncResult) -> None:
+    """Emit human-readable plan summary to the logger."""
+    if result.plan is None:
+        return
+    plan = result.plan
+    logger.info(f"Discovered repositories: {plan.discovered_count}")
+    logger.info(f"Filtered repositories: {plan.filtered_count}")
+    logger.info(f"Planned add: {len(plan.to_add)}")
+    logger.info(f"Planned update: {len(plan.to_update)}")
+    logger.info(f"Planned remove: {len(plan.to_remove)}")
+    logger.info(f"Unchanged: {plan.unchanged}")
+    if plan.to_add:
+        logger.info(
+            "Add candidates: " + ", ".join(repo.name for repo in plan.to_add[:20])
+        )
+    if plan.to_update:
+        logger.info(
+            "Update candidates: " + ", ".join(repo.name for repo in plan.to_update[:20])
+        )
+    if plan.to_remove:
+        logger.warning(
+            "Remove candidates: " + ", ".join(repo.name for repo in plan.to_remove[:20])
+        )
 
 
 @click.group(name="source")
@@ -122,6 +184,12 @@ def source(ctx: click.Context) -> None:
     help="Confirm destructive reconcile removals",
 )
 @click.option(
+    "--sync/--no-sync",
+    default=False,
+    show_default=True,
+    help="Run project git sync after a successful manifest apply",
+)
+@click.option(
     "--json",
     "as_json",
     is_flag=True,
@@ -148,6 +216,7 @@ def source_sync(
     no_enrich_topics: bool,
     apply: bool,
     yes: bool,
+    sync: bool,
     as_json: bool,
 ) -> None:
     """Discover and sync repositories from provider sources."""
@@ -158,7 +227,7 @@ def source_sync(
     config_path: str = ctx.obj["config_path"]
 
     try:
-        spec = SourceSpec(
+        spec = build_source_spec_from_cli(
             provider=provider,
             org=org,
             user=user,
@@ -167,8 +236,8 @@ def source_sync(
             include_archived=include_archived,
             include_forks=include_forks,
             path_prefix=path_prefix,
-            include_patterns=list(include_patterns),
-            ignore_patterns=list(ignore_patterns),
+            include_patterns=include_patterns,
+            ignore_patterns=ignore_patterns,
             name_strategy=name_strategy,
             ensure=ensure,
             refresh_metadata=refresh_metadata,
@@ -180,109 +249,35 @@ def source_sync(
     if not local_config.workspace:
         raise click.UsageError("No workspace configuration found in .metagit.yml")
 
-    workspace_project: Optional[WorkspaceProject] = next(
-        (item for item in local_config.workspace.projects if item.name == project_name),
-        None,
-    )
-    if not workspace_project:
-        raise click.UsageError(
-            f"Project '{project_name}' not found in workspace configuration"
-        )
-
-    service = SourceSyncService(app_config, logger)
-    discovered_result = service.discover(spec)
-    if isinstance(discovered_result, Exception):
-        result = SourceSyncResult(
-            ok=False,
-            spec=spec.model_dump(mode="json"),
-            errors=[
-                SourceSyncError(
-                    kind="discovery_failed",
-                    message=str(discovered_result),
-                )
-            ],
-        )
-        if as_json:
-            _emit_json(result)
-        else:
-            logger.error(f"Source discovery failed: {discovered_result}")
-        ctx.abort()
-
-    discovered = discovered_result
-    sync_mode = SourceSyncMode(mode)
-    plan = service.plan(spec, workspace_project, discovered, sync_mode)
-    result = SourceSyncResult(
-        ok=True,
-        applied=False,
-        spec=spec.model_dump(mode="json"),
-        plan=plan,
+    result = run_source_sync(
+        app_config=app_config,
+        logger=logger,
+        config=local_config,
+        config_path=config_path,
+        request=SourceSyncRunRequest(
+            spec=spec,
+            mode=SourceSyncMode(mode),
+            project_name=project_name,
+            apply=apply,
+            confirm_reconcile=yes,
+            sync_clones=sync and apply,
+        ),
     )
 
     if not as_json:
-        logger.info(f"Discovered repositories: {plan.discovered_count}")
-        logger.info(f"Filtered repositories: {plan.filtered_count}")
-        logger.info(f"Planned add: {len(plan.to_add)}")
-        logger.info(f"Planned update: {len(plan.to_update)}")
-        logger.info(f"Planned remove: {len(plan.to_remove)}")
-        logger.info(f"Unchanged: {plan.unchanged}")
-
-        if len(plan.to_add) > 0:
-            logger.info(
-                "Add candidates: " + ", ".join(repo.name for repo in plan.to_add[:20])
-            )
-        if len(plan.to_update) > 0:
-            logger.info(
-                "Update candidates: "
-                + ", ".join(repo.name for repo in plan.to_update[:20])
-            )
-        if len(plan.to_remove) > 0:
-            logger.warning(
-                "Remove candidates: "
-                + ", ".join(repo.name for repo in plan.to_remove[:20])
-            )
-
-    if not apply or sync_mode == SourceSyncMode.DISCOVER:
-        if not as_json:
+        if result.ok and result.plan is not None:
+            log_source_sync_plan(logger, result)
+        if not apply or SourceSyncMode(mode) == SourceSyncMode.DISCOVER:
             logger.info("Dry-run complete (no config changes applied).")
-        else:
-            _emit_json(result)
-        return
+        elif result.applied:
+            logger.success("Source sync applied successfully.")
+        for error in result.errors:
+            if error.kind == "reconcile_confirmation_required":
+                raise click.UsageError(error.message)
+            logger.error(error.message)
 
-    if sync_mode == SourceSyncMode.RECONCILE and len(plan.to_remove) > 0 and not yes:
-        result.ok = False
-        result.errors.append(
-            SourceSyncError(
-                kind="reconcile_confirmation_required",
-                message="Reconcile mode has removals. Re-run with --yes to confirm.",
-            )
-        )
-        if as_json:
-            _emit_json(result)
-        else:
-            raise click.UsageError(result.errors[0].message)
-        ctx.abort()
-
-    updated_project = service.apply_plan(workspace_project, plan, sync_mode)
-    for index, item in enumerate(local_config.workspace.projects):
-        if item.name == updated_project.name:
-            local_config.workspace.projects[index] = updated_project
-            break
-
-    config_manager = MetagitConfigManager(config_path=config_path)
-    save_result = config_manager.save_config(local_config, config_path)
-    if isinstance(save_result, Exception):
-        result.ok = False
-        result.errors.append(
-            SourceSyncError(kind="save_failed", message=str(save_result))
-        )
-        if as_json:
-            _emit_json(result)
-        else:
-            logger.error(f"Failed to save updated config: {save_result}")
-        ctx.abort()
-
-    result.applied = True
     if as_json:
-        _emit_json(result)
-    else:
-        logger.success("Source sync applied successfully.")
+        emit_source_sync_json(result)
+
+    if not result.ok:
+        ctx.abort()

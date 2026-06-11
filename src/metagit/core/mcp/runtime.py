@@ -46,6 +46,8 @@ from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.layout_context import resolve_sync_context
 from metagit.core.workspace.root_resolver import resolve_sync_root
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
+from metagit.core.mcp.services.source_sync import run_mcp_source_sync
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.mcp.services.workspace_template import WorkspaceTemplateService
 from metagit.core.mcp.tool_registry import ToolRegistry
@@ -548,6 +550,44 @@ class MetagitMcpRuntime:
                     "project_name": {"type": "string"},
                     "name": {"type": "string"},
                     "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_project_source_sync": {
+                "type": "object",
+                "required": ["project_name", "provider"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "provider": {"type": "string", "enum": ["github", "gitlab"]},
+                    "org": {"type": "string"},
+                    "user": {"type": "string"},
+                    "group": {"type": "string"},
+                    "mode": {
+                        "type": "string",
+                        "enum": ["discover", "additive", "reconcile"],
+                    },
+                    "recursive": {"type": "boolean"},
+                    "include_archived": {"type": "boolean"},
+                    "include_forks": {"type": "boolean"},
+                    "path_prefix": {"type": "string"},
+                    "include_patterns": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "ignore_patterns": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "name_strategy": {
+                        "type": "string",
+                        "enum": ["short", "namespaced"],
+                    },
+                    "ensure": {"type": "boolean"},
+                    "refresh_metadata": {"type": "boolean"},
+                    "enrich_topics": {"type": "boolean"},
+                    "apply": {"type": "boolean"},
+                    "confirm": {"type": "boolean"},
+                    "sync": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -1535,6 +1575,32 @@ class MetagitMcpRuntime:
                 repo_name=str(arguments.get("name", "")).strip(),
                 force=bool(arguments.get("force", False)),
             ).model_dump(mode="json")
+
+        if name == "metagit_project_source_sync":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "project source sync requires an active workspace"
+                )
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            app_config = AppConfig.load()
+            if isinstance(app_config, Exception):
+                return {
+                    "ok": False,
+                    "errors": [
+                        {
+                            "kind": "app_config",
+                            "message": str(app_config),
+                        }
+                    ],
+                }
+            logger = UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
+            return run_mcp_source_sync(
+                app_config=app_config,
+                logger=logger,
+                config=config,
+                config_path=config_path,
+                arguments=arguments,
+            )
 
         if name in {
             "metagit_workspace_project_rename",

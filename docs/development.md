@@ -26,6 +26,9 @@ Use source sync to discover repositories from GitHub/GitLab and plan/apply works
 - Refresh metadata with ensure: add `--refresh-metadata` to update descriptions/tags on existing URLs
 - Filters: repeatable `--ignore '**/deprecated/**'` and `--include-pattern 'acme/platform-*'`
 - Agent JSON: append `--json` (logs stay on stderr when not using JSON-only tooling)
+- Clone after apply: `--sync` runs `metagit project sync` for the target project
+- Agent alias: `metagit workspace import --project <p> --provider github --org <org> [--ignore ...]`
+- MCP (ACTIVE): `metagit_project_source_sync` with the same parameters (`apply`, `confirm`, `sync`)
 - Reconcile apply: `metagit project source sync --provider gitlab --group <group> --mode reconcile --apply --yes`
 
 GitHub org/user listing is flat (no nested subgroups). GitLab groups honor `--recursive` / `--no-recursive` for subgroups. Default manifest naming is `namespaced`; use `--name-strategy short` for legacy short names.

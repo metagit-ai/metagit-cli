@@ -6,6 +6,8 @@ Unit tests for metagit.core.mcp.runtime
 import json
 from pathlib import Path
 
+import pytest
+
 from metagit.core.mcp.runtime import MetagitMcpRuntime
 
 
@@ -648,3 +650,78 @@ def test_tools_call_metagit_objective_list(tmp_path: Path) -> None:
     assert payload["ok"] is True
     ids = [item["id"] for item in payload["objectives"]]
     assert "mcp-goal" in ids
+
+
+def test_tools_list_includes_project_source_sync_when_active(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 200, "method": "tools/list", "params": {}}
+    )
+    assert response is not None
+    names = [item["name"] for item in response["result"]["tools"]]
+    assert "metagit_project_source_sync" in names
+
+
+def test_tools_call_project_source_sync_dry_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    from metagit.core.project.source_models import SourceSyncPlan, SourceSyncResult
+
+    monkeypatch.setattr(
+        "metagit.core.mcp.services.source_sync.run_source_sync",
+        lambda **_: SourceSyncResult(
+            ok=True,
+            applied=False,
+            plan=SourceSyncPlan(discovered_count=0, filtered_count=0),
+        ),
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 201,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_project_source_sync",
+                "arguments": {
+                    "project_name": "alpha",
+                    "provider": "github",
+                    "org": "acme",
+                    "mode": "discover",
+                },
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is True
