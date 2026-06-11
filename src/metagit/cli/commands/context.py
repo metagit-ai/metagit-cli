@@ -25,6 +25,7 @@ from metagit.core.context.models import (
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.repomix_profile_service import RepomixProfileService
+from metagit.core.project.source_approval_executor import SourceSyncApprovalExecutor
 from metagit.core.workspace.root_resolver import (
     resolve_definition_root,
     resolve_session_root,
@@ -598,7 +599,7 @@ def approval_approve_cmd(
     resolver_note: str | None,
 ) -> None:
     """Approve a pending request."""
-    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    config, config_path, _, session_root, _ = _context_paths(ctx, definition_path)
     try:
         row = ApprovalService(workspace_root=session_root).resolve(
             request_id=approval_id,
@@ -607,6 +608,14 @@ def approval_approve_cmd(
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
+    if row.action == "source_sync_reconcile":
+        applied = SourceSyncApprovalExecutor().apply_if_approved(
+            approval=row,
+            config=config,
+            config_path=config_path,
+        )
+        if isinstance(applied, Exception):
+            raise click.ClickException(str(applied)) from applied
     click.echo(row.model_dump_json(indent=2))
 
 

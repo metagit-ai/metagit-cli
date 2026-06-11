@@ -49,6 +49,34 @@ def run_mcp_source_sync(
     arguments: dict[str, Any],
 ) -> dict[str, Any]:
     """Execute source sync from MCP tool arguments."""
+    if bool(arguments.get("from_manifest", False)):
+        project_name = str(arguments.get("project_name", "")).strip()
+        if not project_name:
+            return {
+                "ok": False,
+                "errors": [
+                    {"kind": "invalid_arguments", "message": "project_name is required"}
+                ],
+            }
+        from metagit.core.project.source_manifest_sync import SourceManifestSyncService
+        from metagit.core.workspace.root_resolver import resolve_session_root
+
+        result = SourceManifestSyncService().sync_project(
+            app_config=app_config,
+            logger=logger,
+            config=config,
+            config_path=config_path,
+            project_name=project_name,
+            source_id=_optional_str(arguments.get("source_id")),
+            apply=bool(arguments.get("apply", False)),
+            force=bool(arguments.get("force", False)),
+            sync_clones=bool(arguments.get("sync", False))
+            and bool(arguments.get("apply", False)),
+            session_root=resolve_session_root(config_path),
+            requested_by=str(arguments.get("requested_by", "mcp")),
+        )
+        return result.model_dump(mode="json")
+
     project_name = str(arguments.get("project_name", "")).strip()
     if not project_name:
         return {

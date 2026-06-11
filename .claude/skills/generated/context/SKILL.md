@@ -6,7 +6,7 @@ metadata:
 ---
 # Context
 
-104 symbols | 17 files | Cohesion: 85%
+104 symbols | 17 files | Cohesion: 84%
 
 ## When to Use
 
@@ -51,18 +51,18 @@ Start here when exploring this area:
 | `test_git_command_error_sets_row_error` | Function | `tests/core/context/test_session_digest_service.py` | 209 |
 | `test_invalid_since_raises` | Function | `tests/core/context/test_session_digest_service.py` | 247 |
 | `test_since_accepts_zulu_suffix` | Function | `tests/core/context/test_session_digest_service.py` | 259 |
-| `approval_list_cmd` | Function | `src/metagit/cli/commands/context.py` | 555 |
-| `test_request_persists_hex_id_and_pending_status` | Function | `tests/core/context/test_approval_service.py` | 19 |
-| `test_list_optional_status_filter` | Function | `tests/core/context/test_approval_service.py` | 42 |
-| `test_resolve_sets_status_timestamp_and_note` | Function | `tests/core/context/test_approval_service.py` | 57 |
-| `test_resolve_unknown_id_raises` | Function | `tests/core/context/test_approval_service.py` | 67 |
-| `test_resolve_non_pending_raises` | Function | `tests/core/context/test_approval_service.py` | 73 |
-| `test_reload_from_disk_shares_queue` | Function | `tests/core/context/test_approval_service.py` | 81 |
 | `test_list_returns_empty_when_no_file` | Function | `tests/core/context/test_objective_service.py` | 29 |
 | `test_upsert_persists_under_sessions` | Function | `tests/core/context/test_objective_service.py` | 35 |
 | `test_get_and_list_roundtrip` | Function | `tests/core/context/test_objective_service.py` | 48 |
 | `test_upsert_updates_existing_keeps_created_at` | Function | `tests/core/context/test_objective_service.py` | 59 |
 | `test_objective_model_rejects_invalid_id` | Function | `tests/core/context/test_objective_service.py` | 108 |
+| `test_objective_model_rejects_blank_title` | Function | `tests/core/context/test_objective_service.py` | 113 |
+| `test_complete_and_cancel` | Function | `tests/core/context/test_objective_service.py` | 78 |
+| `test_get_complete_cancel_reject_bad_id_slug` | Function | `tests/core/context/test_objective_service.py` | 92 |
+| `test_complete_missing_raises` | Function | `tests/core/context/test_objective_service.py` | 102 |
+| `test_build_one_git_repo_detects_pyproject_and_branch` | Function | `tests/core/context/test_repo_card_service.py` | 22 |
+| `test_build_one_missing_clone_sets_missing_clone_flag` | Function | `tests/core/context/test_repo_card_service.py` | 63 |
+| `test_health_flags_stale_head_via_mock` | Function | `tests/core/context/test_repo_card_service.py` | 95 |
 
 ## Execution Flows
 

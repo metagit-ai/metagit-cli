@@ -4,9 +4,10 @@ Models for provider-based recursive repository discovery and sync planning.
 """
 
 from enum import Enum
+import re
 from typing import Any, List, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
 from metagit.core.project.models import ProjectPath
 
@@ -103,6 +104,87 @@ class SourceSpec(BaseModel):
         if self.provider == SourceProvider.GITHUB:
             return self.org if self.org else self.user or ""
         return self.group or ""
+
+
+class ProjectSource(BaseModel):
+    """Declarative provider import scope stored on ``workspace.projects[]``."""
+
+    id: str = Field(..., description="Stable slug unique within the project")
+    provider: SourceProvider = Field(..., description="Source provider")
+    org: Optional[str] = Field(None, description="GitHub organization")
+    user: Optional[str] = Field(None, description="GitHub user")
+    group: Optional[str] = Field(None, description="GitLab group path")
+    mode: SourceSyncMode = Field(
+        SourceSyncMode.ADDITIVE,
+        description="additive or reconcile (discover is CLI-only)",
+    )
+    recursive: bool = Field(
+        True, description="Recurse into nested scopes when supported"
+    )
+    ensure: bool = Field(True, description="Skip metadata updates for existing URLs")
+    refresh_metadata: bool = Field(
+        False,
+        description="With ensure, still refresh description/tags",
+    )
+    enrich_topics: bool = Field(
+        True, description="Merge provider topics into repo tags"
+    )
+    include_archived: bool = Field(False, description="Include archived repositories")
+    include_forks: bool = Field(False, description="Include forked repositories")
+    path_prefix: Optional[str] = Field(
+        None, description="Optional namespace/repo prefix"
+    )
+    include_patterns: List[str] = Field(default_factory=list)
+    ignore_patterns: List[str] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("ignore_patterns", "ignore"),
+    )
+    name_strategy: Literal["short", "namespaced"] = Field("namespaced")
+    enabled: bool = Field(True, description="When false, skip during manifest sync")
+
+    @field_validator("id")
+    @classmethod
+    def validate_id_slug(cls, value: str) -> str:
+        trimmed = value.strip()
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", trimmed):
+            raise ValueError(
+                "source id must be a lowercase slug (letters, numbers, hyphens)"
+            )
+        return trimmed
+
+    @model_validator(mode="after")
+    def validate_manifest_source(self) -> "ProjectSource":
+        if self.mode == SourceSyncMode.DISCOVER:
+            raise ValueError(
+                "sources[].mode cannot be discover; use additive or reconcile"
+            )
+        _ = SourceSpec(
+            provider=self.provider,
+            org=self.org,
+            user=self.user,
+            group=self.group,
+        )
+        return self
+
+    def to_source_spec(self) -> SourceSpec:
+        """Convert manifest source entry to runtime discovery spec."""
+        return SourceSpec(
+            provider=self.provider,
+            org=self.org,
+            user=self.user,
+            group=self.group,
+            recursive=self.recursive,
+            include_archived=self.include_archived,
+            include_forks=self.include_forks,
+            path_prefix=self.path_prefix,
+            include_patterns=list(self.include_patterns),
+            ignore_patterns=list(self.ignore_patterns),
+            name_strategy=self.name_strategy,
+            ensure=self.ensure,
+            refresh_metadata=self.refresh_metadata,
+            enrich_topics=self.enrich_topics,
+            source_id=self.id,
+        )
 
 
 class DiscoveredRepo(BaseModel):

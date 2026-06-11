@@ -1,12 +1,12 @@
 ---
 name: api
-description: "Skill for the Api area of metagit-cli. 60 symbols across 18 files."
+description: "Skill for the Api area of metagit-cli. 58 symbols across 16 files."
 metadata:
   internal: true
 ---
 # Api
 
-60 symbols | 18 files | Cohesion: 80%
+58 symbols | 16 files | Cohesion: 82%
 
 ## When to Use
 
@@ -72,23 +72,21 @@ Start here when exploring this area:
 | `OpsPanel → ApiError` | cross_community | 5 |
 | `SyncDialog → ApiError` | cross_community | 5 |
 | `MutationFn → ApiError` | intra_community | 5 |
+| `MutationFn → ApiError` | intra_community | 5 |
+| `QueryFn → ApiError` | intra_community | 5 |
+| `QueryFn → ApiError` | cross_community | 5 |
 | `Do_GET → Load_config` | cross_community | 4 |
 | `Do_POST → Load_config` | cross_community | 4 |
 | `Do_POST → _bool_param` | cross_community | 4 |
-| `Do_DELETE → Load_config` | cross_community | 4 |
-| `Workspace_project_rename → Find_project` | cross_community | 4 |
-| `Workspace_project_rename → Resolve_effective_dedupe` | cross_community | 4 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Commands | 6 calls |
-| Tests | 1 calls |
+| Commands | 5 calls |
 | Project | 1 calls |
 | Services | 1 calls |
 | Workspace | 1 calls |
-| Prompt | 1 calls |
 
 ## How to Explore
 

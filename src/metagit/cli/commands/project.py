@@ -19,6 +19,7 @@ from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager, project_manager_from_app
+from metagit.core.project.source_manifest_sync import SourceManifestSyncService
 from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
@@ -29,6 +30,7 @@ from metagit.core.workspace.layout_resolver import (
     project_exists_in_manifest,
     resolve_active_project_name,
 )
+from metagit.core.workspace.root_resolver import resolve_session_root
 from metagit.core.workspace.models import WorkspaceProject
 from metagit.cli.shell_completion import complete_projects
 
@@ -277,8 +279,14 @@ def project_select(ctx: click.Context) -> None:
     default=False,
     help="After sync, replace symlink mounts with full directory copies",
 )
+@click.option(
+    "--refresh-sources",
+    is_flag=True,
+    default=False,
+    help="Apply workspace.projects[].sources[] before git sync",
+)
 @click.pass_context
-def project_sync(ctx: click.Context, hydrate: bool) -> None:
+def project_sync(ctx: click.Context, hydrate: bool, refresh_sources: bool) -> None:
     """Sync project within workspace"""
     logger = ctx.obj["logger"]
     app_config: AppConfig = ctx.obj["config"]
@@ -327,6 +335,27 @@ def project_sync(ctx: click.Context, hydrate: bool) -> None:
                     f"Project '{project}' not found in workspace configuration"
                 )
                 ctx.abort()
+
+        if refresh_sources and project != "local":
+            config_path = ctx.obj["config_path"]
+            manifest_result = SourceManifestSyncService().sync_project(
+                app_config=app_config,
+                logger=logger,
+                config=local_config,
+                config_path=config_path,
+                project_name=project,
+                apply=True,
+                sync_clones=False,
+                session_root=resolve_session_root(config_path),
+            )
+            if not manifest_result.ok:
+                for error in manifest_result.errors:
+                    logger.error(error.message)
+                ctx.abort()
+            workspace_project = next(
+                (p for p in local_config.workspace.projects if p.name == project),
+                workspace_project,
+            )
 
         sync_result: bool = project_manager.sync(workspace_project, hydrate=hydrate)
         if sync_result:

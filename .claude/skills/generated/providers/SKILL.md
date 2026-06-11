@@ -69,9 +69,6 @@ Start here when exploring this area:
 |------|------|-------|
 | `Init → Load_config` | cross_community | 5 |
 | `Init → Manifest_gate_error_message` | cross_community | 4 |
-| `Source_sync → Clear` | cross_community | 4 |
-| `Source_sync → Register` | cross_community | 4 |
-| `Source_sync → Normalize_git_url` | cross_community | 4 |
 | `Main → Normalize_git_url` | cross_community | 4 |
 | `Sync_example → Normalize_git_url` | cross_community | 4 |
 | `Async_example → Normalize_git_url` | cross_community | 4 |

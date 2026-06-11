@@ -1,12 +1,12 @@
 ---
 name: commands
-description: "Skill for the Commands area of metagit-cli. 202 symbols across 55 files."
+description: "Skill for the Commands area of metagit-cli. 203 symbols across 53 files."
 metadata:
   internal: true
 ---
 # Commands
 
-202 symbols | 55 files | Cohesion: 71%
+203 symbols | 53 files | Cohesion: 71%
 
 ## When to Use
 
@@ -24,7 +24,7 @@ metadata:
 | `src/metagit/cli/commands/agent.py` | _require_manifest_root, agent_dispatch_plan, agent_overlay_init, agent_overlay_path, _emit_json (+7) |
 | `tests/cli/commands/test_context.py` | _env_workspace_root, test_context_repo_card_json, test_context_objective_list_after_set, test_context_objective_partial_update_without_title, test_context_approval_request_json (+5) |
 | `src/metagit/cli/commands/config.py` | config_validate, config_set, set_nested_attr, config_info, config_graph_export (+3) |
-| `src/metagit/cli/commands/project_repo.py` | repo_add, repo_promote, repo_prune, repo_rename, repo_move (+3) |
+| `src/metagit/cli/commands/project_repo.py` | repo_rename, repo_move, repo_add, repo_promote, repo_prune (+3) |
 | `tests/cli/commands/test_version.py` | _sample_result, test_version_check_json, test_version_check_human_output, test_version_check_no_notes, _sample_upgrade_result (+2) |
 | `tests/cli/commands/test_workspace_grep.py` | _env_workspace_root, _write_grep_fixture, test_workspace_grep_json_smoke, test_workspace_grep_excludes_node_modules, test_workspace_grep_info_without_rg (+2) |
 | `src/metagit/cli/commands/prompt.py` | _load_manifest, _prompt_ctx, _run_emit, prompt_workspace, prompt_project (+2) |
@@ -83,14 +83,14 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
+| Cluster_394 | 20 calls |
+| Workspace | 13 calls |
 | Examples | 11 calls |
-| Cluster_389 | 10 calls |
-| Workspace | 9 calls |
+| Cli | 10 calls |
 | Agent | 9 calls |
-| Cli | 6 calls |
-| Project | 3 calls |
-| Tests | 3 calls |
+| Project | 4 calls |
 | Services | 3 calls |
+| Tests | 2 calls |
 
 ## How to Explore
 

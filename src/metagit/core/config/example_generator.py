@@ -183,6 +183,8 @@ class ConfigExampleGenerator:
         }:
             inner = self._sample_annotation(field_info.annotation, name)
             return [inner] if isinstance(inner, dict) else inner
+        if field_info.default_factory is not None and name == "sources":
+            return []
         annotation = field_info.annotation
         return self._sample_annotation(annotation, name)
 
@@ -206,6 +208,15 @@ class ConfigExampleGenerator:
 
         if isinstance(annotation, type) and issubclass(annotation, enum.Enum):
             return next(iter(annotation)).value
+
+        if annotation is bool:
+            return False
+        if annotation is int:
+            return 0
+        if annotation is float:
+            return 0.0
+        if annotation is str:
+            return self._scalar_for_name(field_name)
 
         return self._scalar_for_name(field_name)
 

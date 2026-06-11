@@ -432,6 +432,19 @@
           "description": "Provider-native repository identifier",
           "title": "Source Repo Id"
         },
+        "source_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declarative source id from workspace.projects[].sources[]",
+          "title": "Source Id"
+        },
         "tags": {
           "additionalProperties": {
             "type": "string"
@@ -1287,6 +1300,19 @@
           "description": "Provider-native repository identifier",
           "title": "Source Repo Id"
         },
+        "source_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declarative source id from workspace.projects[].sources[]",
+          "title": "Source Id"
+        },
         "tags": {
           "additionalProperties": {
             "type": "string"
@@ -1339,6 +1365,148 @@
         "name"
       ],
       "title": "ProjectPath",
+      "type": "object"
+    },
+    "ProjectSource": {
+      "description": "Declarative provider import scope stored on ``workspace.projects[]``.",
+      "properties": {
+        "id": {
+          "description": "Stable slug unique within the project",
+          "title": "Id",
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/$defs/SourceProvider",
+          "description": "Source provider"
+        },
+        "org": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub organization",
+          "title": "Org"
+        },
+        "user": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub user",
+          "title": "User"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitLab group path",
+          "title": "Group"
+        },
+        "mode": {
+          "$ref": "#/$defs/SourceSyncMode",
+          "default": "additive",
+          "description": "additive or reconcile (discover is CLI-only)"
+        },
+        "recursive": {
+          "default": true,
+          "description": "Recurse into nested scopes when supported",
+          "title": "Recursive",
+          "type": "boolean"
+        },
+        "ensure": {
+          "default": true,
+          "description": "Skip metadata updates for existing URLs",
+          "title": "Ensure",
+          "type": "boolean"
+        },
+        "refresh_metadata": {
+          "default": false,
+          "description": "With ensure, still refresh description/tags",
+          "title": "Refresh Metadata",
+          "type": "boolean"
+        },
+        "enrich_topics": {
+          "default": true,
+          "description": "Merge provider topics into repo tags",
+          "title": "Enrich Topics",
+          "type": "boolean"
+        },
+        "include_archived": {
+          "default": false,
+          "description": "Include archived repositories",
+          "title": "Include Archived",
+          "type": "boolean"
+        },
+        "include_forks": {
+          "default": false,
+          "description": "Include forked repositories",
+          "title": "Include Forks",
+          "type": "boolean"
+        },
+        "path_prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional namespace/repo prefix",
+          "title": "Path Prefix"
+        },
+        "include_patterns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Include Patterns",
+          "type": "array"
+        },
+        "ignore_patterns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ignore Patterns",
+          "type": "array"
+        },
+        "name_strategy": {
+          "default": "namespaced",
+          "enum": [
+            "short",
+            "namespaced"
+          ],
+          "title": "Name Strategy",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "description": "When false, skip during manifest sync",
+          "title": "Enabled",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "provider"
+      ],
+      "title": "ProjectSource",
       "type": "object"
     },
     "ProvisioningTool": {
@@ -1404,6 +1572,25 @@
         "other"
       ],
       "title": "SecretKind",
+      "type": "string"
+    },
+    "SourceProvider": {
+      "description": "Supported source providers for recursive discovery.",
+      "enum": [
+        "github",
+        "gitlab"
+      ],
+      "title": "SourceProvider",
+      "type": "string"
+    },
+    "SourceSyncMode": {
+      "description": "Supported sync planning modes.",
+      "enum": [
+        "discover",
+        "additive",
+        "reconcile"
+      ],
+      "title": "SourceSyncMode",
       "type": "string"
     },
     "Tasker": {
@@ -1656,6 +1843,14 @@
           "description": "Extensible key-value payload for exports and tooling",
           "title": "Metadata",
           "type": "object"
+        },
+        "sources": {
+          "description": "Declarative provider import scopes for this project",
+          "items": {
+            "$ref": "#/$defs/ProjectSource"
+          },
+          "title": "Sources",
+          "type": "array"
         },
         "repos": {
           "description": "Repository list",

@@ -85,8 +85,8 @@ Start here when exploring this area:
 |------|-------------|
 | Mcp | 2 calls |
 | Web | 2 calls |
-| Skills | 2 calls |
 | Commands | 2 calls |
+| Skills | 2 calls |
 | Init | 1 calls |
 
 ## How to Explore

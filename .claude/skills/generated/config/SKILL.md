@@ -83,9 +83,8 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 9 calls |
-| Web | 1 calls |
-| Appconfig | 1 calls |
+| Commands | 8 calls |
+| Web | 3 calls |
 
 ## How to Explore
 

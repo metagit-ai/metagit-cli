@@ -1,12 +1,12 @@
 ---
 name: workspace
-description: "Skill for the Workspace area of metagit-cli. 100 symbols across 25 files."
+description: "Skill for the Workspace area of metagit-cli. 105 symbols across 28 files."
 metadata:
   internal: true
 ---
 # Workspace
 
-100 symbols | 25 files | Cohesion: 78%
+105 symbols | 28 files | Cohesion: 76%
 
 ## When to Use
 
@@ -26,8 +26,8 @@ metadata:
 | `tests/core/workspace/test_layout_resolver.py` | _config_with_projects, test_resolve_active_project_prefers_explicit, test_resolve_active_project_uses_preference_when_present, test_resolve_active_project_falls_back_to_single_project, test_resolve_active_project_unresolved_when_multiple_without_preference (+2) |
 | `src/metagit/core/workspace/workspace_dedupe.py` | build_repo_identity, find_duplicate_identities, list_canonical_references, _branch_suffix, _slugify |
 | `tests/core/workspace/test_layout_service.py` | _setup_workspace, test_rename_project_moves_sync_folder, test_rename_repo_moves_mount, test_move_repo_between_projects, test_dry_run_does_not_mutate |
+| `src/metagit/core/project/manager.py` | add, _create_vscode_workspace, sync, hydrate_project |
 | `src/metagit/core/project/repo_promote_service.py` | promote, _find_repo, _save_config |
-| `tests/core/workspace/test_workspace_project_protected.py` | _protected_config, test_remove_protected_project_requires_force, test_add_repo_to_protected_project_requires_force |
 
 ## Entry Points
 
@@ -57,7 +57,7 @@ Start here when exploring this area:
 | `test_add_project_ensure_noop` | Function | `tests/core/workspace/test_catalog_service.py` | 194 |
 | `test_remove_protected_project_requires_force` | Function | `tests/core/workspace/test_workspace_project_protected.py` | 26 |
 | `test_add_repo_to_protected_project_requires_force` | Function | `tests/core/workspace/test_workspace_project_protected.py` | 36 |
-| `workspace_repo_add` | Function | `src/metagit/cli/commands/workspace.py` | 361 |
+| `workspace_repo_add` | Function | `src/metagit/cli/commands/workspace.py` | 362 |
 | `test_add_and_remove_repo` | Function | `tests/core/workspace/test_catalog_service.py` | 59 |
 | `test_add_repo_rejects_duplicate_identity` | Function | `tests/core/workspace/test_catalog_service.py` | 93 |
 | `test_add_repo_ensure_noop_when_matching` | Function | `tests/core/workspace/test_catalog_service.py` | 129 |
@@ -68,23 +68,24 @@ Start here when exploring this area:
 
 | Flow | Type | Steps |
 |------|------|-------|
+| `Repo_add → _promptkit` | cross_community | 6 |
+| `Repo_add → _interactive_prompt_ui_enabled` | cross_community | 6 |
+| `Repo_add → _convert_input` | cross_community | 5 |
 | `Promote → Collect_file_copy_jobs` | cross_community | 5 |
 | `Project_sync → Collect_file_copy_jobs` | cross_community | 5 |
+| `Repo_add → _default_for_unprompted_field` | cross_community | 4 |
 | `Promote → Create_vscode_workspace` | cross_community | 4 |
 | `Project_sync → Create_vscode_workspace` | cross_community | 4 |
 | `Workspace_project_rename → Find_project` | cross_community | 4 |
-| `Workspace_repo_rename → Find_project` | cross_community | 4 |
-| `Workspace_repo_move → Find_project` | cross_community | 4 |
-| `Show → Validate_env_value` | cross_community | 4 |
-| `Repo_add → Save_config` | cross_community | 3 |
-| `Repo_add → _find_project` | cross_community | 3 |
+| `Workspace_project_rename → Resolve_effective_dedupe` | cross_community | 4 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Commands | 14 calls |
+| Commands | 15 calls |
 | Services | 4 calls |
+| Tests | 2 calls |
 | Providers | 1 calls |
 
 ## How to Explore
