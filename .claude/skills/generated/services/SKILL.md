@@ -83,10 +83,10 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Config | 3 calls |
+| Commands | 3 calls |
 | Workspace | 3 calls |
 | Context | 1 calls |
-| Commands | 1 calls |
+| Config | 1 calls |
 
 ## How to Explore
 

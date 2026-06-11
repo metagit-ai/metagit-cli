@@ -4,7 +4,7 @@ Models for provider-based recursive repository discovery and sync planning.
 """
 
 from enum import Enum
-from typing import List, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -42,6 +42,42 @@ class SourceSpec(BaseModel):
     include_forks: bool = Field(False, description="Include forked repositories")
     path_prefix: Optional[str] = Field(
         None, description="Optional namespace/repo prefix filter"
+    )
+    include_patterns: List[str] = Field(
+        default_factory=list,
+        description="fnmatch allowlist on provider full_name; empty means no allowlist",
+    )
+    ignore_patterns: List[str] = Field(
+        default_factory=list,
+        description="fnmatch denylist on provider full_name",
+    )
+    ignore_languages: List[str] = Field(
+        default_factory=list,
+        description="Drop repos whose language matches (case-insensitive)",
+    )
+    visibility: Literal["any", "public", "private", "internal"] = Field(
+        "any",
+        description="Filter by repository visibility when provider exposes it",
+    )
+    name_strategy: Literal["short", "namespaced"] = Field(
+        "namespaced",
+        description="How to derive manifest repo names from discovered repos",
+    )
+    ensure: bool = Field(
+        False,
+        description="Skip metadata updates for repos already matched by URL or repo id",
+    )
+    refresh_metadata: bool = Field(
+        False,
+        description="With ensure, still update description/tags when provider changed",
+    )
+    enrich_topics: bool = Field(
+        True,
+        description="Merge provider topics into repo tags when authenticated",
+    )
+    source_id: Optional[str] = Field(
+        None,
+        description="Declarative source id from workspace.projects[].sources[]",
     )
 
     @model_validator(mode="after")
@@ -83,6 +119,8 @@ class DiscoveredRepo(BaseModel):
     archived: bool = False
     fork: bool = False
     private: Optional[bool] = None
+    language: Optional[str] = None
+    topics: List[str] = Field(default_factory=list)
 
 
 class SourceSyncPlan(BaseModel):
@@ -93,3 +131,22 @@ class SourceSyncPlan(BaseModel):
     to_add: List[ProjectPath] = Field(default_factory=list)
     to_update: List[ProjectPath] = Field(default_factory=list)
     to_remove: List[ProjectPath] = Field(default_factory=list)
+    filtered_count: int = 0
+
+
+class SourceSyncError(BaseModel):
+    """Structured error for source sync JSON responses."""
+
+    kind: str
+    message: str
+
+
+class SourceSyncResult(BaseModel):
+    """CLI/MCP JSON envelope for source sync operations."""
+
+    ok: bool = True
+    applied: bool = False
+    spec: Optional[dict[str, Any]] = None
+    plan: Optional[SourceSyncPlan] = None
+    errors: List[SourceSyncError] = Field(default_factory=list)
+    pending_approval_id: Optional[str] = None

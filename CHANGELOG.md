@@ -4,7 +4,7 @@
 
 ### Added
 
-- **`metagit project repo promote`:** migrate a path-based workspace repo entry to a git-managed clone under the sync folder — clears `path`, sets `url` (from manifest, `--url`, or git `origin`), removes the symlink mount, and runs `project sync`. Supports `--dry-run`, `--json`, and `--force` for protected repos. root `CHANGELOG.md` syncs into the docs site (`/changelog/`), `task qa:prepush`/CI validate updates when `src/`, `schemas/`, or `web/` change, and semantic-release promotes `## Unreleased` into versioned notes for GitHub Releases.
+- **`metagit project source sync` enhancements:** include/ignore glob filters, `--ensure` / `--refresh-metadata` idempotency, provider topic enrichment into repo tags, default `namespaced` GitLab naming, and `--json` agent output.
 - **`metagit version check`:** CLI and MCP `metagit_version_check` compare the installed package to the latest GitHub release (notes) and PyPI; available without an active workspace gate. Use `--json` or `include_notes: false` for agent-friendly output.
 - **`metagit version upgrade`:** CLI and MCP `metagit_version_upgrade` detect the install channel (`uv tool`, `pip`, editable) and plan or run a self-update from PyPI. Defaults to dry-run; pass `--apply` or `apply: true` to execute. Refuses editable development installs.
 - **Agent onboarding:** `llms.txt`, [docs/agents.md](docs/agents.md), and README/AGENTS.md sections so agents landing on the GitHub repo can install and use Metagit with minimal tokens (context packs, skills, MCP).

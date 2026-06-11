@@ -221,6 +221,7 @@ If the repo has its own `.metagit.yml`: `metagit detect repository -p . -o metag
 
 ## 3. Provider discovery (when remote url is known)
 - `metagit project source sync --provider github|gitlab --org|--user|--group ... --mode discover --no-apply`
+- For idempotent catalog updates use `--mode additive --ensure --apply`; add `--refresh-metadata` to refresh topics/descriptions. Filters: `--ignore`, `--include-pattern`. Agent output: `--json`.
 Use output to fill `url`, `source_provider`, `source_namespace`, `source_repo_id`, and provider tags when missing.
 
 ## 4. Merge into workspace.projects[].repos[]

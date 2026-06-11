@@ -108,3 +108,50 @@ workspace:
 
     assert result.exit_code != 0
     assert "Reconcile mode has removals" in result.output
+
+
+def test_project_source_sync_json_output(monkeypatch, tmp_path) -> None:
+    config_path = tmp_path / ".metagit.yml"
+    config_path.write_text(
+        """
+name: test-project
+workspace:
+  projects:
+    - name: default
+      repos: []
+""".strip()
+    )
+
+    monkeypatch.setattr(SourceSyncService, "discover", lambda self, spec: [])
+    monkeypatch.setattr(
+        SourceSyncService,
+        "plan",
+        lambda self, spec, project, discovered, mode: SourceSyncPlan(
+            discovered_count=2,
+            filtered_count=2,
+            unchanged=1,
+        ),
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "project",
+            "--config",
+            str(config_path),
+            "source",
+            "sync",
+            "--provider",
+            "github",
+            "--org",
+            "metagit-ai",
+            "--mode",
+            "discover",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert '"discovered_count": 2' in result.output
+    assert '"ok": true' in result.output

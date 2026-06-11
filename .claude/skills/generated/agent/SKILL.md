@@ -1,12 +1,12 @@
 ---
 name: agent
-description: "Skill for the Agent area of metagit-cli. 122 symbols across 17 files."
+description: "Skill for the Agent area of metagit-cli. 119 symbols across 17 files."
 metadata:
   internal: true
 ---
 # Agent
 
-122 symbols | 17 files | Cohesion: 74%
+119 symbols | 17 files | Cohesion: 74%
 
 ## When to Use
 
@@ -19,15 +19,15 @@ metadata:
 | File | Symbols |
 |------|---------|
 | `src/metagit/core/agent/registry.py` | load_bundled_manifest, template_dir, _load_bundled_manifest, _bundled_template_dir, resolve_source (+15) |
-| `src/metagit/core/agent/overlay.py` | overlay_template_dir, resolve_template_source, overlay_relative_for_scope, overlay_path_for_template, ensure_overlay_root (+14) |
+| `src/metagit/core/agent/overlay.py` | overlay_template_dir, resolve_template_source, resolve_template_file, overlay_relative_for_scope, overlay_path_for_template (+14) |
 | `src/metagit/core/agent/service.py` | init_overlay, template_detail, create, __post_init__, render_template (+10) |
 | `src/metagit/core/agent/dispatch.py` | _build_install, _install_command, build_plan, _validate_scope_inputs, _resolve_project_repo (+7) |
 | `tests/core/agent/test_agent_service.py` | test_create_writes_claude_code_agent, test_create_refuses_overwrite_without_force, test_create_hermes_installs_skill, test_create_opencode_uses_subagent_frontmatter, test_create_cursor_agent (+6) |
 | `tests/core/agent/test_agent_overlay.py` | _normalize_path_text, _write_manifest_root, test_init_overlay_committed_default_path, test_init_overlay_local_path, test_local_overlay_overrides_committed_manifest (+3) |
 | `tests/core/agent/test_agent_dispatch.py` | _workspace_manifest, test_dispatch_plan_repo_implementer_handoff, test_dispatch_plan_detects_installed_artifact, test_dispatch_plan_requires_repo_scope_inputs, test_dispatch_plan_cli_json (+2) |
-| `src/metagit/cli/commands/agent.py` | agent_show, _require_manifest_root, agent_dispatch_plan, agent_overlay_path, agent_schema |
 | `src/metagit/core/agent/paths.py` | expand_agent_path, autodetect_agent_targets, resolve_skills_directory, resolve_agents_directory, resolve_vendor_artifact_path |
 | `src/metagit/core/init/prompts.py` | load_answers_file, build_builtin_defaults, resolve_prompt_default, collect_answers |
+| `src/metagit/core/agent/catalog.py` | list_catalog, build_delegation_index, _apply_delegation_index, _build_taxonomy |
 
 ## Entry Points
 
@@ -55,14 +55,14 @@ Start here when exploring this area:
 | `overlay_template_dir` | Function | `src/metagit/core/agent/overlay.py` | 231 |
 | `resolve_template_source` | Function | `src/metagit/core/agent/overlay.py` | 316 |
 | `test_overlay_merge` | Function | `tests/core/agent/test_agent_catalog.py` | 53 |
-| `agent_dispatch_plan` | Function | `src/metagit/cli/commands/agent.py` | 279 |
-| `agent_overlay_path` | Function | `src/metagit/cli/commands/agent.py` | 581 |
-| `overlay_relative_for_scope` | Function | `src/metagit/core/agent/overlay.py` | 39 |
-| `overlay_path_for_template` | Function | `src/metagit/core/agent/overlay.py` | 48 |
-| `ensure_overlay_root` | Function | `src/metagit/core/agent/overlay.py` | 82 |
-| `overlay_has_files` | Function | `src/metagit/core/agent/overlay.py` | 93 |
-| `init_overlay_from_bundled` | Function | `src/metagit/core/agent/overlay.py` | 146 |
 | `test_create_writes_claude_code_agent` | Function | `tests/core/agent/test_agent_service.py` | 45 |
+| `test_create_refuses_overwrite_without_force` | Function | `tests/core/agent/test_agent_service.py` | 70 |
+| `test_create_hermes_installs_skill` | Function | `tests/core/agent/test_agent_service.py` | 94 |
+| `test_create_opencode_uses_subagent_frontmatter` | Function | `tests/core/agent/test_agent_service.py` | 119 |
+| `test_create_cursor_agent` | Function | `tests/core/agent/test_agent_service.py` | 141 |
+| `test_create_github_copilot_agent` | Function | `tests/core/agent/test_agent_service.py` | 162 |
+| `test_create_windsurf_installs_skill` | Function | `tests/core/agent/test_agent_service.py` | 185 |
+| `test_create_codex_installs_skill` | Function | `tests/core/agent/test_agent_service.py` | 208 |
 
 ## Execution Flows
 
@@ -83,10 +83,10 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 4 calls |
 | Mcp | 2 calls |
 | Web | 2 calls |
 | Skills | 2 calls |
+| Commands | 2 calls |
 | Init | 1 calls |
 
 ## How to Explore

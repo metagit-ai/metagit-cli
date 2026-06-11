@@ -79,7 +79,7 @@ Start here when exploring this area:
 | Services | 2 calls |
 | Tests | 2 calls |
 | Agent | 2 calls |
-| Config | 2 calls |
+| Commands | 2 calls |
 | Api | 1 calls |
 
 ## How to Explore

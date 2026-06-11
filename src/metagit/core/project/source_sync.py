@@ -11,6 +11,13 @@ import requests
 
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.project.models import ProjectPath
+from metagit.core.project.source_enrichment import (
+    enrich_discovered_repos,
+    merge_repo_tags,
+    topics_to_tags,
+)
+from metagit.core.project.source_filters import apply_source_filters
+from metagit.core.project.source_naming import resolve_manifest_names
 from metagit.core.project.source_models import (
     DiscoveredRepo,
     SourceProvider,
@@ -20,6 +27,7 @@ from metagit.core.project.source_models import (
 )
 from metagit.core.utils.common import normalize_git_url
 from metagit.core.utils.logging import UnifiedLogger
+from metagit.core.providers import ProviderRegistry
 from metagit.core.workspace.models import WorkspaceProject
 from metagit.core.workspace.protection import project_is_protected
 
@@ -34,10 +42,24 @@ class SourceSyncService:
     def discover(self, spec: SourceSpec) -> Union[List[DiscoveredRepo], Exception]:
         try:
             if spec.provider == SourceProvider.GITHUB:
-                return self._discover_github(spec)
-            if spec.provider == SourceProvider.GITLAB:
-                return self._discover_gitlab(spec)
-            return Exception(f"Unsupported provider: {spec.provider}")
+                raw = self._discover_github(spec)
+            elif spec.provider == SourceProvider.GITLAB:
+                raw = self._discover_gitlab(spec)
+            else:
+                return Exception(f"Unsupported provider: {spec.provider}")
+
+            if isinstance(raw, Exception):
+                return raw
+
+            raw_count = len(raw)
+            filtered = apply_source_filters(spec, raw)
+            registry = ProviderRegistry()
+            registry.configure_from_app_config(self._app_config)
+            enriched = enrich_discovered_repos(spec, filtered, registry, self._logger)
+            self._logger.info(
+                f"Source discovery: raw={raw_count} filtered={len(enriched)}"
+            )
+            return enriched
         except Exception as exc:
             return exc
 
@@ -48,7 +70,16 @@ class SourceSyncService:
         discovered: List[DiscoveredRepo],
         mode: SourceSyncMode,
     ) -> SourceSyncPlan:
-        discovered_project_paths = [self._to_project_path(repo) for repo in discovered]
+        manifest_names = resolve_manifest_names(
+            discovered,
+            strategy=spec.name_strategy,
+        )
+        discovered_project_paths = [
+            self._to_project_path(
+                spec, repo, manifest_names.get(repo.clone_url, repo.name)
+            )
+            for repo in discovered
+        ]
         discovered_by_url = {
             self._normalized_url(path.url): path
             for path in discovered_project_paths
@@ -58,15 +89,23 @@ class SourceSyncService:
             self._normalized_url(repo.url): repo for repo in project.repos if repo.url
         }
 
-        plan = SourceSyncPlan(discovered_count=len(discovered))
+        plan = SourceSyncPlan(
+            discovered_count=len(discovered),
+            filtered_count=len(discovered),
+        )
 
         for url_key, new_repo in discovered_by_url.items():
             existing = existing_by_url.get(url_key)
             if existing is None:
+                existing = self._find_existing_by_repo_id(project, new_repo)
+            if existing is None:
                 plan.to_add.append(new_repo)
                 continue
-            if self._needs_update(existing, new_repo):
-                plan.to_update.append(new_repo)
+            if spec.ensure and not spec.refresh_metadata:
+                plan.unchanged += 1
+                continue
+            if self._needs_update(existing, new_repo, spec):
+                plan.to_update.append(self._merge_repo_update(existing, new_repo, spec))
             else:
                 plan.unchanged += 1
 
@@ -78,10 +117,13 @@ class SourceSyncService:
                     continue
                 if bool(repo.protected):
                     continue
-                if repo.source_provider != spec.provider.value:
+                if spec.source_id and repo.source_id != spec.source_id:
                     continue
-                if repo.source_namespace != spec.namespace_key:
-                    continue
+                if not spec.source_id:
+                    if repo.source_provider != spec.provider.value:
+                        continue
+                    if repo.source_namespace != spec.namespace_key:
+                        continue
                 url_key = self._normalized_url(repo.url)
                 if url_key not in discovered_by_url:
                     plan.to_remove.append(repo)
@@ -180,9 +222,9 @@ class SourceSyncService:
                     archived=bool(repo.get("archived", False)),
                     fork=bool(repo.get("fork", False)),
                     private=repo.get("private"),
+                    language=repo.get("language"),
                 )
-                if self._include_candidate(spec, candidate):
-                    discovered.append(candidate)
+                discovered.append(candidate)
             page += 1
         return discovered
 
@@ -219,6 +261,7 @@ class SourceSyncService:
             if not items:
                 break
             for repo in items:
+                visibility = repo.get("visibility")
                 candidate = DiscoveredRepo(
                     provider=SourceProvider.GITLAB,
                     namespace=spec.namespace_key,
@@ -230,43 +273,81 @@ class SourceSyncService:
                     repo_id=str(repo.get("id")) if repo.get("id") is not None else None,
                     archived=bool(repo.get("archived", False)),
                     fork=repo.get("forked_from_project") is not None,
-                    private=(repo.get("visibility") == "private"),
+                    private=(visibility in {"private", "internal"}),
+                    language=repo.get("language"),
+                    topics=list(repo.get("topics") or []),
                 )
-                if self._include_candidate(spec, candidate):
-                    discovered.append(candidate)
+                discovered.append(candidate)
             page += 1
         return discovered
 
-    def _include_candidate(self, spec: SourceSpec, candidate: DiscoveredRepo) -> bool:
-        if not spec.include_archived and candidate.archived:
-            return False
-        if not spec.include_forks and candidate.fork:
-            return False
-        if spec.path_prefix:
-            return candidate.full_name.startswith(spec.path_prefix)
-        return True
-
-    def _to_project_path(self, repo: DiscoveredRepo) -> ProjectPath:
+    def _to_project_path(
+        self,
+        spec: SourceSpec,
+        repo: DiscoveredRepo,
+        manifest_name: str,
+    ) -> ProjectPath:
+        incoming_tags = topics_to_tags(repo.topics, repo.provider.value)
         return ProjectPath(
-            name=repo.name,
+            name=manifest_name,
             description=repo.description,
             url=repo.clone_url,
             sync=True,
+            language=repo.language,
             source_provider=repo.provider.value,
             source_namespace=repo.namespace,
             source_repo_id=repo.repo_id,
-            tags={"source": repo.provider.value},
+            source_id=spec.source_id,
+            tags=incoming_tags,
         )
 
-    def _needs_update(self, current: ProjectPath, incoming: ProjectPath) -> bool:
+    def _find_existing_by_repo_id(
+        self,
+        project: WorkspaceProject,
+        incoming: ProjectPath,
+    ) -> Optional[ProjectPath]:
+        if not incoming.source_repo_id:
+            return None
+        for repo in project.repos:
+            if repo.source_repo_id == incoming.source_repo_id:
+                return repo
+        return None
+
+    def _needs_update(
+        self,
+        current: ProjectPath,
+        incoming: ProjectPath,
+        spec: SourceSpec,
+    ) -> bool:
         tracked_fields: List[Tuple[Optional[str], Optional[str]]] = [
             (current.name, incoming.name),
             (current.description, incoming.description),
             (current.source_provider, incoming.source_provider),
             (current.source_namespace, incoming.source_namespace),
             (current.source_repo_id, incoming.source_repo_id),
+            (current.language, incoming.language),
         ]
-        return any(lhs != rhs for lhs, rhs in tracked_fields)
+        if any(lhs != rhs for lhs, rhs in tracked_fields):
+            return True
+        if spec.refresh_metadata:
+            return current.tags != incoming.tags
+        for key, value in incoming.tags.items():
+            if key not in current.tags:
+                return True
+        return False
+
+    def _merge_repo_update(
+        self,
+        current: ProjectPath,
+        incoming: ProjectPath,
+        spec: SourceSpec,
+    ) -> ProjectPath:
+        merged_tags = merge_repo_tags(
+            dict(current.tags),
+            dict(incoming.tags),
+            refresh_metadata=spec.refresh_metadata,
+        )
+        return incoming.model_copy(update={"tags": merged_tags})
 
     def _normalized_url(self, url: Optional[object]) -> str:
         if not url:

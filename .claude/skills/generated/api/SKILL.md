@@ -72,21 +72,20 @@ Start here when exploring this area:
 | `OpsPanel → ApiError` | cross_community | 5 |
 | `SyncDialog → ApiError` | cross_community | 5 |
 | `MutationFn → ApiError` | intra_community | 5 |
-| `MutationFn → ApiError` | intra_community | 5 |
-| `QueryFn → ApiError` | intra_community | 5 |
-| `QueryFn → ApiError` | cross_community | 5 |
 | `Do_GET → Load_config` | cross_community | 4 |
 | `Do_POST → Load_config` | cross_community | 4 |
 | `Do_POST → _bool_param` | cross_community | 4 |
+| `Do_DELETE → Load_config` | cross_community | 4 |
+| `Workspace_project_rename → Find_project` | cross_community | 4 |
+| `Workspace_project_rename → Resolve_effective_dedupe` | cross_community | 4 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Config | 5 calls |
+| Commands | 6 calls |
 | Tests | 1 calls |
 | Project | 1 calls |
-| Commands | 1 calls |
 | Services | 1 calls |
 | Workspace | 1 calls |
 | Prompt | 1 calls |
