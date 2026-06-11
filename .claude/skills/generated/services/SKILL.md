@@ -1,12 +1,12 @@
 ---
 name: services
-description: "Skill for the Services area of metagit-cli. 169 symbols across 38 files."
+description: "Skill for the Services area of metagit-cli. 171 symbols across 39 files."
 metadata:
   internal: true
 ---
 # Services
 
-169 symbols | 38 files | Cohesion: 81%
+171 symbols | 39 files | Cohesion: 80%
 
 ## When to Use
 
@@ -83,11 +83,11 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 3 calls |
-| Workspace | 3 calls |
+| Workspace | 5 calls |
+| Commands | 5 calls |
+| Project | 3 calls |
 | Context | 1 calls |
 | Config | 1 calls |
-| Project | 1 calls |
 
 ## How to Explore
 

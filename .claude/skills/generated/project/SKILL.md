@@ -1,12 +1,12 @@
 ---
 name: project
-description: "Skill for the Project area of metagit-cli. 61 symbols across 14 files."
+description: "Skill for the Project area of metagit-cli. 73 symbols across 18 files."
 metadata:
   internal: true
 ---
 # Project
 
-61 symbols | 14 files | Cohesion: 83%
+73 symbols | 18 files | Cohesion: 79%
 
 ## When to Use
 
@@ -18,16 +18,16 @@ metadata:
 
 | File | Symbols |
 |------|---------|
-| `src/metagit/core/project/source_sync.py` | plan, apply_plan, _to_project_path, _find_existing_by_repo_id, _needs_update (+5) |
+| `src/metagit/core/project/source_sync.py` | plan, _to_project_path, _find_existing_by_repo_id, _needs_update, _merge_repo_update (+5) |
 | `src/metagit/core/project/manager.py` | _sync_repo, _sync_repo_deduped, _sync_local_canonical, _sync_remote_canonical, _sync_local (+5) |
 | `tests/core/project/test_repo_promote_service.py` | _write_manifest, _init_local_git_repo, _load_config, test_resolve_git_remote_url_reads_origin, test_promote_dry_run_reports_plan (+2) |
 | `tests/test_project_source_sync.py` | _service, test_plan_additive_adds_missing_repo, test_plan_reconcile_removes_unmatched_provider_managed_repo, test_apply_plan_reconcile_preserves_protected_repo, test_plan_ensure_skips_metadata_update (+1) |
+| `src/metagit/core/project/source_manifest_sync.py` | sync_project, _find_project, _select_sources, _merge_plan, _preview_adds_and_updates (+1) |
 | `src/metagit/core/project/source_enrichment.py` | merge_repo_tags, topics_to_tags, enrich_discovered_repos, _owner_repo_from_full_name, _provider_display_name |
 | `src/metagit/core/project/search_service.py` | search, _to_match, _row_passes_filters, _sort_matches, _match_row |
 | `tests/core/project/test_source_filters.py` | _repo, test_ignore_pattern_drops_match, test_include_pattern_allowlist, test_visibility_private_filter, test_ignore_language_filter |
+| `src/metagit/core/project/source_approval_executor.py` | apply_if_approved, apply_payload, _removal_url_keys, _repo_matches_removal |
 | `tests/core/project/test_source_naming.py` | _repo, test_namespaced_collision_uses_parent_segment, test_short_strategy_uses_repo_name |
-| `tests/core/project/test_source_sync_runner.py` | _config, test_run_source_sync_dry_run, test_run_source_sync_reconcile_requires_confirm |
-| `src/metagit/core/project/source_sync_runner.py` | resolve_workspace_project, run_source_sync |
 
 ## Entry Points
 
@@ -36,8 +36,8 @@ Start here when exploring this area:
 - **`merge_repo_tags`** (Function) — `src/metagit/core/project/source_enrichment.py:22`
 - **`topics_to_tags`** (Function) — `src/metagit/core/project/source_enrichment.py:39`
 - **`resolve_manifest_names`** (Function) — `src/metagit/core/project/source_naming.py:10`
-- **`resolve_workspace_project`** (Function) — `src/metagit/core/project/source_sync_runner.py:37`
-- **`run_source_sync`** (Function) — `src/metagit/core/project/source_sync_runner.py:50`
+- **`test_plan_additive_adds_missing_repo`** (Function) — `tests/test_project_source_sync.py:25`
+- **`test_plan_reconcile_removes_unmatched_provider_managed_repo`** (Function) — `tests/test_project_source_sync.py:44`
 
 ## Key Symbols
 
@@ -46,8 +46,6 @@ Start here when exploring this area:
 | `merge_repo_tags` | Function | `src/metagit/core/project/source_enrichment.py` | 22 |
 | `topics_to_tags` | Function | `src/metagit/core/project/source_enrichment.py` | 39 |
 | `resolve_manifest_names` | Function | `src/metagit/core/project/source_naming.py` | 10 |
-| `resolve_workspace_project` | Function | `src/metagit/core/project/source_sync_runner.py` | 37 |
-| `run_source_sync` | Function | `src/metagit/core/project/source_sync_runner.py` | 50 |
 | `test_plan_additive_adds_missing_repo` | Function | `tests/test_project_source_sync.py` | 25 |
 | `test_plan_reconcile_removes_unmatched_provider_managed_repo` | Function | `tests/test_project_source_sync.py` | 44 |
 | `test_apply_plan_reconcile_preserves_protected_repo` | Function | `tests/test_project_source_sync.py` | 74 |
@@ -63,27 +61,33 @@ Start here when exploring this area:
 | `test_include_pattern_allowlist` | Function | `tests/core/project/test_source_filters.py` | 41 |
 | `test_visibility_private_filter` | Function | `tests/core/project/test_source_filters.py` | 53 |
 | `test_ignore_language_filter` | Function | `tests/core/project/test_source_filters.py` | 65 |
+| `test_namespaced_collision_uses_parent_segment` | Function | `tests/core/project/test_source_naming.py` | 19 |
+| `test_short_strategy_uses_repo_name` | Function | `tests/core/project/test_source_naming.py` | 29 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
+| `Sync_project → Clear` | cross_community | 4 |
+| `Sync_project → Register` | cross_community | 4 |
+| `Sync_project → _visibility_matches` | cross_community | 4 |
+| `Sync_project → Topics_to_tags` | cross_community | 4 |
+| `Sync_project → Normalize_git_url` | cross_community | 4 |
 | `Search → _row_passes_filters` | cross_community | 4 |
 | `Search → _match_row` | cross_community | 4 |
 | `Search → _to_match` | cross_community | 4 |
 | `Search → _sort_matches` | cross_community | 4 |
-| `Repo_select → _build_preview_sections` | cross_community | 3 |
-| `Repo_select → _build_project_repo_summary` | cross_community | 3 |
-| `Repo_select → _append_preview_lines` | cross_community | 3 |
+| `Sync_project → _discover_github` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
 | Commands | 7 calls |
-| Workspace | 5 calls |
-| Providers | 2 calls |
+| Providers | 4 calls |
+| Workspace | 4 calls |
 | Examples | 1 calls |
+| Services | 1 calls |
 
 ## How to Explore
 

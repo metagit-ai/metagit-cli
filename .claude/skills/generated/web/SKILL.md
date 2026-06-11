@@ -1,12 +1,12 @@
 ---
 name: web
-description: "Skill for the Web area of metagit-cli. 131 symbols across 17 files."
+description: "Skill for the Web area of metagit-cli. 126 symbols across 15 files."
 metadata:
   internal: true
 ---
 # Web
 
-131 symbols | 17 files | Cohesion: 73%
+126 symbols | 15 files | Cohesion: 74%
 
 ## When to Use
 
@@ -72,19 +72,18 @@ Start here when exploring this area:
 | `Handle → Load_config` | cross_community | 4 |
 | `Handle → _parse_body` | intra_community | 4 |
 | `Handle → _tree_response` | cross_community | 4 |
-| `Preview → Dump_config_dict` | cross_community | 3 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Commands | 13 calls |
+| Commands | 11 calls |
 | Api | 5 calls |
 | Context | 5 calls |
 | Agent | 5 calls |
+| Workspace | 2 calls |
 | Config | 2 calls |
 | Tests | 1 calls |
-| Workspace | 1 calls |
 | Appconfig | 1 calls |
 
 ## How to Explore

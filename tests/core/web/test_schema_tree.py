@@ -233,3 +233,59 @@ def test_append_and_remove_list_items() -> None:
     )
     assert errors == []
     assert removed.artifacts == []
+
+
+def test_append_workspace_project_validates_with_empty_sources() -> None:
+    service = SchemaTreeService()
+    config = MetagitConfig.model_validate(
+        {"name": "demo", "kind": "umbrella", "workspace": {"projects": []}}
+    )
+    appended, errors = service.apply_operations(
+        config,
+        MetagitConfig,
+        [
+            ConfigOperation(op=ConfigOpKind.APPEND, path="workspace.projects"),
+            ConfigOperation(
+                op=ConfigOpKind.SET,
+                path="workspace.projects[0].name",
+                value="platform",
+            ),
+        ],
+    )
+
+    assert errors == []
+    assert len(appended.workspace.projects) == 1
+    assert appended.workspace.projects[0].name == "platform"
+    assert appended.workspace.projects[0].sources == []
+
+
+def test_workspace_project_sources_exposed_in_tree() -> None:
+    service = SchemaTreeService()
+    config = MetagitConfig.model_validate(
+        {
+            "name": "demo",
+            "kind": "umbrella",
+            "workspace": {
+                "projects": [
+                    {
+                        "name": "platform",
+                        "sources": [
+                            {
+                                "id": "github-platform",
+                                "provider": "github",
+                                "org": "acme",
+                                "mode": "additive",
+                            }
+                        ],
+                        "repos": [],
+                    }
+                ]
+            },
+        }
+    )
+    root = service.build_tree(config, MetagitConfig)
+    sources_node = service.find_node(root, "workspace.projects[0].sources")
+
+    assert sources_node is not None
+    assert sources_node.can_append is True
+    assert sources_node.item_count == 1

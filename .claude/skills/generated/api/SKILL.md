@@ -71,22 +71,21 @@ Start here when exploring this area:
 | `QueryFn → ApiError` | cross_community | 5 |
 | `OpsPanel → ApiError` | cross_community | 5 |
 | `SyncDialog → ApiError` | cross_community | 5 |
-| `MutationFn → ApiError` | intra_community | 5 |
-| `MutationFn → ApiError` | intra_community | 5 |
-| `QueryFn → ApiError` | intra_community | 5 |
-| `QueryFn → ApiError` | cross_community | 5 |
 | `Do_GET → Load_config` | cross_community | 4 |
 | `Do_POST → Load_config` | cross_community | 4 |
 | `Do_POST → _bool_param` | cross_community | 4 |
+| `Do_DELETE → Load_config` | cross_community | 4 |
+| `FetchAgentCatalog → ApiError` | intra_community | 4 |
+| `FetchAgentTemplate → ApiError` | intra_community | 4 |
+| `FetchWorkspaceGrepInfo → ApiError` | intra_community | 4 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Commands | 5 calls |
+| Commands | 6 calls |
 | Project | 1 calls |
 | Services | 1 calls |
-| Workspace | 1 calls |
 
 ## How to Explore
 

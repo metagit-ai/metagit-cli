@@ -1,12 +1,12 @@
 ---
 name: workspace
-description: "Skill for the Workspace area of metagit-cli. 105 symbols across 28 files."
+description: "Skill for the Workspace area of metagit-cli. 102 symbols across 26 files."
 metadata:
   internal: true
 ---
 # Workspace
 
-105 symbols | 28 files | Cohesion: 76%
+102 symbols | 26 files | Cohesion: 77%
 
 ## When to Use
 
@@ -77,15 +77,16 @@ Start here when exploring this area:
 | `Promote → Create_vscode_workspace` | cross_community | 4 |
 | `Project_sync → Create_vscode_workspace` | cross_community | 4 |
 | `Workspace_project_rename → Find_project` | cross_community | 4 |
-| `Workspace_project_rename → Resolve_effective_dedupe` | cross_community | 4 |
+| `Workspace_repo_rename → Find_project` | cross_community | 4 |
 
 ## Connected Areas
 
 | Area | Connections |
 |------|-------------|
-| Commands | 15 calls |
+| Commands | 14 calls |
 | Services | 4 calls |
-| Tests | 2 calls |
+| Tests | 1 calls |
+| Project | 1 calls |
 | Providers | 1 calls |
 
 ## How to Explore

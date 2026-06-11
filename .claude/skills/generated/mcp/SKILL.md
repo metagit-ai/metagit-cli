@@ -78,9 +78,8 @@ Start here when exploring this area:
 | Context | 6 calls |
 | Services | 3 calls |
 | Tests | 3 calls |
+| Commands | 3 calls |
 | Agent | 2 calls |
-| Commands | 2 calls |
-| Workspace | 1 calls |
 
 ## How to Explore
 

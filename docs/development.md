@@ -31,6 +31,32 @@ Use source sync to discover repositories from GitHub/GitLab and plan/apply works
 - MCP (ACTIVE): `metagit_project_source_sync` with the same parameters (`apply`, `confirm`, `sync`)
 - Reconcile apply: `metagit project source sync --provider gitlab --group <group> --mode reconcile --apply --yes`
 
+### Declarative `sources[]` (manifest sync)
+
+Store import scopes on `workspace.projects[].sources[]` and sync from the manifest instead of CLI flags:
+
+```yaml
+workspace:
+  projects:
+    - name: platform
+      sources:
+        - id: github-platform
+          provider: github
+          org: acme
+          mode: additive
+          ensure: true
+          ignore:
+            - "**/archived/**"
+      repos: []
+```
+
+- Manifest sync: `metagit project --project platform source sync --from-manifest --apply --json`
+- Single source: `--source-id github-platform`
+- Persist imperative flags: `--write-source --source-id github-platform` (after a successful imperative sync)
+- Project sync hook: `metagit project sync --project platform --refresh-sources` (manifest sync then git sync)
+- Reconcile removals are deferred unless `--force`; pending removals enqueue `source_sync_reconcile` approvals — approve with `metagit context approval approve --id <id>`
+- Repos without `source_id` are manual entries and are never auto-removed during reconcile
+
 GitHub org/user listing is flat (no nested subgroups). GitLab groups honor `--recursive` / `--no-recursive` for subgroups. Default manifest naming is `namespaced`; use `--name-strategy short` for legacy short names.
 
 | Flag combo | Re-run behavior |
