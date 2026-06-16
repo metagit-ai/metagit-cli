@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.7.0] - 2026-06-16
+
+
+
 ### Added
 
 - **`metagit project source sync` enhancements:** include/ignore glob filters, `--ensure` / `--refresh-metadata` idempotency, provider topic enrichment into repo tags, default `namespaced` GitLab naming, `--json` agent output, `--sync` post-apply clone, MCP `metagit_project_source_sync`, `metagit workspace import` alias, declarative `workspace.projects[].sources[]` with `--from-manifest`, and approval-gated reconcile removals. **Web parity:** Config Studio `sources[]` editing, Workspace Console manifest sync (`POST /v3/ops/source-sync`), pending approvals panel, and shared `ApprovalResolveOrchestrator`.
