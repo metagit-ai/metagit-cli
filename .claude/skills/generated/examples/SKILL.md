@@ -1,12 +1,12 @@
 ---
 name: examples
-description: "Skill for the Examples area of metagit-cli. 109 symbols across 32 files."
+description: "Skill for the Examples area of metagit-cli. 106 symbols across 31 files."
 metadata:
   internal: true
 ---
 # Examples
 
-109 symbols | 32 files | Cohesion: 80%
+106 symbols | 31 files | Cohesion: 80%
 
 ## When to Use
 
@@ -19,7 +19,7 @@ metadata:
 | File | Symbols |
 |------|---------|
 | `examples/fuzzyfinder_custom_colors_demo.py` | test_fuzzyfindertarget_with_colors, test_mixed_object_types, test_priority_demonstration, test_string_items_with_colors, test_object_items_with_colors (+4) |
-| `examples/detection_manager_example.py` | example_remote_repository_analysis, example_local_repository_analysis, example_metagit_record_integration, example_output_formats, example_specific_analysis_methods (+3) |
+| `examples/detection_manager_example.py` | example_local_repository_analysis, example_metagit_record_integration, example_output_formats, example_specific_analysis_methods, example_repository_analysis_access (+3) |
 | `examples/provider_example.py` | analyze_remote_repo, setup_providers_from_appconfig, setup_providers_from_environment, setup_providers_manually, analyze_local_repo (+2) |
 | `examples/test_record_manager_simple.py` | test_basic_functionality, store_record, get_record, list_records, test_error_handling (+1) |
 | `src/metagit/core/record/manager.py` | create_record_from_config, _get_git_info, store_record, get_record, list_records (+1) |
@@ -27,7 +27,7 @@ metadata:
 | `src/metagit/core/gitcache/manager.py` | get_cached_repository, list_cache_entries, refresh_cache_entry, refresh_cache_entry_async, get_cache_stats |
 | `examples/repository_analysis_example.py` | example_configuration, example_local_repository_analysis, example_remote_repository_analysis, example_specific_analysis, main |
 | `examples/record_manager_example.py` | example_local_file_storage, example_opensearch_storage, example_file_operations, main |
-| `src/metagit/core/detect/manager.py` | from_url, _load_existing_config, from_path, summary |
+| `examples/gitcache_example.py` | create_sample_local_directory, sync_example, async_example, main |
 
 ## Entry Points
 
@@ -83,12 +83,12 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 11 calls |
 | Gitcache | 11 calls |
+| Commands | 7 calls |
+| Cli | 4 calls |
 | Tests | 1 calls |
 | Detect | 1 calls |
 | Config | 1 calls |
-| Cluster_385 | 1 calls |
 | Providers | 1 calls |
 
 ## How to Explore

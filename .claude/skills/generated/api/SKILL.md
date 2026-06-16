@@ -1,12 +1,12 @@
 ---
 name: api
-description: "Skill for the Api area of metagit-cli. 60 symbols across 18 files."
+description: "Skill for the Api area of metagit-cli. 58 symbols across 16 files."
 metadata:
   internal: true
 ---
 # Api
 
-60 symbols | 18 files | Cohesion: 80%
+58 symbols | 16 files | Cohesion: 80%
 
 ## When to Use
 
@@ -33,28 +33,28 @@ metadata:
 
 Start here when exploring this area:
 
-- **`requestJson`** (Function) — `web/src/api/client.ts:75`
-- **`patchMetagitConfig`** (Function) — `web/src/api/client.ts:116`
-- **`patchAppconfig`** (Function) — `web/src/api/client.ts:127`
-- **`postConfigPreview`** (Function) — `web/src/api/client.ts:138`
-- **`getWorkspace`** (Function) — `web/src/api/client.ts:217`
+- **`requestJson`** (Function) — `web/src/api/client.ts:77`
+- **`patchMetagitConfig`** (Function) — `web/src/api/client.ts:118`
+- **`patchAppconfig`** (Function) — `web/src/api/client.ts:129`
+- **`postConfigPreview`** (Function) — `web/src/api/client.ts:140`
+- **`getWorkspace`** (Function) — `web/src/api/client.ts:219`
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `ApiError` | Class | `web/src/api/client.ts` | 63 |
-| `requestJson` | Function | `web/src/api/client.ts` | 75 |
-| `patchMetagitConfig` | Function | `web/src/api/client.ts` | 116 |
-| `patchAppconfig` | Function | `web/src/api/client.ts` | 127 |
-| `postConfigPreview` | Function | `web/src/api/client.ts` | 138 |
-| `getWorkspace` | Function | `web/src/api/client.ts` | 217 |
-| `postOpenPath` | Function | `web/src/api/client.ts` | 331 |
-| `getWorkspaceGrepInfo` | Function | `web/src/api/client.ts` | 411 |
-| `getAgentCatalog` | Function | `web/src/api/client.ts` | 479 |
-| `getAgentTemplate` | Function | `web/src/api/client.ts` | 483 |
-| `getAgentPreview` | Function | `web/src/api/client.ts` | 489 |
-| `postAgentOverlayInit` | Function | `web/src/api/client.ts` | 519 |
+| `ApiError` | Class | `web/src/api/client.ts` | 65 |
+| `requestJson` | Function | `web/src/api/client.ts` | 77 |
+| `patchMetagitConfig` | Function | `web/src/api/client.ts` | 118 |
+| `patchAppconfig` | Function | `web/src/api/client.ts` | 129 |
+| `postConfigPreview` | Function | `web/src/api/client.ts` | 140 |
+| `getWorkspace` | Function | `web/src/api/client.ts` | 219 |
+| `postOpenPath` | Function | `web/src/api/client.ts` | 333 |
+| `getWorkspaceGrepInfo` | Function | `web/src/api/client.ts` | 469 |
+| `getAgentCatalog` | Function | `web/src/api/client.ts` | 537 |
+| `getAgentTemplate` | Function | `web/src/api/client.ts` | 541 |
+| `getAgentPreview` | Function | `web/src/api/client.ts` | 547 |
+| `postAgentOverlayInit` | Function | `web/src/api/client.ts` | 577 |
 | `fetchAgentCatalog` | Function | `web/src/pages/agentQueries.ts` | 15 |
 | `fetchAgentTemplate` | Function | `web/src/pages/agentQueries.ts` | 23 |
 | `fetchAgentPreview` | Function | `web/src/pages/agentQueries.ts` | 31 |
@@ -68,8 +68,8 @@ Start here when exploring this area:
 
 | Flow | Type | Steps |
 |------|------|-------|
+| `OpsPanel → ApiError` | cross_community | 6 |
 | `QueryFn → ApiError` | cross_community | 5 |
-| `OpsPanel → ApiError` | cross_community | 5 |
 | `SyncDialog → ApiError` | cross_community | 5 |
 | `MutationFn → ApiError` | intra_community | 5 |
 | `MutationFn → ApiError` | intra_community | 5 |
@@ -83,13 +83,10 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Config | 5 calls |
-| Tests | 1 calls |
+| Config | 4 calls |
+| Commands | 2 calls |
 | Project | 1 calls |
-| Commands | 1 calls |
 | Services | 1 calls |
-| Workspace | 1 calls |
-| Prompt | 1 calls |
 
 ## How to Explore
 

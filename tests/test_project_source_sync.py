@@ -95,3 +95,74 @@ def test_apply_plan_reconcile_preserves_protected_repo() -> None:
     updated = service.apply_plan(project, plan, SourceSyncMode.RECONCILE)
     assert len(updated.repos) == 1
     assert updated.repos[0].name == "protected-repo"
+
+
+def test_plan_ensure_skips_metadata_update() -> None:
+    service = _service()
+    spec = SourceSpec(provider=SourceProvider.GITHUB, org="acme", ensure=True)
+    project = WorkspaceProject(
+        name="default",
+        repos=[
+            ProjectPath(
+                name="svc",
+                url="https://github.com/acme/svc.git",
+                description="old",
+                source_provider="github",
+                source_namespace="acme",
+                source_repo_id="1",
+            )
+        ],
+    )
+    discovered = [
+        DiscoveredRepo(
+            provider=SourceProvider.GITHUB,
+            namespace="acme",
+            full_name="acme/svc",
+            name="svc",
+            clone_url="https://github.com/acme/svc.git",
+            description="new",
+            repo_id="1",
+        )
+    ]
+    plan = service.plan(spec, project, discovered, SourceSyncMode.ADDITIVE)
+    assert plan.to_update == []
+    assert plan.unchanged == 1
+
+
+def test_plan_ensure_refresh_metadata_updates() -> None:
+    service = _service()
+    spec = SourceSpec(
+        provider=SourceProvider.GITHUB,
+        org="acme",
+        ensure=True,
+        refresh_metadata=True,
+    )
+    project = WorkspaceProject(
+        name="default",
+        repos=[
+            ProjectPath(
+                name="svc",
+                url="https://github.com/acme/svc.git",
+                description="old",
+                source_provider="github",
+                source_namespace="acme",
+                source_repo_id="1",
+                tags={"source": "github"},
+            )
+        ],
+    )
+    discovered = [
+        DiscoveredRepo(
+            provider=SourceProvider.GITHUB,
+            namespace="acme",
+            full_name="acme/svc",
+            name="svc",
+            clone_url="https://github.com/acme/svc.git",
+            description="new",
+            repo_id="1",
+            topics=["python"],
+        )
+    ]
+    plan = service.plan(spec, project, discovered, SourceSyncMode.ADDITIVE)
+    assert len(plan.to_update) == 1
+    assert "python" in plan.to_update[0].tags

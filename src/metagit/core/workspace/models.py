@@ -5,13 +5,14 @@ Pydantic models for .metagit.yml workspace configuration.
 
 from typing import Any, List, Optional
 
-from pydantic import AliasChoices, BaseModel, Field, field_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
 from metagit.core.config.documentation_models import (
     DocumentationSource,
     normalize_documentation_entries,
 )
 from metagit.core.project.models import ProjectPath
+from metagit.core.project.source_models import ProjectSource
 
 
 class ProjectDedupeOverride(BaseModel):
@@ -72,7 +73,22 @@ class WorkspaceProject(BaseModel):
         default_factory=dict,
         description="Extensible key-value payload for exports and tooling",
     )
+    sources: List[ProjectSource] = Field(
+        default_factory=list,
+        description="Declarative provider import scopes for this project",
+    )
     repos: List[ProjectPath] = Field(..., description="Repository list")
+
+    @model_validator(mode="after")
+    def validate_unique_source_ids(self) -> "WorkspaceProject":
+        seen: set[str] = set()
+        for source in self.sources:
+            if source.id in seen:
+                raise ValueError(
+                    f"duplicate sources[].id '{source.id}' in project '{self.name}'"
+                )
+            seen.add(source.id)
+        return self
 
     @field_validator("documentation", mode="before")
     @classmethod

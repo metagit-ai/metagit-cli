@@ -54,7 +54,7 @@ Start here when exploring this area:
 | `config_validate` | Function | `src/metagit/cli/commands/config.py` | 162 |
 | `config_info` | Function | `src/metagit/cli/commands/config.py` | 380 |
 | `config_graph_export` | Function | `src/metagit/cli/commands/config.py` | 700 |
-| `workspace` | Function | `src/metagit/cli/commands/workspace.py` | 93 |
+| `workspace` | Function | `src/metagit/cli/commands/workspace.py` | 94 |
 | `test_render_metagit_omits_schema_defaults_by_default` | Function | `tests/core/config/test_format_service.py` | 101 |
 | `test_render_metagit_include_defaults_preserves_default_fields` | Function | `tests/core/config/test_format_service.py` | 135 |
 | `appconfig_set` | Function | `src/metagit/cli/commands/appconfig.py` | 202 |
@@ -83,9 +83,8 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 4 calls |
-| Web | 1 calls |
-| Appconfig | 1 calls |
+| Web | 3 calls |
+| Commands | 3 calls |
 
 ## How to Explore
 

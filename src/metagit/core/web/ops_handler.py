@@ -17,11 +17,14 @@ from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.objective_service import ObjectiveService
+from metagit.core.mcp.services.source_sync import run_mcp_source_sync
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
+from metagit.core.project.source_manifest_sync import SourceManifestSyncService
 from metagit.core.project.manager import project_manager_from_app
 from metagit.core.utils.common import open_editor
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
@@ -32,9 +35,13 @@ from metagit.core.web.models import (
     ObjectiveStatusPatchRequest,
     ObjectiveUpsertRequest,
     OpenPathRequest,
+    SourceSyncRequest,
     SyncJobRequest,
 )
-from metagit.core.workspace.root_resolver import resolve_definition_root
+from metagit.core.workspace.root_resolver import (
+    resolve_definition_root,
+    resolve_session_root,
+)
 
 JsonResponder = Callable[[int, dict[str, Any]], None]
 
@@ -132,6 +139,10 @@ class OpsWebHandler:
 
         if method == "POST" and parsed_path == "/v3/ops/sync":
             self._post_sync(body, respond)
+            return True
+
+        if method == "POST" and parsed_path == "/v3/ops/source-sync":
+            self._post_source_sync(body, respond)
             return True
 
         if method == "POST" and parsed_path == "/v3/ops/open":
@@ -263,19 +274,23 @@ class OpsWebHandler:
                 {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
             )
             return
-        svc = ApprovalService(workspace_root=self._root)
-        try:
-            saved = svc.resolve(
-                request_id=approval_id,
-                decision=req.decision,
-                note=req.note,
-            )
-        except ValueError as exc:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        saved = ApprovalResolveOrchestrator().resolve(
+            workspace_root=self._root,
+            config=config,
+            config_path=self._config_path,
+            request_id=approval_id,
+            decision=req.decision,
+            note=req.note,
+        )
+        if isinstance(saved, Exception):
             respond(
                 400,
                 {
                     "ok": False,
-                    "error": {"kind": "resolve_error", "message": str(exc)},
+                    "error": {"kind": "resolve_error", "message": str(saved)},
                 },
             )
             return
@@ -593,6 +608,43 @@ class OpsWebHandler:
             },
         )
 
+    def _post_source_sync(self, body: bytes, respond: JsonResponder) -> None:
+        payload = self._parse_body(body, respond, required=True)
+        if payload is None:
+            return
+        try:
+            request = SourceSyncRequest.model_validate(payload)
+        except ValidationError as exc:
+            respond(
+                400,
+                {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
+            )
+            return
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        app_config = self._load_appconfig(respond)
+        if app_config is None:
+            return
+        arguments = {
+            "project_name": request.project_name,
+            "from_manifest": request.from_manifest,
+            "source_id": request.source_id,
+            "apply": request.apply,
+            "force": request.force,
+            "sync": request.sync,
+            "requested_by": request.requested_by,
+        }
+        result = run_mcp_source_sync(
+            app_config=app_config,
+            logger=self._logger,
+            config=config,
+            config_path=self._config_path,
+            arguments=arguments,
+        )
+        status = 200 if result.get("ok", False) else 422
+        respond(status, {"ok": result.get("ok", False), **result})
+
     def _post_sync(self, body: bytes, respond: JsonResponder) -> None:
         config = self._load_metagit(respond)
         if config is None:
@@ -669,6 +721,62 @@ class OpsWebHandler:
     ) -> None:
         self._job_store.mark_running(job_id)
         self._job_store.append_event(job_id, {"type": "started", "job_id": job_id})
+        if request.refresh_sources:
+            project_name = (request.project_name or "").strip()
+            if not project_name:
+                self._job_store.fail(
+                    job_id,
+                    "project_name is required when refresh_sources is true",
+                )
+                self._job_store.append_event(
+                    job_id,
+                    {
+                        "type": "failed",
+                        "job_id": job_id,
+                        "error": "project_name is required when refresh_sources is true",
+                    },
+                )
+                return
+            app_config = self._load_appconfig_silent()
+            if app_config is None:
+                self._job_store.fail(job_id, "failed to load app config")
+                return
+            manifest_result = SourceManifestSyncService().sync_project(
+                app_config=app_config,
+                logger=self._logger,
+                config=config,
+                config_path=self._config_path,
+                project_name=project_name,
+                apply=True,
+                sync_clones=False,
+                session_root=resolve_session_root(self._root),
+                requested_by="web",
+            )
+            if not manifest_result.ok:
+                message = (
+                    manifest_result.errors[0].message
+                    if manifest_result.errors
+                    else "manifest source sync failed"
+                )
+                self._job_store.fail(job_id, message)
+                self._job_store.append_event(
+                    job_id,
+                    {"type": "failed", "job_id": job_id, "error": message},
+                )
+                return
+            reloaded = self._load_metagit_silent()
+            if reloaded is None:
+                self._job_store.fail(job_id, "failed to reload manifest after refresh")
+                return
+            config = reloaded
+            self._job_store.append_event(
+                job_id,
+                {
+                    "type": "refresh_sources",
+                    "job_id": job_id,
+                    "project_name": project_name,
+                },
+            )
         rows = self._index.build_index(
             config=config,
             workspace_root=self._workspace_root,
@@ -714,29 +822,47 @@ class OpsWebHandler:
         )
 
     def _load_metagit(self, respond: JsonResponder) -> MetagitConfig | None:
-        manager = MetagitConfigManager(self._config_path)
-        loaded = manager.load_config()
-        if isinstance(loaded, Exception):
+        loaded = self._load_metagit_silent()
+        if loaded is None:
             respond(
                 500,
                 {
                     "ok": False,
-                    "error": {"kind": "config_error", "message": str(loaded)},
+                    "error": {
+                        "kind": "config_error",
+                        "message": "failed to load .metagit.yml",
+                    },
                 },
             )
             return None
         return loaded
 
-    def _load_appconfig(self, respond: JsonResponder) -> AppConfig | None:
-        loaded = load_appconfig(self._appconfig_path)
+    def _load_metagit_silent(self) -> MetagitConfig | None:
+        manager = MetagitConfigManager(self._config_path)
+        loaded = manager.load_config()
         if isinstance(loaded, Exception):
+            return None
+        return loaded
+
+    def _load_appconfig(self, respond: JsonResponder) -> AppConfig | None:
+        loaded = self._load_appconfig_silent()
+        if loaded is None:
             respond(
                 500,
                 {
                     "ok": False,
-                    "error": {"kind": "config_error", "message": str(loaded)},
+                    "error": {
+                        "kind": "config_error",
+                        "message": "failed to load app config",
+                    },
                 },
             )
+            return None
+        return loaded
+
+    def _load_appconfig_silent(self) -> AppConfig | None:
+        loaded = load_appconfig(self._appconfig_path)
+        if isinstance(loaded, Exception):
             return None
         return loaded
 

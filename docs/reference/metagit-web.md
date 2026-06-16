@@ -110,6 +110,25 @@ returns install, per-vendor launch hints, and handoff CLI commands for overseer 
 
 The **Workspace Console** is **Workspace** in the chrome (`/workspace`): catalog-level context (projects/repos index, search/filter) plus the **workspace operations** side panel (health/prune/sync style actions routed through `/v3/ops`). This is meant for situational awareness and lightweight maintenance; destructive actions remain gated as in the CLI and API.
 
+**Provider source sync (manifest):** use the Operations panel to preview or apply sync from `workspace.projects[].sources[]`, or call:
+
+```bash
+curl -sS -X POST http://127.0.0.1:8787/v3/ops/source-sync \
+  -H 'Content-Type: application/json' \
+  -d '{"project_name":"platform","from_manifest":true,"apply":true}'
+```
+
+**Approvals:** pending reconcile removals appear in the Operations panel. Resolve via UI or:
+
+```bash
+curl -sS http://127.0.0.1:8787/v3/ops/approvals
+curl -sS -X POST http://127.0.0.1:8787/v3/ops/approvals/<id>/resolve \
+  -H 'Content-Type: application/json' \
+  -d '{"decision":"approved"}'
+```
+
+Git sync jobs accept `refresh_sources: true` and `project_name` to mirror `metagit project sync --refresh-sources` before fetch/pull/clone.
+
 Use the **Repositories | Explorer | Search | Graph** toggle on the workspace toolbar:
 
 - **Repositories** — filterable table of projects and repos (synced / missing) with per-repo sync actions.
@@ -153,9 +172,28 @@ The browser talks to Vite while API calls traverse the proxy to Python.
 task web:build
 ```
 
-This runs `npm ci || npm install` under `web/`, then `npm run build`, emitting into
-`src/metagit/data/web/` (`emptyOutDir: true`). Commit those generated assets whenever
-shipping UI fixes so `metagit web serve` picks them up without a local Node install.
+This runs `web:assets` (regenerate header logo when `docs/inc/metagit_logo_dark.png` changes),
+`npm ci || npm install` under `web/`, then `npm run build`, emitting into
+`src/metagit/data/web/` (`emptyOutDir: true`). Commit generated assets under both
+`web/src/assets/` and `src/metagit/data/web/` whenever shipping UI fixes so
+`metagit web serve` picks them up without a local Node install.
+
+#### Header logo (web-optimized)
+
+| Asset | Role |
+|-------|------|
+| `docs/inc/metagit_logo_dark.png` | Canonical logo (docs, README) — do not load in the SPA |
+| `web/src/assets/metagit_logo_header.{webp,png}` | 128×128 header assets (~3 KB WebP) |
+
+Regenerate after changing the source art:
+
+```bash
+task web:assets
+# or: uv run python scripts/generate_web_logo.py --force
+```
+
+Uses `sips` on macOS (and ImageMagick on Linux if installed). `cwebp` adds WebP when present.
+Committed outputs are reused on Linux CI when regeneration tools are unavailable.
 
 Continuous integration hooks in `task qa:prepush`/`scripts/prepush-gate.py` focus on Python
 tests and lint; they do **not** run **`task web:build`**. If you alter source under `web/`,

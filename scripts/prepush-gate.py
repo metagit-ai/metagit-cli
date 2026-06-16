@@ -41,6 +41,12 @@ def resolve_manifest_fixture_cmd() -> list[str]:
     return [sys.executable, "scripts/validate-manifest-fixtures.py"]
 
 
+def resolve_modality_parity_cmd() -> list[str]:
+    if shutil.which("uv"):
+        return ["uv", "run", "python", "scripts/check_modality_parity.py"]
+    return [sys.executable, "scripts/check_modality_parity.py"]
+
+
 def resolve_changelog_check_cmd() -> list[str]:
     if shutil.which("uv"):
         return ["uv", "run", "python", "scripts/validate_changelog.py"]
@@ -61,6 +67,28 @@ def resolve_pytest_cmd() -> list[str]:
 
 SECURITY_DEP_FILES = frozenset({"pyproject.toml", "uv.lock"})
 SECURITY_SRC_PREFIX = "src/"
+
+
+def _posix_path(path: str) -> str:
+    """Normalize repo-relative paths for cross-platform comparisons and pytest args."""
+    return Path(path.replace("\\", "/")).as_posix()
+
+
+def _normalize_changed_paths(paths: set[str]) -> set[str]:
+    return {_posix_path(path) for path in paths}
+
+
+def pytest_targets(changed: set[str] | None) -> list[str] | None:
+    """Map changed ``src/`` modules to flat ``tests/test_<module>.py`` targets."""
+    if changed is None or not changed:
+        return None
+    targets: set[str] = set()
+    for raw in _normalize_changed_paths(changed):
+        if not raw.startswith("src/") or not raw.endswith(".py"):
+            continue
+        stem = Path(raw).stem
+        targets.add(_posix_path(str(Path("tests") / f"test_{stem}.py")))
+    return sorted(targets) if targets else None
 
 
 def _git_lines(args: list[str]) -> list[str] | None:
@@ -94,7 +122,7 @@ def changed_paths_for_security() -> set[str] | None:
         if branch_diff is None:
             return None
         chunks.extend(branch_diff)
-    return set(chunks)
+    return _normalize_changed_paths(set(chunks))
 
 
 def security_scan_plan(changed: set[str] | None) -> tuple[bool, bool, bool]:
@@ -167,6 +195,11 @@ def main() -> int:
         failed |= not run_step(
             "manifest_fixtures",
             resolve_manifest_fixture_cmd(),
+            logs_dir,
+        )
+        failed |= not run_step(
+            "modality_parity",
+            resolve_modality_parity_cmd(),
             logs_dir,
         )
         failed |= not run_step(

@@ -97,6 +97,10 @@ class ProjectPath(BaseModel):
     source_repo_id: Optional[str] = Field(
         None, description="Provider-native repository identifier"
     )
+    source_id: Optional[str] = Field(
+        None,
+        description="Declarative source id from workspace.projects[].sources[]",
+    )
     tags: dict[str, str] = Field(
         default_factory=dict,
         description="Flat metadata tags for managed repo search and filtering",

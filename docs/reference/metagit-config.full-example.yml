@@ -259,6 +259,9 @@ paths:
     # Provider-native repository identifier
     source_repo_id: example-value
 ...
+    # Declarative source id from workspace.projects[].sources[]
+    source_id: example-value
+...
     # Flat metadata tags for managed repo search and filtering
     tags:
       example: documentation
@@ -306,6 +309,9 @@ dependencies:
 ...
     # Provider-native repository identifier
     source_repo_id: example-value
+...
+    # Declarative source id from workspace.projects[].sources[]
+    source_id: example-value
 ...
     # Flat metadata tags for managed repo search and filtering
     tags:
@@ -356,6 +362,9 @@ components:
 ...
     # Provider-native repository identifier
     source_repo_id: example-value
+...
+    # Declarative source id from workspace.projects[].sources[]
+    source_id: example-value
 ...
     # Flat metadata tags for managed repo search and filtering
     tags:

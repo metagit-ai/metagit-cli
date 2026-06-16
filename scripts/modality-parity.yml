@@ -1,0 +1,62 @@
+# Modality parity registry — keep in sync when adding user-facing workspace features.
+# Validated by scripts/check_modality_parity.py (wired into task qa:prepush).
+
+version: 1
+
+features:
+  - id: provider_source_sync_imperative
+    description: Imperative provider discovery and manifest apply
+    service: metagit.core.project.source_sync_runner.run_source_sync
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/project_source.py
+            contains: run_source_sync
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_project_source_sync
+          - path: src/metagit/core/mcp/services/source_sync.py
+            contains: run_source_sync
+
+  - id: provider_source_sync_manifest
+    description: Declarative sync from workspace.projects[].sources[]
+    service: metagit.core.project.source_manifest_sync.SourceManifestSyncService
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/project_source.py
+            contains: from_manifest
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/services/source_sync.py
+            contains: from_manifest
+      web:
+        markers:
+          - path: src/metagit/core/web/ops_handler.py
+            contains: /v3/ops/source-sync
+
+  - id: source_sync_reconcile_approval
+    description: Apply approved reconcile removals to the manifest
+    service: metagit.core.context.approval_resolve.ApprovalResolveOrchestrator
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/context.py
+            contains: ApprovalResolveOrchestrator
+      web:
+        markers:
+          - path: src/metagit/core/web/ops_handler.py
+            contains: ApprovalResolveOrchestrator
+
+  - id: project_sync_refresh_sources
+    description: Manifest source refresh before git clone sync
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/project.py
+            contains: refresh_sources
+      web:
+        markers:
+          - path: src/metagit/core/web/models.py
+            contains: refresh_sources

@@ -137,6 +137,32 @@ def test_open_rejects_unknown_path(tmp_path: Path) -> None:
     thread.join(timeout=0.1)
 
 
+def test_source_sync_manifest_dry_run(monkeypatch, tmp_path: Path) -> None:
+  thread, base = _start_server(tmp_path)
+
+  def _fake_run_mcp_source_sync(**kwargs):  # noqa: ANN003
+    _ = kwargs
+    return {"ok": True, "applied": False, "plan": {"discovered_count": 1}}
+
+  monkeypatch.setattr(
+    "metagit.core.web.ops_handler.run_mcp_source_sync",
+    _fake_run_mcp_source_sync,
+  )
+  try:
+    status, payload = _post_json(
+      f"{base}/v3/ops/source-sync",
+      {
+        "project_name": "platform",
+        "from_manifest": True,
+        "apply": False,
+      },
+    )
+    assert status == 200
+    assert payload["ok"] is True
+  finally:
+    thread.join(timeout=0.1)
+
+
 def test_open_managed_repo_uses_echo_editor(tmp_path: Path) -> None:
   sync_root = tmp_path / "sync" / "demo"
   sync_root.mkdir(parents=True)

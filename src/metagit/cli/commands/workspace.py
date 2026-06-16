@@ -8,6 +8,7 @@ from pathlib import Path
 import click
 
 from metagit.cli.commands.project_repo import repo_select
+from metagit.cli.commands.workspace_import import workspace_import
 from metagit.cli.json_output import (
     emit_json,
     exit_on_catalog_mutation,
@@ -715,3 +716,6 @@ def workspace_select(ctx: click.Context, project: str = None) -> None:
         default_project=app_config.workspace.default_project,
     )
     call_click_command_with_ctx(repo_select, ctx)
+
+
+workspace.add_command(workspace_import, name="import")

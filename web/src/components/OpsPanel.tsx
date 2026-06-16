@@ -1,9 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ApiError,
+  getApprovals,
   postHealth,
   postPrune,
   postPrunePreview,
+  postSourceSync,
+  resolveApproval,
+  type ApprovalRequestRow,
   type PruneCandidate,
   type WorkspaceHealthResult,
   type WorkspaceProjectEntry,
@@ -28,12 +32,41 @@ export default function OpsPanel({ projects, onWorkspaceRefresh }: OpsPanelProps
   const [pruneError, setPruneError] = useState('')
   const [confirmPrune, setConfirmPrune] = useState(false)
 
+  const [approvals, setApprovals] = useState<ApprovalRequestRow[]>([])
+  const [approvalsLoading, setApprovalsLoading] = useState(false)
+  const [approvalsError, setApprovalsError] = useState('')
+  const [approvalsMessage, setApprovalsMessage] = useState('')
+
+  const [sourceApply, setSourceApply] = useState(false)
+  const [sourceForce, setSourceForce] = useState(false)
+  const [sourceSyncClones, setSourceSyncClones] = useState(false)
+  const [sourceLoading, setSourceLoading] = useState(false)
+  const [sourceMessage, setSourceMessage] = useState('')
+  const [sourceError, setSourceError] = useState('')
+
   const projectOptions = useMemo(
     () => projects.filter((entry) => entry.name !== 'local'),
     [projects],
   )
 
   const selectedProject = project || projectOptions[0]?.name || ''
+
+  const loadApprovals = async () => {
+    setApprovalsLoading(true)
+    setApprovalsError('')
+    try {
+      const result = await getApprovals('pending')
+      setApprovals(result.requests ?? [])
+    } catch (err) {
+      setApprovalsError(err instanceof ApiError ? err.message : 'Failed to load approvals.')
+    } finally {
+      setApprovalsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadApprovals()
+  }, [])
 
   const runHealth = async () => {
     setHealthLoading(true)
@@ -104,6 +137,68 @@ export default function OpsPanel({ projects, onWorkspaceRefresh }: OpsPanelProps
     }
   }
 
+  const runSourceSync = async () => {
+    if (!selectedProject) {
+      setSourceError('Select a project first.')
+      return
+    }
+    setSourceLoading(true)
+    setSourceError('')
+    setSourceMessage('')
+    try {
+      const result = await postSourceSync({
+        project_name: selectedProject,
+        from_manifest: true,
+        apply: sourceApply,
+        force: sourceForce,
+        sync: sourceSyncClones,
+      })
+      if (result.pending_approval_id) {
+        setSourceMessage(
+          `Plan applied; removals pending approval (${result.pending_approval_id}).`,
+        )
+        await loadApprovals()
+      } else if (result.applied) {
+        setSourceMessage('Manifest source sync applied.')
+      } else {
+        setSourceMessage('Manifest source sync plan ready (dry run).')
+      }
+      onWorkspaceRefresh?.()
+    } catch (err) {
+      setSourceError(err instanceof ApiError ? err.message : 'Source sync failed.')
+    } finally {
+      setSourceLoading(false)
+    }
+  }
+
+  const resolvePendingApproval = async (
+    row: ApprovalRequestRow,
+    decision: 'approved' | 'denied',
+  ) => {
+    setApprovalsLoading(true)
+    setApprovalsError('')
+    setApprovalsMessage('')
+    try {
+      await resolveApproval(row.id, {
+        decision,
+        note: decision === 'denied' ? 'Denied from web UI' : undefined,
+      })
+      setApprovalsMessage(
+        decision === 'approved'
+          ? `Approved ${row.action}.`
+          : `Denied ${row.action}.`,
+      )
+      await loadApprovals()
+      onWorkspaceRefresh?.()
+    } catch (err) {
+      setApprovalsError(
+        err instanceof ApiError ? err.message : 'Failed to resolve approval.',
+      )
+    } finally {
+      setApprovalsLoading(false)
+    }
+  }
+
   return (
     <aside className={styles.panel} aria-label="Workspace operations">
       <h3 className={styles.heading}>Operations</h3>
@@ -121,6 +216,132 @@ export default function OpsPanel({ projects, onWorkspaceRefresh }: OpsPanelProps
         >
           {healthLoading ? 'Checking…' : 'Health check'}
         </button>
+      </div>
+
+      <div className={styles.divider} />
+
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>Provider source sync</h4>
+        <p className={styles.hint}>
+          Sync repos from manifest <code>sources[]</code> for the selected project.
+        </p>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="source-project">
+            Project
+          </label>
+          <select
+            id="source-project"
+            className={styles.select}
+            value={selectedProject}
+            onChange={(event) => {
+              setProject(event.target.value)
+              setSourceMessage('')
+              setSourceError('')
+            }}
+            disabled={sourceLoading || projectOptions.length === 0}
+          >
+            {projectOptions.length === 0 ? (
+              <option value="">No projects</option>
+            ) : (
+              projectOptions.map((entry) => (
+                <option key={entry.name} value={entry.name}>
+                  {entry.name}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+        <label className={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={sourceApply}
+            onChange={(event) => setSourceApply(event.target.checked)}
+            disabled={sourceLoading}
+          />
+          Apply changes to manifest
+        </label>
+        <label className={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={sourceForce}
+            onChange={(event) => setSourceForce(event.target.checked)}
+            disabled={sourceLoading || !sourceApply}
+          />
+          Force reconcile removals (skip approval queue)
+        </label>
+        <label className={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={sourceSyncClones}
+            onChange={(event) => setSourceSyncClones(event.target.checked)}
+            disabled={sourceLoading || !sourceApply}
+          />
+          Clone/sync repos after apply
+        </label>
+        <button
+          type="button"
+          className={`${styles.button} ${styles.buttonPrimary}`}
+          onClick={() => void runSourceSync()}
+          disabled={sourceLoading || !selectedProject}
+        >
+          {sourceLoading ? 'Running…' : sourceApply ? 'Run manifest sync' : 'Preview manifest sync'}
+        </button>
+        {sourceMessage ? <p className={styles.status}>{sourceMessage}</p> : null}
+        {sourceError ? (
+          <p className={`${styles.status} ${styles.statusError}`}>{sourceError}</p>
+        ) : null}
+      </div>
+
+      <div className={styles.divider} />
+
+      <div className={styles.section}>
+        <h4 className={styles.sectionTitle}>Pending approvals</h4>
+        <p className={styles.hint}>
+          Reconcile removals and other gated operations awaiting a decision.
+        </p>
+        <button
+          type="button"
+          className={styles.button}
+          onClick={() => void loadApprovals()}
+          disabled={approvalsLoading}
+        >
+          {approvalsLoading ? 'Loading…' : 'Refresh'}
+        </button>
+        {approvalsMessage ? <p className={styles.status}>{approvalsMessage}</p> : null}
+        {approvalsError ? (
+          <p className={`${styles.status} ${styles.statusError}`}>{approvalsError}</p>
+        ) : null}
+        {approvals.length === 0 ? (
+          <p className={styles.status}>No pending approvals.</p>
+        ) : (
+          <ul className={styles.candidateList}>
+            {approvals.map((row) => (
+              <li key={row.id}>
+                <strong>{row.action}</strong>
+                <br />
+                <span>{row.id}</span>
+                <div className={styles.approvalActions}>
+                  <button
+                    type="button"
+                    className={`${styles.button} ${styles.buttonPrimary}`}
+                    onClick={() => void resolvePendingApproval(row, 'approved')}
+                    disabled={approvalsLoading}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.button}
+                    onClick={() => void resolvePendingApproval(row, 'denied')}
+                    disabled={approvalsLoading}
+                  >
+                    Deny
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className={styles.divider} />

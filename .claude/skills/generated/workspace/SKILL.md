@@ -1,12 +1,12 @@
 ---
 name: workspace
-description: "Skill for the Workspace area of metagit-cli. 98 symbols across 24 files."
+description: "Skill for the Workspace area of metagit-cli. 96 symbols across 23 files."
 metadata:
   internal: true
 ---
 # Workspace
 
-98 symbols | 24 files | Cohesion: 78%
+96 symbols | 23 files | Cohesion: 77%
 
 ## When to Use
 
@@ -57,7 +57,7 @@ Start here when exploring this area:
 | `test_add_project_ensure_noop` | Function | `tests/core/workspace/test_catalog_service.py` | 194 |
 | `test_remove_protected_project_requires_force` | Function | `tests/core/workspace/test_workspace_project_protected.py` | 26 |
 | `test_add_repo_to_protected_project_requires_force` | Function | `tests/core/workspace/test_workspace_project_protected.py` | 36 |
-| `workspace_repo_add` | Function | `src/metagit/cli/commands/workspace.py` | 361 |
+| `workspace_repo_add` | Function | `src/metagit/cli/commands/workspace.py` | 362 |
 | `test_add_and_remove_repo` | Function | `tests/core/workspace/test_catalog_service.py` | 59 |
 | `test_add_repo_rejects_duplicate_identity` | Function | `tests/core/workspace/test_catalog_service.py` | 93 |
 | `test_add_repo_ensure_noop_when_matching` | Function | `tests/core/workspace/test_catalog_service.py` | 129 |
@@ -83,11 +83,11 @@ Start here when exploring this area:
 
 | Area | Connections |
 |------|-------------|
-| Commands | 9 calls |
+| Commands | 8 calls |
 | Config | 7 calls |
-| Services | 4 calls |
+| Services | 3 calls |
+| Project | 1 calls |
 | Providers | 1 calls |
-| Web | 1 calls |
 
 ## How to Explore
 

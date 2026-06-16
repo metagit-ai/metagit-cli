@@ -7,3 +7,5 @@ fixtures:
     label: documented example manifest
   - path: examples/hermes-orchestrator/.metagit.yml
     label: hermes orchestrator workspace example
+  - path: examples/source-import/.metagit.yml
+    label: declarative source import example

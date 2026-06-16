@@ -1,0 +1,16 @@
+name: source-import-example
+kind: umbrella
+workspace:
+  projects:
+    - name: platform
+      sources:
+        - id: acme-github-platform
+          provider: github
+          org: acme-corp
+          mode: reconcile
+          ensure: true
+          ignore:
+            - "**/deprecated/**"
+      repos:
+        - name: coordinator
+          path: ./

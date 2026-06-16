@@ -15,6 +15,7 @@ import click
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.models import (
@@ -598,15 +599,17 @@ def approval_approve_cmd(
     resolver_note: str | None,
 ) -> None:
     """Approve a pending request."""
-    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
-    try:
-        row = ApprovalService(workspace_root=session_root).resolve(
-            request_id=approval_id,
-            decision="approved",
-            note=resolver_note,
-        )
-    except ValueError as exc:
-        raise click.ClickException(str(exc)) from exc
+    config, config_path, _, session_root, _ = _context_paths(ctx, definition_path)
+    row = ApprovalResolveOrchestrator().resolve(
+        workspace_root=session_root,
+        config=config,
+        config_path=config_path,
+        request_id=approval_id,
+        decision="approved",
+        note=resolver_note,
+    )
+    if isinstance(row, Exception):
+        raise click.ClickException(str(row)) from row
     click.echo(row.model_dump_json(indent=2))
 
 

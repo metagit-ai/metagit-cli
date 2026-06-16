@@ -1,78 +1,73 @@
 ---
 name: assets
-description: "Skill for the Assets area of metagit-cli. 672 symbols across 4 files."
+description: "Skill for the Assets area of metagit-cli. 654 symbols across 1 files."
 metadata:
   internal: true
 ---
 # Assets
 
-672 symbols | 4 files | Cohesion: 73%
+654 symbols | 1 files | Cohesion: 73%
 
 ## When to Use
 
 - Working with code in `src/`
-- Understanding how test_workspace_resources_available_when_active, get_resource, append work
+- Understanding how tt, ot, Or work
 - Modifying assets-related functionality
 
 ## Key Files
 
 | File | Symbols |
 |------|---------|
-| `src/metagit/data/web/assets/index-DuMVTTOl.js` | m, b, ae, ce, c (+664) |
-| `src/metagit/core/mcp/resources.py` | get_resource |
-| `src/metagit/core/mcp/services/ops_log.py` | append |
-| `tests/core/mcp/test_resources.py` | test_workspace_resources_available_when_active |
-
-## Entry Points
-
-Start here when exploring this area:
-
-- **`test_workspace_resources_available_when_active`** (Function) — `tests/core/mcp/test_resources.py:10`
-- **`get_resource`** (Method) — `src/metagit/core/mcp/resources.py:18`
-- **`append`** (Method) — `src/metagit/core/mcp/services/ops_log.py:15`
+| `src/metagit/data/web/assets/index-DoByXycf.js` | tt, ot, Or, mi, hi (+649) |
 
 ## Key Symbols
 
 | Symbol | Type | File | Line |
 |--------|------|------|------|
-| `test_workspace_resources_available_when_active` | Function | `tests/core/mcp/test_resources.py` | 10 |
-| `get_resource` | Method | `src/metagit/core/mcp/resources.py` | 18 |
-| `append` | Method | `src/metagit/core/mcp/services/ops_log.py` | 15 |
-| `m` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 0 |
-| `b` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 0 |
-| `ae` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 0 |
-| `ce` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 0 |
-| `c` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 0 |
-| `x` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 0 |
-| `p` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 0 |
-| `xt` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `N` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `St` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `Dt` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `Ot` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `Lt` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `Rt` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `getValue` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `setValue` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
-| `zt` | Function | `src/metagit/data/web/assets/index-DuMVTTOl.js` | 7 |
+| `tt` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `ot` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `Or` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `mi` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `hi` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `bi` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `Li` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `Vi` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `Wi` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `Zi` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `$i` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `ea` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `ta` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `ra` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `aa` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `da` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `_a` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `xa` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `Sa` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
+| `Va` | Function | `src/metagit/data/web/assets/index-DoByXycf.js` | 7 |
 
 ## Execution Flows
 
 | Flow | Type | Steps |
 |------|------|-------|
-| `Mc → N` | cross_community | 7 |
-| `Pc → Rn` | cross_community | 7 |
-| `Pc → St` | cross_community | 7 |
-| `Pc → N` | cross_community | 7 |
-| `Pc → Fn` | cross_community | 7 |
-| `Mc → Ue` | cross_community | 6 |
-| `Mc → De` | cross_community | 6 |
-| `Mc → Ea` | intra_community | 6 |
-| `L → Rn` | cross_community | 6 |
-| `L → St` | cross_community | 6 |
+| `Jc → Rn` | cross_community | 8 |
+| `Jc → St` | cross_community | 8 |
+| `Jc → N` | cross_community | 7 |
+| `Jc → Fn` | cross_community | 7 |
+| `P → Ha` | cross_community | 7 |
+| `UseTransition → Ha` | cross_community | 7 |
+| `Fc → Rn` | cross_community | 7 |
+| `Fc → St` | cross_community | 7 |
+| `Fc → N` | cross_community | 7 |
+| `Fc → Fn` | cross_community | 7 |
+
+## Connected Areas
+
+| Area | Connections |
+|------|-------------|
+| Mcp | 2 calls |
 
 ## How to Explore
 
-1. `gitnexus_context({name: "test_workspace_resources_available_when_active"})` — see callers and callees
+1. `gitnexus_context({name: "tt"})` — see callers and callees
 2. `gitnexus_query({query: "assets"})` — find related execution flows
 3. Read key files listed above for implementation details

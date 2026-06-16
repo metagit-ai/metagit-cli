@@ -6,7 +6,7 @@ metadata:
 ---
 # Providers
 
-27 symbols | 9 files | Cohesion: 86%
+27 symbols | 9 files | Cohesion: 83%
 
 ## When to Use
 
@@ -69,7 +69,9 @@ Start here when exploring this area:
 |------|------|-------|
 | `Init → Load_config` | cross_community | 5 |
 | `Init → Manifest_gate_error_message` | cross_community | 4 |
-| `Source_sync → Normalize_git_url` | cross_community | 4 |
+| `Sync_project → Clear` | cross_community | 4 |
+| `Sync_project → Register` | cross_community | 4 |
+| `Sync_project → Normalize_git_url` | cross_community | 4 |
 | `Main → Normalize_git_url` | cross_community | 4 |
 | `Sync_example → Normalize_git_url` | cross_community | 4 |
 | `Async_example → Normalize_git_url` | cross_community | 4 |

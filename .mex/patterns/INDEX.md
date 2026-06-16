@@ -30,6 +30,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [mcp-project-context.md](mcp-project-context.md) | Project context switch, session store, or workspace snapshot MCP tools |
 | [mcp-cross-project-dependencies.md](mcp-cross-project-dependencies.md) | Cross-project dependency graph MCP tool and collectors |
 | [metagit-web-api.md](metagit-web-api.md) | Adding or changing Pydantic models and routes for `metagit web serve` |
+| [modality-parity.md](modality-parity.md) | Shipping a feature across CLI, MCP, and web — shared services + parity registry |
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |
 | [changelog-release.md](changelog-release.md) | Updating `CHANGELOG.md`, docs publishing, and semantic-release note promotion |
 | [context-pack-repo-cards.md](context-pack-repo-cards.md) | Tier-1 context pack repo cards (`RepoCardService`, index + `inspect_repo_state`) |

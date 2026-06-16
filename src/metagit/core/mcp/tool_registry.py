@@ -55,6 +55,7 @@ class ToolRegistry:
         "metagit_workspace_project_rename",
         "metagit_workspace_repo_rename",
         "metagit_workspace_repo_move",
+        "metagit_project_source_sync",
         "metagit_project_template_apply",
         "metagit_agent_catalog",
         "metagit_agent_dispatch_plan",

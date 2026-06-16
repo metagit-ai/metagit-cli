@@ -45,3 +45,26 @@ def test_security_scan_plan_skips_docs_only() -> None:
         False,
     )
     assert gate.security_scan_plan({"web/src/App.tsx"}) == (False, False, False)
+
+
+def test_pytest_targets_returns_none_when_unknown() -> None:
+    gate = _prepush_gate_module()
+    assert gate.pytest_targets(None) is None
+    assert gate.pytest_targets(set()) is None
+
+
+def test_pytest_targets_returns_none_for_docs_only() -> None:
+    gate = _prepush_gate_module()
+    assert gate.pytest_targets({"docs/install.md", "README.md"}) is None
+
+
+def test_pytest_targets_maps_src_module_to_test_file() -> None:
+    gate = _prepush_gate_module()
+    targets = gate.pytest_targets({"src/metagit/core/config/models.py"})
+    assert targets == ["tests/test_models.py"]
+
+
+def test_pytest_targets_normalizes_windows_src_paths() -> None:
+    gate = _prepush_gate_module()
+    targets = gate.pytest_targets({r"src\metagit\core\config\models.py"})
+    assert targets == ["tests/test_models.py"]

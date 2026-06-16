@@ -22,7 +22,59 @@ Use source sync to discover repositories from GitHub/GitLab and plan/apply works
 
 - Discover-only: `metagit project source sync --provider github --org <org> --mode discover`
 - Additive apply: `metagit project source sync --provider github --org <org> --mode additive --apply`
+- Idempotent additive (CI-safe): `metagit project source sync --provider github --org <org> --mode additive --ensure --apply`
+- Refresh metadata with ensure: add `--refresh-metadata` to update descriptions/tags on existing URLs
+- Filters: repeatable `--ignore '**/deprecated/**'` and `--include-pattern 'acme/platform-*'`
+- Agent JSON: append `--json` (logs stay on stderr when not using JSON-only tooling)
+- Clone after apply: `--sync` runs `metagit project sync` for the target project
+- Agent alias: `metagit workspace import --project <p> --provider github --org <org> [--ignore ...]`
+- MCP (ACTIVE): `metagit_project_source_sync` with the same parameters (`apply`, `confirm`, `sync`)
 - Reconcile apply: `metagit project source sync --provider gitlab --group <group> --mode reconcile --apply --yes`
+
+### Declarative `sources[]` (manifest sync)
+
+Store import scopes on `workspace.projects[].sources[]` and sync from the manifest instead of CLI flags:
+
+```yaml
+workspace:
+  projects:
+    - name: platform
+      sources:
+        - id: github-platform
+          provider: github
+          org: acme
+          mode: additive
+          ensure: true
+          ignore:
+            - "**/archived/**"
+      repos: []
+```
+
+- Manifest sync: `metagit project --project platform source sync --from-manifest --apply --json`
+- Single source: `--source-id github-platform`
+- Persist imperative flags: `--write-source --source-id github-platform` (after a successful imperative sync)
+- Project sync hook: `metagit project sync --project platform --refresh-sources` (manifest sync then git sync)
+- Reconcile removals are deferred unless `--force`; pending removals enqueue `source_sync_reconcile` approvals — approve with `metagit context approval approve --id <id>`
+- Repos without `source_id` are manual entries and are never auto-removed during reconcile
+
+**Web:** Config Studio edits `sources[]`; Workspace Console Operations panel runs manifest sync and resolves approvals. See [metagit-web.md](reference/metagit-web.md).
+
+## Modality parity
+
+Operator-facing features should share core services across CLI, MCP, and web. When adding capability:
+
+1. Put logic in `src/metagit/core/…` (not in Click handlers or React alone).
+2. Wire adapters for each modality in the same change when possible.
+3. Register markers in `scripts/modality-parity.yml`; `task qa:prepush` runs `scripts/check_modality_parity.py`.
+4. Follow `.mex/patterns/modality-parity.md`.
+
+GitHub org/user listing is flat (no nested subgroups). GitLab groups honor `--recursive` / `--no-recursive` for subgroups. Default manifest naming is `namespaced`; use `--name-strategy short` for legacy short names.
+
+| Flag combo | Re-run behavior |
+|------------|-----------------|
+| `--mode additive --apply` | Add missing; update changed metadata |
+| `--mode additive --apply --ensure` | Add missing; noop for existing URLs |
+| `--ensure --refresh-metadata` | Ensure plus provider metadata refresh |
 
 ## Changelog and releases
 
