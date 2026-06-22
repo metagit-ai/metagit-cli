@@ -4,6 +4,16 @@
 
 
 
+## [0.8.0] - 2026-06-22
+
+
+
+### Changed
+- Merge pull request #45 from metagit-ai:zloeber/release-workflow-fixes (e8205ed)
+
+### Fixed
+- fix: add release floor and single-workflow release strategy (1fb6cb8)
+
 ## [0.7.1282] - 2026-06-22
 
 
