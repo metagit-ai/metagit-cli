@@ -87,7 +87,9 @@ GitHub org/user listing is flat (no nested subgroups). GitLab groups honor `--re
 `.github/workflows/semantic-release.yaml` runs on merges to `main` and uses conventional commit prefixes to compute the next version.
 
 - Promotes `## Unreleased` into a dated version section in `CHANGELOG.md`, commits to `main`, then tags.
+- Tags created by the workflow use the canonical `vX.Y.Z` format.
 - GitHub Release notes use the promoted changelog body (commit-log fallback only when `Unreleased` is empty).
+- Changelog-only commits do not retrigger semantic release, and no tag is created when there are no releasable `fix:`, `feat:`, or breaking-change commits since the previous tag.
 - Release automation is deterministic (no LLM). GitHub Copilot AI credits are not a free pipeline for custom workflows; they meter Copilot Chat/agents/review features instead.
 
 - `fix:` -> patch release (`X.Y.Z+1`) **default for most updates**
