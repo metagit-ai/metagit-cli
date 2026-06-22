@@ -4,6 +4,16 @@
 
 
 
+## [0.7.1282] - 2026-06-22
+
+
+
+### Changed
+- Merge pull request #44 from metagit-ai/zloeber/fix_broke_release (cb6364d)
+
+### Fixed
+- fix: broken release loop (f52c011)
+
 ## [0.7.1281] - 2026-06-17
 
 
