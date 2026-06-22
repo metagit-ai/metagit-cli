@@ -11,6 +11,7 @@ on:
 
 env:
   PROJECT_NAME: metagit-cli
+  RELEASE_FLOOR: 0.8.0
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -102,6 +103,13 @@ jobs:
           fi
 
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          if [[ "$SHOULD_RELEASE" == "true" ]]; then
+            FLOORED_VERSION=$(printf '%s\n%s\n' "$NEW_VERSION" "${{ env.RELEASE_FLOOR }}" | sort -V | tail -n 1)
+            if [[ "$FLOORED_VERSION" != "$NEW_VERSION" ]]; then
+              NEW_VERSION="$FLOORED_VERSION"
+            fi
+          fi
+
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
           echo "New version: $NEW_VERSION"
@@ -182,6 +190,7 @@ jobs:
         run: |
           echo "Previous tag: ${{ steps.prev_tag.outputs.tag }}"
           echo "New version: ${{ steps.version.outputs.new_version }}"
+          echo "Release floor: ${{ env.RELEASE_FLOOR }}"
           echo "Should release: ${{ steps.version.outputs.should_release }}"
           echo "Release tag: ${{ steps.check_tag.outputs.release_tag }}"
           echo "Tag exists: ${{ steps.check_tag.outputs.tag_exists }}"

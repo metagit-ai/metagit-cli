@@ -90,6 +90,7 @@ GitHub org/user listing is flat (no nested subgroups). GitLab groups honor `--re
 - Tags created by the workflow use the canonical `vX.Y.Z` format.
 - GitHub Release notes use the promoted changelog body (commit-log fallback only when `Unreleased` is empty).
 - Changelog-only commits do not retrigger semantic release, and no tag is created when there are no releasable `fix:`, `feat:`, or breaking-change commits since the previous tag.
+- The workflow currently floors computed release versions at `0.8.0` so the next valid release lands on `v0.8.0` or newer instead of continuing the accidental `0.7.x` line.
 - Release automation is deterministic (no LLM). GitHub Copilot AI credits are not a free pipeline for custom workflows; they meter Copilot Chat/agents/review features instead.
 
 - `fix:` -> patch release (`X.Y.Z+1`) **default for most updates**
