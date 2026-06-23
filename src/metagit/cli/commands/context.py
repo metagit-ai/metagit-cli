@@ -18,6 +18,9 @@ from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
+from metagit.core.context.event_service import WorkspaceEventService
+from metagit.core.context.handoff_service import HandoffService
+from metagit.core.context.session_begin_service import SessionBeginService
 from metagit.core.context.models import (
     ContextPackResult,
     RepoCardResult,
@@ -31,6 +34,8 @@ from metagit.core.workspace.root_resolver import (
     resolve_session_root,
     resolve_sync_root,
 )
+from metagit.cli.exit_codes import EXIT_NO_WORKSPACE
+from metagit.cli.json_output import emit_json
 from metagit.cli.shell_completion import (
     complete_projects,
     complete_repos,
@@ -176,6 +181,12 @@ def context(ctx: click.Context) -> None:
     default=False,
     help="Print ContextPackResult as JSON",
 )
+@click.option(
+    "--max-tokens",
+    type=click.IntRange(min=1),
+    default=None,
+    help="Optional token budget for context pack with greedy drops",
+)
 @click.pass_context
 def pack_cmd(
     ctx: click.Context,
@@ -184,6 +195,7 @@ def pack_cmd(
     project_name: str | None,
     repo_name: str | None,
     as_json: bool,
+    max_tokens: int | None,
 ) -> None:
     """Emit a tiered context pack (workspace map ± repo cards ± digest)."""
     config, config_path, sync_root, session_root, _ = _context_paths(
@@ -201,11 +213,92 @@ def pack_cmd(
         tier=tier,
         project_name=project_name,
         repo_name=repo_name,
+        max_tokens=max_tokens,
     )
     if as_json:
-        click.echo(result.model_dump_json(indent=2))
+        emit_json(result)
         return
     _summarize_pack(result)
+
+
+@context.group("session")
+def session_group() -> None:
+    """Session lifecycle and bootstrap commands."""
+
+
+@session_group.command("begin")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+    help="Path to the workspace .metagit.yml definition file",
+)
+@click.option(
+    "--project",
+    "project_name",
+    default=None,
+    shell_complete=complete_projects,
+    help="Optional project focus override",
+)
+@click.option(
+    "--repo",
+    "repo_name",
+    default=None,
+    shell_complete=complete_repos,
+    help="Optional repo focus override",
+)
+@click.option(
+    "--max-tokens",
+    type=click.IntRange(min=1),
+    default=None,
+    help="Optional token budget for the embedded context pack",
+)
+@click.option("--json", "as_json", is_flag=True, default=False)
+@click.pass_context
+def session_begin_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    project_name: str | None,
+    repo_name: str | None,
+    max_tokens: int | None,
+    as_json: bool,
+) -> None:
+    """Start a deterministic session envelope in one command."""
+    definition_file = Path(definition_path).expanduser()
+    if not definition_file.exists():
+        click.echo(f"Workspace definition not found: {definition_path}", err=True)
+        ctx.exit(EXIT_NO_WORKSPACE)
+
+    config, config_path, sync_root, session_root, _ = _context_paths(
+        ctx,
+        definition_path,
+    )
+    definition_root = resolve_definition_root(definition_path)
+    result = SessionBeginService().begin(
+        config=config,
+        config_path=config_path,
+        workspace_root=sync_root,
+        session_root=session_root,
+        definition_root=definition_root,
+        project_name=project_name,
+        repo_name=repo_name,
+        max_tokens=max_tokens,
+    )
+
+    if as_json:
+        emit_json(result)
+        return
+
+    click.echo(f"workspace: {result.workspace_name}")
+    click.echo(f"active_project: {result.active_project or '—'}")
+    click.echo(f"objectives: {len(result.objectives)}")
+    click.echo(f"pending_approvals: {len(result.approvals)}")
+    click.echo(f"pack_tier: {result.pack.tier} tokens~{result.pack.token_estimate}")
+    if result.warnings:
+        for warning in result.warnings:
+            click.echo(f"warning: {warning}")
 
 
 @context.command("repo-card")
@@ -250,7 +343,7 @@ def repo_card_cmd(
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
     if as_json:
-        click.echo(card.model_dump_json(indent=2))
+        emit_json(card)
         return
     _summarize_card(card)
 
@@ -350,7 +443,7 @@ def objective_list_cmd(
     _, _, _, session_root, _ = _context_paths(ctx, definition_path)
     result = ObjectiveService(workspace_root=session_root).list()
     if as_json:
-        click.echo(result.model_dump_json(indent=2))
+        emit_json(result)
         return
     if not result.objectives:
         click.echo("No objectives.")
@@ -437,7 +530,7 @@ def objective_set_cmd(
         saved = svc.upsert_partial(merged)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
-    click.echo(saved.model_dump_json(indent=2))
+    emit_json(saved)
 
 
 @objective_group.command("get")
@@ -468,7 +561,7 @@ def objective_get_cmd(
     if obj is None:
         raise click.ClickException(f"objective not found: {objective_id}")
     if as_json:
-        click.echo(obj.model_dump_json(indent=2))
+        emit_json(obj)
         return
     click.echo(
         f"{obj.id} [{obj.status}] {obj.title}\nrepos: {', '.join(obj.repos) or '—'}",
@@ -498,7 +591,7 @@ def objective_complete_cmd(
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
-    click.echo(saved.model_dump_json(indent=2))
+    emit_json(saved)
 
 
 @objective_group.command("cancel")
@@ -524,7 +617,84 @@ def objective_cancel_cmd(
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
-    click.echo(saved.model_dump_json(indent=2))
+    emit_json(saved)
+
+
+@objective_group.command("export")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--output", "output_path", default=None, help="Write JSON to file")
+@click.pass_context
+def objective_export_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    output_path: str | None,
+) -> None:
+    """Export objectives as a portable JSON envelope."""
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    rows = ObjectiveService(workspace_root=session_root).list().objectives
+    payload = {
+        "schema_version": "1.0",
+        "objectives": [item.model_dump(mode="json") for item in rows],
+    }
+    if output_path:
+        Path(output_path).write_text(
+            json.dumps(payload, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        click.echo(str(Path(output_path).resolve()))
+        return
+    emit_json(payload)
+
+
+@objective_group.command("import")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--input", "input_path", default=None, help="Read JSON from file")
+@click.pass_context
+def objective_import_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    input_path: str | None,
+) -> None:
+    """Import objectives from a portable JSON envelope."""
+    if input_path:
+        raw = Path(input_path).read_text(encoding="utf-8")
+    else:
+        if sys.stdin.isatty():
+            raise click.ClickException("provide --input or pipe JSON on stdin")
+        raw = sys.stdin.read()
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise click.ClickException(f"invalid objective import JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise click.ClickException("import payload must be a JSON object")
+    rows_raw = payload.get("objectives")
+    if not isinstance(rows_raw, list):
+        raise click.ClickException("import payload must contain objectives[]")
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    svc = ObjectiveService(workspace_root=session_root)
+    imported = 0
+    for row in rows_raw:
+        if not isinstance(row, dict):
+            continue
+        try:
+            svc.upsert_partial(row)
+            imported += 1
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+    emit_json({"ok": True, "imported": imported})
 
 
 @context.group("approval")
@@ -569,7 +739,7 @@ def approval_list_cmd(
         else svc.list(status=status_filter)
     )
     if as_json:
-        click.echo(result.model_dump_json(indent=2))
+        emit_json(result)
         return
     if not result.requests:
         click.echo("No approval requests.")
@@ -610,7 +780,7 @@ def approval_approve_cmd(
     )
     if isinstance(row, Exception):
         raise click.ClickException(str(row)) from row
-    click.echo(row.model_dump_json(indent=2))
+    emit_json(row)
 
 
 def _resolve_approval_dict_from_cli(
@@ -618,6 +788,7 @@ def _resolve_approval_dict_from_cli(
     *,
     action: str | None,
     requested_by: str | None,
+    idempotency_key: str | None,
     payload_json: str | None,
 ) -> dict[str, Any]:
     merged = dict(stdin_obj)
@@ -625,6 +796,8 @@ def _resolve_approval_dict_from_cli(
         merged["action"] = action
     if requested_by is not None:
         merged["requested_by"] = requested_by
+    if idempotency_key is not None:
+        merged["idempotency_key"] = idempotency_key
     if payload_json is not None:
         try:
             parsed_payload = json.loads(payload_json)
@@ -646,6 +819,7 @@ def _resolve_approval_dict_from_cli(
 )
 @click.option("--action")
 @click.option("--requested-by", "requested_by")
+@click.option("--idempotency-key", "idempotency_key", default=None)
 @click.option("--payload", "payload_json", default=None, help="JSON object string")
 @click.pass_context
 def approval_request_cmd(
@@ -653,6 +827,7 @@ def approval_request_cmd(
     definition_path: str,
     action: str | None,
     requested_by: str | None,
+    idempotency_key: str | None,
     payload_json: str | None,
 ) -> None:
     """Create an approval request from JSON on stdin or flags."""
@@ -675,12 +850,14 @@ def approval_request_cmd(
         base,
         action=action,
         requested_by=requested_by,
+        idempotency_key=idempotency_key,
         payload_json=payload_json,
     )
     action_val = str(merged.get("action") or "").strip()
     if not action_val:
         raise click.ClickException("action is required (stdin or --action)")
     requester = str(merged.get("requested_by") or "agent").strip() or "agent"
+    idem = str(merged.get("idempotency_key") or "").strip() or None
     payload_raw = merged.get("payload")
     payload = dict(payload_raw) if isinstance(payload_raw, dict) else {}
     _, _, _, session_root, _ = _context_paths(ctx, definition_path)
@@ -688,8 +865,9 @@ def approval_request_cmd(
         action=action_val,
         payload=payload,
         requested_by=requester,
+        idempotency_key=idem,
     )
-    click.echo(row.model_dump_json(indent=2))
+    emit_json(row)
 
 
 @approval_group.command("deny")
@@ -719,4 +897,175 @@ def approval_deny_cmd(
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
-    click.echo(row.model_dump_json(indent=2))
+    emit_json(row)
+
+
+@context.group("handoff")
+def handoff_group() -> None:
+    """First-class multi-agent handoff queue operations."""
+
+
+@handoff_group.command("list")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option(
+    "--status",
+    "status_filter",
+    type=click.Choice(["open", "claimed", "completed", "cancelled"]),
+    default=None,
+)
+@click.option("--json", "as_json", is_flag=True, default=False)
+@click.pass_context
+def handoff_list_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    status_filter: str | None,
+    as_json: bool,
+) -> None:
+    """List handoffs, optionally filtered by status."""
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    result = HandoffService(workspace_root=session_root).list(status=status_filter)
+    if as_json:
+        emit_json(result)
+        return
+    if not result.handoffs:
+        click.echo("No handoffs.")
+        return
+    for row in result.handoffs:
+        click.echo(f"{row.id} [{row.status}] {row.title}")
+
+
+@handoff_group.command("create")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--title", required=True)
+@click.option("--created-by", "created_by", default="agent")
+@click.option("--payload", "payload_json", default=None, help="JSON object string")
+@click.pass_context
+def handoff_create_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    title: str,
+    created_by: str,
+    payload_json: str | None,
+) -> None:
+    """Create a handoff with append-only audit history."""
+    payload: dict[str, Any] = {}
+    if payload_json:
+        try:
+            parsed = json.loads(payload_json)
+        except json.JSONDecodeError as exc:
+            raise click.ClickException(f"--payload JSON invalid: {exc}") from exc
+        if not isinstance(parsed, dict):
+            raise click.ClickException("--payload JSON must be an object")
+        payload = parsed
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    row = HandoffService(workspace_root=session_root).create(
+        title=title,
+        created_by=created_by,
+        payload=payload,
+    )
+    emit_json(row)
+
+
+@handoff_group.command("claim")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--id", "handoff_id", required=True)
+@click.option("--by", "claimed_by", required=True)
+@click.option("--note", default=None)
+@click.pass_context
+def handoff_claim_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    handoff_id: str,
+    claimed_by: str,
+    note: str | None,
+) -> None:
+    """Claim a handoff for an assignee."""
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    try:
+        row = HandoffService(workspace_root=session_root).claim(
+            handoff_id,
+            claimed_by=claimed_by,
+            note=note,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    emit_json(row)
+
+
+@handoff_group.command("complete")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--id", "handoff_id", required=True)
+@click.option("--by", "actor", required=True)
+@click.option("--note", default=None)
+@click.pass_context
+def handoff_complete_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    handoff_id: str,
+    actor: str,
+    note: str | None,
+) -> None:
+    """Complete a handoff and append audit entry."""
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    try:
+        row = HandoffService(workspace_root=session_root).complete(
+            handoff_id,
+            actor=actor,
+            note=note,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    emit_json(row)
+
+
+@context.command("events")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--since", "since_cursor", default=None)
+@click.option("--json", "as_json", is_flag=True, default=False)
+@click.pass_context
+def events_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    since_cursor: str | None,
+    as_json: bool,
+) -> None:
+    """Emit workspace events since a cursor timestamp."""
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    result = WorkspaceEventService(workspace_root=session_root).list_events(
+        since=since_cursor,
+    )
+    if as_json:
+        emit_json(result)
+        return
+    click.echo(f"events: {len(result.events)}")
+    click.echo(f"next_cursor: {result.next_cursor}")

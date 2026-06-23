@@ -54,6 +54,13 @@ class WorkspaceConfig(BaseModel):
     """Model for workspace configuration in AppConfig."""
 
     path: str = Field(default="./.metagit", description="Workspace path")
+    session_path: str = Field(
+        default=".metagit/sessions",
+        description=(
+            "Path for workspace session state (metadata/objectives). "
+            "Relative paths resolve from workspace root."
+        ),
+    )
     default_project: Optional[str] = Field(
         default=None,
         description=(
@@ -277,6 +284,9 @@ class AppConfig(BaseModel):
 
             # Override with environment variables
             config = cls._override_from_environment(config)
+            os.environ.setdefault(
+                "METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path
+            )
 
             return config
 
@@ -327,6 +337,8 @@ class AppConfig(BaseModel):
         # Workspace configuration
         if os.getenv("METAGIT_WORKSPACE_PATH"):
             config.workspace.path = os.getenv("METAGIT_WORKSPACE_PATH")
+        if os.getenv("METAGIT_WORKSPACE_SESSION_PATH"):
+            config.workspace.session_path = os.getenv("METAGIT_WORKSPACE_SESSION_PATH")
         if os.getenv("METAGIT_WORKSPACE_DEFAULT_PROJECT"):
             config.workspace.default_project = os.getenv(
                 "METAGIT_WORKSPACE_DEFAULT_PROJECT"

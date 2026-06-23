@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Persist workspace and per-project session state under .metagit/sessions/.
+Persist workspace and per-project session state under a configurable sessions path.
 """
 
 import json
@@ -21,11 +21,21 @@ _PROJECT_FILE_PATTERN = re.compile(r"^[\w.-]+$")
 
 
 class SessionStore:
-    """Read and write session JSON under the workspace .metagit directory."""
+    """Read and write session JSON under the resolved workspace sessions directory."""
 
-    def __init__(self, workspace_root: str) -> None:
+    def __init__(self, workspace_root: str, session_path: Optional[str] = None) -> None:
         self._workspace_root = str(Path(workspace_root).expanduser().resolve())
-        self._sessions_dir = Path(self._workspace_root) / ".metagit" / "sessions"
+        resolved_session_path = (
+            session_path
+            or os.getenv("METAGIT_WORKSPACE_SESSION_PATH")
+            or ".metagit/sessions"
+        )
+        candidate = Path(resolved_session_path).expanduser()
+        self._sessions_dir = (
+            candidate.resolve()
+            if candidate.is_absolute()
+            else (Path(self._workspace_root) / candidate).resolve()
+        )
         self._workspace_meta_path = self._sessions_dir / "_workspace.json"
 
     @property

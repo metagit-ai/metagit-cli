@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """CLI tests for metagit context pack and repo-card."""
 
+import json
 import os
 from pathlib import Path
 
@@ -219,6 +220,135 @@ def test_context_approval_request_json(tmp_path: Path, monkeypatch) -> None:
     assert result.exit_code == 0
     assert '"status": "pending"' in result.output
     assert '"action": "repo_sync"' in result.output
+
+
+def test_context_session_begin_json(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=True)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+    result = runner.invoke(
+        cli,
+        ["context", "session", "begin", "--json"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == "1.0"
+    assert payload["workspace_name"] == "ctx-cli"
+    assert payload["pack"]["tier"] == 2
+
+
+def test_context_session_begin_missing_workspace_definition_exit_code(tmp_path: Path) -> None:
+    runner = CliRunner()
+    missing = tmp_path / "missing.metagit.yml"
+    result = runner.invoke(
+        cli,
+        [
+            "context",
+            "session",
+            "begin",
+            "--json",
+            "--definition",
+            str(missing),
+        ],
+        env=_env_workspace_root(tmp_path),
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 10
+
+
+def test_context_pack_max_tokens_reports_drops(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=True)
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["context", "pack", "--tier", "2", "--json", "--max-tokens", "1"],
+        env=_env_workspace_root(tmp_path),
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["max_tokens"] == 1
+    assert len(payload["dropped_sections"]) >= 1
+
+
+def test_context_approval_request_idempotency_key(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+    for _ in range(2):
+        result = runner.invoke(
+            cli,
+            [
+                "context",
+                "approval",
+                "request",
+                "--action",
+                "repo_sync",
+                "--requested-by",
+                "hermes",
+                "--idempotency-key",
+                "idem-1",
+                "--payload",
+                '{"project":"demo","repo":"svc"}',
+            ],
+            env=env,
+            catch_exceptions=False,
+        )
+        assert result.exit_code == 0
+
+    listed = runner.invoke(
+        cli,
+        ["context", "approval", "list", "--json", "--status", "pending"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert listed.exit_code == 0
+    payload = json.loads(listed.output)
+    assert len(payload["requests"]) == 1
+    assert payload["requests"][0]["idempotency_key"] == "idem-1"
+
+
+def test_context_objective_export_import_roundtrip(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+
+    create = runner.invoke(
+        cli,
+        ["context", "objective", "set", "--id", "exp-1", "--title", "Export me"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert create.exit_code == 0
+
+    out_file = tmp_path / "objectives.json"
+    exported = runner.invoke(
+        cli,
+        ["context", "objective", "export", "--output", str(out_file)],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert exported.exit_code == 0
+    payload = json.loads(out_file.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "1.0"
+    assert payload["objectives"][0]["id"] == "exp-1"
+
+    cleared = runner.invoke(
+        cli,
+        ["context", "objective", "import", "--input", str(out_file)],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert cleared.exit_code == 0
+    summary = json.loads(cleared.output)
+    assert summary["ok"] is True
+    assert summary["imported"] >= 1
 
 
 def _write_workspace(root: Path, *, with_git_repo: bool) -> None:

@@ -18,6 +18,8 @@ def emit_json(payload: BaseModel | dict[str, Any]) -> None:
         data: dict[str, Any] = payload.model_dump(mode="json")
     else:
         data = payload
+    if isinstance(data, dict) and "schema_version" not in data:
+        data = {"schema_version": "1.0", **data}
     click.echo(json.dumps(data, indent=2, default=str))
 
 

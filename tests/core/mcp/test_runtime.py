@@ -725,3 +725,233 @@ def test_tools_call_project_source_sync_dry_run(
     assert response is not None
     payload = json.loads(response["result"]["content"][0]["text"])
     assert payload["ok"] is True
+
+
+def test_tools_list_includes_session_begin_when_active(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 300, "method": "tools/list", "params": {}}
+    )
+    assert response is not None
+    names = [item["name"] for item in response["result"]["tools"]]
+    assert "metagit_session_begin" in names
+
+
+def test_tools_call_session_begin_returns_envelope(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos:",
+                "        - name: api",
+                "          path: alpha/api",
+                "          sync: true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "alpha" / "api").mkdir(parents=True)
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 301,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_session_begin",
+                "arguments": {"max_tokens": 1},
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["schema_version"] == "1.0"
+    assert payload["workspace_name"] == "workspace"
+    assert payload["pack"]["tier"] == 2
+
+
+# --- Handoff MCP tools ---
+
+_HANDOFF_WORKSPACE_YML = "\n".join(
+    [
+        "name: workspace",
+        "kind: application",
+        "workspace:",
+        "  projects:",
+        "    - name: alpha",
+        "      repos: []",
+    ]
+)
+
+
+def test_tools_list_includes_handoff_tools(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(_HANDOFF_WORKSPACE_YML + "\n", encoding="utf-8")
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 400, "method": "tools/list", "params": {}}
+    )
+    assert response is not None
+    names = [item["name"] for item in response["result"]["tools"]]
+    assert "metagit_handoff_list" in names
+    assert "metagit_handoff_create" in names
+    assert "metagit_handoff_claim" in names
+    assert "metagit_handoff_complete" in names
+    assert "metagit_events" in names
+
+
+def test_tools_call_handoff_create_returns_item(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(_HANDOFF_WORKSPACE_YML + "\n", encoding="utf-8")
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 401,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_handoff_create",
+                "arguments": {"title": "MCP handoff", "created_by": "tester"},
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["title"] == "MCP handoff"
+    assert payload["status"] == "open"
+    assert payload["id"]
+
+
+def test_tools_call_handoff_list_returns_result(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(_HANDOFF_WORKSPACE_YML + "\n", encoding="utf-8")
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    # Create one first
+    runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 402,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_handoff_create",
+                "arguments": {"title": "Listed handoff"},
+            },
+        }
+    )
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 403,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_handoff_list",
+                "arguments": {},
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is True
+    assert len(payload["handoffs"]) == 1
+    assert payload["handoffs"][0]["title"] == "Listed handoff"
+
+
+def test_tools_call_handoff_claim_and_complete(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(_HANDOFF_WORKSPACE_YML + "\n", encoding="utf-8")
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+
+    created = json.loads(
+        runtime._handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 410,
+                "method": "tools/call",
+                "params": {
+                    "name": "metagit_handoff_create",
+                    "arguments": {"title": "Round trip"},
+                },
+            }
+        )["result"]["content"][0]["text"]
+    )
+    handoff_id = created["id"]
+
+    claimed = json.loads(
+        runtime._handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 411,
+                "method": "tools/call",
+                "params": {
+                    "name": "metagit_handoff_claim",
+                    "arguments": {"id": handoff_id, "claimed_by": "agentX"},
+                },
+            }
+        )["result"]["content"][0]["text"]
+    )
+    assert claimed["status"] == "claimed"
+
+    done = json.loads(
+        runtime._handle_request(
+            {
+                "jsonrpc": "2.0",
+                "id": 412,
+                "method": "tools/call",
+                "params": {
+                    "name": "metagit_handoff_complete",
+                    "arguments": {"id": handoff_id, "actor": "agentX"},
+                },
+            }
+        )["result"]["content"][0]["text"]
+    )
+    assert done["status"] == "completed"
+
+
+def test_tools_call_events_returns_result(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(_HANDOFF_WORKSPACE_YML + "\n", encoding="utf-8")
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    # Seed a handoff so there is at least one event
+    runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 420,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_handoff_create",
+                "arguments": {"title": "Event seed"},
+            },
+        }
+    )
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 421,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_events",
+                "arguments": {},
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is True
+    assert payload["schema_version"] == "1.0"
+    assert isinstance(payload["events"], list)
+    assert len(payload["events"]) >= 1
+

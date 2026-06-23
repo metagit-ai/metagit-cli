@@ -212,6 +212,12 @@
           "title": "Path",
           "type": "string"
         },
+        "session_path": {
+          "default": ".metagit/sessions",
+          "description": "Path for workspace session state (metadata/objectives). Relative paths resolve from workspace root.",
+          "title": "Session Path",
+          "type": "string"
+        },
         "default_project": {
           "anyOf": [
             {

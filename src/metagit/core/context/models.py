@@ -142,6 +142,7 @@ class ObjectiveListResult(BaseModel):
 
 
 ApprovalStatus = Literal["pending", "approved", "denied"]
+HandoffStatus = Literal["open", "claimed", "completed", "cancelled"]
 
 
 class ApprovalRequest(BaseModel):
@@ -151,6 +152,7 @@ class ApprovalRequest(BaseModel):
     action: str
     status: ApprovalStatus = "pending"
     requested_by: str = "agent"
+    idempotency_key: Optional[str] = None
     payload: dict[str, Any] = Field(default_factory=dict)
     created_at: str
     resolved_at: Optional[str] = None
@@ -182,4 +184,72 @@ class ContextPackResult(BaseModel):
         default=None,
         description="Tier 2 session digest when included.",
     )
+    dropped_sections: list[str] = Field(default_factory=list)
+    max_tokens: Optional[int] = None
     token_estimate: Optional[int] = None
+
+
+class SessionBeginResult(BaseModel):
+    """Deterministic session-start envelope for agents and orchestration."""
+
+    ok: bool = True
+    schema_version: str = "1.0"
+    workspace_name: str
+    active_project: Optional[str] = None
+    session: dict[str, Any] = Field(default_factory=dict)
+    objectives: list[Objective] = Field(default_factory=list)
+    approvals: list[ApprovalRequest] = Field(default_factory=list)
+    handoffs: list[dict[str, Any]] = Field(default_factory=list)
+    pack: ContextPackResult
+    prompt: str = ""
+    warnings: list[str] = Field(default_factory=list)
+
+
+class HandoffEvent(BaseModel):
+    """Audit trail entry for handoff state transitions."""
+
+    at: str
+    by: str
+    action: str
+    note: Optional[str] = None
+
+
+class HandoffItem(BaseModel):
+    """Coordinated work handoff object."""
+
+    id: str
+    title: str
+    status: HandoffStatus = "open"
+    created_by: str = "agent"
+    claimed_by: Optional[str] = None
+    payload: dict[str, Any] = Field(default_factory=dict)
+    created_at: str
+    updated_at: str
+    events: list[HandoffEvent] = Field(default_factory=list)
+
+
+class HandoffListResult(BaseModel):
+    """List of handoff items."""
+
+    ok: bool = True
+    handoffs: list[HandoffItem] = Field(default_factory=list)
+
+
+class WorkspaceEvent(BaseModel):
+    """Timeline row for incremental event polling."""
+
+    timestamp: str
+    source: str
+    kind: str
+    id: str
+    data: dict[str, Any] = Field(default_factory=dict)
+
+
+class WorkspaceEventsResult(BaseModel):
+    """Incremental events feed with cursor support."""
+
+    ok: bool = True
+    schema_version: str = "1.0"
+    since: Optional[str] = None
+    next_cursor: Optional[str] = None
+    events: list[WorkspaceEvent] = Field(default_factory=list)

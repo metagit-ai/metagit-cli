@@ -87,3 +87,24 @@ def test_reload_from_disk_shares_queue(tmp_path: Path) -> None:
     listed = svc_b.list()
     assert len(listed.requests) == 1
     assert listed.requests[0].id == r.id
+
+
+def test_request_idempotency_key_reuses_pending_row(tmp_path: Path) -> None:
+    root = str(tmp_path.resolve())
+    svc = ApprovalService(workspace_root=root)
+    first = svc.request(
+        action="workspace.sync",
+        payload={"mode": "pull"},
+        requested_by="mcp-agent",
+        idempotency_key="idem-abc",
+    )
+    second = svc.request(
+        action="workspace.sync",
+        payload={"mode": "pull"},
+        requested_by="mcp-agent",
+        idempotency_key="idem-abc",
+    )
+    assert first.id == second.id
+    listed = svc.list(status="pending")
+    assert len(listed.requests) == 1
+    assert listed.requests[0].idempotency_key == "idem-abc"
