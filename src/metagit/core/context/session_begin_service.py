@@ -71,9 +71,9 @@ class SessionBeginService:
             warnings.append(f"session-start prompt unavailable: {exc}")
 
         objectives = ObjectiveService(workspace_root=session_root).list().objectives
-        approvals = ApprovalService(workspace_root=session_root).list(
-            status="pending"
-        ).requests
+        approvals = (
+            ApprovalService(workspace_root=session_root).list(status="pending").requests
+        )
 
         project_session = None
         if active_project:

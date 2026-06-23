@@ -1476,7 +1476,9 @@ class MetagitMcpRuntime:
             if isinstance(payload_raw, dict):
                 payload = payload_raw
             svc = HandoffService(workspace_root=status.root_path)
-            row = svc.create(title=title_raw.strip(), created_by=created_by, payload=payload)
+            row = svc.create(
+                title=title_raw.strip(), created_by=created_by, payload=payload
+            )
             return row.model_dump(mode="json")
 
         if name == "metagit_handoff_claim":
@@ -1490,7 +1492,11 @@ class MetagitMcpRuntime:
             claimed_by_raw = arguments.get("claimed_by", "agent")
             claimed_by = str(claimed_by_raw).strip() or "agent"
             note_raw = arguments.get("note")
-            note_opt = str(note_raw).strip() if isinstance(note_raw, str) and note_raw.strip() else None
+            note_opt = (
+                str(note_raw).strip()
+                if isinstance(note_raw, str) and note_raw.strip()
+                else None
+            )
             svc = HandoffService(workspace_root=status.root_path)
             try:
                 row = svc.claim(hid, claimed_by=claimed_by, note=note_opt)
@@ -1509,7 +1515,11 @@ class MetagitMcpRuntime:
             actor_raw = arguments.get("actor", "agent")
             actor = str(actor_raw).strip() or "agent"
             note_raw = arguments.get("note")
-            note_opt = str(note_raw).strip() if isinstance(note_raw, str) and note_raw.strip() else None
+            note_opt = (
+                str(note_raw).strip()
+                if isinstance(note_raw, str) and note_raw.strip()
+                else None
+            )
             svc = HandoffService(workspace_root=status.root_path)
             try:
                 row = svc.complete(hid, actor=actor, note=note_opt)
@@ -1523,7 +1533,11 @@ class MetagitMcpRuntime:
                     "events requires an active workspace",
                 )
             since_raw = arguments.get("since")
-            since_opt = str(since_raw).strip() if isinstance(since_raw, str) and since_raw.strip() else None
+            since_opt = (
+                str(since_raw).strip()
+                if isinstance(since_raw, str) and since_raw.strip()
+                else None
+            )
             svc = WorkspaceEventService(workspace_root=status.root_path)
             return svc.list_events(since=since_opt).model_dump(mode="json")
 
