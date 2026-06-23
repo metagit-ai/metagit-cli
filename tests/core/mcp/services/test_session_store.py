@@ -63,3 +63,22 @@ def test_save_workspace_meta_writes_json(tmp_path: Path) -> None:
   store.save_workspace_meta(meta=WorkspaceSessionMeta(active_project="beta"))
   raw = json.loads((store.sessions_dir / "_workspace.json").read_text(encoding="utf-8"))
   assert raw["active_project"] == "beta"
+
+
+def test_session_store_uses_custom_relative_session_path(tmp_path: Path) -> None:
+  store = SessionStore(
+    workspace_root=str(tmp_path),
+    session_path="state/sessions",
+  )
+  store.save_workspace_meta(meta=WorkspaceSessionMeta(active_project="gamma"))
+  assert store.sessions_dir == (tmp_path / "state" / "sessions").resolve()
+
+
+def test_session_store_uses_env_session_path_override(
+  tmp_path: Path,
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  monkeypatch.setenv("METAGIT_WORKSPACE_SESSION_PATH", "custom/sessions")
+  store = SessionStore(workspace_root=str(tmp_path))
+  store.save_workspace_meta(meta=WorkspaceSessionMeta(active_project="delta"))
+  assert store.sessions_dir == (tmp_path / "custom" / "sessions").resolve()

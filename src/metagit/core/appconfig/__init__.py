@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import json
 from pathlib import Path
 from typing import Union
@@ -34,7 +35,13 @@ def load_config(config_path: str) -> Union[AppConfig, Exception]:
             config_data = yaml.safe_load(file)
 
         config = AppConfig(**config_data["config"])
-        return AppConfig._override_from_environment(config)
+        config = AppConfig._override_from_environment(config)
+        # Keep session path discoverable for components that initialize without direct
+        # access to AppConfig but honor METAGIT_WORKSPACE_SESSION_PATH overrides.
+        os.environ.setdefault(
+            "METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path
+        )
+        return config
     except Exception as e:
         return e
 

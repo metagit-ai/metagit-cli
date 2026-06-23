@@ -38,9 +38,12 @@ from metagit.core.mcp.services.cross_project_dependencies import (
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
+from metagit.core.context.event_service import WorkspaceEventService
+from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.models import ApprovalStatus
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
+from metagit.core.context.session_begin_service import SessionBeginService
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.layout_context import resolve_sync_context
@@ -81,6 +84,7 @@ class MetagitMcpRuntime:
         self._gitnexus_group_sync = GitNexusGroupSyncService()
         self._workspace_health = WorkspaceHealthService()
         self._context_pack = ContextPackService()
+        self._session_begin = SessionBeginService()
         self._repo_card = RepoCardService()
         self._workspace_catalog = WorkspaceCatalogService()
         self._workspace_layout = WorkspaceLayoutService()
@@ -369,6 +373,16 @@ class MetagitMcpRuntime:
                     "tier": {"type": "integer", "enum": [0, 1, 2]},
                     "project_name": {"type": "string"},
                     "repo_name": {"type": "string"},
+                    "max_tokens": {"type": "integer", "minimum": 1},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_session_begin": {
+                "type": "object",
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                    "max_tokens": {"type": "integer", "minimum": 1},
                 },
                 "additionalProperties": False,
             },
@@ -406,6 +420,7 @@ class MetagitMcpRuntime:
                     "action": {"type": "string"},
                     "payload": {"type": "object"},
                     "requested_by": {"type": "string"},
+                    "idempotency_key": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -434,6 +449,53 @@ class MetagitMcpRuntime:
                         "enum": ["approved", "denied"],
                     },
                     "note": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_handoff_list": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": ["open", "claimed", "completed", "cancelled"],
+                    },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_handoff_create": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                    "title": {"type": "string"},
+                    "created_by": {"type": "string"},
+                    "payload": {"type": "object"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_handoff_claim": {
+                "type": "object",
+                "required": ["id", "claimed_by"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "claimed_by": {"type": "string"},
+                    "note": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_handoff_complete": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "actor": {"type": "string"},
+                    "note": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_events": {
+                "type": "object",
+                "properties": {
+                    "since": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -774,6 +836,8 @@ class MetagitMcpRuntime:
             config=config,
         )
         self._ops_log.append(action="tool_call", detail=name)
+        if isinstance(result, dict) and "schema_version" not in result:
+            result = {"schema_version": "1.0", **result}
         return {"content": [{"type": "text", "text": json.dumps(result)}]}
 
     def _handle_resources_list(self) -> dict[str, Any]:
@@ -1161,6 +1225,19 @@ class MetagitMcpRuntime:
                 if isinstance(repo_raw, str) and repo_raw.strip()
                 else None
             )
+            max_tokens_raw = arguments.get("max_tokens")
+            max_tokens: int | None = None
+            if max_tokens_raw is not None:
+                try:
+                    max_tokens = int(max_tokens_raw)
+                except (TypeError, ValueError) as exc:
+                    raise InvalidToolArgumentsError(
+                        "max_tokens must be an integer",
+                    ) from exc
+                if max_tokens < 1:
+                    raise InvalidToolArgumentsError(
+                        "max_tokens must be >= 1",
+                    )
             config_path = str(Path(status.root_path) / ".metagit.yml")
             tier_literal = cast(Literal[0, 1, 2], tier_val)
             definition_root = status.root_path
@@ -1179,8 +1256,60 @@ class MetagitMcpRuntime:
                 tier=tier_literal,
                 project_name=project_opt,
                 repo_name=repo_opt,
+                max_tokens=max_tokens,
             )
             return pack.model_dump(mode="json")
+
+        if name == "metagit_session_begin":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "session begin requires an active workspace"
+                )
+            project_raw = arguments.get("project_name")
+            repo_raw = arguments.get("repo_name")
+            project_opt = (
+                str(project_raw).strip()
+                if isinstance(project_raw, str) and project_raw.strip()
+                else None
+            )
+            repo_opt = (
+                str(repo_raw).strip()
+                if isinstance(repo_raw, str) and repo_raw.strip()
+                else None
+            )
+            max_tokens_raw = arguments.get("max_tokens")
+            max_tokens: int | None = None
+            if max_tokens_raw is not None:
+                try:
+                    max_tokens = int(max_tokens_raw)
+                except (TypeError, ValueError) as exc:
+                    raise InvalidToolArgumentsError(
+                        "max_tokens must be an integer",
+                    ) from exc
+                if max_tokens < 1:
+                    raise InvalidToolArgumentsError(
+                        "max_tokens must be >= 1",
+                    )
+
+            config_path = str(Path(status.root_path) / ".metagit.yml")
+            definition_root = status.root_path
+            app_config = AppConfig.load()
+            sync_root = (
+                resolve_sync_root(definition_root, app_config.workspace.path)
+                if not isinstance(app_config, Exception)
+                else definition_root
+            )
+            envelope = self._session_begin.begin(
+                config=config,
+                config_path=config_path,
+                workspace_root=sync_root,
+                session_root=definition_root,
+                definition_root=definition_root,
+                project_name=project_opt,
+                repo_name=repo_opt,
+                max_tokens=max_tokens,
+            )
+            return envelope.model_dump(mode="json")
 
         if name == "metagit_objective_list":
             if not status.root_path:
@@ -1246,10 +1375,17 @@ class MetagitMcpRuntime:
             )
             if not requested_by:
                 requested_by = "agent"
+            idempotency_raw = arguments.get("idempotency_key")
+            idempotency_key = (
+                str(idempotency_raw).strip()
+                if isinstance(idempotency_raw, str) and idempotency_raw.strip()
+                else None
+            )
             req = ApprovalService(workspace_root=status.root_path).request(
                 action=action,
                 payload=payload,
                 requested_by=requested_by,
+                idempotency_key=idempotency_key,
             )
             return req.model_dump(mode="json")
 
@@ -1310,6 +1446,100 @@ class MetagitMcpRuntime:
             except ValueError as exc:
                 raise InvalidToolArgumentsError(str(exc)) from exc
             return row.model_dump(mode="json")
+
+        if name == "metagit_handoff_list":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "handoff list requires an active workspace",
+                )
+            status_filter_raw = arguments.get("status")
+            status_filter = (
+                str(status_filter_raw).strip()
+                if isinstance(status_filter_raw, str) and status_filter_raw.strip()
+                else None
+            )
+            svc = HandoffService(workspace_root=status.root_path)
+            return svc.list(status=status_filter).model_dump(mode="json")
+
+        if name == "metagit_handoff_create":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "handoff create requires an active workspace",
+                )
+            title_raw = arguments.get("title")
+            if not isinstance(title_raw, str) or not title_raw.strip():
+                raise InvalidToolArgumentsError("title is required")
+            created_by_raw = arguments.get("created_by", "agent")
+            created_by = str(created_by_raw).strip() or "agent"
+            payload_raw = arguments.get("payload")
+            payload: dict[str, Any] = {}
+            if isinstance(payload_raw, dict):
+                payload = payload_raw
+            svc = HandoffService(workspace_root=status.root_path)
+            row = svc.create(
+                title=title_raw.strip(), created_by=created_by, payload=payload
+            )
+            return row.model_dump(mode="json")
+
+        if name == "metagit_handoff_claim":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "handoff claim requires an active workspace",
+                )
+            hid = str(arguments.get("id", "")).strip()
+            if not hid:
+                raise InvalidToolArgumentsError("id is required")
+            claimed_by_raw = arguments.get("claimed_by", "agent")
+            claimed_by = str(claimed_by_raw).strip() or "agent"
+            note_raw = arguments.get("note")
+            note_opt = (
+                str(note_raw).strip()
+                if isinstance(note_raw, str) and note_raw.strip()
+                else None
+            )
+            svc = HandoffService(workspace_root=status.root_path)
+            try:
+                row = svc.claim(hid, claimed_by=claimed_by, note=note_opt)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return row.model_dump(mode="json")
+
+        if name == "metagit_handoff_complete":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "handoff complete requires an active workspace",
+                )
+            hid = str(arguments.get("id", "")).strip()
+            if not hid:
+                raise InvalidToolArgumentsError("id is required")
+            actor_raw = arguments.get("actor", "agent")
+            actor = str(actor_raw).strip() or "agent"
+            note_raw = arguments.get("note")
+            note_opt = (
+                str(note_raw).strip()
+                if isinstance(note_raw, str) and note_raw.strip()
+                else None
+            )
+            svc = HandoffService(workspace_root=status.root_path)
+            try:
+                row = svc.complete(hid, actor=actor, note=note_opt)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return row.model_dump(mode="json")
+
+        if name == "metagit_events":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "events requires an active workspace",
+                )
+            since_raw = arguments.get("since")
+            since_opt = (
+                str(since_raw).strip()
+                if isinstance(since_raw, str) and since_raw.strip()
+                else None
+            )
+            svc = WorkspaceEventService(workspace_root=status.root_path)
+            return svc.list_events(since=since_opt).model_dump(mode="json")
 
         if name == "metagit_repo_card":
             if not config or not status.root_path:

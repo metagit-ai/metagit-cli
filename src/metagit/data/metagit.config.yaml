@@ -23,6 +23,8 @@ config:
   workspace:
     # Default workspace path, should be added to .gitignore
     path: ./.metagit
+    # Session state location (relative to workspace root unless absolute path)
+    session_path: .metagit/sessions
     # Optional session preference when -p/--project is omitted (unset = resolve from manifest)
     # default_project: remote
     ui_ignore_hidden: true

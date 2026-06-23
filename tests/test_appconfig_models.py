@@ -33,6 +33,7 @@ def test_profiles_model():
 def test_workspace_model():
     w = WorkspaceConfig()
     assert w.path == "./.metagit"
+    assert w.session_path == ".metagit/sessions"
     assert w.default_project is None
     assert w.dedupe.enabled is False
     assert w.ui_show_preview is True
@@ -68,6 +69,7 @@ def test_appconfig_defaults():
     assert cfg.agent_mode is False
     assert cfg.llm.provider == "openrouter"
     assert isinstance(cfg.providers, Providers)
+    assert cfg.workspace.session_path == ".metagit/sessions"
     assert cfg.workspace.dedupe.enabled is False
     assert cfg.workspace.ui_ignore_hidden is True
 

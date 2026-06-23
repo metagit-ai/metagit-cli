@@ -32,17 +32,34 @@ class ApprovalService:
         action: str,
         payload: dict[str, Any],
         requested_by: str,
+        idempotency_key: Optional[str] = None,
     ) -> ApprovalRequest:
         """Append a new pending approval and persist it."""
+        rows = self._store.load_requests()
+        if idempotency_key:
+            existing = next(
+                (
+                    row
+                    for row in rows
+                    if row.status == "pending"
+                    and row.action == action
+                    and row.idempotency_key == idempotency_key
+                    and row.requested_by == requested_by
+                ),
+                None,
+            )
+            if existing is not None:
+                return existing
+
         pending = ApprovalRequest(
             id=uuid.uuid4().hex,
             action=action,
             status="pending",
             requested_by=requested_by,
+            idempotency_key=idempotency_key,
             payload=dict(payload),
             created_at=utc_now_iso(),
         )
-        rows = self._store.load_requests()
         rows.append(pending)
         self._store.save_requests(rows)
         return pending

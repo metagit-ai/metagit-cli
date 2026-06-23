@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Added
+- `metagit context session begin` and MCP `metagit_session_begin`: single-call deterministic session bootstrap envelope (pack, prompt, objectives, approvals, session metadata)
+- `context pack --max-tokens`: greedy token-budgeted packer with `dropped_sections` explanation
+- `schema_version: "1.0"` on all `--json` output and MCP tool responses
+- Stable exit code constants (`NO_WORKSPACE`, `STALE_INDEX`, `LOCK_CONTENTION`, `NEEDS_APPROVAL`) in `cli/exit_codes.py`
+- First-class handoff API: `metagit context handoff create|list|claim|complete` (CLI + MCP) with append-only audit trail
+- Approval idempotency key support (`--idempotency-key` / `idempotency_key` MCP arg)
+- `metagit context objective export|import` for portable, redaction-safe intent transfer
+- Incremental workspace event feed: `metagit context events --since <cursor>` (CLI + MCP `metagit_events`) with `next_cursor` for polling
+- `workspace.session_path` config key + `METAGIT_WORKSPACE_SESSION_PATH` env override for configurable session storage
+
+### Security
+- Bump `aiohttp` override floor to `>=3.14.1` (fixes CVE-2026-54273 through CVE-2026-54280)
+- Bump `msgpack` override floor to `>=1.2.1` (fixes GHSA-6v7p-g79w-8964)
 
 
 ## [0.8.0] - 2026-06-22

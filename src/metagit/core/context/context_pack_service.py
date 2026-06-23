@@ -49,6 +49,7 @@ class ContextPackService:
         active_project: Optional[str] = None,
         max_cards: int = 50,
         definition_root: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ) -> ContextPackResult:
         """Assemble a context pack for tier 0, 1, or 2 (see module docstring)."""
         resolved_definition_root = definition_root or str(
@@ -68,6 +69,7 @@ class ContextPackService:
                 map=map_result,
                 cards=None,
                 digest=None,
+                max_tokens=max_tokens,
             )
         elif tier == 1:
             card_rows = self._cards.build_many(
@@ -84,6 +86,7 @@ class ContextPackService:
                 map=map_result,
                 cards=card_rows,
                 digest=None,
+                max_tokens=max_tokens,
             )
         else:
             card_rows = self._cards.build_many(
@@ -117,9 +120,26 @@ class ContextPackService:
                 map=map_result,
                 cards=card_rows,
                 digest=digest,
+                max_tokens=max_tokens,
             )
             session_store.touch_session()
-        return base.model_copy(update={"token_estimate": _estimate_tokens(base)})
+        estimated = _estimate_tokens(base)
+        dropped: list[str] = []
+        if max_tokens is not None and max_tokens > 0 and estimated > max_tokens:
+            if base.cards is not None:
+                base.cards = None
+                dropped.append("cards")
+                estimated = _estimate_tokens(base)
+            if estimated > max_tokens and base.digest is not None:
+                base.digest = None
+                dropped.append("digest")
+                estimated = _estimate_tokens(base)
+        return base.model_copy(
+            update={
+                "token_estimate": estimated,
+                "dropped_sections": dropped,
+            }
+        )
 
 
 __all__ = ["ContextPackService"]

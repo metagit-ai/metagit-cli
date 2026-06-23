@@ -68,7 +68,8 @@ exclude = [".venv", "records", ".metagit", "examples", "docs", "tests"]
 [tool.uv]
 override-dependencies = [
     "pip>=26.1.2",
-    "aiohttp>=3.14.0",
+    "aiohttp>=3.14.1",
+    "msgpack>=1.2.1",
     "cryptography>=46.0.7",
     "filelock>=3.20.3",
     "idna>=3.15",
