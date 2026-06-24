@@ -314,7 +314,9 @@ class PipelineStatusService:
         )
         project_resp.raise_for_status()
         project_data = project_resp.json()
-        default_branch = str(project_data.get("default_branch", "") or "").strip() or None
+        default_branch = (
+            str(project_data.get("default_branch", "") or "").strip() or None
+        )
         branch = self._local_branch(repo_path) if local_status == "synced" else None
         branch = branch or default_branch
 
@@ -380,7 +382,11 @@ class PipelineStatusService:
                 continue
             if not options.include_unsynced and local_status != "synced":
                 continue
-            if repo_filters and repo_name.lower() not in repo_filters and selector not in repo_filters:
+            if (
+                repo_filters
+                and repo_name.lower() not in repo_filters
+                and selector not in repo_filters
+            ):
                 continue
             out.append(row)
         return out
@@ -427,7 +433,9 @@ class PipelineStatusService:
         if provider.enabled and provider.api_token.strip():
             return provider.api_token.strip(), "appconfig.github"
         if os.getenv("METAGIT_GITHUB_API_TOKEN"):
-            return str(os.getenv("METAGIT_GITHUB_API_TOKEN")).strip(), "env.METAGIT_GITHUB_API_TOKEN"
+            return str(
+                os.getenv("METAGIT_GITHUB_API_TOKEN")
+            ).strip(), "env.METAGIT_GITHUB_API_TOKEN"
         if os.getenv("GITHUB_TOKEN"):
             return str(os.getenv("GITHUB_TOKEN")).strip(), "env.GITHUB_TOKEN"
         if os.getenv("GH_TOKEN"):
@@ -439,7 +447,9 @@ class PipelineStatusService:
         if provider.enabled and provider.api_token.strip():
             return provider.api_token.strip(), "appconfig.gitlab"
         if os.getenv("METAGIT_GITLAB_API_TOKEN"):
-            return str(os.getenv("METAGIT_GITLAB_API_TOKEN")).strip(), "env.METAGIT_GITLAB_API_TOKEN"
+            return str(
+                os.getenv("METAGIT_GITLAB_API_TOKEN")
+            ).strip(), "env.METAGIT_GITLAB_API_TOKEN"
         if os.getenv("GITLAB_TOKEN"):
             return str(os.getenv("GITLAB_TOKEN")).strip(), "env.GITLAB_TOKEN"
         if os.getenv("GLAB_TOKEN"):

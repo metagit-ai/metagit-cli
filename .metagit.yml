@@ -8,10 +8,8 @@ description: |-
 documentation:
   # Strings are allowed and will be treated as a markdown file in the root of the project
   - README.md
-  - CHANGELOG.md
-  - CONTRIBUTING.md
-  - CODE_OF_CONDUCT.md
-  - SECURITY.md
+  - AGENTS.md
+  - docs/terminology.md
   # URLs are allowed and will be treated as a web page.
   - https://metagit-ai.github.io/metagit-cli/
   # All of these are duplicates of the strings above, but they are here to demonstrate 
@@ -72,7 +70,7 @@ cicd:
 paths:
   - name: metagit
     description: The main project path
-    path: ./metagit
+    path: ./src/metagit
     language: python
     language_version: '3.13'
     package_manager: uv

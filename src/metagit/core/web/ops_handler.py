@@ -434,11 +434,12 @@ class OpsWebHandler:
             limit = max(1, min(int(raw_limit), 1000))
         except ValueError:
             limit = 200
-        include_unsynced = (
-            (params.get("include_unsynced") or ["true"])[0].strip().lower()
-            != "false"
+        include_unsynced = (params.get("include_unsynced") or ["true"])[
+            0
+        ].strip().lower() != "false"
+        repo_filters = tuple(
+            value.strip() for value in params.get("repo", []) if value.strip()
         )
-        repo_filters = tuple(value.strip() for value in params.get("repo", []) if value.strip())
 
         result = self._pipelines.pipeline_status(
             config=config,
