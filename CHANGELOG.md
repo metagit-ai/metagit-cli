@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.9.0] - 2026-06-23
+
+
+
 ### Added
 - `metagit context session begin` and MCP `metagit_session_begin`: single-call deterministic session bootstrap envelope (pack, prompt, objectives, approvals, session metadata)
 - `context pack --max-tokens`: greedy token-budgeted packer with `dropped_sections` explanation
@@ -18,7 +24,6 @@
 ### Security
 - Bump `aiohttp` override floor to `>=3.14.1` (fixes CVE-2026-54273 through CVE-2026-54280)
 - Bump `msgpack` override floor to `>=1.2.1` (fixes GHSA-6v7p-g79w-8964)
-
 
 ## [0.8.0] - 2026-06-22
 
