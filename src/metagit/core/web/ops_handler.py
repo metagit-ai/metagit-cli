@@ -30,6 +30,10 @@ from metagit.core.utils.common import open_editor
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.web.graph_service import WorkspaceGraphService
 from metagit.core.web.job_store import SyncJobStore
+from metagit.core.web.pipeline_status_service import (
+    PipelineQueryOptions,
+    PipelineStatusService,
+)
 from metagit.core.web.models import (
     ApprovalResolveRequest,
     ObjectiveStatusPatchRequest,
@@ -80,6 +84,7 @@ class OpsWebHandler:
         self._index = WorkspaceIndexService()
         self._sync = WorkspaceSyncService()
         self._graph = WorkspaceGraphService()
+        self._pipelines = PipelineStatusService()
         self._logger = UnifiedLogger(
             LoggerConfig(log_level="ERROR", minimal_console=True)
         )
@@ -97,6 +102,14 @@ class OpsWebHandler:
 
         if method == "GET" and parsed_path == "/v3/ops/graph":
             self._get_graph(query, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/pipelines/providers":
+            self._get_pipeline_providers(respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/pipelines/status":
+            self._get_pipeline_status(query, respond)
             return True
 
         if method == "GET" and parsed_path == "/v3/ops/objectives":
@@ -396,6 +409,53 @@ class OpsWebHandler:
             dedupe=dedupe,
         )
         respond(200, result.model_dump(mode="json"))
+
+    def _get_pipeline_providers(self, respond: JsonResponder) -> None:
+        app_config = self._load_appconfig(respond)
+        if app_config is None:
+            return
+        payload = self._pipelines.provider_diagnostics(app_config)
+        respond(200, payload)
+
+    def _get_pipeline_status(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        app_config = self._load_appconfig(respond)
+        if app_config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+
+        raw_project = (params.get("project") or [""])[0].strip() or None
+        raw_provider = (params.get("provider") or [""])[0].strip().lower() or None
+        raw_status = (params.get("status") or [""])[0].strip().lower() or None
+        raw_limit = (params.get("limit") or ["200"])[0].strip() or "200"
+        try:
+            limit = max(1, min(int(raw_limit), 1000))
+        except ValueError:
+            limit = 200
+        include_unsynced = (params.get("include_unsynced") or ["true"])[
+            0
+        ].strip().lower() != "false"
+        repo_filters = tuple(
+            value.strip() for value in params.get("repo", []) if value.strip()
+        )
+
+        result = self._pipelines.pipeline_status(
+            config=config,
+            app_config=app_config,
+            workspace_root=self._workspace_root,
+            definition_root=resolve_definition_root(self._config_path),
+            options=PipelineQueryOptions(
+                project=raw_project,
+                provider=raw_provider,
+                status=raw_status,
+                repos=repo_filters,
+                include_unsynced=include_unsynced,
+                limit=limit,
+            ),
+        )
+        respond(200, result)
 
     def _get_graph(self, query: str, respond: JsonResponder) -> None:
         config = self._load_metagit(respond)

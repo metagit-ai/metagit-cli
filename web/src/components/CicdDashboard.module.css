@@ -1,0 +1,214 @@
+.panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.summaryRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.summaryChip {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-md);
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+.summaryChip strong {
+  color: var(--color-text);
+}
+
+.summaryChipActive {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-bg);
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+}
+
+.select,
+.search {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  padding: 0.45rem 0.6rem;
+}
+
+.search {
+  min-width: 12rem;
+  flex: 1;
+}
+
+.checkboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.refresh {
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+.providerInfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.providerChip {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+  padding: 0.2rem 0.45rem;
+  font-size: 0.78rem;
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.group {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+  padding: 0.65rem;
+}
+
+.groupTitle {
+  margin: 0 0 0.45rem;
+  font-size: 0.95rem;
+}
+
+.rowList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.row {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  padding: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.repoName {
+  font-weight: 600;
+}
+
+.status {
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--color-border);
+  text-transform: lowercase;
+}
+
+.status_passed {
+  border-color: #2e7d32;
+  color: #2e7d32;
+}
+
+.status_failed {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.status_running {
+  border-color: #1565c0;
+  color: #1565c0;
+}
+
+.status_pending {
+  border-color: #8d6e63;
+  color: #8d6e63;
+}
+
+.status_canceled,
+.status_skipped,
+.status_unknown {
+  color: var(--color-text-muted);
+}
+
+.provider {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.links a {
+  font-size: 0.85rem;
+}
+
+.reason {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.loading,
+.error {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+}
+
+.loading {
+  color: var(--color-text-muted);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+}
+
+.error {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border: 1px solid var(--color-danger);
+}

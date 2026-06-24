@@ -1,5 +1,9 @@
 {
   "aiTools": [
-    "cursor"
-  ]
+    "copilot"
+  ],
+  "scaffold_id": "1183ad7b-dc61-4908-b6a7-aed47dd1dc47",
+  "scaffold_name": "metagit-cli",
+  "origin": null,
+  "upstream": null
 }

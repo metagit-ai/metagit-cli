@@ -18,6 +18,8 @@
 - `metagit context objective export|import` for portable, redaction-safe intent transfer
 - Incremental workspace event feed: `metagit context events --since <cursor>` (CLI + MCP `metagit_events`) with `next_cursor` for polling
 - `workspace.session_path` config key + `METAGIT_WORKSPACE_SESSION_PATH` env override for configurable session storage
+- Live CI/CD status dashboard in the web workspace with provider/status/project filtering and periodic refresh
+- Ops API endpoints for pipeline provider diagnostics and live pipeline status aggregation via `PipelineStatusService`
 
 ### Security
 - Bump `aiohttp` override floor to `>=3.14.1` (fixes CVE-2026-54273 through CVE-2026-54280)

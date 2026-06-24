@@ -1,3 +1,26 @@
+---
+name: agents
+description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
+last_updated: [YYYY-MM-DD]
+---
+
+# Metagit
+
+## What This Is
+Metagit gives you situational awareness across Git repositories. It helps multi-repo projects feel manageable, discoverable, and cohesive. It captures cross-repository relationships and project knowledge in easy to understand version controlled manifests.
+
+## After Every Task
+After meaningful work, run GROW:
+- Prepare: Run `task qa:prepush` and resolve any errors. Rerun until all failures are resolved.
+- Ground: what changed in reality?
+- Record: update `.mex/ROUTER.md` and relevant `.mex/context/` files
+- Orient: create or update a `.mex/patterns/` runbook if this can recur
+- Write: bump `last_updated` on changed scaffold files and run `mex log` when rationale matters
+
+## Navigation
+At the start of every session, read `.mex/ROUTER.md` before doing anything else.
+For full project context, patterns, and task guidance — everything is there.
+
 # Metagit — agent quick reference
 
 For agents instructed to **use Metagit** (not necessarily to contribute to this repository).

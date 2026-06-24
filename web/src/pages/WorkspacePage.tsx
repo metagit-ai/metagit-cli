@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import GraphDiagram from '../components/GraphDiagram'
+import CicdDashboard from '../components/CicdDashboard'
 import OpsPanel from '../components/OpsPanel'
 import RepoTable from '../components/RepoTable'
 import SyncDialog from '../components/SyncDialog'
@@ -13,13 +14,19 @@ import {
   grepQueryKey,
 } from './grepQueries'
 import {
+  fetchPipelineProviders,
+  fetchPipelineStatus,
   fetchWorkspace,
+  pipelineProvidersQueryKey,
+  pipelineStatusQueryKey,
+  type PipelineProviderFilter,
+  type PipelineStatusFilter,
   workspaceQueryKey,
   type StatusFilter,
 } from './workspaceQueries'
 import styles from './WorkspacePage.module.css'
 
-type WorkspaceView = 'repos' | 'explorer' | 'graph' | 'search'
+type WorkspaceView = 'repos' | 'explorer' | 'graph' | 'search' | 'cicd'
 
 interface SyncTarget {
   repos: string[]
@@ -38,6 +45,11 @@ export default function WorkspacePage() {
   const [grepSubmitted, setGrepSubmitted] = useState('')
   const [grepProject, setGrepProject] = useState('')
   const [grepFilesOnly, setGrepFilesOnly] = useState(false)
+  const [pipelineProvider, setPipelineProvider] = useState<PipelineProviderFilter>('all')
+  const [pipelineStatus, setPipelineStatus] = useState<PipelineStatusFilter>('all')
+  const [pipelineProject, setPipelineProject] = useState('')
+  const [pipelineIncludeUnsynced, setPipelineIncludeUnsynced] = useState(true)
+  const [pipelineSearch, setPipelineSearch] = useState('')
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: workspaceQueryKey,
@@ -81,6 +93,41 @@ export default function WorkspacePage() {
     queryKey: grepInfoQueryKey,
     queryFn: fetchWorkspaceGrepInfo,
     enabled: view === 'search',
+  })
+
+  const {
+    data: pipelineProviders,
+    refetch: refetchPipelineProviders,
+  } = useQuery({
+    queryKey: pipelineProvidersQueryKey,
+    queryFn: fetchPipelineProviders,
+    enabled: view === 'cicd',
+  })
+
+  const {
+    data: pipelineData,
+    isLoading: pipelineLoading,
+    isError: pipelineIsError,
+    error: pipelineError,
+    refetch: refetchPipeline,
+  } = useQuery({
+    queryKey: pipelineStatusQueryKey({
+      project: pipelineProject || undefined,
+      provider: pipelineProvider,
+      status: pipelineStatus,
+      includeUnsynced: pipelineIncludeUnsynced,
+      limit: 300,
+    }),
+    queryFn: () =>
+      fetchPipelineStatus({
+        project: pipelineProject || undefined,
+        provider: pipelineProvider,
+        status: pipelineStatus,
+        includeUnsynced: pipelineIncludeUnsynced,
+        limit: 300,
+      }),
+    enabled: view === 'cicd',
+    refetchInterval: view === 'cicd' ? 20_000 : false,
   })
 
   const reposIndex = data?.repos_index ?? []
@@ -146,6 +193,7 @@ export default function WorkspacePage() {
               ['repos', 'Repositories'],
               ['explorer', 'Explorer'],
               ['search', 'Search'],
+              ['cicd', 'CI/CD'],
               ['graph', 'Graph'],
             ] as const
           ).map(([value, label]) => (
@@ -248,7 +296,7 @@ export default function WorkspacePage() {
               Search
             </button>
           </form>
-        ) : (
+        ) : view === 'graph' ? (
           <div className={styles.graphFilters}>
             <label className={styles.checkLabel}>
               <input
@@ -267,7 +315,12 @@ export default function WorkspacePage() {
               Project → repo structure
             </label>
           </div>
-        )}
+        ) : null}
+        {view === 'cicd' ? (
+          <div className={styles.graphFilters}>
+            <span className={styles.checkLabel}>Live polling every 20s</span>
+          </div>
+        ) : null}
       </div>
 
       {isLoading ? <p className={styles.loading}>Loading workspace…</p> : null}
@@ -344,7 +397,7 @@ export default function WorkspacePage() {
                 )
               ) : null}
             </section>
-          ) : (
+          ) : view === 'graph' ? (
             <section className={styles.graphPanel}>
               {graphLoading ? (
                 <p className={styles.loading}>Loading relationship graph…</p>
@@ -366,6 +419,29 @@ export default function WorkspacePage() {
                 />
               ) : null}
             </section>
+          ) : (
+            <CicdDashboard
+              data={pipelineData}
+              providers={pipelineProviders}
+              isLoading={pipelineLoading}
+              isError={pipelineIsError}
+              error={pipelineError instanceof Error ? pipelineError : null}
+              providerFilter={pipelineProvider}
+              statusFilter={pipelineStatus}
+              projectFilter={pipelineProject}
+              includeUnsynced={pipelineIncludeUnsynced}
+              textFilter={pipelineSearch}
+              projects={projects}
+              onProviderFilter={setPipelineProvider}
+              onStatusFilter={setPipelineStatus}
+              onProjectFilter={setPipelineProject}
+              onIncludeUnsynced={setPipelineIncludeUnsynced}
+              onTextFilter={setPipelineSearch}
+              onRefresh={() => {
+                void refetchPipelineProviders()
+                void refetchPipeline()
+              }}
+            />
           )}
           <OpsPanel
             projects={projects}
