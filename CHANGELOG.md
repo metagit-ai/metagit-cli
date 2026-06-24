@@ -4,6 +4,19 @@
 
 
 
+## [0.9.1] - 2026-06-24
+
+
+
+### Changed
+- Merge pull request #48 from metagit-ai/zloeber/web_cicd_feature (6c9958f)
+- Merge remote-tracking branch 'origin/main' into zloeber/session_path (61104df)
+- chore(skills): sync copilot skill assets and agent scaffolding (56de31d)
+- feat(web,ops): add live CI/CD pipeline dashboard and status API (35c6cc6)
+
+### Fixed
+- fix: update local metagit for testing, accuracy (462a82f)
+
 ## [0.9.0] - 2026-06-23
 
 
