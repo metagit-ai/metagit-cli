@@ -29,20 +29,19 @@ documentation:
       - docker
       - python
 license:
-  kind: BSD-3-Clause
-  file: LICENSE.md
+  kind: MIT
+  file: docs/LICENSE.md
 maintainers:
   - name: Zachary Loeber
     email: zloeber@gmail.com
     role: Contributor
 branch_strategy: trunk
-
 taskers:
   - kind: Taskfile
 artifacts:
   - type: python_package
     definition: pyproject.toml
-    location: dist/
+    location: .
     version_strategy: semver
   - type: docker
     definition: Dockerfile
@@ -88,3 +87,10 @@ dependencies:
     ref: ./Dockerfile
     url: https://hub.docker.com/_/python
     kind: docker_image
+
+workspace:
+  projects:
+    - name: self
+      repos:
+        - name: metagit-cli
+          path: .
