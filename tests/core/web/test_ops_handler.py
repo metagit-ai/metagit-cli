@@ -215,3 +215,62 @@ def test_open_managed_repo_uses_echo_editor(tmp_path: Path) -> None:
   finally:
     server.server_close()
     thread.join(timeout=0.1)
+
+
+def test_pipeline_providers_endpoint(tmp_path: Path) -> None:
+  thread, base = _start_server(tmp_path)
+  try:
+    with urllib.request.urlopen(f"{base}/v3/ops/pipelines/providers", timeout=5) as resp:
+      payload = json.loads(resp.read().decode("utf-8"))
+    assert payload["ok"] is True
+    assert isinstance(payload["providers"], list)
+  finally:
+    thread.join(timeout=0.1)
+
+
+def test_pipeline_status_endpoint(tmp_path: Path) -> None:
+  (tmp_path / ".metagit.yml").write_text(
+    "\n".join(
+      [
+        "name: workspace",
+        "kind: application",
+        "workspace:",
+        "  projects:",
+        "    - name: platform",
+        "      repos:",
+        "        - name: metagit-cli",
+        "          url: https://github.com/metagit-ai/metagit-cli.git",
+      ]
+    )
+    + "\n",
+    encoding="utf-8",
+  )
+  (tmp_path / "metagit.config.yaml").write_text(
+    "\n".join(
+      [
+        "config:",
+        "  workspace:",
+        "    path: ./sync",
+      ]
+    )
+    + "\n",
+    encoding="utf-8",
+  )
+  server = build_web_server(
+    root=str(tmp_path),
+    appconfig_path=str(tmp_path / "metagit.config.yaml"),
+    host="127.0.0.1",
+    port=0,
+  )
+  thread = threading.Thread(target=server.serve_forever, daemon=True)
+  thread.start()
+  base = f"http://127.0.0.1:{server.server_address[1]}"
+  try:
+    with urllib.request.urlopen(f"{base}/v3/ops/pipelines/status", timeout=5) as resp:
+      payload = json.loads(resp.read().decode("utf-8"))
+    assert payload["ok"] is True
+    assert "rows" in payload
+    assert isinstance(payload["rows"], list)
+  finally:
+    server.server_close()
+    thread.join(timeout=0.1)

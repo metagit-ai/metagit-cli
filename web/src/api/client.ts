@@ -212,6 +212,63 @@ export interface WorkspaceHealthResult {
   recommendations: HealthRecommendation[]
 }
 
+export type PipelineStatus =
+  | 'passed'
+  | 'failed'
+  | 'running'
+  | 'pending'
+  | 'canceled'
+  | 'skipped'
+  | 'unknown'
+
+export interface ProviderDiagnosticsRow {
+  provider: 'github' | 'gitlab' | string
+  enabled: boolean
+  available: boolean
+  auth_source: string
+  base_url?: string | null
+}
+
+export interface PipelineProvidersResponse {
+  ok: boolean
+  fetched_at: string
+  providers: ProviderDiagnosticsRow[]
+}
+
+export interface PipelineStatusRow {
+  project_name: string
+  repo_name: string
+  provider: 'github' | 'gitlab' | 'unknown' | string
+  repo_url?: string | null
+  repo_path?: string | null
+  local_status: 'synced' | 'configured_missing' | string
+  branch_used?: string | null
+  pipeline_status: PipelineStatus | string
+  pipeline_name?: string | null
+  updated_at?: string | null
+  duration_sec?: number | null
+  web_url?: string | null
+  source: 'live' | 'cache' | 'fallback' | string
+  reason?: string | null
+}
+
+export interface PipelineStatusResponse {
+  ok: boolean
+  fetched_at: string
+  summary: Record<string, number>
+  rows: PipelineStatusRow[]
+  errors: Array<{ project_name: string; repo_name: string; message: string }>
+}
+
+export interface PipelineStatusOptions {
+  project?: string
+  provider?: 'github' | 'gitlab' | 'all'
+  status?: PipelineStatus | 'all'
+  repos?: string[]
+  includeUnsynced?: boolean
+  limit?: number
+}
+
 export interface PruneCandidate {
   path: string
   name: string
@@ -219,6 +276,41 @@ export interface PruneCandidate {
 
 export function getWorkspace(): Promise<CatalogEnvelope<WorkspaceData>> {
   return requestJson<CatalogEnvelope<WorkspaceData>>('/v2/workspace')
+}
+
+export function getPipelineProviders(): Promise<PipelineProvidersResponse> {
+  return requestJson<PipelineProvidersResponse>('/v3/ops/pipelines/providers')
+}
+
+export function getPipelineStatus(
+  options: PipelineStatusOptions = {},
+): Promise<PipelineStatusResponse> {
+  const params = new URLSearchParams()
+  if (options.project) {
+    params.set('project', options.project)
+  }
+  if (options.provider && options.provider !== 'all') {
+    params.set('provider', options.provider)
+  }
+  if (options.status && options.status !== 'all') {
+    params.set('status', options.status)
+  }
+  for (const repo of options.repos ?? []) {
+    if (repo.trim()) {
+      params.append('repo', repo.trim())
+    }
+  }
+  if (options.includeUnsynced === false) {
+    params.set('include_unsynced', 'false')
+  }
+  if (typeof options.limit === 'number') {
+    params.set('limit', String(options.limit))
+  }
+  const query = params.toString()
+  const path = query
+    ? `/v3/ops/pipelines/status?${query}`
+    : '/v3/ops/pipelines/status'
+  return requestJson<PipelineStatusResponse>(path)
 }
 
 export interface GraphViewNode {
