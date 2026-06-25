@@ -36,6 +36,7 @@ from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
+from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.event_service import WorkspaceEventService
@@ -44,6 +45,7 @@ from metagit.core.context.models import ApprovalStatus
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.session_begin_service import SessionBeginService
+from metagit.core.context.session_digest_service import SessionDigestService
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.layout_context import resolve_sync_context
@@ -386,6 +388,11 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_session_digest": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
             "metagit_objective_list": {
                 "type": "object",
                 "properties": {},
@@ -394,6 +401,28 @@ class MetagitMcpRuntime:
             "metagit_objective_upsert": {
                 "type": "object",
                 "required": ["id", "title"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "title": {"type": "string"},
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "in_progress",
+                            "done",
+                            "cancelled",
+                        ],
+                    },
+                    "repos": {"type": "array", "items": {"type": "string"}},
+                    "acceptance": {"type": "string"},
+                    "human_notes": {"type": "string"},
+                    "agent_notes": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_objective_edit": {
+                "type": "object",
+                "required": ["id"],
                 "properties": {
                     "id": {"type": "string"},
                     "title": {"type": "string"},
@@ -1311,6 +1340,41 @@ class MetagitMcpRuntime:
             )
             return envelope.model_dump(mode="json")
 
+        if name == "metagit_session_digest":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "session digest requires an active workspace"
+                )
+            config_path = str(Path(status.root_path) / ".metagit.yml")
+            definition_root = status.root_path
+            app_config = AppConfig.load()
+            sync_root = (
+                resolve_sync_root(definition_root, app_config.workspace.path)
+                if not isinstance(app_config, Exception)
+                else definition_root
+            )
+            objectives = (
+                ObjectiveService(workspace_root=definition_root).list().objectives
+            )
+            active_objective_id = next(
+                (
+                    objective.id
+                    for objective in objectives
+                    if objective.status == "in_progress"
+                ),
+                None,
+            )
+            session_store = SessionStore(workspace_root=definition_root)
+            digest = SessionDigestService.build(
+                config=config,
+                config_path=config_path,
+                workspace_root=sync_root,
+                since=session_store.get_last_session_at(),
+                active_objective_id=active_objective_id,
+                definition_root=definition_root,
+            )
+            return digest.model_dump(mode="json")
+
         if name == "metagit_objective_list":
             if not status.root_path:
                 raise InvalidToolArgumentsError(
@@ -1352,6 +1416,46 @@ class MetagitMcpRuntime:
             svc = ObjectiveService(workspace_root=status.root_path)
             try:
                 saved = svc.upsert_partial(partial)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return saved.model_dump(mode="json")
+
+        if name == "metagit_objective_edit":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "objective edit requires an active workspace",
+                )
+            obj_id = str(arguments.get("id", "")).strip()
+            if not obj_id:
+                raise InvalidToolArgumentsError("id is required")
+            updates: dict[str, Any] = {}
+            title_raw = arguments.get("title")
+            if isinstance(title_raw, str):
+                updates["title"] = title_raw
+            status_raw = arguments.get("status")
+            if status_raw is not None:
+                sv = str(status_raw).strip()
+                if sv not in (
+                    "pending",
+                    "in_progress",
+                    "done",
+                    "cancelled",
+                ):
+                    raise InvalidToolArgumentsError("invalid objective status")
+                updates["status"] = sv
+            raw_repos = arguments.get("repos")
+            if isinstance(raw_repos, list):
+                updates["repos"] = [str(r) for r in raw_repos]
+            for field in ("acceptance", "human_notes", "agent_notes"):
+                if field in arguments and isinstance(arguments.get(field), str):
+                    updates[field] = str(arguments[field])
+            if not updates:
+                raise InvalidToolArgumentsError(
+                    "at least one editable field is required",
+                )
+            svc = ObjectiveService(workspace_root=status.root_path)
+            try:
+                saved = svc.edit(objective_id=obj_id, updates=updates)
             except ValueError as exc:
                 raise InvalidToolArgumentsError(str(exc)) from exc
             return saved.model_dump(mode="json")

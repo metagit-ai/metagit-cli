@@ -36,8 +36,11 @@ Testing flow is pytest-driven from `tests/` with focused unit tests per core mod
 - **Detection subsystem (`metagit.core.detect.*`)** — infers repository metadata (language/framework/dependencies) and feeds generated config/context output.
 - **Record subsystem (`metagit.core.record.*`)** — manages normalized records and conversions; used for storage/search flows beyond raw config files.
 - **MCP runtime (`metagit.core.mcp.*`)** — stdio JSON-RPC server for tools/resources with state-aware gating, workspace path search/index, managed-repo search (`metagit_repo_search`), upstream hints, repo ops, and bootstrap sampling flow.
+- **MCP runtime (`metagit.core.mcp.*`)** — stdio JSON-RPC server for tools/resources with state-aware gating, workspace path search/index, managed-repo search (`metagit_repo_search`), upstream hints, repo ops, bootstrap sampling flow, and objective/session collaboration tools (session begin/digest + objective list/upsert/edit).
 - **Managed repo search (`metagit.core.project.search_service`, `search_models`)** — ranks `.metagit.yml` workspace repos with tags/status; shared by CLI, MCP, and the local HTTP API.
 - **Local HTTP API (`metagit.core.api.server`)** — optional `ThreadingHTTPServer` with read-only JSON routes for the same managed-repo search and resolve semantics.
+- **Local Web ops API (`metagit.core.web.*`)** — localhost-only v3 ops endpoints for workspace maintenance plus objective/session workflows (`/v3/ops/objectives*`, `/v3/ops/session*`) used by the SPA.
+- **Agents SPA surface (`web/src/pages/AgentsPage.tsx`)** — one route with `Templates`, `Objectives`, and `Sessions` sub-tabs; the page combines agent catalog calls (`/v3/agents/*`) with objective/session ops endpoints (`/v3/ops/objectives*`, `/v3/ops/session*`) and uses client-side polling controls for lightweight live updates.
 
 ## External Dependencies
 - **Git providers (GitHub/GitLab APIs via provider modules)** — used for metadata/provider operations; provider wiring is optional/config-driven.

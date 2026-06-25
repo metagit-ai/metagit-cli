@@ -106,6 +106,21 @@ and a read-only install command (`metagit agent create …`). Bundled templates 
 **Dispatch plan** (`GET /v3/agents/templates/{id}/dispatch-plan?vendor=&project=&repo=&task=`)
 returns install, per-vendor launch hints, and handoff CLI commands for overseer subagent routing.
 
+The page now includes three sub-tabs:
+
+- **Templates** — the existing agent catalog, preview, and overlay-init workflow.
+- **Objectives** — collaborative objective review/editing backed by `GET /v3/ops/objectives`, `POST /v3/ops/objectives`, and `PATCH /v3/ops/objectives/{id}`. Objectives render grouped by workflow status, show `agent_notes` prominently, and keep `human_notes` editable.
+- **Sessions** — a read-only digest from `GET /v3/ops/session` plus an explicit **Begin session** action backed by `POST /v3/ops/session/begin`.
+
+Objectives and Sessions share a lightweight polling control bar:
+
+- **Live update** toggle
+- **Update frequency** selector with 30s, 60s, 90s, and 300s options
+- default interval of **90 seconds**
+- **Refresh now** button for manual refetch when polling is disabled or when immediate sync is useful
+
+The Sessions tab shows a compact begin-session summary rather than the full raw `session/begin` payload. On success it refreshes both the current session digest and objectives view so the workflow context stays aligned.
+
 ### Workspace Console
 
 The **Workspace Console** is **Workspace** in the chrome (`/workspace`): catalog-level context (projects/repos index, search/filter) plus the **workspace operations** side panel (health/prune/sync style actions routed through `/v3/ops`). This is meant for situational awareness and lightweight maintenance; destructive actions remain gated as in the CLI and API.
@@ -125,6 +140,29 @@ curl -sS http://127.0.0.1:8787/v3/ops/approvals
 curl -sS -X POST http://127.0.0.1:8787/v3/ops/approvals/<id>/resolve \
   -H 'Content-Type: application/json' \
   -d '{"decision":"approved"}'
+```
+
+**Objectives + session:** web ops also exposes collaborative objective/session endpoints:
+
+```bash
+# List objectives
+curl -sS http://127.0.0.1:8787/v3/ops/objectives
+
+# Create objective
+curl -sS -X POST http://127.0.0.1:8787/v3/ops/objectives \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"demo-1","title":"Ship objective editing"}'
+
+# Partial objective edit (status/title/acceptance/human_notes/agent_notes/repos)
+curl -sS -X PATCH http://127.0.0.1:8787/v3/ops/objectives/demo-1 \
+  -H 'Content-Type: application/json' \
+  -d '{"status":"in_progress","human_notes":"pairing with agent"}'
+
+# Session digest and session begin envelope
+curl -sS http://127.0.0.1:8787/v3/ops/session
+curl -sS -X POST http://127.0.0.1:8787/v3/ops/session/begin \
+  -H 'Content-Type: application/json' \
+  -d '{"project_name":"platform"}'
 ```
 
 Git sync jobs accept `refresh_sources: true` and `project_name` to mirror `metagit project sync --refresh-sources` before fetch/pull/clone.

@@ -403,6 +403,7 @@
       "$ref": "#/$defs/WorkspaceConfig",
       "default": {
         "path": "./.metagit",
+        "session_path": ".metagit/sessions",
         "default_project": null,
         "dedupe": {
           "canonical_dir": "_canonical",

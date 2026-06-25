@@ -145,6 +145,44 @@ class ObjectiveService:
         """Mark an objective cancelled."""
         return self._set_status(objective_id=objective_id, status="cancelled")
 
+    def edit(self, objective_id: str, updates: dict[str, Any]) -> Objective:
+        """Apply a partial objective update and refresh ``updated_at``."""
+        self._validate_objective_id(objective_id=objective_id)
+        existing = self.get(objective_id)
+        if existing is None:
+            raise ValueError(f"Objective not found: {objective_id}")
+
+        merged = existing.model_dump(mode="json")
+        now = utc_now_iso()
+        allowed_keys = {
+            "status",
+            "title",
+            "repos",
+            "acceptance",
+            "human_notes",
+            "agent_notes",
+        }
+        for key, value in updates.items():
+            if key not in allowed_keys or value is None:
+                continue
+            if key == "title":
+                stripped = str(value).strip()
+                if not stripped:
+                    continue
+                merged[key] = stripped
+                continue
+            merged[key] = value
+
+        merged["updated_at"] = now
+        updated = Objective.model_validate(merged)
+        objectives = self._store.load_objectives()
+        for index, row in enumerate(objectives):
+            if row.id == objective_id:
+                objectives[index] = updated
+                self._store.save_objectives(objectives=objectives)
+                return updated
+        raise ValueError(f"Objective not found: {objective_id}")
+
     def _set_status(self, objective_id: str, status: ObjectiveStatus) -> Objective:
         self._validate_objective_id(objective_id=objective_id)
         objectives = self._store.load_objectives()

@@ -652,6 +652,61 @@ def test_tools_call_metagit_objective_list(tmp_path: Path) -> None:
     assert "mcp-goal" in ids
 
 
+def test_tools_call_metagit_objective_edit(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: demo",
+                "      repos: []",
+            ],
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    from metagit.core.context.models import Objective
+    from metagit.core.context.objective_service import ObjectiveService
+    from metagit.core.workspace.context_models import utc_now_iso
+
+    stamp = utc_now_iso()
+    ObjectiveService(workspace_root=str(tmp_path)).upsert(
+        Objective(
+            id="mcp-edit",
+            title="Before edit",
+            status="pending",
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 102,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_objective_edit",
+                "arguments": {
+                    "id": "mcp-edit",
+                    "status": "in_progress",
+                    "acceptance": "Ship MCP parity",
+                    "human_notes": "Need API + UI",
+                },
+            },
+        },
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["id"] == "mcp-edit"
+    assert payload["status"] == "in_progress"
+    assert payload["acceptance"] == "Ship MCP parity"
+    assert payload["human_notes"] == "Need API + UI"
+
+
 def test_tools_list_includes_project_source_sync_when_active(tmp_path: Path) -> None:
     (tmp_path / ".metagit.yml").write_text(
         "\n".join(
@@ -749,6 +804,8 @@ def test_tools_list_includes_session_begin_when_active(tmp_path: Path) -> None:
     assert response is not None
     names = [item["name"] for item in response["result"]["tools"]]
     assert "metagit_session_begin" in names
+    assert "metagit_session_digest" in names
+    assert "metagit_objective_edit" in names
 
 
 def test_tools_call_session_begin_returns_envelope(tmp_path: Path) -> None:
@@ -787,6 +844,54 @@ def test_tools_call_session_begin_returns_envelope(tmp_path: Path) -> None:
     assert payload["schema_version"] == "1.0"
     assert payload["workspace_name"] == "workspace"
     assert payload["pack"]["tier"] == 2
+
+
+def test_tools_call_session_digest_returns_digest(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    from metagit.core.context.models import Objective
+    from metagit.core.context.objective_service import ObjectiveService
+    from metagit.core.workspace.context_models import utc_now_iso
+
+    stamp = utc_now_iso()
+    ObjectiveService(workspace_root=str(tmp_path)).upsert(
+        Objective(
+            id="mcp-active",
+            title="Active objective",
+            status="in_progress",
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 302,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_session_digest",
+                "arguments": {},
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["tier"] == 2
+    assert payload["active_objective_id"] == "mcp-active"
 
 
 # --- Handoff MCP tools ---
