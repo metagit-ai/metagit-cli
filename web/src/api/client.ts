@@ -227,6 +227,12 @@ export interface ProviderDiagnosticsRow {
   available: boolean
   auth_source: string
   base_url?: string | null
+  account?: string | null
+  account_type?: string | null
+  scopes?: string[]
+  token_type?: string | null
+  expires_at?: string | null
+  note?: string | null
 }
 
 export interface PipelineProvidersResponse {

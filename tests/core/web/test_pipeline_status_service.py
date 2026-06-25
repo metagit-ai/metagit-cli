@@ -136,6 +136,54 @@ def test_pipeline_status_filters_by_repo_selector() -> None:
     assert result["rows"][0]["repo_name"] == "metagit-cli"
 
 
+def test_pipeline_status_understands_scp_style_gitlab_urls() -> None:
+    rows = [
+        {
+            "project_name": "platform",
+            "repo_name": "infra",
+            "url": "git@gitlab.com:metagit-ai/platform-infra.git",
+            "status": "configured_missing",
+            "repo_path": "/tmp/platform-infra",
+        }
+    ]
+    service = PipelineStatusService(index_service=_FakeIndexService(rows))
+    service._resolve_gitlab_token = lambda app_config: (None, "none")  # type: ignore[method-assign]
+
+    result = service.pipeline_status(
+        config=_minimal_config(),
+        app_config=AppConfig(),
+        workspace_root="/tmp",
+        definition_root="/tmp",
+        options=PipelineQueryOptions(provider="gitlab"),
+    )
+
+    assert len(result["rows"]) == 1
+    row = result["rows"][0]
+    assert row["provider"] == "gitlab"
+    assert row["reason"] == "no GitLab auth context available"
+
+
+def test_provider_diagnostics_reports_safe_metadata_from_remote_probe() -> None:
+    service = PipelineStatusService(index_service=_FakeIndexService([]))
+    service._resolve_github_token = lambda app_config: ("gh-token", "env.GITHUB_TOKEN")  # type: ignore[method-assign]
+    service._resolve_gitlab_token = lambda app_config: (None, "none")  # type: ignore[method-assign]
+    service._probe_provider_metadata = lambda provider, app_config: {  # type: ignore[method-assign]
+        "account": "octocat",
+        "scopes": ["repo", "workflow"],
+        "token_type": "classic",
+        "expires_at": None,
+        "note": None,
+    }
+
+    payload = service.provider_diagnostics(AppConfig())
+
+    github = {item["provider"]: item for item in payload["providers"]}["github"]
+    assert github["available"] is True
+    assert github["account"] == "octocat"
+    assert github["scopes"] == ["repo", "workflow"]
+    assert github["token_type"] == "classic"
+
+
 def test_status_normalization_helpers() -> None:
     assert (
         PipelineStatusService._normalize_github_status("completed", "success")

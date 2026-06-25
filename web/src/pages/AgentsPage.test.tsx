@@ -242,6 +242,52 @@ describe('AgentsPage', () => {
     })
   })
 
+  it('allows updating objective status before saving', async () => {
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Objectives' }))
+
+    const statusFields = await screen.findAllByLabelText('Status')
+    fireEvent.change(statusFields[0], { target: { value: 'done' } })
+    fireEvent.click(screen.getAllByRole('button', { name: 'Save changes' })[0])
+
+    await waitFor(() => {
+      expect(patchObjectiveMock).toHaveBeenCalledWith('obj-pending', {
+        title: 'Draft agent onboarding guide',
+        status: 'done',
+        repos: ['docs'],
+        acceptance: 'Guide covers install and usage',
+        human_notes: 'Need final walkthrough notes',
+      })
+    })
+  })
+
+  it('supports alternate list view with inline editing', async () => {
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Objectives' }))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'List view' }))
+    expect(screen.getByRole('tab', { name: 'Grouped view' })).toBeInTheDocument()
+
+    const row = await screen.findByRole('article', { name: /Draft agent onboarding guide/i })
+    fireEvent.change(within(row).getByLabelText('Human notes'), {
+      target: { value: 'List edit note' },
+    })
+    fireEvent.change(within(row).getByLabelText('Status'), {
+      target: { value: 'in_progress' },
+    })
+    fireEvent.click(within(row).getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => {
+      expect(patchObjectiveMock).toHaveBeenCalledWith('obj-pending', {
+        title: 'Draft agent onboarding guide',
+        status: 'in_progress',
+        repos: ['docs'],
+        acceptance: 'Guide covers install and usage',
+        human_notes: 'List edit note',
+      })
+    })
+  })
+
   it('renders session digest summary and repo changes', async () => {
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: 'Sessions' }))
