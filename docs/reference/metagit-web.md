@@ -127,6 +127,29 @@ curl -sS -X POST http://127.0.0.1:8787/v3/ops/approvals/<id>/resolve \
   -d '{"decision":"approved"}'
 ```
 
+**Objectives + session:** web ops also exposes collaborative objective/session endpoints:
+
+```bash
+# List objectives
+curl -sS http://127.0.0.1:8787/v3/ops/objectives
+
+# Create objective
+curl -sS -X POST http://127.0.0.1:8787/v3/ops/objectives \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"demo-1","title":"Ship objective editing"}'
+
+# Partial objective edit (status/title/acceptance/human_notes/agent_notes/repos)
+curl -sS -X PATCH http://127.0.0.1:8787/v3/ops/objectives/demo-1 \
+  -H 'Content-Type: application/json' \
+  -d '{"status":"in_progress","human_notes":"pairing with agent"}'
+
+# Session digest and session begin envelope
+curl -sS http://127.0.0.1:8787/v3/ops/session
+curl -sS -X POST http://127.0.0.1:8787/v3/ops/session/begin \
+  -H 'Content-Type: application/json' \
+  -d '{"project_name":"platform"}'
+```
+
 Git sync jobs accept `refresh_sources: true` and `project_name` to mirror `metagit project sync --refresh-sources` before fetch/pull/clone.
 
 Use the **Repositories | Explorer | Search | Graph** toggle on the workspace toolbar:

@@ -53,6 +53,8 @@ def test_active_registry_exposes_full_toolset() -> None:
     assert "metagit_gitnexus_group_sync" in tools
     assert "metagit_workspace_health_check" in tools
     assert "metagit_workspace_semantic_search" in tools
+    assert "metagit_session_digest" in tools
+    assert "metagit_objective_edit" in tools
     assert "metagit_workspace_discover" in tools
     assert "metagit_project_template_apply" in tools
     assert "metagit_agent_catalog" in tools

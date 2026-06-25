@@ -117,6 +117,25 @@ class ObjectiveStatusPatchRequest(BaseModel):
     status: Literal["done", "cancelled"]
 
 
+class ObjectiveEditRequest(BaseModel):
+    """Partial objective edit payload for PATCH `/v3/ops/objectives/{id}`."""
+
+    status: Literal["pending", "in_progress", "done", "cancelled"] | None = None
+    title: str | None = None
+    repos: list[str] | None = None
+    acceptance: str | None = None
+    human_notes: str | None = None
+    agent_notes: str | None = None
+
+
+class SessionBeginRequest(BaseModel):
+    """Optional body for POST `/v3/ops/session/begin`."""
+
+    project_name: str | None = None
+    repo_name: str | None = None
+    max_tokens: int | None = None
+
+
 class ApprovalResolveRequest(BaseModel):
     """Body for POST `/v3/ops/approvals/{id}/resolve`."""
 

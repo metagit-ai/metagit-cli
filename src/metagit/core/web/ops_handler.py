@@ -20,6 +20,9 @@ from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.objective_service import ObjectiveService
+from metagit.core.context.session_begin_service import SessionBeginService
+from metagit.core.context.session_digest_service import SessionDigestService
+from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.mcp.services.source_sync import run_mcp_source_sync
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
@@ -36,9 +39,11 @@ from metagit.core.web.pipeline_status_service import (
 )
 from metagit.core.web.models import (
     ApprovalResolveRequest,
+    ObjectiveEditRequest,
     ObjectiveStatusPatchRequest,
     ObjectiveUpsertRequest,
     OpenPathRequest,
+    SessionBeginRequest,
     SourceSyncRequest,
     SyncJobRequest,
 )
@@ -118,6 +123,14 @@ class OpsWebHandler:
 
         if method == "POST" and parsed_path == "/v3/ops/objectives":
             self._post_objectives(body, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/session":
+            self._get_session(respond)
+            return True
+
+        if method == "POST" and parsed_path == "/v3/ops/session/begin":
+            self._post_session_begin(body, respond)
             return True
 
         if method == "GET" and parsed_path == "/v3/ops/approvals":
@@ -222,7 +235,27 @@ class OpsWebHandler:
         if payload is None:
             return
         try:
-            req = ObjectiveStatusPatchRequest.model_validate(payload)
+            if set(payload.keys()) == {"status"}:
+                req = ObjectiveStatusPatchRequest.model_validate(payload)
+                svc = ObjectiveService(workspace_root=self._root)
+                try:
+                    if req.status == "done":
+                        saved = svc.complete(objective_id=objective_id)
+                    else:
+                        saved = svc.cancel(objective_id=objective_id)
+                except ValueError as exc:
+                    respond(
+                        404,
+                        {
+                            "ok": False,
+                            "error": {"kind": "not_found", "message": str(exc)},
+                        },
+                    )
+                    return
+                respond(200, saved.model_dump(mode="json"))
+                return
+
+            req = ObjectiveEditRequest.model_validate(payload)
         except ValidationError as exc:
             respond(
                 400,
@@ -231,10 +264,32 @@ class OpsWebHandler:
             return
         svc = ObjectiveService(workspace_root=self._root)
         try:
-            if req.status == "done":
-                saved = svc.complete(objective_id=objective_id)
-            else:
-                saved = svc.cancel(objective_id=objective_id)
+            updates: dict[str, Any] = {}
+            if req.status is not None:
+                updates["status"] = req.status
+            if req.title is not None:
+                updates["title"] = req.title
+            if req.repos is not None:
+                updates["repos"] = list(req.repos)
+            if req.acceptance is not None:
+                updates["acceptance"] = req.acceptance
+            if req.human_notes is not None:
+                updates["human_notes"] = req.human_notes
+            if req.agent_notes is not None:
+                updates["agent_notes"] = req.agent_notes
+            if not updates:
+                respond(
+                    400,
+                    {
+                        "ok": False,
+                        "error": {
+                            "kind": "invalid_body",
+                            "message": "at least one editable field is required",
+                        },
+                    },
+                )
+                return
+            saved = svc.edit(objective_id=objective_id, updates=updates)
         except ValueError as exc:
             respond(
                 404,
@@ -245,6 +300,62 @@ class OpsWebHandler:
             )
             return
         respond(200, saved.model_dump(mode="json"))
+
+    def _get_session(self, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        definition_root = resolve_definition_root(self._config_path)
+        session_root = resolve_session_root(self._root)
+        session_store = SessionStore(workspace_root=session_root)
+        since = session_store.get_last_session_at()
+        objectives = ObjectiveService(workspace_root=session_root).list().objectives
+        active_objective_id = next(
+            (
+                objective.id
+                for objective in objectives
+                if objective.status == "in_progress"
+            ),
+            None,
+        )
+        digest = SessionDigestService.build(
+            config=config,
+            config_path=self._config_path,
+            workspace_root=self._workspace_root,
+            since=since,
+            active_objective_id=active_objective_id,
+            definition_root=definition_root,
+        )
+        respond(200, digest.model_dump(mode="json"))
+
+    def _post_session_begin(self, body: bytes, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        payload = self._parse_body(body, respond, required=False)
+        if payload is None:
+            return
+        try:
+            req = SessionBeginRequest.model_validate(payload)
+        except ValidationError as exc:
+            respond(
+                400,
+                {"ok": False, "error": {"kind": "invalid_body", "message": str(exc)}},
+            )
+            return
+        definition_root = resolve_definition_root(self._config_path)
+        session_root = resolve_session_root(self._root)
+        result = SessionBeginService().begin(
+            config=config,
+            config_path=self._config_path,
+            workspace_root=self._workspace_root,
+            session_root=session_root,
+            definition_root=definition_root,
+            project_name=req.project_name,
+            repo_name=req.repo_name,
+            max_tokens=req.max_tokens,
+        )
+        respond(200, result.model_dump(mode="json"))
 
     def _get_approvals(self, query: str, respond: JsonResponder) -> None:
         params = parse_qs(query.lstrip("?"))

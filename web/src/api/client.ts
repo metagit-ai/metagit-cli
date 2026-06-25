@@ -446,9 +446,111 @@ export interface ApprovalListResponse {
   requests: ApprovalRequestRow[]
 }
 
+export type ObjectiveStatus = 'pending' | 'in_progress' | 'done' | 'cancelled'
+
+export interface ObjectiveRow {
+  id: string
+  status: ObjectiveStatus
+  title: string
+  repos: string[]
+  acceptance?: string | null
+  human_notes?: string | null
+  agent_notes?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ObjectiveListResponse {
+  ok: boolean
+  objectives: ObjectiveRow[]
+}
+
+export interface ObjectiveUpsertRequest {
+  id: string
+  title: string
+  status?: ObjectiveStatus
+  repos?: string[]
+  acceptance?: string | null
+  human_notes?: string | null
+  agent_notes?: string | null
+}
+
+export interface ObjectiveEditRequest {
+  status?: ObjectiveStatus
+  title?: string
+  repos?: string[]
+  acceptance?: string | null
+  human_notes?: string | null
+  agent_notes?: string | null
+}
+
+export interface SessionDigestRepoChange {
+  project_name: string
+  repo_name: string
+  repo_path: string
+  commit_count: number
+  recent_subjects: string[]
+  error?: string | null
+}
+
+export interface SessionDigestResponse {
+  tier: 2
+  since?: string | null
+  first_session: boolean
+  manifest_changed: boolean
+  active_objective_id?: string | null
+  repo_changes: SessionDigestRepoChange[]
+}
+
+export interface SessionBeginResponse {
+  ok: boolean
+  schema_version: string
+  workspace_name: string
+  active_project?: string | null
+  session: Record<string, unknown>
+  objectives: ObjectiveRow[]
+  approvals: ApprovalRequestRow[]
+  pack: Record<string, unknown>
+  prompt: string
+  warnings: string[]
+}
+
 export function getApprovals(status: 'pending' | 'approved' | 'denied' | 'all' = 'pending'): Promise<ApprovalListResponse> {
   const query = status === 'pending' ? '' : `?status=${encodeURIComponent(status)}`
   return requestJson<ApprovalListResponse>(`/v3/ops/approvals${query}`)
+}
+
+export function getObjectives(): Promise<ObjectiveListResponse> {
+  return requestJson<ObjectiveListResponse>('/v3/ops/objectives')
+}
+
+export function postObjective(body: ObjectiveUpsertRequest): Promise<ObjectiveRow> {
+  return requestJson<ObjectiveRow>('/v3/ops/objectives', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+export function patchObjective(id: string, body: ObjectiveEditRequest): Promise<ObjectiveRow> {
+  return requestJson<ObjectiveRow>(`/v3/ops/objectives/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  })
+}
+
+export function getSessionDigest(): Promise<SessionDigestResponse> {
+  return requestJson<SessionDigestResponse>('/v3/ops/session')
+}
+
+export function postSessionBegin(body?: {
+  project_name?: string
+  repo_name?: string
+  max_tokens?: number
+}): Promise<SessionBeginResponse> {
+  return requestJson<SessionBeginResponse>('/v3/ops/session/begin', {
+    method: 'POST',
+    body: JSON.stringify(body ?? {}),
+  })
 }
 
 export function resolveApproval(
