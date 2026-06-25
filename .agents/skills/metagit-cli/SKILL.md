@@ -129,6 +129,8 @@ metagit config providers --show
 | Full export bundle (JSON) | `metagit config graph export -c .metagit.yml --json` |
 | MCP tool_calls only | `metagit config graph export -c .metagit.yml --format tool-calls` |
 | Ingest overlay into GitNexus | `./skills/metagit-gitnexus/scripts/ingest-workspace-graph.sh -c .metagit.yml` |
+| Sync GitNexus cross-index group | `metagit gitnexus group sync -c .metagit.yml --json` |
+| MCP group sync | `metagit_gitnexus_group_sync` |
 
 See bundled `metagit-graph-maintain` skill for the full promote → validate → ingest loop. Overlay tables: `MetagitEntity`, `MetagitLink`.
 
@@ -275,6 +277,7 @@ metagit project sync --hydrate   # symlink mounts → full directory copies (per
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>
+metagit project repo promote --name <repo> --dry-run   # path entry → git clone under sync root
 metagit project repo remove --name <repo> --json
 metagit project repo rename --name <old> --new-name <new> --dry-run --json
 metagit project repo move --name <repo> --to-project <other> --dry-run --json
@@ -342,16 +345,29 @@ metagit config providers --show
 
 ---
 
-## Records, skills, version
+## Records, skills, agents, version
 
 ```bash
 metagit record search "<query>"
 metagit skills list
 metagit skills show metagit-cli
 metagit skills install --skill metagit-cli
+metagit agent list
+metagit agent export orchestration-overseer -o ./agent-bundle --no-prompt
+metagit agent create orchestration-overseer --vendor cursor --install-skills --install-mcp
+metagit agent create orchestration-overseer --vendor github_copilot --scope project
+metagit agent create orchestration-overseer --vendor hermes --scope user
+metagit agent create orchestration-overseer --vendor opencode --scope project
+metagit agent create orchestration-overseer --vendor windsurf --scope project
+metagit agent create orchestration-overseer --vendor codex --scope project
 metagit version
+metagit version check --json
+metagit version upgrade --json
+metagit version upgrade --apply --json
 metagit info
 ```
+
+`version check` compares the installed package to the latest GitHub release (release notes) and PyPI. `version upgrade` plans or runs a self-update via the detected package manager (`uv tool upgrade metagit-cli` when installed with `uv tool`). Default is dry-run; pass `--apply` to execute. MCP: `metagit_version_check`, `metagit_version_upgrade` (`apply: true` to upgrade). Both work without an active workspace gate. Editable dev installs cannot self-update.
 
 ---
 

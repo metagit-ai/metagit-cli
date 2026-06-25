@@ -106,6 +106,21 @@ and a read-only install command (`metagit agent create …`). Bundled templates 
 **Dispatch plan** (`GET /v3/agents/templates/{id}/dispatch-plan?vendor=&project=&repo=&task=`)
 returns install, per-vendor launch hints, and handoff CLI commands for overseer subagent routing.
 
+The page now includes three sub-tabs:
+
+- **Templates** — the existing agent catalog, preview, and overlay-init workflow.
+- **Objectives** — collaborative objective review/editing backed by `GET /v3/ops/objectives`, `POST /v3/ops/objectives`, and `PATCH /v3/ops/objectives/{id}`. Objectives render grouped by workflow status, show `agent_notes` prominently, and keep `human_notes` editable.
+- **Sessions** — a read-only digest from `GET /v3/ops/session` plus an explicit **Begin session** action backed by `POST /v3/ops/session/begin`.
+
+Objectives and Sessions share a lightweight polling control bar:
+
+- **Live update** toggle
+- **Update frequency** selector with 30s, 60s, 90s, and 300s options
+- default interval of **90 seconds**
+- **Refresh now** button for manual refetch when polling is disabled or when immediate sync is useful
+
+The Sessions tab shows a compact begin-session summary rather than the full raw `session/begin` payload. On success it refreshes both the current session digest and objectives view so the workflow context stays aligned.
+
 ### Workspace Console
 
 The **Workspace Console** is **Workspace** in the chrome (`/workspace`): catalog-level context (projects/repos index, search/filter) plus the **workspace operations** side panel (health/prune/sync style actions routed through `/v3/ops`). This is meant for situational awareness and lightweight maintenance; destructive actions remain gated as in the CLI and API.

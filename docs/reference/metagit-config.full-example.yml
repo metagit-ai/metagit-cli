@@ -239,7 +239,7 @@ paths:
     url: https://example.com/org/repo
 ...
     # Sync setting
-    sync: true
+    sync: false
     # Programming language
     language: python
     # Language version
@@ -290,7 +290,7 @@ dependencies:
     url: https://example.com/org/repo
 ...
     # Sync setting
-    sync: true
+    sync: false
     # Programming language
     language: python
     # Language version
@@ -343,7 +343,7 @@ components:
     url: https://example.com/org/repo
 ...
     # Sync setting
-    sync: true
+    sync: false
     # Programming language
     language: python
     # Language version

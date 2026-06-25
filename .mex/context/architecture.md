@@ -40,6 +40,7 @@ Testing flow is pytest-driven from `tests/` with focused unit tests per core mod
 - **Managed repo search (`metagit.core.project.search_service`, `search_models`)** — ranks `.metagit.yml` workspace repos with tags/status; shared by CLI, MCP, and the local HTTP API.
 - **Local HTTP API (`metagit.core.api.server`)** — optional `ThreadingHTTPServer` with read-only JSON routes for the same managed-repo search and resolve semantics.
 - **Local Web ops API (`metagit.core.web.*`)** — localhost-only v3 ops endpoints for workspace maintenance plus objective/session workflows (`/v3/ops/objectives*`, `/v3/ops/session*`) used by the SPA.
+- **Agents SPA surface (`web/src/pages/AgentsPage.tsx`)** — one route with `Templates`, `Objectives`, and `Sessions` sub-tabs; the page combines agent catalog calls (`/v3/agents/*`) with objective/session ops endpoints (`/v3/ops/objectives*`, `/v3/ops/session*`) and uses client-side polling controls for lightweight live updates.
 
 ## External Dependencies
 - **Git providers (GitHub/GitLab APIs via provider modules)** — used for metadata/provider operations; provider wiring is optional/config-driven.

@@ -2,21 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ApiError,
   getApprovals,
-  getObjectives,
-  getSessionDigest,
-  patchObjective,
   postHealth,
-  postObjective,
-  postSessionBegin,
   postPrune,
   postPrunePreview,
   postSourceSync,
   resolveApproval,
   type ApprovalRequestRow,
-  type ObjectiveRow,
-  type ObjectiveStatus,
   type PruneCandidate,
-  type SessionDigestResponse,
   type WorkspaceHealthResult,
   type WorkspaceProjectEntry,
 } from '../api/client'
@@ -25,31 +17,6 @@ import styles from './OpsPanel.module.css'
 export interface OpsPanelProps {
   projects: WorkspaceProjectEntry[]
   onWorkspaceRefresh?: () => void
-}
-
-type ObjectiveDraft = {
-  title: string
-  status: ObjectiveStatus
-  acceptance: string
-  human_notes: string
-  repos: string
-}
-
-const OBJECTIVE_STATUS_ORDER: ObjectiveStatus[] = [
-  'pending',
-  'in_progress',
-  'done',
-  'cancelled',
-]
-
-function toObjectiveDraft(row: ObjectiveRow): ObjectiveDraft {
-  return {
-    title: row.title,
-    status: row.status,
-    acceptance: row.acceptance ?? '',
-    human_notes: row.human_notes ?? '',
-    repos: (row.repos ?? []).join(', '),
-  }
 }
 
 export default function OpsPanel({ projects, onWorkspaceRefresh }: OpsPanelProps) {

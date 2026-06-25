@@ -8,6 +8,7 @@
 
 ### Changed
 - `PATCH /v3/ops/objectives/{id}` now supports partial edits of objective fields (`title`, `acceptance`, `human_notes`, `agent_notes`, `repos`, `status`) while preserving status-only behavior
+- The web `/agents` route now includes `Templates`, `Objectives`, and `Sessions` sub-tabs with live refresh controls, collaborative objective editing, and a session digest/begin-session dashboard
 
 
 

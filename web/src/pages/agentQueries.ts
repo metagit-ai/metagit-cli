@@ -2,19 +2,53 @@ import {
   getAgentCatalog,
   getAgentPreview,
   getAgentTemplate,
+  getObjectives,
+  patchObjective,
+  getSessionDigest,
   postAgentOverlayInit,
+  postSessionBegin,
   type AgentCatalogEntry,
   type AgentCatalogResponse,
+  type ObjectiveEditRequest,
   type AgentOverlayInitOptions,
   type AgentOverlayInitResponse,
   type AgentPreviewResponse,
   type AgentTemplateDetailResponse,
+  type ObjectiveRow,
+  type ObjectiveListResponse,
+  type SessionBeginResponse,
+  type SessionDigestResponse,
 } from '../api/client'
 
 export const agentCatalogQueryKey = ['agents', 'catalog'] as const
+export const objectivesQueryKey = ['agents', 'objectives'] as const
+export const sessionDigestQueryKey = ['agents', 'session'] as const
 
 export function fetchAgentCatalog(): Promise<AgentCatalogResponse> {
   return getAgentCatalog()
+}
+
+export function fetchObjectives(): Promise<ObjectiveListResponse> {
+  return getObjectives()
+}
+
+export function saveObjective(
+  id: string,
+  body: ObjectiveEditRequest,
+): Promise<ObjectiveRow> {
+  return patchObjective(id, body)
+}
+
+export function fetchSessionDigest(): Promise<SessionDigestResponse> {
+  return getSessionDigest()
+}
+
+export function beginSession(body?: {
+  project_name?: string
+  repo_name?: string
+  max_tokens?: number
+}): Promise<SessionBeginResponse> {
+  return postSessionBegin(body)
 }
 
 export function agentTemplateQueryKey(templateId: string) {

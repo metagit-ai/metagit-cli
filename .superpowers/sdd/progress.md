@@ -1,0 +1,6 @@
+Task 1: complete (frontend test harness added, review clean)
+Task 2: complete (agent queries/objective-session query helpers wired, review clean)
+Task 3: complete (agents sub-tab shell added, review clean)
+Task 4: complete (objectives panel implemented with grouped editable cards, review clean)
+Task 5: complete (sessions digest and begin-session flow implemented, review clean)
+Task 6: complete (docs/context/pattern updates plus build and QA verification, review clean)

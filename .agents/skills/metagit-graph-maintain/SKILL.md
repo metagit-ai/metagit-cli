@@ -97,6 +97,17 @@ Then run each `gitnexus_cypher` call (or use the ingest script).
 ./skills/metagit-gitnexus/scripts/analyze-targets.sh <workspace_root> <project>
 ```
 
+### 6. Sync GitNexus group (cross-index)
+
+After repos are indexed, align the workspace with a GitNexus group:
+
+```bash
+./skills/metagit-gitnexus/scripts/sync-group.sh -c .metagit.yml
+# MCP: metagit_gitnexus_group_sync
+```
+
+Enables `gitnexus group query` / `group impact` across member repos.
+
 ## Output contract
 
 Return:
