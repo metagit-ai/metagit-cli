@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import os
 from pathlib import Path
+import re
 import subprocess
 from typing import Any
 from urllib.parse import quote, urlparse
@@ -46,6 +47,12 @@ class PipelineStatusService:
         """Return provider availability metadata without exposing secrets."""
         gh_token, gh_source = self._resolve_github_token(app_config)
         gl_token, gl_source = self._resolve_gitlab_token(app_config)
+        gh_metadata = (
+            self._probe_provider_metadata("github", app_config) if gh_token else {}
+        )
+        gl_metadata = (
+            self._probe_provider_metadata("gitlab", app_config) if gl_token else {}
+        )
 
         return {
             "ok": True,
@@ -57,6 +64,7 @@ class PipelineStatusService:
                     "available": bool(gh_token),
                     "auth_source": gh_source,
                     "base_url": app_config.providers.github.base_url,
+                    **gh_metadata,
                 },
                 {
                     "provider": "gitlab",
@@ -64,6 +72,7 @@ class PipelineStatusService:
                     "available": bool(gl_token),
                     "auth_source": gl_source,
                     "base_url": app_config.providers.gitlab.base_url,
+                    **gl_metadata,
                 },
             ],
         }
@@ -393,9 +402,9 @@ class PipelineStatusService:
 
     @staticmethod
     def _provider_for_url(url: Any) -> str:
-        if not isinstance(url, str) or not url.strip():
+        host, _ = PipelineStatusService._split_remote_url(url)
+        if not host:
             return "unknown"
-        host = urlparse(url.strip()).netloc.lower()
         if "github" in host:
             return "github"
         if "gitlab" in host:
@@ -404,29 +413,154 @@ class PipelineStatusService:
 
     @staticmethod
     def _parse_github_repo(url: Any) -> tuple[str | None, str | None]:
-        if not isinstance(url, str):
+        _, path = PipelineStatusService._split_remote_url(url)
+        if not path:
             return None, None
-        parsed = urlparse(url)
-        parts = [piece for piece in parsed.path.split("/") if piece]
+        parts = [piece for piece in path.split("/") if piece]
         if len(parts) < 2:
             return None, None
         owner = parts[0]
         repo = parts[1]
-        if repo.endswith(".git"):
-            repo = repo[:-4]
         return owner, repo
 
     @staticmethod
     def _parse_gitlab_repo_path(url: Any) -> str | None:
-        if not isinstance(url, str):
+        _, path = PipelineStatusService._split_remote_url(url)
+        if not path:
             return None
-        parsed = urlparse(url)
-        parts = [piece for piece in parsed.path.split("/") if piece]
+        parts = [piece for piece in path.split("/") if piece]
         if len(parts) < 2:
             return None
-        if parts[-1].endswith(".git"):
-            parts[-1] = parts[-1][:-4]
         return "/".join(parts)
+
+    @staticmethod
+    def _split_remote_url(url: Any) -> tuple[str | None, str | None]:
+        if not isinstance(url, str) or not url.strip():
+            return None, None
+
+        raw = url.strip()
+        scp_match = re.match(
+            r"^(?:(?P<user>[^@/]+)@)?(?P<host>[^:]+):(?P<path>.+)$",
+            raw,
+        )
+        if "://" not in raw and scp_match is not None:
+            host = (scp_match.group("host") or "").strip().lower() or None
+            path = (scp_match.group("path") or "").strip()
+            if path.endswith(".git"):
+                path = path[:-4]
+            return host, path or None
+
+        parsed = urlparse(raw)
+        host = (parsed.hostname or parsed.netloc or "").strip().lower() or None
+        path = parsed.path.strip().lstrip("/")
+        if path.endswith(".git"):
+            path = path[:-4]
+        return host, path or None
+
+    def _probe_provider_metadata(
+        self,
+        provider: str,
+        app_config: AppConfig,
+    ) -> dict[str, Any]:
+        try:
+            if provider == "github":
+                return self._probe_github_metadata(app_config)
+            if provider == "gitlab":
+                return self._probe_gitlab_metadata(app_config)
+        except Exception as exc:
+            return {
+                "account": None,
+                "account_type": None,
+                "scopes": [],
+                "token_type": None,
+                "expires_at": None,
+                "note": f"metadata probe failed: {exc}",
+            }
+        return {}
+
+    def _probe_github_metadata(self, app_config: AppConfig) -> dict[str, Any]:
+        token, _ = self._resolve_github_token(app_config)
+        if not token:
+            return {}
+
+        session = requests.Session()
+        session.headers.update(
+            {
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github+json",
+            }
+        )
+        response = session.get(
+            f"{app_config.providers.github.base_url.rstrip('/')}/user",
+            timeout=self._timeout_seconds,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        scopes = _split_scopes(
+            response.headers.get("X-OAuth-Scopes")
+            or response.headers.get("x-oauth-scopes")
+        )
+        expires_at = response.headers.get("GitHub-Authentication-Token-Expiration")
+        note = None
+        token_type = "classic" if scopes else None
+        if not scopes:
+            note = "GitHub did not expose token scopes for this auth context"
+        return {
+            "account": payload.get("login") or payload.get("name"),
+            "account_type": payload.get("type"),
+            "scopes": scopes,
+            "token_type": token_type,
+            "expires_at": expires_at,
+            "note": note,
+        }
+
+    def _probe_gitlab_metadata(self, app_config: AppConfig) -> dict[str, Any]:
+        token, _ = self._resolve_gitlab_token(app_config)
+        if not token:
+            return {}
+
+        session = requests.Session()
+        session.headers.update(
+            {
+                "PRIVATE-TOKEN": token,
+                "Content-Type": "application/json",
+            }
+        )
+        api_base = app_config.providers.gitlab.base_url.rstrip("/")
+        user_response = session.get(
+            f"{api_base}/user",
+            timeout=self._timeout_seconds,
+        )
+        user_response.raise_for_status()
+        user_payload = user_response.json()
+        scopes = _split_scopes(
+            user_response.headers.get("X-OAuth-Scopes")
+            or user_response.headers.get("x-oauth-scopes")
+        )
+        token_type = None
+        expires_at = None
+        note = None
+
+        pat_response = session.get(
+            f"{api_base}/personal_access_tokens/self",
+            timeout=self._timeout_seconds,
+        )
+        if pat_response.ok:
+            pat_payload = pat_response.json()
+            scopes = scopes or [str(scope) for scope in pat_payload.get("scopes") or []]
+            token_type = "personal_access_token"
+            expires_at = pat_payload.get("expires_at")
+        elif not scopes:
+            note = "GitLab did not expose token scopes for this auth context"
+
+        return {
+            "account": user_payload.get("username") or user_payload.get("name"),
+            "account_type": user_payload.get("state"),
+            "scopes": scopes,
+            "token_type": token_type,
+            "expires_at": expires_at,
+            "note": note,
+        }
 
     def _resolve_github_token(self, app_config: AppConfig) -> tuple[str | None, str]:
         provider = app_config.providers.github
@@ -539,6 +673,14 @@ def _duration_seconds(start: Any, end: Any) -> int | None:
         return None
     duration = int((end_dt - start_dt).total_seconds())
     return duration if duration >= 0 else None
+
+
+def _split_scopes(value: Any) -> list[str]:
+    if not isinstance(value, str) or not value.strip():
+        return []
+    if "," in value:
+        return [part.strip() for part in value.split(",") if part.strip()]
+    return [part.strip() for part in value.split() if part.strip()]
 
 
 def _iso_now() -> str:

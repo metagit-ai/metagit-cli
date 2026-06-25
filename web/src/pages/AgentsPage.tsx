@@ -37,6 +37,7 @@ const REFRESH_OPTIONS = [30, 60, 90, 300] as const
 
 type AgentsTab = 'templates' | 'objectives' | 'sessions'
 type DetailTab = 'metadata' | 'preview'
+type ObjectivesViewMode = 'grouped' | 'list'
 
 type RefreshPanelProps = {
   liveUpdate: boolean
@@ -317,6 +318,7 @@ function ObjectivesPanel({
   const [savingId, setSavingId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ObjectivesViewMode>('grouped')
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: objectivesQueryKey,
@@ -344,6 +346,16 @@ function ObjectivesPanel({
   })
 
   const objectives = data?.objectives ?? []
+  const orderedObjectives = useMemo(() => {
+    const order = new Map(OBJECTIVE_GROUPS.map((group, index) => [group.status, index]))
+    return [...objectives].sort((left, right) => {
+      const statusDelta = (order.get(left.status) ?? 99) - (order.get(right.status) ?? 99)
+      if (statusDelta !== 0) {
+        return statusDelta
+      }
+      return left.title.localeCompare(right.title)
+    })
+  }, [objectives])
 
   return (
     <section className={styles.panel} aria-label="Objectives panel">
@@ -364,6 +376,27 @@ function ObjectivesPanel({
         />
       </div>
 
+      <div className={styles.viewToggle} role="tablist" aria-label="Objectives view mode">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={viewMode === 'grouped'}
+          className={viewMode === 'grouped' ? styles.tabActive : styles.tab}
+          onClick={() => setViewMode('grouped')}
+        >
+          Grouped view
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={viewMode === 'list'}
+          className={viewMode === 'list' ? styles.tabActive : styles.tab}
+          onClick={() => setViewMode('list')}
+        >
+          List view
+        </button>
+      </div>
+
       {isLoading ? <p className={styles.status}>Loading objectives…</p> : null}
       {isError ? (
         <p className={styles.error}>
@@ -373,7 +406,7 @@ function ObjectivesPanel({
       {saveMessage ? <p className={styles.status}>{saveMessage}</p> : null}
       {saveError ? <p className={styles.error}>{saveError}</p> : null}
 
-      {!isLoading && !isError ? (
+      {!isLoading && !isError && viewMode === 'grouped' ? (
         <div className={styles.objectiveGroups}>
           {OBJECTIVE_GROUPS.map((group) => {
             const groupObjectives = objectives.filter((item) => item.status === group.status)
@@ -402,6 +435,24 @@ function ObjectivesPanel({
             )
           })}
         </div>
+      ) : null}
+
+      {!isLoading && !isError && viewMode === 'list' ? (
+        orderedObjectives.length ? (
+          <div className={styles.objectiveListRows}>
+            {orderedObjectives.map((objective) => (
+              <ObjectiveCard
+                key={objective.id}
+                objective={objective}
+                isSaving={savingId === objective.id && saveMutation.isPending}
+                onSave={(body) => saveMutation.mutate({ id: objective.id, body })}
+                compact
+              />
+            ))}
+          </div>
+        ) : (
+          <p className={styles.emptyState}>No objectives available.</p>
+        )
       ) : null}
     </section>
   )
@@ -626,10 +677,12 @@ function ObjectiveCard({
   objective,
   isSaving,
   onSave,
+  compact = false,
 }: {
   objective: ObjectiveRow
   isSaving: boolean
   onSave: (body: ObjectiveEditRequest) => void
+  compact?: boolean
 }) {
   const [draft, setDraft] = useState<ObjectiveDraft>(() => toObjectiveDraft(objective))
 
@@ -638,13 +691,16 @@ function ObjectiveCard({
   }, [objective])
 
   return (
-    <article className={styles.objectiveCard}>
+    <article
+      className={compact ? `${styles.objectiveCard} ${styles.objectiveCardCompact}` : styles.objectiveCard}
+      aria-label={objective.title}
+    >
       <div className={styles.objectiveCardHeader}>
         <div>
           <h5 className={styles.cardTitle}>{objective.title}</h5>
           <p className={styles.cardDescription}>{objective.acceptance ?? 'No acceptance notes.'}</p>
         </div>
-        <span className={styles.badge}>{formatObjectiveStatus(objective.status)}</span>
+        <span className={styles.badge}>{formatObjectiveStatus(draft.status)}</span>
       </div>
 
       <div className={styles.meta}>
@@ -658,6 +714,28 @@ function ObjectiveCard({
       <div className={styles.agentNotesBlock}>
         <p className={styles.objectiveLabel}>Agent notes</p>
         <p className={styles.agentNotesText}>{objective.agent_notes ?? 'No agent notes yet.'}</p>
+      </div>
+
+      <div className={styles.objectiveField}>
+        <label className={styles.objectiveLabel} htmlFor={`objective-status-${objective.id}`}>
+          Status
+        </label>
+        <select
+          id={`objective-status-${objective.id}`}
+          className={styles.select}
+          value={draft.status}
+          onChange={(event) => {
+            setDraft((current) => ({
+              ...current,
+              status: event.target.value as ObjectiveStatus,
+            }))
+          }}
+        >
+          <option value="pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="done">Done</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
       </div>
 
       <div className={styles.objectiveField}>

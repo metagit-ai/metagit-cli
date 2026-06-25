@@ -67,6 +67,10 @@ function ageLabel(updatedAt?: string | null): string {
   return `${days}d ago`
 }
 
+function providerSummary(provider: PipelineProvidersResponse['providers'][number]): string {
+  return provider.available ? 'auth ok' : 'no auth'
+}
+
 export default function CicdDashboard({
   data,
   providers,
@@ -221,9 +225,22 @@ export default function CicdDashboard({
 
       <div className={styles.providerInfo}>
         {providers?.providers?.map((provider) => (
-          <span key={provider.provider} className={styles.providerChip}>
-            {provider.provider}: {provider.available ? 'auth ok' : 'no auth'}
-          </span>
+          <article key={provider.provider} className={styles.providerCard}>
+            <div className={styles.providerCardHeader}>
+              <strong>{provider.provider}</strong>
+              <span className={styles.providerChip}>{providerSummary(provider)}</span>
+            </div>
+            <div className={styles.providerMeta}>
+              <span>source: {provider.auth_source}</span>
+              {provider.account ? <span>account: {provider.account}</span> : null}
+              {provider.account_type ? <span>account type: {provider.account_type}</span> : null}
+              {provider.token_type ? <span>token type: {provider.token_type}</span> : null}
+              {provider.scopes?.length ? <span>scopes: {provider.scopes.join(', ')}</span> : null}
+              {provider.expires_at ? <span>expires: {provider.expires_at}</span> : null}
+              {provider.base_url ? <span>api: {provider.base_url}</span> : null}
+              {provider.note ? <span className={styles.reason}>{provider.note}</span> : null}
+            </div>
+          </article>
         ))}
       </div>
 
