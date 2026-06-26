@@ -1,9 +1,9 @@
 [project]
 name = "metagit-cli"
 dynamic = ["version"]
-description = "Metagit-ai multi-repo management tool"
+description = "Metagit multi-repo management tool"
 readme = "README.md"
-license-files = ["LICENSE"]
+license-files = ["LICENSE.md"]
 
 authors = [
     {name = "Zachary Loeber", email = "zloeber@gmail.com"}
