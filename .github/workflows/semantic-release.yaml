@@ -64,21 +64,12 @@ jobs:
           MINOR_BUMP=0
           PATCH_BUMP=0
 
-          echo "$COMMITS" | while IFS= read -r line; do
-            if [[ "$line" =~ ^BREAKING\ CHANGE|^feat\!: ]]; then
-              MAJOR_BUMP=1
-            elif [[ "$line" =~ ^feat: ]]; then
-              MINOR_BUMP=1
-            elif [[ "$line" =~ ^fix:|^refactor:|^perf: ]]; then
-              PATCH_BUMP=1
-            fi
-          done
-
-          if [[ "$COMMITS" =~ BREAKING\ CHANGE|feat\!: ]]; then
+          # Support Conventional Commits with optional scope, e.g. fix(web): ...
+          if echo "$COMMITS" | grep -Eq '^(feat|fix|refactor|perf)(\([^)]+\))?!:'; then
             MAJOR_BUMP=1
-          elif [[ "$COMMITS" =~ feat: ]]; then
+          elif echo "$COMMITS" | grep -Eq '^feat(\([^)]+\))?:'; then
             MINOR_BUMP=1
-          elif [[ "$COMMITS" =~ fix:|refactor:|perf: ]]; then
+          elif echo "$COMMITS" | grep -Eq '^(fix|refactor|perf)(\([^)]+\))?:'; then
             PATCH_BUMP=1
           fi
 
@@ -119,13 +110,27 @@ jobs:
         id: check_tag
         if: steps.version.outputs.should_release == 'true'
         run: |
-          RELEASE_TAG="v${{ steps.version.outputs.new_version }}"
+          RELEASE_TAG="${{ steps.version.outputs.new_version }}"
           echo "release_tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
           if git rev-parse "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
             echo "tag_exists=true" >> $GITHUB_OUTPUT
             echo "Tag $RELEASE_TAG already exists"
           else
             echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Enforce non-prefixed release tag policy
+        if: steps.version.outputs.should_release == 'true'
+        run: |
+          RELEASE_TAG="${{ steps.check_tag.outputs.release_tag }}"
+          EXPECTED_TAG="${{ steps.version.outputs.new_version }}"
+          if [[ "$RELEASE_TAG" != "$EXPECTED_TAG" ]]; then
+            echo "::error::Release tag policy violation: expected '$EXPECTED_TAG' (no prefix), got '$RELEASE_TAG'"
+            exit 1
+          fi
+          if [[ "$RELEASE_TAG" =~ ^v[0-9] ]]; then
+            echo "::error::Release tag policy violation: v-prefixed tags are not allowed ($RELEASE_TAG)"
+            exit 1
           fi
 
       - name: Install uv

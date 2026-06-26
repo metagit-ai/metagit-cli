@@ -34,3 +34,4 @@ docs/superpowers
 docs/changelog.md
 web/node_modules
 .gitnexus
+secret_results.json

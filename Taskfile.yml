@@ -234,6 +234,36 @@ tasks:
     cmds:
       - |
         gitleaks detect --source ./ -f json -r secret_results.json
+
+  tags:cleanup:preview:
+    desc: Preview legacy non-v tags below safety floor (default keep >= 0.8.0)
+    cmds:
+      - |
+        python3 scripts/delete_legacy_tags.py
+
+  tags:cleanup:apply:
+    desc: Delete legacy non-v tags below safety floor locally and on origin (requires confirmation)
+    cmds:
+      - |
+        python3 scripts/delete_legacy_tags.py --apply
+
+  tags:cleanup:prefixed:preview:
+    desc: Preview v-prefixed tags that would be deleted
+    cmds:
+      - |
+        python3 scripts/delete_legacy_tags.py --target-v-prefix
+
+  tags:cleanup:prefixed:apply:
+    desc: Delete v-prefixed tags locally and on origin (requires confirmation)
+    cmds:
+      - |
+        python3 scripts/delete_legacy_tags.py --target-v-prefix --no-safety-floor --apply
+
+  release:next:
+    desc: Compute next release version from git history using workflow rules
+    cmds:
+      - |
+        python3 scripts/release_next_version.py
   
   build:
     desc: Build the project
