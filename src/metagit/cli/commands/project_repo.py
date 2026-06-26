@@ -13,6 +13,7 @@ from metagit.cli.json_output import (
     exit_on_catalog_mutation,
     exit_on_layout_mutation,
 )
+from metagit.cli.shell_completion import complete_repos
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import project_manager_from_app
@@ -29,6 +30,7 @@ from metagit.core.workspace.dedupe_resolver import (
 )
 from metagit.core.workspace.layout_resolver import active_project_resolution_error
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
+from metagit.core.workspace.root_resolver import resolve_definition_root
 
 
 @click.group(name="repo")
@@ -40,10 +42,12 @@ def repo(ctx: click.Context) -> None:
         return
 
 
-@repo.command("select")
-@click.pass_context
-def repo_select(ctx: click.Context) -> None:
-    """Select project repo to work on"""
+def execute_repo_select(
+    ctx: click.Context,
+    *,
+    repo_name: Optional[str] = None,
+) -> None:
+    """Select a project repo interactively or open a named repo in the editor."""
     logger = ctx.obj["logger"]
     local_config: MetagitConfig = ctx.obj["local_config"]
     project = ctx.obj["project"]
@@ -58,14 +62,25 @@ def repo_select(ctx: click.Context) -> None:
         project_name=project,
     )
     agent_mode = bool(ctx.obj.get("agent_mode", False))
-    selected_repo = project_manager.select_repo(
-        local_config,
-        project,
-        show_preview=app_config.workspace.ui_show_preview,
-        menu_length=app_config.workspace.ui_menu_length,
-        ignore_hidden=app_config.workspace.ui_ignore_hidden,
-        agent_mode=agent_mode,
-    )
+    definition_root = resolve_definition_root(str(ctx.obj.get("config_path", ".metagit.yml")))
+
+    if repo_name:
+        selected_repo = project_manager.resolve_selected_repo_path(
+            local_config,
+            project,
+            repo_name,
+            definition_root=definition_root,
+        )
+    else:
+        selected_repo = project_manager.select_repo(
+            local_config,
+            project,
+            show_preview=app_config.workspace.ui_show_preview,
+            menu_length=app_config.workspace.ui_menu_length,
+            ignore_hidden=app_config.workspace.ui_ignore_hidden,
+            agent_mode=agent_mode,
+        )
+
     if isinstance(selected_repo, Exception):
         logger.error(f"Failed to select project repo: {selected_repo}")
         ctx.abort()
@@ -73,12 +88,27 @@ def repo_select(ctx: click.Context) -> None:
         logger.info("No repo selected")
         ctx.abort()
     logger.info(f"Selected repo: {selected_repo}")
-    if not agent_mode:
-        editor_result = open_editor(app_config.editor, selected_repo)
-        if isinstance(editor_result, Exception):
-            logger.error(f"Failed to open editor: {editor_result}")
-        else:
-            logger.info(f"Opened {selected_repo} in {app_config.editor}")
+    if agent_mode:
+        return
+    editor_result = open_editor(app_config.editor, selected_repo)
+    if isinstance(editor_result, Exception):
+        logger.error(f"Failed to open editor: {editor_result}")
+    else:
+        logger.info(f"Opened {selected_repo} in {app_config.editor}")
+
+
+@repo.command("select")
+@click.option(
+    "--repo",
+    "repo_name",
+    default=None,
+    help="Open this repository in the default editor without the picker TUI",
+    shell_complete=complete_repos,
+)
+@click.pass_context
+def repo_select(ctx: click.Context, repo_name: Optional[str]) -> None:
+    """Select project repo to work on"""
+    execute_repo_select(ctx, repo_name=repo_name)
 
 
 @repo.command("list")

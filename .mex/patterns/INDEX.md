@@ -23,6 +23,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 
 | Pattern | Use when |
 |---------|----------|
+| [cli-tui-hub.md](cli-tui-hub.md) | Adding `metagit tui`, configuration wizard flows, or `--repo` direct-open on select |
 | [add-cli-command.md](add-cli-command.md) | Adding or extending a Click CLI command while keeping core logic in `src/metagit/core/*` |
 | [add-prompt-catalog-kind.md](add-prompt-catalog-kind.md) | Adding a new built-in `metagit prompt` kind (catalog + template + tests) |
 | [add-managed-repo-search.md](add-managed-repo-search.md) | Extending or debugging managed-only repo search (CLI, MCP `metagit_repo_search`, local JSON API) |

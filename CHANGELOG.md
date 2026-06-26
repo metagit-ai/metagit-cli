@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+### Added
+- `metagit project select --repo <name>` (and `project repo select`, `workspace select`): skip the picker TUI and open the named repository in the configured editor
+- `metagit tui`: Textual hub to browse common CLI workflows, run commands, and configure `metagit.config.yaml` via an interactive wizard (`--wizard` opens the wizard directly)
 
+### Fixed
+- `metagit tui`: Esc/Back navigation on list screens; wizard Back button; correct manifest flags per CLI group (`workspace` uses `--config`, not `-c`); repo picker runs in-process with terminal suspend instead of hanging in a captured subprocess
 
 ## [0.10.0] - 2026-06-26
 

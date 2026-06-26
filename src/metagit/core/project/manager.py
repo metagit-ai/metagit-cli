@@ -19,6 +19,7 @@ from metagit.core.appconfig.models import (
 )
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.project.models import ProjectPath
 from metagit.core.utils.common import create_vscode_workspace
 from metagit.core.utils.files import parse_gitignore, should_ignore_path
@@ -34,6 +35,7 @@ from metagit.core.workspace.dedupe_resolver import resolve_effective_dedupe
 from metagit.core.workspace.hydrate import materialize_symlink_mount
 from metagit.core.workspace.layout_resolver import (
     find_project,
+    find_repo,
     list_project_names,
 )
 from metagit.core.workspace.models import WorkspaceProject
@@ -732,6 +734,45 @@ class ProjectManager:
             if selected_path.startswith("../../"):
                 selected_path = selected_path.replace("../../", "./", 1)
             return selected_path
+
+    def resolve_selected_repo_path(
+        self,
+        metagit_config: MetagitConfig,
+        project: str,
+        repo_name: str,
+        *,
+        definition_root: Optional[str] = None,
+    ) -> Union[str, Exception]:
+        """Resolve a configured repository name to its on-disk path."""
+        if project == "local":
+            workspace_project = metagit_config.local_workspace_project
+        else:
+            workspace_project = find_project(metagit_config, project)
+            if workspace_project is None:
+                available = list_project_names(metagit_config)
+                hint = (
+                    f" Available projects: {', '.join(available)}."
+                    if available
+                    else (" No workspace projects are defined in .metagit.yml.")
+                )
+                return ValueError(f"Project '{project}' not found in workspace configuration.{hint}")
+
+        repo_entry = find_repo(workspace_project, repo_name)
+        if repo_entry is None:
+            available = sorted({repo.name for repo in workspace_project.repos if repo.name})
+            hint = f" Available repos: {', '.join(available)}." if available else " No repos are configured."
+            return ValueError(f"Repository '{repo_name}' not found in project '{project}'.{hint}")
+
+        sync_root = str(self.workspace_path)
+        manifest_root = definition_root or sync_root
+        resolved = WorkspaceIndexService()._resolve_repo_path(
+            workspace_root=sync_root,
+            definition_root=manifest_root,
+            project_name=project,
+            configured_path=repo_entry.path,
+            repo_name=repo_name,
+        )
+        return resolved
 
     @staticmethod
     def _append_preview_lines(existing: str, lines: List[str]) -> str:

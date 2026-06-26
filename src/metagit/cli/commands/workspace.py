@@ -7,7 +7,7 @@ from pathlib import Path
 
 import click
 
-from metagit.cli.commands.project_repo import repo_select
+from metagit.cli.commands.project_repo import execute_repo_select
 from metagit.cli.commands.workspace_import import workspace_import
 from metagit.cli.json_output import (
     emit_json,
@@ -20,7 +20,6 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
-from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
@@ -668,9 +667,17 @@ def workspace_grep_info(ctx: click.Context, as_json: bool) -> None:
     "-p",
     default=None,
     help="Project within workspace to select target paths from",
+    shell_complete=complete_projects,
+)
+@click.option(
+    "--repo",
+    "repo_name",
+    default=None,
+    help="Open this repository in the default editor without the picker TUI",
+    shell_complete=complete_repos,
 )
 @click.pass_context
-def workspace_select(ctx: click.Context, project: str = None) -> None:
+def workspace_select(ctx: click.Context, project: str = None, repo_name: str | None = None) -> None:
     """Select project repo to work on"""
     app_config: AppConfig = ctx.obj["config"]
     local_config: MetagitConfig = ctx.obj["local_config"]
@@ -679,7 +686,7 @@ def workspace_select(ctx: click.Context, project: str = None) -> None:
         explicit=project,
         default_project=app_config.workspace.default_project,
     )
-    call_click_command_with_ctx(repo_select, ctx)
+    execute_repo_select(ctx, repo_name=repo_name)
 
 
 workspace.add_command(workspace_import, name="import")

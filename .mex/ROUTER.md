@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-06-11
+last_updated: 2026-06-26
 ---
 
 # Session Bootstrap
@@ -59,6 +59,7 @@ Then read this file fully before doing anything else in this session.
 - **Hermes orchestrator template:** `hermes-orchestrator` under `src/metagit/data/templates/`, example manifest at `examples/hermes-orchestrator/.metagit.yml`, guide at `docs/hermes-orchestrator-workspace.md`.
 - **`metagit init`:** bundled init templates (`application`, `umbrella`, `hermes-orchestrator`) with copier-style `{{ var }}` rendering, `--answers-file`, `--no-prompt`, all `ProjectKind` values via `--minimal`; idempotent when a valid `.metagit.yml` already exists (`--force` to overwrite).
 - **Shell tab completion:** `metagit completion show|install|doctor` for zsh/bash/fish; dynamic `--project` / `--repo` / repomix `--profile` completion when a manifest is present (`src/metagit/cli/shell_completion.py`, `docs/install.md`).
+- **`metagit tui`:** Textual hub (`src/metagit/core/tui/`) to browse/run common CLI workflows and configure `metagit.config.yaml` via wizard; `metagit project select --repo` opens a named repo in the editor without the picker TUI.
 - **`metagit fmt` / `metagit format`:** schema-ordered, readable YAML for `.metagit.yml` and `metagit.config.yaml`; preserves comments, injects yaml-language-server schema directive, 2-space indent, **88-column string wrapping** (`yaml_display`, `yaml_roundtrip`). **Default formatting omits schema-default optional fields** (empty lists/dicts, false, etc.); use **`--include-defaults`** to retain them. Web Config Studio and `metagit config patch --save` default to **auto-format on save** (`auto_format` / `--no-format`).
 - **`metagit web serve` groundwork:** Pydantic request/response models for the local web UI API live in `src/metagit/core/web/models.py` (`ConfigTreeResponse`, sync job shapes, config patch types). Thread-safe in-memory sync job tracking + SSE event buffers live in `src/metagit/core/web/job_store.py` (`SyncJobStore`).
 - **`metagit web serve` config HTTP:** `build_web_server` in `src/metagit/core/web/server.py` exposes v3 config tree/patch/validate routes via `ConfigWebHandler` (`metagit` + `appconfig` targets, `SchemaTreeService` mutations). PATCH with `save=true` returns HTTP 422 and skips disk write when validation fails; masked sensitive tokens are preserved on noop set.

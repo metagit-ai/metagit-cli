@@ -125,3 +125,51 @@ def test_select_repo_missing_project_returns_value_error(tmp_path) -> None:
   assert isinstance(result, ValueError)
   assert "missing-project" in str(result)
   assert "proj-one" in str(result)
+
+
+def test_resolve_selected_repo_path_returns_sync_mount(tmp_path) -> None:
+  workspace_root = tmp_path / "workspace"
+  project_root = workspace_root / "proj-one"
+  repo_dir = project_root / "repo-a"
+  repo_dir.mkdir(parents=True)
+
+  config = MetagitConfig(
+    name="test-config",
+    workspace=Workspace(
+      projects=[
+        WorkspaceProject(
+          name="proj-one",
+          repos=[
+            ProjectPath(
+              name="repo-a",
+              url="https://example.com/repo-a.git",
+            ),
+          ],
+        )
+      ]
+    ),
+  )
+
+  manager = ProjectManager(workspace_root, _DummyLogger())
+  resolved = manager.resolve_selected_repo_path(
+    config,
+    "proj-one",
+    "repo-a",
+    definition_root=str(tmp_path),
+  )
+  assert resolved == str(repo_dir.resolve())
+
+
+def test_resolve_selected_repo_path_unknown_repo_returns_value_error(tmp_path) -> None:
+  workspace_root = tmp_path / "workspace"
+  (workspace_root / "proj-one").mkdir(parents=True)
+
+  manager = ProjectManager(workspace_root, _DummyLogger())
+  result = manager.resolve_selected_repo_path(
+    _build_metagit_config(),
+    "proj-one",
+    "nope-repo",
+    definition_root=str(tmp_path),
+  )
+  assert isinstance(result, ValueError)
+  assert "nope-repo" in str(result)

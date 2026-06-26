@@ -4,24 +4,24 @@ Project subcommand
 
 import sys
 from pathlib import Path
+from typing import Optional
 
 import click
 import yaml
 
-from metagit.cli.commands.project_repo import repo, repo_select
+from metagit.cli.commands.project_repo import execute_repo_select, repo
 from metagit.cli.commands.project_source import source
 from metagit.cli.json_output import (
     emit_json,
     exit_on_catalog_mutation,
     exit_on_layout_mutation,
 )
-from metagit.cli.shell_completion import complete_projects
+from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager, project_manager_from_app
 from metagit.core.project.source_manifest_sync import SourceManifestSyncService
-from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
@@ -249,11 +249,17 @@ def project_rename(
 
 
 @project.command("select")
+@click.option(
+    "--repo",
+    "repo_name",
+    default=None,
+    help="Open this repository in the default editor without the picker TUI",
+    shell_complete=complete_repos,
+)
 @click.pass_context
-def project_select(ctx: click.Context) -> None:
+def project_select(ctx: click.Context, repo_name: Optional[str]) -> None:
     """Shortcut: Uses 'project repo select' to select workspace project repo to work on"""
-    # Call the repo_select function
-    call_click_command_with_ctx(repo_select, ctx)
+    execute_repo_select(ctx, repo_name=repo_name)
 
 
 @project.command("sync")
