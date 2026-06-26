@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.11.0] - 2026-06-26
+
+
+
 ### Added
 - `metagit project select --repo <name>` (and `project repo select`, `workspace select`): skip the picker TUI and open the named repository in the configured editor
 - `metagit tui`: Textual hub to browse common CLI workflows, run commands, and configure `metagit.config.yaml` via an interactive wizard (`--wizard` opens the wizard directly)
