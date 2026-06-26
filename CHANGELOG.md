@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.10.0] - 2026-06-26
+
+
+
 ### Added
 - Ops API session endpoints: `GET /v3/ops/session` (digest with `active_objective_id` + repo changes) and `POST /v3/ops/session/begin` (session bootstrap envelope)
 - MCP parity tools for objective/session collaboration: `metagit_objective_edit` (partial objective updates) and `metagit_session_digest` (current session digest)
@@ -10,8 +16,6 @@
 - `PATCH /v3/ops/objectives/{id}` now supports partial edits of objective fields (`title`, `acceptance`, `human_notes`, `agent_notes`, `repos`, `status`) while preserving status-only behavior
 - The web `/agents` route now includes `Templates`, `Objectives`, and `Sessions` sub-tabs with live refresh controls, collaborative objective editing, and a session digest/begin-session dashboard
 - The web Objectives panel now supports inline status changes, a toggleable grouped/list layout, and per-row save actions; the CI/CD dashboard now understands SCP/SSH Git remotes and shows safe provider token metadata when the remote API exposes it
-
-
 
 ## [0.9.1] - 2026-06-24
 
