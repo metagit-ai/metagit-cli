@@ -145,9 +145,7 @@ def _get_record_manager(ctx: click.Context) -> MetagitRecordManager:
                 ssl_show_warn=False,
             )
             backend = OpenSearchStorageBackend(opensearch_service)
-            logger.debug(
-                f"Using OpenSearch backend with index {ctx.obj['opensearch_index']}"
-            )
+            logger.debug(f"Using OpenSearch backend with index {ctx.obj['opensearch_index']}")
 
         else:
             raise ValueError(f"Unsupported storage type: {storage_type}")
@@ -273,11 +271,7 @@ def record_show(ctx: click.Context, record_id: Optional[str], format: str) -> No
                 )
                 logger.echo(output)
             else:  # json
-                logger.echo(
-                    record.model_dump_json(
-                        exclude_none=True, exclude_defaults=True, indent=2
-                    )
-                )
+                logger.echo(record.model_dump_json(exclude_none=True, exclude_defaults=True, indent=2))
 
         else:
             # List all records
@@ -327,9 +321,7 @@ def record_show(ctx: click.Context, record_id: Optional[str], format: str) -> No
     help="Output format",
 )
 @click.pass_context
-def record_search(
-    ctx: click.Context, query: str, page: int, size: int, format: str
-) -> None:
+def record_search(ctx: click.Context, query: str, page: int, size: int, format: str) -> None:
     """Search records"""
     logger = ctx.obj["logger"]
 
@@ -371,10 +363,7 @@ def record_search(
         elif format == "yaml":
             yaml.Dumper.ignore_aliases = lambda *args: True  # noqa: ARG005
             output = yaml.dump(
-                [
-                    record.model_dump(exclude_none=True, exclude_defaults=True)
-                    for record in records
-                ],
+                [record.model_dump(exclude_none=True, exclude_defaults=True) for record in records],
                 default_flow_style=False,
                 sort_keys=False,
                 indent=2,
@@ -383,10 +372,7 @@ def record_search(
 
         else:  # json
             output = json.dumps(
-                [
-                    record.model_dump(exclude_none=True, exclude_defaults=True)
-                    for record in records
-                ],
+                [record.model_dump(exclude_none=True, exclude_defaults=True) for record in records],
                 indent=2,
                 cls=DateTimeEncoder,
             )
@@ -447,8 +433,7 @@ def record_update(
             updated_record = record_manager.create_record_from_config(
                 config=config_result,
                 detection_source=detection_source or existing_record.detection_source,
-                detection_version=detection_version
-                or existing_record.detection_version,
+                detection_version=detection_version or existing_record.detection_version,
             )
 
             if isinstance(updated_record, Exception):
@@ -460,9 +445,7 @@ def record_update(
                 updated_record.detection_source = detection_source
             if detection_version:
                 updated_record.detection_version = detection_version
-            updated_record.detection_timestamp = (
-                None  # Will be set by create_record_from_config
-            )
+            updated_record.detection_timestamp = None  # Will be set by create_record_from_config
 
         # Update the record
         async def update_record():
@@ -539,9 +522,7 @@ def record_delete(ctx: click.Context, record_id: str, force: bool) -> None:
     help="Export format",
 )
 @click.pass_context
-def record_export(
-    ctx: click.Context, record_id: str, output_file: str, format: str
-) -> None:
+def record_export(ctx: click.Context, record_id: str, output_file: str, format: str) -> None:
     """Export a record to file"""
     logger = ctx.obj["logger"]
 

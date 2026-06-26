@@ -34,9 +34,7 @@ SUPPORTED_TARGETS = [
 class TargetPaths(BaseModel):
     """Paths for target deployment in each scope."""
 
-    project_skills_path: str = Field(
-        ..., description="Project-local skills destination"
-    )
+    project_skills_path: str = Field(..., description="Project-local skills destination")
     user_skills_path: str = Field(..., description="User-global skills destination")
     project_mcp_path: str = Field(..., description="Project-local MCP config path")
     user_mcp_path: str = Field(..., description="User-global MCP config path")
@@ -59,9 +57,7 @@ class InstallResult(BaseModel):
     applied: bool
     path: str
     details: str
-    dry_run: bool = Field(
-        default=False, description="True when no changes were written"
-    )
+    dry_run: bool = Field(default=False, description="True when no changes were written")
 
 
 TARGET_PATHS: Dict[str, TargetPaths] = {
@@ -147,9 +143,7 @@ def resolve_skill_names(skill_names: Optional[List[str]]) -> List[str]:
     unknown = sorted({name for name in skill_names if name not in bundled})
     if unknown:
         available = ", ".join(bundled) if bundled else "(none)"
-        raise ValueError(
-            f"Unknown skill(s): {', '.join(unknown)}. Available: {available}"
-        )
+        raise ValueError(f"Unknown skill(s): {', '.join(unknown)}. Available: {available}")
     return list(dict.fromkeys(skill_names))
 
 
@@ -174,15 +168,11 @@ def autodetect_targets(mode: InstallMode, scope: InstallScope) -> List[str]:
         target_paths = TARGET_PATHS[target]
         if mode == "skills":
             candidate = _expand_target_path(
-                target_paths.project_skills_path
-                if scope == "project"
-                else target_paths.user_skills_path
+                target_paths.project_skills_path if scope == "project" else target_paths.user_skills_path
             )
         else:
             candidate = _expand_target_path(
-                target_paths.project_mcp_path
-                if scope == "project"
-                else target_paths.user_mcp_path
+                target_paths.project_mcp_path if scope == "project" else target_paths.user_mcp_path
             )
         if candidate.exists() or candidate.parent.exists():
             resolved.append(target)
@@ -238,9 +228,7 @@ def install_skills_for_targets(
     for target in targets:
         target_paths = TARGET_PATHS[target]
         destination = _expand_target_path(
-            target_paths.project_skills_path
-            if scope == "project"
-            else target_paths.user_skills_path
+            target_paths.project_skills_path if scope == "project" else target_paths.user_skills_path
         )
         if not dry_run:
             destination.mkdir(parents=True, exist_ok=True)
@@ -281,19 +269,13 @@ def install_mcp_for_targets(
     for target in targets:
         target_paths = TARGET_PATHS[target]
         config_path = _expand_target_path(
-            target_paths.project_mcp_path
-            if scope == "project"
-            else target_paths.user_mcp_path
+            target_paths.project_mcp_path if scope == "project" else target_paths.user_mcp_path
         )
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_data = _read_json_with_comments(config_path)
         if not isinstance(config_data, dict):
             config_data = {}
-        root_key = (
-            target_paths.project_mcp_root_key
-            if scope == "project"
-            else target_paths.user_mcp_root_key
-        )
+        root_key = target_paths.project_mcp_root_key if scope == "project" else target_paths.user_mcp_root_key
         mcp_servers = config_data.get(root_key)
         if not isinstance(mcp_servers, dict):
             mcp_servers = {}

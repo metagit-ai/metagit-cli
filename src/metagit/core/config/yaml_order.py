@@ -35,17 +35,11 @@ def order_payload(data: Any, model: type[BaseModel]) -> Any:
         return None
     if isinstance(data, list):
         if isinstance(model, type) and issubclass(model, BaseModel):
-            return [
-                order_payload(item, model) if isinstance(item, dict) else item
-                for item in data
-            ]
+            return [order_payload(item, model) if isinstance(item, dict) else item for item in data]
         item_model = _list_item_model(model)
         if item_model is None:
             return data
-        return [
-            order_payload(item, item_model) if isinstance(item, dict) else item
-            for item in data
-        ]
+        return [order_payload(item, item_model) if isinstance(item, dict) else item for item in data]
     if not isinstance(data, dict):
         return data
 
@@ -56,14 +50,11 @@ def order_payload(data: Any, model: type[BaseModel]) -> Any:
         raw = _resolve_field_value(data, field_name, field_info)
         if raw is None:
             continue
-        consumed.update(
-            key for key in _field_source_keys(field_name, field_info) if key in data
-        )
+        consumed.update(key for key in _field_source_keys(field_name, field_info) if key in data)
         nested_model = _nested_model(field_info.annotation)
         if isinstance(raw, list) and nested_model is not None:
             ordered[field_name] = [
-                order_payload(item, nested_model) if isinstance(item, dict) else item
-                for item in raw
+                order_payload(item, nested_model) if isinstance(item, dict) else item for item in raw
             ]
         elif nested_model is not None and isinstance(raw, dict):
             ordered[field_name] = order_payload(raw, nested_model)

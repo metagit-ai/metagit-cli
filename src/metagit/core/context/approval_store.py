@@ -5,6 +5,7 @@ Persist approval queue JSON under ``<workspace_root>/.metagit/approvals/pending.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -31,10 +32,8 @@ class ApprovalStore:
         """Create approvals directory with restrictive permissions when possible."""
         parent = Path(self._path).parent
         parent.mkdir(parents=True, exist_ok=True)
-        try:
+        with contextlib.suppress(OSError):
             os.chmod(parent, 0o700)
-        except OSError:
-            pass
 
     def load_requests(self) -> list[ApprovalRequest]:
         """Return stored requests, or an empty list when missing or invalid."""
@@ -67,7 +66,5 @@ class ApprovalStore:
             json.dumps(payload, indent=2) + "\n",
             encoding="utf-8",
         )
-        try:
+        with contextlib.suppress(OSError):
             os.chmod(self._path, 0o600)
-        except OSError:
-            pass

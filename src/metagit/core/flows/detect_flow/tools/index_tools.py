@@ -13,18 +13,14 @@ from langchain.vectorstores import FAISS
 
 
 @tool
-def index_repo(
-    repo_path: str, chunk_size: int = 1000, chunk_overlap: int = 200
-) -> ToolResponse:
+def index_repo(repo_path: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> ToolResponse:
     """
     Walk the repo, split files, embed, and store in FAISS.
     Returns index metadata location.
     """
     try:
         embeddings = OpenAIEmbeddings()
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size, chunk_overlap=chunk_overlap
-        )
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         docs = []
         for root, _, files in os.walk(repo_path):
             for fn in files:
@@ -44,8 +40,6 @@ def index_repo(
             metadatas=[d["metadata"] for d in docs],
         )
         vectorstore.save_local(f"{repo_path}/.repo_index")
-        return ToolResponse(
-            success=True, data={"index_path": f"{repo_path}/.repo_index"}
-        )
+        return ToolResponse(success=True, data={"index_path": f"{repo_path}/.repo_index"})
     except Exception as e:
         return ToolResponse(success=False, error=str(e))

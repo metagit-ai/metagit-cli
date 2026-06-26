@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from pydantic import BaseModel
 from git import Repo
+from pydantic import BaseModel
 
 from metagit import DATA_PATH
 
@@ -26,6 +26,7 @@ def directory_tree(paths: List[Path], show_files: bool = False) -> str:
     Returns:
         String representation of the directory tree
     """
+    _ = show_files
     if not paths:
         return ""
 
@@ -45,9 +46,8 @@ def directory_tree(paths: List[Path], show_files: bool = False) -> str:
             current = current[part]
 
     # Generate tree string representation
-    def _build_tree(
-        tree_dict: dict, prefix: str = "", is_last: bool = True
-    ) -> List[str]:
+    def _build_tree(tree_dict: dict, prefix: str = "", is_last: bool = True) -> List[str]:
+        _ = is_last
         lines = []
         keys = sorted(tree_dict.keys())
 
@@ -58,9 +58,7 @@ def directory_tree(paths: List[Path], show_files: bool = False) -> str:
 
             if tree_dict[key]:  # Has children
                 extension = "    " if is_last_item else "│   "
-                child_lines = _build_tree(
-                    tree_dict[key], prefix + extension, is_last_item
-                )
+                child_lines = _build_tree(tree_dict[key], prefix + extension, is_last_item)
                 lines.extend(child_lines)
 
         return lines
@@ -148,9 +146,7 @@ def list_git_files(directory_path: str) -> List[Path]:
     except Exception as e:
         return Exception(f"Not a valid Git repository: {e}")
     try:
-        values = repo.git.ls_files(
-            "--cached", "--others", "--exclude-standard"
-        ).splitlines()
+        values = repo.git.ls_files("--cached", "--others", "--exclude-standard").splitlines()
     except Exception as e:
         return Exception(f"Error listing files in Git repository: {e}")
 
@@ -285,9 +281,7 @@ class DirectoryDetails(BaseModel):
 
 
 class FileExtensionLookup:
-    def __init__(
-        self, extension_data: str = os.path.join(DATA_PATH, "file-types.json")
-    ):
+    def __init__(self, extension_data: str = os.path.join(DATA_PATH, "file-types.json")):
         # Parse JSON data
         try:
             with open(extension_data, "r", encoding="utf-8") as f:
@@ -299,10 +293,7 @@ class FileExtensionLookup:
         self._lookup: Dict[str, FileTypeInfo] = {}
 
         # Handle the JSON structure which has data wrapped in "extensions" key
-        if isinstance(data, dict) and "extensions" in data:
-            items = data["extensions"]
-        else:
-            items = data
+        items = data["extensions"] if isinstance(data, dict) and "extensions" in data else data
 
         for item in items:
             if isinstance(item, dict):
@@ -447,9 +438,7 @@ def directory_details(
             continue
         if item.is_dir():
             # Recursively process subdirectory with the same ignore_patterns
-            sub_metadata = directory_details(
-                str(item), file_lookup, ignore_patterns, resolve_path
-            )
+            sub_metadata = directory_details(str(item), file_lookup, ignore_patterns, resolve_path)
             subpaths.append(sub_metadata)
         else:
             # Count file and get detailed type information
@@ -460,9 +449,7 @@ def directory_details(
                 category = file_info.type
                 kind = file_info.kind
                 if category in file_type_counts:
-                    file_type_counts[category][kind] = (
-                        file_type_counts[category].get(kind, 0) + 1
-                    )
+                    file_type_counts[category][kind] = file_type_counts[category].get(kind, 0) + 1
 
     # Convert counts to percentages based on total files in directory
     file_types_by_category: Dict[str, List[FileTypeWithPercent]] = {}
@@ -471,12 +458,8 @@ def directory_details(
         for category, kinds in file_type_counts.items():
             if kinds:  # Only include categories that have files
                 file_types_by_category[category] = [
-                    FileTypeWithPercent(
-                        kind=kind, percent=round((count / num_files) * 100, 1)
-                    )
-                    for kind, count in sorted(
-                        kinds.items(), key=lambda x: x[1], reverse=True
-                    )
+                    FileTypeWithPercent(kind=kind, percent=round((count / num_files) * 100, 1))
+                    for kind, count in sorted(kinds.items(), key=lambda x: x[1], reverse=True)
                 ]
     final_path = path.resolve() if resolve_path else path
     return DirectoryDetails(
@@ -552,9 +535,7 @@ def directory_summary(
             file_types[file_ext] = file_types.get(file_ext, 0) + 1
 
     # Convert file types to list of FileType models
-    file_types_list = [
-        FileType(type=ext, count=count) for ext, count in sorted(file_types.items())
-    ]
+    file_types_list = [FileType(type=ext, count=count) for ext, count in sorted(file_types.items())]
     final_path = path.resolve() if resolve_path else path
     return DirectorySummary(
         path=str(final_path),

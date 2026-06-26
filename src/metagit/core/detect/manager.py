@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
+import importlib
 import json
 import os
+import pkgutil
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Union
-import importlib
-import pkgutil
 
 import yaml
 from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 from pydantic import Field
 
+import metagit.core.detect.detectors as detectors
 from metagit.core.config.models import (
     Branch,
     Language,
@@ -26,12 +27,12 @@ from metagit.core.detect.models import (
     BranchStrategy,
     CIConfigAnalysis,
     DetectionManagerConfig,
-    GitBranchAnalysis,
-    LanguageDetection,
-    ProjectTypeDetection,
     Detector,
     DiscoveryResult,
+    GitBranchAnalysis,
+    LanguageDetection,
     ProjectScanContext,
+    ProjectTypeDetection,
 )
 from metagit.core.record.models import MetagitRecord
 from metagit.core.utils.common import normalize_git_url
@@ -42,8 +43,6 @@ from metagit.core.utils.files import (
     list_git_files,
 )
 from metagit.core.utils.logging import LoggerConfig, LoggingModel, UnifiedLogger
-
-import metagit.core.detect.detectors as detectors
 
 # from metagit.core.detect.detectors.terraform import TerraformModuleDiscovery
 
@@ -62,9 +61,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
     )
 
     # Internal tracking
-    analysis_completed: bool = Field(
-        default=False, description="Whether analysis has been completed"
-    )
+    analysis_completed: bool = Field(default=False, description="Whether analysis has been completed")
 
     @property
     def project_path(self) -> str:
@@ -249,13 +246,9 @@ class DetectionManager(MetagitRecord, LoggingModel):
             # Run branch analysis if enabled
             if self.detection_config.branch_analysis_enabled and self.is_git_repo:
                 try:
-                    self.branch_analysis = GitBranchAnalysis.from_repo(
-                        self.path, self.logger
-                    )
+                    self.branch_analysis = GitBranchAnalysis.from_repo(self.path, self.logger)
                     if isinstance(self.branch_analysis, Exception):
-                        self.logger.warning(
-                            f"Branch analysis failed: {self.branch_analysis}"
-                        )
+                        self.logger.warning(f"Branch analysis failed: {self.branch_analysis}")
                         self.branch_analysis = None
                 except Exception as e:
                     self.logger.warning(f"Branch analysis failed: {e}")
@@ -265,9 +258,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
                 try:
                     self.ci_config_analysis = self._ci_config_analysis()
                     if isinstance(self.ci_config_analysis, Exception):
-                        self.logger.warning(
-                            f"CI/CD analysis failed: {self.ci_config_analysis}"
-                        )
+                        self.logger.warning(f"CI/CD analysis failed: {self.ci_config_analysis}")
                         self.ci_config_analysis = None
                 except Exception as e:
                     self.logger.warning(f"CI/CD analysis failed: {e}")
@@ -403,7 +394,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
             build_tools = []
 
             # Check for common file extensions
-            for root, dirs, files in os.walk(self.path):
+            for _root, _dirs, files in os.walk(self.path):
                 for file in files:
                     if file.endswith(".py"):
                         detected_languages.append("Python")
@@ -502,13 +493,9 @@ class DetectionManager(MetagitRecord, LoggingModel):
         try:
             # Check for various file types
             self.has_docker = any(Path(self.path).glob("Dockerfile*"))
-            self.has_tests = any(
-                Path(self.path).glob("**/test*") or Path(self.path).glob("**/*test*")
-            )
+            self.has_tests = any(Path(self.path).glob("**/test*") or Path(self.path).glob("**/*test*"))
             self.has_docs = any(Path(self.path).glob("**/*.md"))
-            self.has_iac = any(
-                Path(self.path).glob("**/*.tf") or Path(self.path).glob("**/*.yaml")
-            )
+            self.has_iac = any(Path(self.path).glob("**/*.tf") or Path(self.path).glob("**/*.yaml"))
 
             # Categorize detected files
             self.detected_files = {
@@ -543,14 +530,8 @@ class DetectionManager(MetagitRecord, LoggingModel):
             self.metadata = RepoMetadata(
                 tags=[],
                 created_at=None,
-                last_commit_at=(
-                    repo.head.commit.committed_datetime
-                    if repo.head.is_valid()
-                    else None
-                ),
-                default_branch=(
-                    repo.active_branch.name if repo.head.is_valid() else None
-                ),
+                last_commit_at=(repo.head.commit.committed_datetime if repo.head.is_valid() else None),
+                default_branch=(repo.active_branch.name if repo.head.is_valid() else None),
                 topics=[],
                 forked_from=None,
                 archived=False,
@@ -585,9 +566,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
                 self.branches = [
                     Branch(
                         name=branch.name,
-                        environment=(
-                            "production" if branch.name == "main" else "development"
-                        ),
+                        environment=("production" if branch.name == "main" else "development"),
                     )
                     for branch in self.branch_analysis.branches
                 ]
@@ -617,13 +596,9 @@ class DetectionManager(MetagitRecord, LoggingModel):
             if self.language_detection:
                 lines.append(f"Primary language: {self.language_detection.primary}")
                 if self.language_detection.secondary:
-                    lines.append(
-                        f"Secondary languages: {', '.join(self.language_detection.secondary)}"
-                    )
+                    lines.append(f"Secondary languages: {', '.join(self.language_detection.secondary)}")
                 if self.language_detection.frameworks:
-                    lines.append(
-                        f"Frameworks: {', '.join(self.language_detection.frameworks)}"
-                    )
+                    lines.append(f"Frameworks: {', '.join(self.language_detection.frameworks)}")
 
             # Project type detection
             if self.project_type_detection:
@@ -634,9 +609,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
             # Branch analysis
             if self.branch_analysis:
                 lines.append(f"Branch strategy: {self.branch_analysis.strategy_guess}")
-                lines.append(
-                    f"Number of branches: {len(self.branch_analysis.branches)}"
-                )
+                lines.append(f"Number of branches: {len(self.branch_analysis.branches)}")
 
             # CI/CD analysis
             if self.ci_config_analysis:
@@ -649,9 +622,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
 
             if self.directory_details:
                 lines.append(f"Detailed files: {self.directory_details.num_files}")
-                lines.append(
-                    f"File categories: {len(self.directory_details.file_types)}"
-                )
+                lines.append(f"File categories: {len(self.directory_details.file_types)}")
 
             # File analysis
             lines.append(f"Has Docker: {self.has_docker}")
@@ -737,9 +708,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
         except Exception as e:
             return e
 
-    def _ci_config_analysis(
-        self, repo_path: str = None
-    ) -> Union[CIConfigAnalysis, Exception]:
+    def _ci_config_analysis(self, repo_path: str = None) -> Union[CIConfigAnalysis, Exception]:
         """
         Analyze CI/CD configuration in the repository.
 
@@ -781,9 +750,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
                             with open(full_path, "r", encoding="utf-8") as f:
                                 analysis.config_content = f.read()
                         except Exception as e:
-                            self.logger.warning(
-                                f"Could not read CI config file {full_path}: {e}"
-                            )
+                            self.logger.warning(f"Could not read CI config file {full_path}: {e}")
 
                     self.logger.debug(f"Detected CI/CD tool: {tool_name}")
                     break
@@ -793,9 +760,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
                 # Simple pipeline counting based on common patterns
                 pipeline_indicators = ["job:", "stage:", "pipeline:", "workflow:"]
                 analysis.pipeline_count = sum(
-                    1
-                    for indicator in pipeline_indicators
-                    if indicator in analysis.config_content
+                    1 for indicator in pipeline_indicators if indicator in analysis.config_content
                 )
 
             return analysis
@@ -804,9 +769,7 @@ class DetectionManager(MetagitRecord, LoggingModel):
             self.logger.exception(f"CI/CD analysis failed: {e}")
             return e
 
-    def _branch_analysis(
-        self, repo_path: str = "."
-    ) -> Union[GitBranchAnalysis, Exception]:
+    def _branch_analysis(self, repo_path: str = ".") -> Union[GitBranchAnalysis, Exception]:
         """
         Analyze the git repository at the given path and return branch information and a strategy guess.
         Uses GitPython for all git operations.
@@ -878,14 +841,17 @@ class DetectionManager(MetagitRecord, LoggingModel):
         # local_branch_names = [b.name for b in branches if not b.is_remote]
 
         # Check for Git Flow patterns
-        if any(name in remote_branch_names for name in ["develop", "master", "main"]):
-            if "develop" in remote_branch_names:
-                return BranchStrategy.GIT_FLOW
+        if (
+            any(name in remote_branch_names for name in ["develop", "master", "main"])
+            and "develop" in remote_branch_names
+        ):
+            return BranchStrategy.GIT_FLOW
 
         # Check for GitHub Flow patterns
-        if "main" in remote_branch_names or "master" in remote_branch_names:
-            if len(remote_branch_names) <= 2:  # main/master + feature branches
-                return BranchStrategy.GITHUB_FLOW
+        if ("main" in remote_branch_names or "master" in remote_branch_names) and len(
+            remote_branch_names
+        ) <= 2:  # main/master + feature branches
+            return BranchStrategy.GITHUB_FLOW
 
         # Check for GitLab Flow patterns
         if any(name in remote_branch_names for name in ["staging", "production"]):
@@ -964,9 +930,7 @@ class ProjectDetection:
         for _, module_name, is_pkg in pkgutil.iter_modules(detectors.__path__):
             if not is_pkg:
                 try:
-                    module = importlib.import_module(
-                        f"metagit.core.detect.detectors.{module_name}"
-                    )
+                    module = importlib.import_module(f"metagit.core.detect.detectors.{module_name}")
                     # Register all classes that are subclasses of Detector
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
@@ -974,9 +938,7 @@ class ProjectDetection:
                             self.detectors.append(attr())
                 except Exception as e:
                     if self.logger:
-                        self.logger.warning(
-                            f"Failed to load detector '{module_name}': {e}"
-                        )
+                        self.logger.warning(f"Failed to load detector '{module_name}': {e}")
 
     def run(self, path: str) -> Union[List[DiscoveryResult], Exception]:
         """

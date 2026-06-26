@@ -3,6 +3,7 @@
 Persist workspace objectives under .metagit/sessions/objectives.json.
 """
 
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -43,9 +44,7 @@ class ObjectiveStore:
         """Write objectives envelope to disk."""
         self._session.ensure_dirs()
         payload = {
-            "objectives": [
-                objective.model_dump(mode="json") for objective in objectives
-            ],
+            "objectives": [objective.model_dump(mode="json") for objective in objectives],
         }
         self._write_json(path=self._path, payload=payload)
 
@@ -64,7 +63,5 @@ class ObjectiveStore:
         """Write JSON object to path."""
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        try:
+        with contextlib.suppress(OSError):
             os.chmod(path, 0o600)
-        except OSError:
-            pass

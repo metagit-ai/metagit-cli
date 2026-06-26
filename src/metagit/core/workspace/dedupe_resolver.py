@@ -24,9 +24,8 @@ def resolve_effective_dedupe(
     may set ``dedupe.enabled`` in ``.metagit.yml`` to override only the enabled flag.
     """
     enabled = workspace_dedupe.enabled
-    if project is not None and project.dedupe is not None:
-        if project.dedupe.enabled is not None:
-            enabled = project.dedupe.enabled
+    if project is not None and project.dedupe is not None and project.dedupe.enabled is not None:
+        enabled = project.dedupe.enabled
     if not enabled:
         return None
     return workspace_dedupe

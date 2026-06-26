@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import os
-from pathlib import Path
 import re
 import subprocess
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlparse
 
@@ -47,12 +47,8 @@ class PipelineStatusService:
         """Return provider availability metadata without exposing secrets."""
         gh_token, gh_source = self._resolve_github_token(app_config)
         gl_token, gl_source = self._resolve_gitlab_token(app_config)
-        gh_metadata = (
-            self._probe_provider_metadata("github", app_config) if gh_token else {}
-        )
-        gl_metadata = (
-            self._probe_provider_metadata("gitlab", app_config) if gl_token else {}
-        )
+        gh_metadata = self._probe_provider_metadata("github", app_config) if gh_token else {}
+        gl_metadata = self._probe_provider_metadata("gitlab", app_config) if gl_token else {}
 
         return {
             "ok": True,
@@ -245,9 +241,7 @@ class PipelineStatusService:
         session = requests.Session()
         session.headers.update(headers)
 
-        repo_resp = session.get(
-            f"{api_base}/repos/{owner}/{repo}", timeout=self._timeout_seconds
-        )
+        repo_resp = session.get(f"{api_base}/repos/{owner}/{repo}", timeout=self._timeout_seconds)
         repo_resp.raise_for_status()
         repo_data = repo_resp.json()
         default_branch = str(repo_data.get("default_branch", "") or "").strip() or None
@@ -265,16 +259,15 @@ class PipelineStatusService:
         )
         runs_resp.raise_for_status()
         runs = runs_resp.json().get("workflow_runs") or []
-        if not runs:
-            if branch != default_branch and default_branch:
-                runs_resp = session.get(
-                    f"{api_base}/repos/{owner}/{repo}/actions/runs",
-                    params={"per_page": 1, "branch": default_branch},
-                    timeout=self._timeout_seconds,
-                )
-                runs_resp.raise_for_status()
-                runs = runs_resp.json().get("workflow_runs") or []
-                branch = default_branch
+        if not runs and branch != default_branch and default_branch:
+            runs_resp = session.get(
+                f"{api_base}/repos/{owner}/{repo}/actions/runs",
+                params={"per_page": 1, "branch": default_branch},
+                timeout=self._timeout_seconds,
+            )
+            runs_resp.raise_for_status()
+            runs = runs_resp.json().get("workflow_runs") or []
+            branch = default_branch
         if not runs:
             return {
                 "branch_used": branch,
@@ -293,9 +286,7 @@ class PipelineStatusService:
             ),
             "pipeline_name": run.get("name") or run.get("display_title"),
             "updated_at": updated_at,
-            "duration_sec": _duration_seconds(
-                run.get("run_started_at"), run.get("updated_at")
-            ),
+            "duration_sec": _duration_seconds(run.get("run_started_at"), run.get("updated_at")),
             "web_url": run.get("html_url"),
             "source": "live",
             "reason": None,
@@ -318,14 +309,10 @@ class PipelineStatusService:
         session.headers.update(headers)
 
         encoded = quote(namespace_repo, safe="")
-        project_resp = session.get(
-            f"{api_base}/projects/{encoded}", timeout=self._timeout_seconds
-        )
+        project_resp = session.get(f"{api_base}/projects/{encoded}", timeout=self._timeout_seconds)
         project_resp.raise_for_status()
         project_data = project_resp.json()
-        default_branch = (
-            str(project_data.get("default_branch", "") or "").strip() or None
-        )
+        default_branch = str(project_data.get("default_branch", "") or "").strip() or None
         branch = self._local_branch(repo_path) if local_status == "synced" else None
         branch = branch or default_branch
 
@@ -339,16 +326,15 @@ class PipelineStatusService:
         )
         pipelines_resp.raise_for_status()
         pipelines = pipelines_resp.json() or []
-        if not pipelines:
-            if branch != default_branch and default_branch:
-                pipelines_resp = session.get(
-                    f"{api_base}/projects/{encoded}/pipelines",
-                    params={"per_page": 1, "ref": default_branch},
-                    timeout=self._timeout_seconds,
-                )
-                pipelines_resp.raise_for_status()
-                pipelines = pipelines_resp.json() or []
-                branch = default_branch
+        if not pipelines and branch != default_branch and default_branch:
+            pipelines_resp = session.get(
+                f"{api_base}/projects/{encoded}/pipelines",
+                params={"per_page": 1, "ref": default_branch},
+                timeout=self._timeout_seconds,
+            )
+            pipelines_resp.raise_for_status()
+            pipelines = pipelines_resp.json() or []
+            branch = default_branch
         if not pipelines:
             return {
                 "branch_used": branch,
@@ -360,9 +346,7 @@ class PipelineStatusService:
         pipeline = pipelines[0]
         return {
             "branch_used": branch,
-            "pipeline_status": self._normalize_gitlab_status(
-                str(pipeline.get("status", ""))
-            ),
+            "pipeline_status": self._normalize_gitlab_status(str(pipeline.get("status", ""))),
             "pipeline_name": f"Pipeline #{pipeline.get('id')}",
             "updated_at": pipeline.get("updated_at") or pipeline.get("created_at"),
             "duration_sec": None,
@@ -391,11 +375,7 @@ class PipelineStatusService:
                 continue
             if not options.include_unsynced and local_status != "synced":
                 continue
-            if (
-                repo_filters
-                and repo_name.lower() not in repo_filters
-                and selector not in repo_filters
-            ):
+            if repo_filters and repo_name.lower() not in repo_filters and selector not in repo_filters:
                 continue
             out.append(row)
         return out
@@ -496,10 +476,7 @@ class PipelineStatusService:
         )
         response.raise_for_status()
         payload = response.json()
-        scopes = _split_scopes(
-            response.headers.get("X-OAuth-Scopes")
-            or response.headers.get("x-oauth-scopes")
-        )
+        scopes = _split_scopes(response.headers.get("X-OAuth-Scopes") or response.headers.get("x-oauth-scopes"))
         expires_at = response.headers.get("GitHub-Authentication-Token-Expiration")
         note = None
         token_type = "classic" if scopes else None
@@ -534,8 +511,7 @@ class PipelineStatusService:
         user_response.raise_for_status()
         user_payload = user_response.json()
         scopes = _split_scopes(
-            user_response.headers.get("X-OAuth-Scopes")
-            or user_response.headers.get("x-oauth-scopes")
+            user_response.headers.get("X-OAuth-Scopes") or user_response.headers.get("x-oauth-scopes")
         )
         token_type = None
         expires_at = None
@@ -567,9 +543,7 @@ class PipelineStatusService:
         if provider.enabled and provider.api_token.strip():
             return provider.api_token.strip(), "appconfig.github"
         if os.getenv("METAGIT_GITHUB_API_TOKEN"):
-            return str(
-                os.getenv("METAGIT_GITHUB_API_TOKEN")
-            ).strip(), "env.METAGIT_GITHUB_API_TOKEN"
+            return str(os.getenv("METAGIT_GITHUB_API_TOKEN")).strip(), "env.METAGIT_GITHUB_API_TOKEN"
         if os.getenv("GITHUB_TOKEN"):
             return str(os.getenv("GITHUB_TOKEN")).strip(), "env.GITHUB_TOKEN"
         if os.getenv("GH_TOKEN"):
@@ -581,9 +555,7 @@ class PipelineStatusService:
         if provider.enabled and provider.api_token.strip():
             return provider.api_token.strip(), "appconfig.gitlab"
         if os.getenv("METAGIT_GITLAB_API_TOKEN"):
-            return str(
-                os.getenv("METAGIT_GITLAB_API_TOKEN")
-            ).strip(), "env.METAGIT_GITLAB_API_TOKEN"
+            return str(os.getenv("METAGIT_GITLAB_API_TOKEN")).strip(), "env.METAGIT_GITLAB_API_TOKEN"
         if os.getenv("GITLAB_TOKEN"):
             return str(os.getenv("GITLAB_TOKEN")).strip(), "env.GITLAB_TOKEN"
         if os.getenv("GLAB_TOKEN"):

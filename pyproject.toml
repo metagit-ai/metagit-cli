@@ -1,9 +1,9 @@
 [project]
 name = "metagit-cli"
 dynamic = ["version"]
-description = "Metagit-ai multi-repo management tool"
+description = "Metagit multi-repo management tool"
 readme = "README.md"
-license-files = ["LICENSE"]
+license-files = ["LICENSE.md"]
 
 authors = [
     {name = "Zachary Loeber", email = "zloeber@gmail.com"}
@@ -14,12 +14,10 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "logging>=0.4.9.6",
     "loguru>=0.7.3",
     "pydantic>=2.11.4",
     "requests>=2.33.0",
     "click>=8.1.7",
-    "dotenv>=0.9.9",
     "gitpython>=3.1.50",
     "rich>=14.0.0",
     "pyyaml>=6.0.2",
@@ -31,11 +29,11 @@ dependencies = [
     "tqdm>=4.66.4",
     "types-tqdm>=4.67.0.20250516",
     "aiofiles>=23.2.1",
-    "async>=0.6.2",
+    #"async>=0.6.2",
     "setuptools-scm>=8.3.1",
     "litellm>=1.83.7",
     "textual-dev>=1.7.0",
-    "tomli>=2.2.1",
+    #"tomli>=2.2.1",
     "python-hcl2>=7.3.1",
     "prompt-toolkit>=3.0.51",
 ]
@@ -48,22 +46,35 @@ CI = "https://github.com/metagit-ai/metagit-cli/actions"
 
 [project.optional-dependencies]
 standard = []
-test = ["pytest>=9.0.3", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio", "black>=26.3.1"]
-dev = ["ruff", "black>=26.3.1", "isort", "mypy"]
-docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc", "mkdocs-mermaid2-plugin", "mkdocs-material"]
+test = ["pytest>=9.0.3", "pytest-cov", "mypy", "ruff", "httpx", "pytest-asyncio", "black"]
+dev = ["ruff", "black", "isort", "mypy"]
+docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc", "mkdocs-mermaid2-plugin"]
 lint = ["ruff", "black", "isort", "mypy"]
-format = ["black>=26.3.1", "isort"]
+format = ["black", "isort"]
 typecheck = ["mypy"]
 
 [project.scripts]
 metagit = "metagit.cli.main:main"
 
-[lint]
+[tool.ruff.lint]
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
 ignore = ['W291', 'W292', 'W293', 'E501', 'SIM115']
 
 [tool.ruff]
-exclude = [".venv", "records", ".metagit", "examples", "docs", "tests"]
+target-version = "py312"
+line-length = 120
+exclude = [
+    ".venv",
+    "records",
+    ".metagit",
+    "examples",
+    "docs",
+    "tests"
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.uv]
 override-dependencies = [
@@ -105,10 +116,12 @@ package-dir = {"" = "src"}
 
 [tool.setuptools_scm]
 version_file = "src/metagit/_version.py"
+fallback_version = "0.0.0"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["metagit*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 metagit = ["data/**/*"]

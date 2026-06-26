@@ -108,17 +108,13 @@ class ConfigExampleGenerator:
             nested_model = self._nested_model_for_annotation(annotation)
             if isinstance(value, dict) and nested_model is not None:
                 lines.append(f"{pad}{key}:\n")
-                lines.extend(
-                    self._render_mapping(value, nested_model, indent=indent + 1)
-                )
+                lines.extend(self._render_mapping(value, nested_model, indent=indent + 1))
             elif isinstance(value, list) and value and nested_model is not None:
                 lines.append(f"{pad}{key}:\n")
                 for item in value:
                     if isinstance(item, dict):
                         lines.append(f"{pad}  -\n")
-                        lines.extend(
-                            self._render_mapping(item, nested_model, indent=indent + 2)
-                        )
+                        lines.extend(self._render_mapping(item, nested_model, indent=indent + 2))
                     else:
                         lines.append(f"{pad}  - {self._format_scalar(item)}\n")
             else:
@@ -130,17 +126,13 @@ class ConfigExampleGenerator:
         if isinstance(value, dict):
             lines = [f"{pad}{key}:\n"]
             for sub_key, sub_value in value.items():
-                lines.extend(
-                    self._render_key_value(sub_key, sub_value, indent=indent + 1)
-                )
+                lines.extend(self._render_key_value(sub_key, sub_value, indent=indent + 1))
             return lines
         if isinstance(value, list):
             lines = [f"{pad}{key}:\n"]
             for item in value:
                 if isinstance(item, (dict, list)):
-                    lines.append(
-                        f"{pad}  - {yaml.dump(item, default_flow_style=True).strip()}\n"
-                    )
+                    lines.append(f"{pad}  - {yaml.dump(item, default_flow_style=True).strip()}\n")
                 else:
                     lines.append(f"{pad}  - {self._format_scalar(item)}\n")
             return lines
@@ -156,11 +148,7 @@ class ConfigExampleGenerator:
         if isinstance(value, datetime):
             return value.isoformat()
         escaped = str(value).replace("\n", "\\n")
-        if (
-            any(ch in escaped for ch in ":{}[]&*#?|-<>=!%@")
-            or escaped.startswith(" ")
-            or not escaped
-        ):
+        if any(ch in escaped for ch in ":{}[]&*#?|-<>=!%@") or escaped.startswith(" ") or not escaped:
             return yaml.dump(escaped, default_flow_style=True).strip()
         return escaped
 
@@ -176,6 +164,7 @@ class ConfigExampleGenerator:
         field_info: FieldInfo,
         model: type[BaseModel],
     ) -> Any:
+        _ = model
         if field_info.default_factory is not None and name in {
             "artifacts",
             "paths",

@@ -3,6 +3,7 @@
 Persist workspace and per-project session state under a configurable sessions path.
 """
 
+import contextlib
 import json
 import os
 import re
@@ -25,16 +26,10 @@ class SessionStore:
 
     def __init__(self, workspace_root: str, session_path: Optional[str] = None) -> None:
         self._workspace_root = str(Path(workspace_root).expanduser().resolve())
-        resolved_session_path = (
-            session_path
-            or os.getenv("METAGIT_WORKSPACE_SESSION_PATH")
-            or ".metagit/sessions"
-        )
+        resolved_session_path = session_path or os.getenv("METAGIT_WORKSPACE_SESSION_PATH") or ".metagit/sessions"
         candidate = Path(resolved_session_path).expanduser()
         self._sessions_dir = (
-            candidate.resolve()
-            if candidate.is_absolute()
-            else (Path(self._workspace_root) / candidate).resolve()
+            candidate.resolve() if candidate.is_absolute() else (Path(self._workspace_root) / candidate).resolve()
         )
         self._workspace_meta_path = self._sessions_dir / "_workspace.json"
 
@@ -46,10 +41,8 @@ class SessionStore:
     def ensure_dirs(self) -> None:
         """Create session directories with restrictive permissions when possible."""
         self._sessions_dir.mkdir(parents=True, exist_ok=True)
-        try:
+        with contextlib.suppress(OSError):
             os.chmod(self._sessions_dir, 0o700)
-        except OSError:
-            pass
 
     def get_workspace_meta(self) -> WorkspaceSessionMeta:
         """Load workspace session metadata or return defaults."""
@@ -61,9 +54,7 @@ class SessionStore:
     def save_workspace_meta(self, meta: WorkspaceSessionMeta) -> None:
         """Persist workspace session metadata."""
         self.ensure_dirs()
-        self._write_json(
-            path=self._workspace_meta_path, payload=meta.model_dump(mode="json")
-        )
+        self._write_json(path=self._workspace_meta_path, payload=meta.model_dump(mode="json"))
 
     def set_active_project(self, project_name: str) -> WorkspaceSessionMeta:
         """Set active project on workspace metadata."""
@@ -183,7 +174,5 @@ class SessionStore:
         """Write JSON object to path."""
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        try:
+        with contextlib.suppress(OSError):
             os.chmod(path, 0o600)
-        except OSError:
-            pass

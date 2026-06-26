@@ -53,9 +53,7 @@ class SessionBeginService:
 
         warnings: list[str] = []
         if pack.dropped_sections:
-            warnings.append(
-                "token budget reached; dropped: " + ", ".join(pack.dropped_sections)
-            )
+            warnings.append("token budget reached; dropped: " + ", ".join(pack.dropped_sections))
 
         prompt_text = ""
         try:
@@ -71,24 +69,18 @@ class SessionBeginService:
             warnings.append(f"session-start prompt unavailable: {exc}")
 
         objectives = ObjectiveService(workspace_root=session_root).list().objectives
-        approvals = (
-            ApprovalService(workspace_root=session_root).list(status="pending").requests
-        )
+        approvals = ApprovalService(workspace_root=session_root).list(status="pending").requests
 
         project_session = None
         if active_project:
             try:
                 project_session = store.get_project_session(project_name=active_project)
             except ValueError:
-                warnings.append(
-                    f"active project is not a valid session key: {active_project}"
-                )
+                warnings.append(f"active project is not a valid session key: {active_project}")
 
         session_payload = {
             "workspace_meta": meta.model_dump(mode="json"),
-            "project_session": (
-                project_session.model_dump(mode="json") if project_session else None
-            ),
+            "project_session": (project_session.model_dump(mode="json") if project_session else None),
         }
 
         return SessionBeginResult(

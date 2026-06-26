@@ -23,12 +23,12 @@ from pydantic import (
 )
 
 from metagit.core.appconfig.models import AppConfig
-from metagit.core.project.models import GitUrl, ProjectKind, ProjectPath
 from metagit.core.config.documentation_models import (
     DocumentationSource,
     normalize_documentation_entries,
 )
 from metagit.core.config.graph_models import WorkspaceGraph
+from metagit.core.project.models import GitUrl, ProjectKind, ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -209,12 +209,8 @@ class Hosting(str, Enum):
     AZURE_CONTAINER_INSTANCES = "Azure Container Instances"
     AZURE_CONTAINER_APPS = "Azure Container Apps"
     AZURE_CONTAINER_APPS_ENVIRONMENT = "Azure Container Apps Environment"
-    AZURE_CONTAINER_APPS_ENVIRONMENT_SERVICE = (
-        "Azure Container Apps Environment Service"
-    )
-    AZURE_CONTAINER_APPS_ENVIRONMENT_SERVICE_SERVICE = (
-        "Azure Container Apps Environment Service Service"
-    )
+    AZURE_CONTAINER_APPS_ENVIRONMENT_SERVICE = "Azure Container Apps Environment Service"
+    AZURE_CONTAINER_APPS_ENVIRONMENT_SERVICE_SERVICE = "Azure Container Apps Environment Service Service"
     CUSTOM = "custom"
     NONE = "none"
     UNKNOWN = "unknown"
@@ -280,8 +276,7 @@ class Dependency(ProjectPath):
     kind: DependencyKind = Field(
         default=DependencyKind.UNKNOWN,
         description=(
-            "Dependency kind. Distinct from workspace repo entries; "
-            "use tags on ProjectPath for managed repos."
+            "Dependency kind. Distinct from workspace repo entries; use tags on ProjectPath for managed repos."
         ),
     )
 
@@ -468,12 +463,8 @@ class Deployment(BaseModel):
     """Model for deployment configuration."""
 
     strategy: DeploymentStrategy = Field(..., description="Deployment strategy")
-    environments: Optional[List[Environment]] = Field(
-        None, description="Deployment environments"
-    )
-    infrastructure: Optional[Infrastructure] = Field(
-        None, description="Infrastructure configuration"
-    )
+    environments: Optional[List[Environment]] = Field(None, description="Deployment environments")
+    infrastructure: Optional[Infrastructure] = Field(None, description="Infrastructure configuration")
 
     class Config:
         """Pydantic configuration."""
@@ -523,18 +514,10 @@ class Dashboard(BaseModel):
 class Observability(BaseModel):
     """Model for observability configuration."""
 
-    logging_provider: Optional[LoggingProvider] = Field(
-        None, description="Logging provider"
-    )
-    monitoring_providers: Optional[List[MonitoringProvider]] = Field(
-        None, description="Monitoring providers"
-    )
-    alerting_channels: Optional[List[AlertingChannel]] = Field(
-        None, description="Alerting channels"
-    )
-    dashboards: Optional[List[Dashboard]] = Field(
-        None, description="Monitoring dashboards"
-    )
+    logging_provider: Optional[LoggingProvider] = Field(None, description="Logging provider")
+    monitoring_providers: Optional[List[MonitoringProvider]] = Field(None, description="Monitoring providers")
+    alerting_channels: Optional[List[AlertingChannel]] = Field(None, description="Alerting channels")
+    dashboards: Optional[List[Dashboard]] = Field(None, description="Monitoring dashboards")
 
     class Config:
         """Pydantic configuration."""
@@ -627,9 +610,7 @@ class Language(BaseModel):
     """Model for project language information."""
 
     primary: str = Field(..., description="Primary programming language")
-    secondary: Optional[List[str]] = Field(
-        None, description="Secondary programming languages"
-    )
+    secondary: Optional[List[str]] = Field(None, description="Secondary programming languages")
 
     class Config:
         """Pydantic configuration."""
@@ -641,9 +622,7 @@ class Language(BaseModel):
 class Project(BaseModel):
     """Model for project information."""
 
-    description: Optional[str] = Field(
-        None, description="Human-readable description of this project"
-    )
+    description: Optional[str] = Field(None, description="Human-readable description of this project")
     agent_instructions: Optional[str] = Field(
         None,
         validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
@@ -653,9 +632,7 @@ class Project(BaseModel):
     domain: ProjectDomain = Field(..., description="Project domain")
     language: Language = Field(..., description="Language information")
     framework: Optional[List[str]] = Field(None, description="Frameworks used")
-    package_managers: Optional[List[str]] = Field(
-        None, description="Package managers used"
-    )
+    package_managers: Optional[List[str]] = Field(None, description="Package managers used")
     build_tool: Optional[BuildTool] = Field(None, description="Build tool used")
     deploy_targets: Optional[List[str]] = Field(None, description="Deployment targets")
 
@@ -674,31 +651,17 @@ class RepoMetadata(BaseModel):
     last_commit_at: Optional[datetime] = Field(None, description="Last commit date")
     default_branch: Optional[str] = Field(None, description="Default branch name")
     topics: Optional[List[str]] = Field(None, description="Repository topics")
-    forked_from: Optional[Union[HttpUrl, str]] = Field(
-        None, description="Forked from repository URL"
-    )
-    archived: Optional[bool] = Field(
-        False, description="Whether repository is archived"
-    )
-    template: Optional[bool] = Field(
-        False, description="Whether repository is a template"
-    )
+    forked_from: Optional[Union[HttpUrl, str]] = Field(None, description="Forked from repository URL")
+    archived: Optional[bool] = Field(False, description="Whether repository is archived")
+    template: Optional[bool] = Field(False, description="Whether repository is a template")
     has_ci: Optional[bool] = Field(False, description="Whether repository has CI/CD")
     has_tests: Optional[bool] = Field(False, description="Whether repository has tests")
-    has_docs: Optional[bool] = Field(
-        False, description="Whether repository has documentation"
-    )
-    has_docker: Optional[bool] = Field(
-        False, description="Whether repository has Docker configuration"
-    )
-    has_iac: Optional[bool] = Field(
-        False, description="Whether repository has Infrastructure as Code"
-    )
+    has_docs: Optional[bool] = Field(False, description="Whether repository has documentation")
+    has_docker: Optional[bool] = Field(False, description="Whether repository has Docker configuration")
+    has_iac: Optional[bool] = Field(False, description="Whether repository has Infrastructure as Code")
 
     @field_serializer("forked_from")
-    def serialize_forked_from(
-        self, forked_from: Optional[Union[HttpUrl, str]], _info: Any
-    ) -> Optional[str]:
+    def serialize_forked_from(self, forked_from: Optional[Union[HttpUrl, str]], _info: Any) -> Optional[str]:
         """Serialize forked_from to string."""
         return str(forked_from) if forked_from else None
 
@@ -722,9 +685,7 @@ class PullRequests(BaseModel):
     """Model for pull request metrics."""
 
     open: int = Field(..., description="Number of open pull requests")
-    merged_last_30d: int = Field(
-        ..., description="Number of pull requests merged in last 30 days"
-    )
+    merged_last_30d: int = Field(..., description="Number of pull requests merged in last 30 days")
 
     class Config:
         """Pydantic configuration."""
@@ -755,16 +716,11 @@ class MetagitConfig(BaseModel):
     """Main model for .metagit.yml configuration file."""
 
     name: str = Field(..., description="Project name")
-    description: Optional[str] = Field(
-        default="No description", description="Project description"
-    )
+    description: Optional[str] = Field(default="No description", description="Project description")
     agent_instructions: Optional[str] = Field(
         None,
         validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
-        description=(
-            "Optional instructions for controller agents; applies with or without "
-            "a workspace block"
-        ),
+        description=("Optional instructions for controller agents; applies with or without a workspace block"),
     )
     url: Optional[Union[HttpUrl, GitUrl]] = Field(None, description="Project URL")
     kind: Optional[ProjectKind] = Field(
@@ -781,23 +737,16 @@ class MetagitConfig(BaseModel):
     graph: Optional[WorkspaceGraph] = Field(
         None,
         description=(
-            "Manual cross-repo relationships and graph metadata for exports "
-            "and GitNexus-style dependency maps"
+            "Manual cross-repo relationships and graph metadata for exports and GitNexus-style dependency maps"
         ),
     )
     license: Optional[License] = Field(None, description="License information")
-    maintainers: Optional[List[Maintainer]] = Field(
-        None, description="Project maintainers"
-    )
+    maintainers: Optional[List[Maintainer]] = Field(None, description="Project maintainers")
     branch_strategy: Optional[BranchStrategy] = Field(
         default="unknown", description="Branch strategy used by the project."
     )
-    taskers: Optional[List[Tasker]] = Field(
-        None, description="Task management tools employed by the project."
-    )
-    branch_naming: Optional[List[BranchNaming]] = Field(
-        None, description="Branch naming patterns used by the project."
-    )
+    taskers: Optional[List[Tasker]] = Field(None, description="Task management tools employed by the project.")
+    branch_naming: Optional[List[BranchNaming]] = Field(None, description="Branch naming patterns used by the project.")
     artifacts: Optional[List[Artifact]] = Field(
         default_factory=lambda: [], description="Generated artifacts from the project."
     )
@@ -805,16 +754,10 @@ class MetagitConfig(BaseModel):
         None, description="Secrets management tools employed by the project."
     )
     secrets: Optional[List[Secret]] = Field(None, description="Secret definitions")
-    variables: Optional[List[Variable]] = Field(
-        None, description="Variable definitions"
-    )
+    variables: Optional[List[Variable]] = Field(None, description="Variable definitions")
     cicd: Optional[CICD] = Field(None, description="CI/CD configuration")
-    deployment: Optional[Deployment] = Field(
-        None, description="Deployment configuration"
-    )
-    observability: Optional[Observability] = Field(
-        None, description="Observability configuration"
-    )
+    deployment: Optional[Deployment] = Field(None, description="Deployment configuration")
+    observability: Optional[Observability] = Field(None, description="Observability configuration")
     paths: Optional[List[ProjectPath]] = Field(
         default_factory=lambda: [],
         description="Important local project paths. In a monorepo, this would include any sub-projects typically found being built in the CICD pipelines.",
@@ -849,9 +792,7 @@ class MetagitConfig(BaseModel):
         return value
 
     @field_serializer("url")
-    def serialize_url(
-        self, url: Optional[Union[HttpUrl, str]], _info: Any
-    ) -> Optional[str]:
+    def serialize_url(self, url: Optional[Union[HttpUrl, str]], _info: Any) -> Optional[str]:
         """Serialize URL to string."""
         return str(url) if url else None
 
@@ -910,12 +851,8 @@ class TenantConfig(AppConfig):
     enabled: bool = Field(default=False, description="Whether multi-tenancy is enabled")
     default_tenant: str = Field(default="default", description="Default tenant ID")
     tenant_header: str = Field(default="X-Tenant-ID", description="Tenant header name")
-    tenant_required: bool = Field(
-        default=False, description="Whether tenant is required"
-    )
-    allowed_tenants: List[str] = Field(
-        default_factory=list, description="List of allowed tenant IDs"
-    )
+    tenant_required: bool = Field(default=False, description="Whether tenant is required")
+    allowed_tenants: List[str] = Field(default_factory=list, description="List of allowed tenant IDs")
 
     @classmethod
     def _override_from_environment(cls, config: "TenantConfig") -> "TenantConfig":
@@ -939,9 +876,7 @@ class TenantConfig(AppConfig):
         if os.getenv("METAGIT_TENANT_HEADER"):
             config.tenant_header = os.getenv("METAGIT_TENANT_HEADER")
         if os.getenv("METAGIT_TENANT_REQUIRED"):
-            config.tenant_required = (
-                os.getenv("METAGIT_TENANT_REQUIRED").lower() == "true"
-            )
+            config.tenant_required = os.getenv("METAGIT_TENANT_REQUIRED").lower() == "true"
         if os.getenv("METAGIT_TENANT_ALLOWED"):
             config.allowed_tenants = os.getenv("METAGIT_TENANT_ALLOWED").split(",")
 
@@ -960,9 +895,7 @@ class TenantConfig(AppConfig):
         """
         try:
             if not config_path:
-                config_path = os.path.join(
-                    Path.home(), ".config", "metagit", "config.yml"
-                )
+                config_path = os.path.join(Path.home(), ".config", "metagit", "config.yml")
 
             config_file = Path(config_path)
             if not config_file.exists():
@@ -971,10 +904,7 @@ class TenantConfig(AppConfig):
             with config_file.open("r") as f:
                 config_data = yaml.safe_load(f)
 
-            if "config" in config_data:
-                config = cls(**config_data["config"])
-            else:
-                config = cls(**config_data)
+            config = cls(**config_data["config"]) if "config" in config_data else cls(**config_data)
 
             # Override with environment variables
             config = cls._override_from_environment(config)

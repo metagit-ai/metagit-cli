@@ -27,11 +27,11 @@ from metagit.cli.commands.agent import agent
 from metagit.cli.commands.api import api
 from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.completion_cmd import completion_group
-from metagit.cli.commands.fmt import fmt_cmd
-from metagit.cli.commands.gitnexus import gitnexus
 from metagit.cli.commands.config import config
 from metagit.cli.commands.context import context
 from metagit.cli.commands.detect import detect
+from metagit.cli.commands.fmt import fmt_cmd
+from metagit.cli.commands.gitnexus import gitnexus
 from metagit.cli.commands.init import init
 from metagit.cli.commands.mcp import mcp
 from metagit.cli.commands.project import project
@@ -60,9 +60,7 @@ CONTEXT_SETTINGS: dict = {
     help="Path to the configuration file",
 )
 @click.option("--debug/--no-debug", default=False, help="Enable or disable debug mode")
-@click.option(
-    "--verbose/--no-verbose", default=False, help="Enable or disable verbose output"
-)
+@click.option("--verbose/--no-verbose", default=False, help="Enable or disable verbose output")
 @click.pass_context
 def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
     """
@@ -82,14 +80,10 @@ def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
         minimal_console = False
 
     try:
-        logger: UnifiedLogger = UnifiedLogger(
-            LoggerConfig(log_level=log_level, minimal_console=minimal_console)
-        )
+        logger: UnifiedLogger = UnifiedLogger(LoggerConfig(log_level=log_level, minimal_console=minimal_console))
 
         if not Path(config).exists():
-            logger.debug(
-                f"Config file '{config}' not found, using default: {DEFAULT_CONFIG}"
-            )
+            logger.debug(f"Config file '{config}' not found, using default: {DEFAULT_CONFIG}")
             config = DEFAULT_CONFIG
         cfg = load_config(config)
         if isinstance(cfg, Exception):
@@ -120,9 +114,7 @@ def info(ctx: click.Context) -> None:
     logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
 
     logger.config_element(name="version", value=__version__, console=True)
-    logger.config_element(
-        name="config_path", value=ctx.obj["config_path"], console=True
-    )
+    logger.config_element(name="config_path", value=ctx.obj["config_path"], console=True)
     logger.config_element(name="debug", value=ctx.obj["debug"], console=True)
     logger.config_element(name="verbose", value=ctx.obj["verbose"], console=True)
 

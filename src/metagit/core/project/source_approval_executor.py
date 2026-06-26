@@ -56,20 +56,14 @@ class SourceSyncApprovalExecutor:
         if not remove_urls:
             return Exception("invalid source_sync_reconcile payload: to_remove")
 
-        updated_repos = [
-            repo
-            for repo in project.repos
-            if not _repo_matches_removal(repo, remove_urls)
-        ]
+        updated_repos = [repo for repo in project.repos if not _repo_matches_removal(repo, remove_urls)]
         updated_project = project.model_copy(update={"repos": updated_repos})
         for index, item in enumerate(config.workspace.projects):
             if item.name == project_name:
                 config.workspace.projects[index] = updated_project
                 break
 
-        save_result = MetagitConfigManager(config_path=config_path).save_config(
-            config, config_path
-        )
+        save_result = MetagitConfigManager(config_path=config_path).save_config(config, config_path)
         if isinstance(save_result, Exception):
             return save_result
         return config

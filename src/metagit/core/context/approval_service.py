@@ -22,9 +22,7 @@ Decision = Literal["approved", "denied"]
 class ApprovalService:
     """Create, list, and resolve approval rows for a workspace."""
 
-    def __init__(
-        self, workspace_root: str, store: Optional[ApprovalStore] = None
-    ) -> None:
+    def __init__(self, workspace_root: str, store: Optional[ApprovalStore] = None) -> None:
         self._store = store or ApprovalStore(workspace_root=workspace_root)
 
     def request(

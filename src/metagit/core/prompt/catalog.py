@@ -11,10 +11,7 @@ _CATALOG: list[PromptCatalogEntry] = [
     PromptCatalogEntry(
         kind="instructions",
         title="Composed manifest instructions",
-        description=(
-            "Layered agent_instructions from .metagit.yml "
-            "(file → workspace → project → repo)."
-        ),
+        description=("Layered agent_instructions from .metagit.yml (file → workspace → project → repo)."),
         scopes=["workspace", "project", "repo"],
     ),
     PromptCatalogEntry(
@@ -84,8 +81,7 @@ _CATALOG: list[PromptCatalogEntry] = [
         kind="graph-maintain",
         title="Workspace graph maintenance",
         description=(
-            "Suggest, promote, and ingest cross-repo graph.relationships "
-            "for GitNexus overlay and dependency maps."
+            "Suggest, promote, and ingest cross-repo graph.relationships for GitNexus overlay and dependency maps."
         ),
         scopes=["workspace"],
     ),
@@ -327,10 +323,7 @@ Safety: do not promote edges without evidence; do not overwrite existing manual 
         elif kind == "layout-change":
             body += f"\n\nTarget: {project_label}/{repo_label}."
         elif kind == "repo-enrich":
-            body += (
-                f"\n\nTarget repo: {project_label}/{repo_label}. "
-                "Emit merged YAML for the repos[] entry when done."
-            )
+            body += f"\n\nTarget repo: {project_label}/{repo_label}. Emit merged YAML for the repos[] entry when done."
         elif kind == "context-pack":
             body += (
                 f"\n\nActive-scope focus: {project_label}/{repo_label}. "

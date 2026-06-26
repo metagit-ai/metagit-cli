@@ -51,10 +51,7 @@ class ProjectListEntry(BaseModel):
     documentation_count: int = 0
     dedupe_enabled: Optional[bool] = Field(
         default=None,
-        description=(
-            "When set in the manifest, overrides app-config workspace.dedupe.enabled "
-            "for this project"
-        ),
+        description=("When set in the manifest, overrides app-config workspace.dedupe.enabled for this project"),
     )
     repo_count: int = 0
 

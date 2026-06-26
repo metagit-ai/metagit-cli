@@ -51,9 +51,7 @@ class RepomixProfileService:
         with path.open("r", encoding="utf-8") as handle:
             raw = yaml.safe_load(handle)
         if not isinstance(raw, dict):
-            raise ValueError(
-                f"invalid context profiles YAML (expected mapping): {path}"
-            )
+            raise ValueError(f"invalid context profiles YAML (expected mapping): {path}")
         return RepomixProfilesDocument.model_validate(raw)
 
     @property

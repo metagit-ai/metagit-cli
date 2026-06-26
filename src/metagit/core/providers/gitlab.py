@@ -70,9 +70,7 @@ class GitLabProvider(GitProvider):
 
         return {}
 
-    def get_repository_metrics(
-        self, owner: str, repo: str
-    ) -> Union[Metrics, Exception]:
+    def get_repository_metrics(self, owner: str, repo: str) -> Union[Metrics, Exception]:
         """Get repository metrics from GitLab API."""
         try:
             if not self.api_token:
@@ -102,9 +100,7 @@ class GitLabProvider(GitProvider):
             # Get contributors data (approximation using project members)
             members_url = f"{self.api_base}/projects/{project_id}/members"
             members_response = self.session.get(members_url)
-            members_data = (
-                members_response.json() if members_response.status_code == 200 else []
-            )
+            members_data = members_response.json() if members_response.status_code == 200 else []
 
             # Get recent commits for commit frequency
             commits_url = f"{self.api_base}/projects/{project_id}/repository/commits"
@@ -139,9 +135,7 @@ class GitLabProvider(GitProvider):
         except Exception as e:
             return Exception(f"Failed to get GitLab metrics: {e}")
 
-    def get_repository_metadata(
-        self, owner: str, repo: str
-    ) -> Union[Dict[str, Any], Exception]:
+    def get_repository_metadata(self, owner: str, repo: str) -> Union[Dict[str, Any], Exception]:
         """Get additional repository metadata from GitLab API."""
         try:
             if not self.api_token:
@@ -181,9 +175,7 @@ class GitLabProvider(GitProvider):
         except Exception as e:
             return Exception(f"Failed to get GitLab metadata: {e}")
 
-    def _calculate_commit_frequency(
-        self, commits_data: List[Dict[str, Any]]
-    ) -> CommitFrequency:
+    def _calculate_commit_frequency(self, commits_data: List[Dict[str, Any]]) -> CommitFrequency:
         """Calculate commit frequency from recent commits."""
         if not commits_data or len(commits_data) < 2:
             return CommitFrequency.MONTHLY

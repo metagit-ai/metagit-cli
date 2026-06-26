@@ -55,9 +55,7 @@ from metagit.core.utils.files import DirectoryDetails, DirectorySummary
 T = TypeVar("T", bound=BaseModel)
 
 
-def _get_common_fields(
-    source_model: Type[BaseModel], target_model: Type[BaseModel]
-) -> set[str]:
+def _get_common_fields(source_model: Type[BaseModel], target_model: Type[BaseModel]) -> set[str]:
     """
     Automatically detect common fields between two Pydantic models.
 
@@ -135,101 +133,55 @@ class MetagitRecord(MetagitConfig):
     metadata: Optional[RepoMetadata] = Field(None, description="Repository metadata")
 
     # Language and project type detection
-    language: Optional[Language] = Field(
-        None, description="Detected language information"
-    )
-    language_version: Optional[str] = Field(
-        None, description="Primary language version"
-    )
+    language: Optional[Language] = Field(None, description="Detected language information")
+    language_version: Optional[str] = Field(None, description="Primary language version")
     domain: Optional[ProjectDomain] = Field(None, description="Project domain")
 
     # Additional detection fields
-    detection_timestamp: Optional[datetime] = Field(
-        None, description="When this record was last detected/updated"
-    )
+    detection_timestamp: Optional[datetime] = Field(None, description="When this record was last detected/updated")
     detection_source: Optional[str] = Field(
         None, description="Source of the detection (e.g., 'github', 'gitlab', 'local')"
     )
-    detection_version: Optional[str] = Field(
-        None, description="Version of the detection system used"
-    )
+    detection_version: Optional[str] = Field(None, description="Version of the detection system used")
 
     # RepositoryAnalysis attributes merged from repository.py
     # Repository path and URL information
     path: Optional[str] = Field(None, description="Repository path")
     url: Optional[str] = Field(None, description="Repository URL")
-    is_git_repo: bool = Field(
-        default=False, description="Whether this is a git repository"
-    )
-    is_cloned: bool = Field(
-        default=False, description="Whether this was cloned from a URL"
-    )
+    is_git_repo: bool = Field(default=False, description="Whether this is a git repository")
+    is_cloned: bool = Field(default=False, description="Whether this was cloned from a URL")
     temp_dir: Optional[str] = Field(None, description="Temporary directory if cloned")
 
     # Detection results from RepositoryAnalysis
-    language_detection: Optional[LanguageDetection] = Field(
-        None, description="Language detection results"
-    )
-    project_type_detection: Optional[ProjectTypeDetection] = Field(
-        None, description="Project type detection results"
-    )
+    language_detection: Optional[LanguageDetection] = Field(None, description="Language detection results")
+    project_type_detection: Optional[ProjectTypeDetection] = Field(None, description="Project type detection results")
 
     # Analysis results from RepositoryAnalysis
-    branch_analysis: Optional[GitBranchAnalysis] = Field(
-        None, description="Git branch analysis results"
-    )
-    ci_config_analysis: Optional[CIConfigAnalysis] = Field(
-        None, description="CI/CD configuration analysis results"
-    )
-    directory_summary: Optional[DirectorySummary] = Field(
-        None, description="Directory summary analysis results"
-    )
-    directory_details: Optional[DirectoryDetails] = Field(
-        None, description="Directory details analysis results"
-    )
+    branch_analysis: Optional[GitBranchAnalysis] = Field(None, description="Git branch analysis results")
+    ci_config_analysis: Optional[CIConfigAnalysis] = Field(None, description="CI/CD configuration analysis results")
+    directory_summary: Optional[DirectorySummary] = Field(None, description="Directory summary analysis results")
+    directory_details: Optional[DirectoryDetails] = Field(None, description="Directory details analysis results")
 
     # Repository metadata from RepositoryAnalysis
     license_info: Optional[License] = Field(None, description="License information")
-    maintainers: List[Maintainer] = Field(
-        default_factory=list, description="Repository maintainers"
-    )
-    existing_workspace: Optional[Workspace] = Field(
-        None, description="Existing workspace information"
-    )
+    maintainers: List[Maintainer] = Field(default_factory=list, description="Repository maintainers")
+    existing_workspace: Optional[Workspace] = Field(None, description="Existing workspace information")
 
     # Additional metadata from RepositoryAnalysis
-    artifacts: Optional[List[Artifact]] = Field(
-        None, description="Repository artifacts"
-    )
-    secrets_management: Optional[List[str]] = Field(
-        None, description="Secrets management information"
-    )
+    artifacts: Optional[List[Artifact]] = Field(None, description="Repository artifacts")
+    secrets_management: Optional[List[str]] = Field(None, description="Secrets management information")
     secrets: Optional[List[Secret]] = Field(None, description="Repository secrets")
-    documentation: Optional[List[str]] = Field(
-        None, description="Documentation information"
-    )
-    alerts: Optional[List[AlertingChannel]] = Field(
-        None, description="Alerting channels"
-    )
+    documentation: Optional[List[str]] = Field(None, description="Documentation information")
+    alerts: Optional[List[AlertingChannel]] = Field(None, description="Alerting channels")
     dashboards: Optional[List[Dashboard]] = Field(None, description="Dashboards")
     environments: Optional[List[Environment]] = Field(None, description="Environments")
 
     # File analysis from RepositoryAnalysis
-    detected_files: Dict[str, List[str]] = Field(
-        default_factory=dict, description="Detected files by category"
-    )
-    has_docker: bool = Field(
-        default=False, description="Whether repository has Docker files"
-    )
-    has_tests: bool = Field(
-        default=False, description="Whether repository has test files"
-    )
-    has_docs: bool = Field(
-        default=False, description="Whether repository has documentation"
-    )
-    has_iac: bool = Field(
-        default=False, description="Whether repository has Infrastructure as Code files"
-    )
+    detected_files: Dict[str, List[str]] = Field(default_factory=dict, description="Detected files by category")
+    has_docker: bool = Field(default=False, description="Whether repository has Docker files")
+    has_tests: bool = Field(default=False, description="Whether repository has test files")
+    has_docs: bool = Field(default=False, description="Whether repository has documentation")
+    has_iac: bool = Field(default=False, description="Whether repository has Infrastructure as Code files")
 
     class Config:
         """Pydantic configuration."""
@@ -289,6 +241,7 @@ class MetagitRecord(MetagitConfig):
             - Minimal memory allocation through direct field copying
             - No deep copying of nested objects (uses references)
         """
+        _ = exclude_detection_fields
         # Get the model data, excluding None values and defaults for performance
         model_data = self.model_dump(
             exclude_none=True,
@@ -318,6 +271,7 @@ class MetagitRecord(MetagitConfig):
             record = MetagitRecord(name="my-project", description="A project")
             config = record.to_metagit_config_advanced()
         """
+        _ = kwargs
         try:
             # Use the standard method for now, but this could be extended
             # with more sophisticated field mapping logic
@@ -386,9 +340,7 @@ class MetagitRecord(MetagitConfig):
         return cls.model_validate(record_data)
 
     @classmethod
-    def from_metagit_config_advanced(
-        cls, config: MetagitConfig, **detection_kwargs
-    ) -> "MetagitRecord":
+    def from_metagit_config_advanced(cls, config: MetagitConfig, **detection_kwargs) -> "MetagitRecord":
         """
         Advanced conversion from MetagitConfig to MetagitRecord with automatic field handling.
 

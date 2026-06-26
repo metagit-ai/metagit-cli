@@ -51,9 +51,7 @@ def render_metagit_yaml(
 ) -> str:
     """Serialize a metagit manifest for preview."""
     if style == "minimal":
-        payload = config.model_dump(
-            exclude_none=True, exclude_defaults=True, mode="json"
-        )
+        payload = config.model_dump(exclude_none=True, exclude_defaults=True, mode="json")
     else:
         payload = config.model_dump(exclude_none=True, mode="json")
     return dump_config_dict(payload)

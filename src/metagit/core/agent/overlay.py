@@ -39,11 +39,7 @@ id: {template_id}
 
 def overlay_relative_for_scope(scope: AgentOverlayScope) -> Path:
     """Return the path segment(s) for one overlay scope."""
-    return (
-        LOCAL_OVERLAY_RELATIVE
-        if scope == AgentOverlayScope.LOCAL
-        else COMMITTED_OVERLAY_RELATIVE
-    )
+    return LOCAL_OVERLAY_RELATIVE if scope == AgentOverlayScope.LOCAL else COMMITTED_OVERLAY_RELATIVE
 
 
 def overlay_path_for_template(
@@ -112,14 +108,8 @@ def _relative_overlay_files(
     if not bundled_dir.is_dir():
         return []
     if mode == AgentOverlayInitMode.FULL:
-        return sorted(
-            path.relative_to(bundled_dir)
-            for path in bundled_dir.rglob("*")
-            if path.is_file()
-        )
-    return sorted(
-        Path(name) for name in _MINIMAL_OVERLAY_FILES if (bundled_dir / name).is_file()
-    )
+        return sorted(path.relative_to(bundled_dir) for path in bundled_dir.rglob("*") if path.is_file())
+    return sorted(Path(name) for name in _MINIMAL_OVERLAY_FILES if (bundled_dir / name).is_file())
 
 
 def _prepare_overlay_manifest(
@@ -157,9 +147,7 @@ def init_overlay_from_bundled(
     """Copy bundled template sources into a workspace overlay directory."""
     destination = overlay_path_for_template(manifest_root, template_id, scope=scope)
     if overlay_has_files(manifest_root, template_id, scope=scope) and not force:
-        raise FileExistsError(
-            f"overlay already exists: {destination} (use force=True to replace files)"
-        )
+        raise FileExistsError(f"overlay already exists: {destination} (use force=True to replace files)")
     relative_files = _relative_overlay_files(bundled_dir, mode=mode)
     if not relative_files:
         raise ValueError(f"no bundled template files to copy for {template_id!r}")
@@ -337,6 +325,7 @@ def resolve_template_file(
     shared_dir: Path | None,
 ) -> Path | None:
     """Resolve a template source file with overlay precedence."""
+    _ = template_id
     if ".." in filename or "/" in filename or "\\" in filename:
         raise ValueError(f"invalid template filename: {filename!r}")
 
@@ -364,9 +353,7 @@ def resolve_template_file(
         direct = directory / filename
         if direct.is_file():
             return direct
-        partial_name = (
-            f"{filename}.md.tpl" if not filename.endswith(".tpl") else filename
-        )
+        partial_name = f"{filename}.md.tpl" if not filename.endswith(".tpl") else filename
         partial_path = directory / partial_name
         if partial_path.is_file():
             return partial_path

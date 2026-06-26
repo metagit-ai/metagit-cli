@@ -65,11 +65,7 @@ def _detect_project(repo: Path) -> dict[str, str]:
     if readme:
         for line in readme.splitlines():
             stripped = line.strip()
-            if (
-                stripped
-                and not stripped.startswith("#")
-                and not stripped.startswith("[")
-            ):
+            if stripped and not stripped.startswith("#") and not stripped.startswith("["):
                 description = stripped[:200]
                 break
 
@@ -80,18 +76,14 @@ def _detect_project(repo: Path) -> dict[str, str]:
         "session_cmds": session,
         "cli_name": cli,
         "extra_cmd_rows": "\n".join(extra_rows),
-        "docs_agents_link": "- [docs/agents.md](docs/agents.md)"
-        if (repo / "docs").is_dir()
-        else "",
+        "docs_agents_link": "- [docs/agents.md](docs/agents.md)" if (repo / "docs").is_dir() else "",
         "optional_section": "- Contributor docs: see README",
     }
 
 
 def _fill_template(name: str, ctx: dict[str, str]) -> str:
     raw = (TEMPLATE_DIR / name).read_text(encoding="utf-8")
-    session_lines = [
-        line.strip() for line in ctx["session_cmds"].split("\n") if line.strip()
-    ]
+    session_lines = [line.strip() for line in ctx["session_cmds"].split("\n") if line.strip()]
     session_json = ", ".join(json.dumps(line) for line in session_lines) or '""'
     mapping = {
         "{{PROJECT_NAME}}": ctx["project_name"],
@@ -144,9 +136,7 @@ def apply(repo: Path, ctx: dict[str, str]) -> list[str]:
 
     agents_path = repo / "AGENTS.md"
     if not agents_path.is_file():
-        agents_path.write_text(
-            _fill_template("AGENTS.md.template", ctx), encoding="utf-8"
-        )
+        agents_path.write_text(_fill_template("AGENTS.md.template", ctx), encoding="utf-8")
         changed.append(str(agents_path))
 
     agent_dir = repo / ".agent"

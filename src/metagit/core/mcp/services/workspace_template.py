@@ -5,6 +5,7 @@ Apply packaged workspace templates to workspace projects.
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 from pathlib import Path
@@ -83,9 +84,7 @@ class WorkspaceTemplateService:
                     }
                 )
                 continue
-            planned = self._plan_copy(
-                template_dir=template_dir, target_root=target_root
-            )
+            planned = self._plan_copy(template_dir=template_dir, target_root=target_root)
             if dry_run:
                 results.append(
                     {
@@ -125,13 +124,7 @@ class WorkspaceTemplateService:
         root = self._templates_root()
         if not root.is_dir():
             return []
-        return sorted(
-            [
-                path.name
-                for path in root.iterdir()
-                if path.is_dir() and not path.name.startswith(".")
-            ]
-        )
+        return sorted([path.name for path in root.iterdir() if path.is_dir() and not path.name.startswith(".")])
 
     def _templates_root(self) -> Path:
         """Return packaged templates directory."""
@@ -196,10 +189,8 @@ class WorkspaceTemplateService:
                 continue
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(template_dir / relative, destination)
-            try:
+            with contextlib.suppress(OSError):
                 os.chmod(destination, 0o644)
-            except OSError:
-                pass
             item["status"] = "written"
             written.append(item)
         return written

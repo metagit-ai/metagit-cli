@@ -67,9 +67,7 @@ def resolve_target_dir(
     if create:
         path.mkdir(parents=True, exist_ok=False)
         return path
-    raise click.ClickException(
-        f"Target directory does not exist: {path} (use --create to create it)"
-    )
+    raise click.ClickException(f"Target directory does not exist: {path} (use --create to create it)")
 
 
 @click.command("init")
@@ -318,10 +316,7 @@ def _print_next_steps(
 
 def _sanitize_workspace_path(workspace_path: str) -> str:
     """Sanitize workspace path for .gitignore."""
-    if workspace_path.startswith("./"):
-        sanitized = workspace_path[2:]
-    else:
-        sanitized = workspace_path
+    sanitized = workspace_path[2:] if workspace_path.startswith("./") else workspace_path
 
     return f"{sanitized}/" if not sanitized.endswith("/") else sanitized
 
@@ -340,9 +335,7 @@ def _update_gitignore(
 
             for line in lines:
                 if line.strip() == target_path.strip():
-                    logger.info(
-                        f"Workspace path already defined in .gitignore: '{target_path}'"
-                    )
+                    logger.info(f"Workspace path already defined in .gitignore: '{target_path}'")
                     return
 
             with open(gitignore_path, "a", encoding="utf-8") as handle:

@@ -12,6 +12,13 @@ from typing import Any
 
 import click
 
+from metagit.cli.exit_codes import EXIT_NO_WORKSPACE
+from metagit.cli.json_output import emit_json
+from metagit.cli.shell_completion import (
+    complete_projects,
+    complete_repomix_profiles,
+    complete_repos,
+)
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
@@ -20,7 +27,6 @@ from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.event_service import WorkspaceEventService
 from metagit.core.context.handoff_service import HandoffService
-from metagit.core.context.session_begin_service import SessionBeginService
 from metagit.core.context.models import (
     ContextPackResult,
     RepoCardResult,
@@ -29,17 +35,11 @@ from metagit.core.context.models import (
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.repomix_profile_service import RepomixProfileService
+from metagit.core.context.session_begin_service import SessionBeginService
 from metagit.core.workspace.root_resolver import (
     resolve_definition_root,
     resolve_session_root,
     resolve_sync_root,
-)
-from metagit.cli.exit_codes import EXIT_NO_WORKSPACE
-from metagit.cli.json_output import emit_json
-from metagit.cli.shell_completion import (
-    complete_projects,
-    complete_repos,
-    complete_repomix_profiles,
 )
 
 
@@ -66,9 +66,7 @@ def _context_paths(
 
 
 def _summarize_digest_line(digest: SessionDigestResult) -> None:
-    click.echo(
-        f"digest: tier=2 since={digest.since!r} first_session={digest.first_session}"
-    )
+    click.echo(f"digest: tier=2 since={digest.since!r} first_session={digest.first_session}")
     if digest.manifest_changed:
         click.echo("  manifest changed vs session boundary")
     if digest.active_objective_id:
@@ -87,11 +85,7 @@ def _summarize_pack(pack: ContextPackResult) -> None:
     click.echo(f"tier: {pack.tier}")
     if pack.map:
         mp = pack.map
-        click.echo(
-            "map: "
-            f"{mp.project_count} project(s), {mp.repo_count} repo(s); "
-            f"root={mp.workspace_root}"
-        )
+        click.echo(f"map: {mp.project_count} project(s), {mp.repo_count} repo(s); root={mp.workspace_root}")
         if mp.projects:
             names = ", ".join(p.name for p in mp.projects[:8])
             suffix = "" if len(mp.projects) <= 8 else ", …"
@@ -124,9 +118,7 @@ def _summarize_card(card: RepoCardResult) -> None:
     click.echo(f"  status: {card.status} exists={card.exists} git={card.is_git_repo}")
     if card.exists and card.is_git_repo:
         click.echo(
-            "  git: "
-            f"branch={card.branch} ahead={card.ahead} behind={card.behind} "
-            f"dirty={card.dirty}",
+            f"  git: branch={card.branch} ahead={card.ahead} behind={card.behind} dirty={card.dirty}",
         )
     if card.health_flags:
         click.echo(f"  health: {' '.join(card.health_flags)}")
@@ -155,10 +147,7 @@ def context(ctx: click.Context) -> None:
     "--tier",
     type=click.IntRange(0, 2),
     required=True,
-    help=(
-        "0 = workspace map only; 1 = map + repo cards; "
-        "2 = tier 1 + session digest then touch session boundary"
-    ),
+    help=("0 = workspace map only; 1 = map + repo cards; 2 = tier 1 + session digest then touch session boundary"),
 )
 @click.option(
     "--project",
@@ -310,9 +299,7 @@ def session_begin_cmd(
     show_default=True,
     help="Path to the workspace .metagit.yml definition file",
 )
-@click.option(
-    "--project", "project_name", required=True, shell_complete=complete_projects
-)
+@click.option("--project", "project_name", required=True, shell_complete=complete_projects)
 @click.option("--repo", "repo_name", required=True, shell_complete=complete_repos)
 @click.option(
     "--json",
@@ -357,12 +344,8 @@ def repo_card_cmd(
     show_default=True,
     help="Path to the workspace .metagit.yml definition file",
 )
-@click.option(
-    "--profile", "profile_name", required=True, shell_complete=complete_repomix_profiles
-)
-@click.option(
-    "--project", "project_name", required=True, shell_complete=complete_projects
-)
+@click.option("--profile", "profile_name", required=True, shell_complete=complete_repomix_profiles)
+@click.option("--project", "project_name", required=True, shell_complete=complete_projects)
 @click.option("--repo", "repo_name", required=True, shell_complete=complete_repos)
 @click.option(
     "--output",
@@ -450,8 +433,7 @@ def objective_list_cmd(
         return
     for obj in result.objectives:
         click.echo(
-            f"{obj.id} [{obj.status}] {obj.title} "
-            f"repos={','.join(obj.repos) if obj.repos else '—'}",
+            f"{obj.id} [{obj.status}] {obj.title} repos={','.join(obj.repos) if obj.repos else '—'}",
         )
 
 
@@ -733,11 +715,7 @@ def approval_list_cmd(
     """List approval requests (pending by default)."""
     _, _, _, session_root, _ = _context_paths(ctx, definition_path)
     svc = ApprovalService(workspace_root=session_root)
-    result = (
-        svc.list(status=None)
-        if status_filter == "all"
-        else svc.list(status=status_filter)
-    )
+    result = svc.list(status=None) if status_filter == "all" else svc.list(status=status_filter)
     if as_json:
         emit_json(result)
         return
@@ -746,9 +724,7 @@ def approval_list_cmd(
         return
     for req in result.requests:
         note = req.resolver_note or "—"
-        click.echo(
-            f"{req.id} [{req.status}] {req.action} by={req.requested_by} note={note}"
-        )
+        click.echo(f"{req.id} [{req.status}] {req.action} by={req.requested_by} note={note}")
 
 
 @approval_group.command("approve")

@@ -56,11 +56,7 @@ def version_check(
     click.echo(f"installed: {result.installed_version}")
     if result.latest_release is not None:
         latest = result.latest_release
-        published = (
-            latest.published_at.date().isoformat()
-            if latest.published_at is not None
-            else "unknown date"
-        )
+        published = latest.published_at.date().isoformat() if latest.published_at is not None else "unknown date"
         click.echo(f"latest:    {latest.version} ({published})")
         if latest.html_url:
             click.echo(f"release:   {latest.html_url}")
@@ -70,8 +66,7 @@ def version_check(
         click.echo("latest:    unavailable")
 
     if result.pypi_version is not None and (
-        result.latest_release is None
-        or result.pypi_version != result.latest_release.version
+        result.latest_release is None or result.pypi_version != result.latest_release.version
     ):
         click.echo(f"pypi:      {result.pypi_version}")
 

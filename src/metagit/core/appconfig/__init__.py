@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import os
 import json
+import os
 from pathlib import Path
 from typing import Union
 
@@ -38,9 +38,7 @@ def load_config(config_path: str) -> Union[AppConfig, Exception]:
         config = AppConfig._override_from_environment(config)
         # Keep session path discoverable for components that initialize without direct
         # access to AppConfig but honor METAGIT_WORKSPACE_SESSION_PATH overrides.
-        os.environ.setdefault(
-            "METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path
-        )
+        os.environ.setdefault("METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path)
         return config
     except Exception as e:
         return e
@@ -59,11 +57,7 @@ def save_config(
         if auto_format:
             from metagit.core.config.format_service import ConfigFormatService
 
-            original_text = (
-                Path(config_path).read_text(encoding="utf-8")
-                if Path(config_path).is_file()
-                else ""
-            )
+            original_text = Path(config_path).read_text(encoding="utf-8") if Path(config_path).is_file() else ""
             formatted = ConfigFormatService().render_appconfig(
                 config,
                 original_text=original_text,
@@ -85,9 +79,7 @@ def save_config(
         return e
 
 
-def set_config(
-    appconfig: AppConfig, name: str, value: str, logger=None
-) -> Union[AppConfig, Exception]:
+def set_config(appconfig: AppConfig, name: str, value: str, logger=None) -> Union[AppConfig, Exception]:
     """Set appconfig values"""
     if logger is None:
         logger = UnifiedLogger(
@@ -121,9 +113,7 @@ def set_config(
                 try:
                     converted_value = field_type(value)
                 except (ValueError, TypeError):
-                    return TypeError(
-                        f"Invalid value type for '{name}'. Expected {field_type.__name__}."
-                    )
+                    return TypeError(f"Invalid value type for '{name}'. Expected {field_type.__name__}.")
             setattr(current_level, last_element, converted_value)
         else:
             return ValueError(f"Invalid key: {name}")
@@ -148,9 +138,7 @@ def get_config(
             )
         )
     try:
-        appconfig_dict = appconfig.model_dump(
-            exclude_none=True, exclude_unset=True, mode="json"
-        )
+        appconfig_dict = appconfig.model_dump(exclude_none=True, exclude_unset=True, mode="json")
         output_value = {"config": appconfig_dict}
         config_path = name.split(".")
         if name != "":

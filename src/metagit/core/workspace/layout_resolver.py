@@ -82,9 +82,7 @@ def resolve_active_project_name(
     if explicit and explicit.strip():
         return explicit.strip()
     names = list_project_names(config)
-    preferred = (
-        default_project.strip() if default_project and default_project.strip() else None
-    )
+    preferred = default_project.strip() if default_project and default_project.strip() else None
     if preferred and preferred in names:
         return preferred
     if len(names) == 1:
@@ -98,10 +96,7 @@ def active_project_resolution_error(config: MetagitConfig) -> str:
     """Human-readable message when project context cannot be resolved."""
     names = list_project_names(config)
     if not names:
-        return (
-            "No workspace projects defined in .metagit.yml; "
-            "add one with `metagit project add`."
-        )
+        return "No workspace projects defined in .metagit.yml; add one with `metagit project add`."
     return f"Multiple workspace projects ({', '.join(names)}); pass -p/--project."
 
 

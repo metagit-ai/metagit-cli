@@ -67,13 +67,9 @@ class GrepApiHandler:
         repo_rows = self._index.build_index(config, self._workspace_root)
         project = self._first(params, "project")
         if project:
-            repo_rows = [
-                row for row in repo_rows if str(row.get("project_name", "")) == project
-            ]
+            repo_rows = [row for row in repo_rows if str(row.get("project_name", "")) == project]
 
-        repo_selectors = [
-            item.strip() for item in params.get("repo", []) if item.strip()
-        ]
+        repo_selectors = [item.strip() for item in params.get("repo", []) if item.strip()]
         repo_paths = self._search.filter_repo_paths(
             repo_rows=repo_rows,
             repos=repo_selectors or None,
@@ -92,9 +88,7 @@ class GrepApiHandler:
             minimum=0,
             maximum=20,
         )
-        include_paths = (
-            self._first(params, "include_paths", "false") or "false"
-        ).lower() == "true"
+        include_paths = (self._first(params, "include_paths", "false") or "false").lower() == "true"
 
         hits = self._search.search(
             query=query_text,
@@ -132,9 +126,7 @@ class GrepApiHandler:
         return loaded
 
     @staticmethod
-    def _first(
-        params: dict[str, list[str]], key: str, default: str | None = None
-    ) -> str | None:
+    def _first(params: dict[str, list[str]], key: str, default: str | None = None) -> str | None:
         values = params.get(key)
         if not values:
             return default

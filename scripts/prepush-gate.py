@@ -217,9 +217,7 @@ def main() -> int:
         failed |= not run_security_scan(logs_dir)
 
         if shutil.which("gitleaks"):
-            security_ok = run_step(
-                "security_gitleaks", ["task", "secret:search"], logs_dir
-            )
+            security_ok = run_step("security_gitleaks", ["task", "secret:search"], logs_dir)
             if args.strict and not security_ok:
                 failed = True
         else:

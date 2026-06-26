@@ -14,18 +14,18 @@ from metagit.cli.json_output import (
     exit_on_catalog_mutation,
     exit_on_layout_mutation,
 )
+from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
 from metagit.core.workspace.layout_resolver import resolve_active_project_name
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
-from metagit.cli.shell_completion import complete_projects, complete_repos
-from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
-from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 
 _WORKSPACE_GREP_EPILOG = """
 Examples:
@@ -113,9 +113,7 @@ def workspace(ctx: click.Context, config_path: str) -> None:
 
 
 @workspace.command("list")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.option(
     "--no-index",
     is_flag=True,
@@ -139,9 +137,7 @@ def workspace_list(ctx: click.Context, as_json: bool, no_index: bool) -> None:
     summary = (result.data or {}).get("summary", {})
     click.echo(f"Definition: {summary.get('definition_path', config_path)}")
     click.echo(f"Workspace root: {summary.get('workspace_root', workspace_root)}")
-    click.echo(
-        f"Projects: {summary.get('project_count', 0)} | Repos: {summary.get('repo_count', 0)}"
-    )
+    click.echo(f"Projects: {summary.get('project_count', 0)} | Repos: {summary.get('repo_count', 0)}")
     for project in (result.data or {}).get("projects", []):
         click.echo(f"  - {project.get('name')} ({project.get('repo_count', 0)} repos)")
 
@@ -153,9 +149,7 @@ def workspace_project(_ctx: click.Context) -> None:
 
 
 @workspace_project.command("list")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_project_list(ctx: click.Context, as_json: bool) -> None:
     """List projects defined in the workspace manifest."""
@@ -171,17 +165,13 @@ def workspace_project_list(ctx: click.Context, as_json: bool) -> None:
 @workspace_project.command("add")
 @click.argument("name")
 @click.option("--description", default=None, help="Project description")
-@click.option(
-    "--agent-instructions", default=None, help="Agent instructions for the project"
-)
+@click.option("--agent-instructions", default=None, help="Agent instructions for the project")
 @click.option(
     "--ensure",
     is_flag=True,
     help="Succeed without changes when the project already exists with matching fields",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_project_add(
     ctx: click.Context,
@@ -208,9 +198,7 @@ def workspace_project_add(
 @workspace_project.command("remove")
 @click.argument("name")
 @click.option("--force", is_flag=True, default=False, help="Remove protected projects")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_project_remove(
     ctx: click.Context,
@@ -251,9 +239,7 @@ def workspace_project_remove(
     help="Do not migrate .metagit/sessions project files",
 )
 @click.option("--force", is_flag=True, default=False, help="Overwrite existing targets")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_project_rename(
     ctx: click.Context,
@@ -301,9 +287,7 @@ def workspace_repo(_ctx: click.Context) -> None:
     help="Limit to one project name",
     shell_complete=complete_projects,
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_repo_list(
     ctx: click.Context,
@@ -337,9 +321,7 @@ def workspace_repo_list(
     help="Workspace project name",
     shell_complete=complete_projects,
 )
-@click.option(
-    "--name", "-n", required=True, help="Repository name", shell_complete=complete_repos
-)
+@click.option("--name", "-n", required=True, help="Repository name", shell_complete=complete_repos)
 @click.option("--description", default=None)
 @click.option("--path", default=None, help="Relative path under workspace root")
 @click.option("--url", default=None, help="Remote repository URL")
@@ -356,9 +338,7 @@ def workspace_repo_list(
     is_flag=True,
     help="Succeed without changes when the repo already exists with matching url/path",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_repo_add(
     ctx: click.Context,
@@ -406,13 +386,9 @@ def workspace_repo_add(
     help="Workspace project name",
     shell_complete=complete_projects,
 )
-@click.option(
-    "--name", "-n", required=True, help="Repository name", shell_complete=complete_repos
-)
+@click.option("--name", "-n", required=True, help="Repository name", shell_complete=complete_repos)
 @click.option("--force", is_flag=True, default=False, help="Remove protected repos")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_repo_remove(
     ctx: click.Context,
@@ -451,9 +427,7 @@ def workspace_repo_remove(
     help="Update manifest only; do not rename sync mount",
 )
 @click.option("--force", is_flag=True, default=False)
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_repo_rename(
     ctx: click.Context,
@@ -510,9 +484,7 @@ def workspace_repo_rename(
     help="Update manifest only; do not move sync mount",
 )
 @click.option("--force", is_flag=True, default=False)
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_repo_move(
     ctx: click.Context,
@@ -580,9 +552,7 @@ def workspace_grep_group(ctx: click.Context) -> None:
     help="Limit search to repo selector(s); repeatable",
     shell_complete=complete_repos,
 )
-@click.option(
-    "--preset", default=None, help="Search preset (terraform, docker, infra, ci)"
-)
+@click.option("--preset", default=None, help="Search preset (terraform, docker, infra, ci)")
 @click.option(
     "--intent",
     default=None,
@@ -602,9 +572,7 @@ def workspace_grep_group(ctx: click.Context) -> None:
     default=False,
     help="Return matching file paths only",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_grep_search(
     ctx: click.Context,
@@ -629,9 +597,7 @@ def workspace_grep_search(
     search_service = WorkspaceSearchService()
     repo_rows = index_service.build_index(local_config, workspace_root)
     if project:
-        repo_rows = [
-            row for row in repo_rows if str(row.get("project_name", "")) == project
-        ]
+        repo_rows = [row for row in repo_rows if str(row.get("project_name", "")) == project]
     repo_selectors = [item.strip() for item in repo if item.strip()]
     repo_paths = search_service.filter_repo_paths(
         repo_rows=repo_rows,
@@ -676,9 +642,7 @@ def workspace_grep_search(
 
 
 @workspace_grep_group.command("info")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def workspace_grep_info(ctx: click.Context, as_json: bool) -> None:
     """Show ripgrep availability and workspace grep search backend."""

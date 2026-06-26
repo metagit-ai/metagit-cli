@@ -11,7 +11,6 @@ import click
 from metagit.core.init.models import InitPromptSpec, InitTemplateManifest
 from metagit.core.utils.yaml_class import yaml
 
-
 PromptFn = Callable[..., str]
 
 
@@ -26,9 +25,7 @@ def load_answers_file(path: Path) -> dict[str, str]:
         loaded = yaml.safe_load(text)
     if not isinstance(loaded, dict):
         raise ValueError("answers file must be a mapping of variable names to values")
-    return {
-        str(key): "" if value is None else str(value) for key, value in loaded.items()
-    }
+    return {str(key): "" if value is None else str(value) for key, value in loaded.items()}
 
 
 def build_builtin_defaults(
@@ -38,6 +35,7 @@ def build_builtin_defaults(
     git_remote_url: Optional[str],
 ) -> dict[str, str]:
     """Built-in default resolvers for template prompts."""
+    _ = target_dir
     return {
         "directory_name": directory_name,
         "git_remote_url": git_remote_url or "",
@@ -76,9 +74,7 @@ def collect_answers(
     if answers:
         merged.update(answers)
     if overrides:
-        merged.update(
-            {key: value for key, value in overrides.items() if value is not None}
-        )
+        merged.update({key: value for key, value in overrides.items() if value is not None})
 
     builtins = build_builtin_defaults(
         target_dir,
@@ -94,8 +90,7 @@ def collect_answers(
         if no_prompt:
             if prompt.required and not default:
                 raise click.UsageError(
-                    f"Missing required init answer {prompt.name!r} "
-                    f"(provide --answers-file or drop --no-prompt)"
+                    f"Missing required init answer {prompt.name!r} (provide --answers-file or drop --no-prompt)"
                 )
             merged[prompt.name] = default
             continue

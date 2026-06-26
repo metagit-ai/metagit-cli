@@ -160,8 +160,7 @@ SPECS: list[dict[str, object]] = [
         "id": "repo-enricher",
         "label": "Repo enricher",
         "description": (
-            "Enriches a single repo catalog entry via detect/source sync and "
-            "repo-enrich prompt workflows."
+            "Enriches a single repo catalog entry via detect/source sync and repo-enrich prompt workflows."
         ),
         "archetype": "specialist",
         "scope": "repo",
@@ -193,9 +192,7 @@ SPECS: list[dict[str, object]] = [
     {
         "id": "agent-access-optimizer",
         "label": "Agent access optimizer",
-        "description": (
-            "Optimizes agent onboarding artifacts (llms.txt, AGENTS.md) for one repo."
-        ),
+        "description": ("Optimizes agent onboarding artifacts (llms.txt, AGENTS.md) for one repo."),
         "archetype": "specialist",
         "scope": "repo",
         "sort_order": 90,
@@ -207,9 +204,7 @@ SPECS: list[dict[str, object]] = [
         "recommended_skills": ["metagit-agent-access"],
         "tools": "Read, Write, Edit, Grep, Glob, Skill",
         "role_heading": "Agent access optimizer",
-        "role_summary": (
-            "You improve agent-readable docs for a single repo without changing runtime code."
-        ),
+        "role_summary": ("You improve agent-readable docs for a single repo without changing runtime code."),
         "sections": [
             "## Agent access workflow",
             "",
@@ -223,9 +218,7 @@ SPECS: list[dict[str, object]] = [
     {
         "id": "catalog-bootstrapper",
         "label": "Catalog bootstrapper",
-        "description": (
-            "Registers projects and repos in the workspace manifest using search-before-create."
-        ),
+        "description": ("Registers projects and repos in the workspace manifest using search-before-create."),
         "archetype": "specialist",
         "scope": "workspace",
         "sort_order": 40,
@@ -242,9 +235,7 @@ SPECS: list[dict[str, object]] = [
         ],
         "tools": "Read, Write, Bash, Grep, Glob, Skill",
         "role_heading": "Catalog bootstrapper",
-        "role_summary": (
-            "You expand the workspace catalog safely — search before create, validate after edits."
-        ),
+        "role_summary": ("You expand the workspace catalog safely — search before create, validate after edits."),
         "sections": [
             "## Catalog workflow",
             "",
@@ -262,9 +253,7 @@ SPECS: list[dict[str, object]] = [
     {
         "id": "upstream-triage",
         "label": "Upstream triage",
-        "description": (
-            "Triages cross-repo blockers by ranking likely upstream repositories and files."
-        ),
+        "description": ("Triages cross-repo blockers by ranking likely upstream repositories and files."),
         "archetype": "specialist",
         "scope": "workspace",
         "sort_order": 50,
@@ -280,9 +269,7 @@ SPECS: list[dict[str, object]] = [
         ],
         "tools": "Read, Bash, Grep, Glob, Skill",
         "role_heading": "Upstream triage",
-        "role_summary": (
-            "You find upstream causes when local fixes look incomplete across the workspace."
-        ),
+        "role_summary": ("You find upstream causes when local fixes look incomplete across the workspace."),
         "sections": [
             "## Triage workflow",
             "",
@@ -300,9 +287,7 @@ SPECS: list[dict[str, object]] = [
     {
         "id": "release-auditor",
         "label": "Release auditor",
-        "description": (
-            "Runs release-audit workflows, objectives tracking, and prepush gate checks."
-        ),
+        "description": ("Runs release-audit workflows, objectives tracking, and prepush gate checks."),
         "archetype": "specialist",
         "scope": "workspace",
         "sort_order": 70,
@@ -314,9 +299,7 @@ SPECS: list[dict[str, object]] = [
         "recommended_skills": ["metagit-release-audit", "metagit-control-center"],
         "tools": "Read, Bash, Grep, Glob, Skill",
         "role_heading": "Release auditor",
-        "role_summary": (
-            "You verify release readiness across managed repos without bypassing QA gates."
-        ),
+        "role_summary": ("You verify release readiness across managed repos without bypassing QA gates."),
         "sections": [
             "## Release audit workflow",
             "",
@@ -332,9 +315,7 @@ SPECS: list[dict[str, object]] = [
     {
         "id": "secret-bootstrapper",
         "label": "Secret bootstrapper",
-        "description": (
-            "Guides SecretZero bootstrap when Secretfile.yml is present. Never handles secret values."
-        ),
+        "description": ("Guides SecretZero bootstrap when Secretfile.yml is present. Never handles secret values."),
         "archetype": "specialist",
         "scope": "workspace",
         "sort_order": 80,
@@ -352,9 +333,7 @@ SPECS: list[dict[str, object]] = [
         ],
         "tools": "Read, Bash, Grep, Glob, Skill",
         "role_heading": "Secret bootstrapper",
-        "role_summary": (
-            "You guide operators through SecretZero bootstrap without pasting secrets into chat."
-        ),
+        "role_summary": ("You guide operators through SecretZero bootstrap without pasting secrets into chat."),
         "sections": [
             "## SecretZero workflow",
             "",
@@ -530,9 +509,7 @@ def write_template(spec: dict[str, object]) -> None:
     yaml_parts.append("vendors:")
     yaml_parts.extend(VENDOR_BLOCK.format(id=template_id).splitlines())
     yaml_parts.extend(FILE_BLOCK.format(id=template_id).splitlines())
-    (target / "template.yaml").write_text(
-        "\n".join(yaml_parts) + "\n", encoding="utf-8"
-    )
+    (target / "template.yaml").write_text("\n".join(yaml_parts) + "\n", encoding="utf-8")
 
     default_tpl = _frontmatter(spec) + '{{ include "body" }}\n'
     (target / f"{template_id}.md.tpl").write_text(default_tpl, encoding="utf-8")
@@ -549,9 +526,7 @@ def write_template(spec: dict[str, object]) -> None:
         content = content.replace("Orchestration overseer", str(spec["role_heading"]))
         if "{{ include" not in content:
             content = _frontmatter(spec) + '{{ include "body" }}\n'
-        (target / f"{template_id}.{suffix}.md.tpl").write_text(
-            content, encoding="utf-8"
-        )
+        (target / f"{template_id}.{suffix}.md.tpl").write_text(content, encoding="utf-8")
 
     for fragment in ("AGENTS.md.fragment.tpl", "manifest.json.tpl"):
         shutil.copy2(OVERSEER / fragment, target / fragment)

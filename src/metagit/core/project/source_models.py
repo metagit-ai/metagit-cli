@@ -3,8 +3,8 @@
 Models for provider-based recursive repository discovery and sync planning.
 """
 
-from enum import Enum
 import re
+from enum import Enum
 from typing import Any, List, Literal, Optional
 
 from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
@@ -34,16 +34,10 @@ class SourceSpec(BaseModel):
     org: Optional[str] = Field(None, description="GitHub organization")
     user: Optional[str] = Field(None, description="GitHub user")
     group: Optional[str] = Field(None, description="GitLab group path")
-    recursive: bool = Field(
-        True, description="Whether to recurse into nested scopes when supported"
-    )
-    include_archived: bool = Field(
-        False, description="Include archived repositories in discovery"
-    )
+    recursive: bool = Field(True, description="Whether to recurse into nested scopes when supported")
+    include_archived: bool = Field(False, description="Include archived repositories in discovery")
     include_forks: bool = Field(False, description="Include forked repositories")
-    path_prefix: Optional[str] = Field(
-        None, description="Optional namespace/repo prefix filter"
-    )
+    path_prefix: Optional[str] = Field(None, description="Optional namespace/repo prefix filter")
     include_patterns: List[str] = Field(
         default_factory=list,
         description="fnmatch allowlist on provider full_name; empty means no allowlist",
@@ -86,9 +80,7 @@ class SourceSpec(BaseModel):
         if self.provider == SourceProvider.GITHUB:
             selectors = [self.org, self.user]
             if sum(1 for value in selectors if value) != 1:
-                raise ValueError(
-                    "GitHub source requires exactly one of --org or --user"
-                )
+                raise ValueError("GitHub source requires exactly one of --org or --user")
             if self.group:
                 raise ValueError("GitHub source cannot use --group")
         if self.provider == SourceProvider.GITLAB:
@@ -118,22 +110,16 @@ class ProjectSource(BaseModel):
         SourceSyncMode.ADDITIVE,
         description="additive or reconcile (discover is CLI-only)",
     )
-    recursive: bool = Field(
-        True, description="Recurse into nested scopes when supported"
-    )
+    recursive: bool = Field(True, description="Recurse into nested scopes when supported")
     ensure: bool = Field(True, description="Skip metadata updates for existing URLs")
     refresh_metadata: bool = Field(
         False,
         description="With ensure, still refresh description/tags",
     )
-    enrich_topics: bool = Field(
-        True, description="Merge provider topics into repo tags"
-    )
+    enrich_topics: bool = Field(True, description="Merge provider topics into repo tags")
     include_archived: bool = Field(False, description="Include archived repositories")
     include_forks: bool = Field(False, description="Include forked repositories")
-    path_prefix: Optional[str] = Field(
-        None, description="Optional namespace/repo prefix"
-    )
+    path_prefix: Optional[str] = Field(None, description="Optional namespace/repo prefix")
     include_patterns: List[str] = Field(default_factory=list)
     ignore_patterns: List[str] = Field(
         default_factory=list,
@@ -147,17 +133,13 @@ class ProjectSource(BaseModel):
     def validate_id_slug(cls, value: str) -> str:
         trimmed = value.strip()
         if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", trimmed):
-            raise ValueError(
-                "source id must be a lowercase slug (letters, numbers, hyphens)"
-            )
+            raise ValueError("source id must be a lowercase slug (letters, numbers, hyphens)")
         return trimmed
 
     @model_validator(mode="after")
     def validate_manifest_source(self) -> "ProjectSource":
         if self.mode == SourceSyncMode.DISCOVER:
-            raise ValueError(
-                "sources[].mode cannot be discover; use additive or reconcile"
-            )
+            raise ValueError("sources[].mode cannot be discover; use additive or reconcile")
         _ = SourceSpec(
             provider=self.provider,
             org=self.org,

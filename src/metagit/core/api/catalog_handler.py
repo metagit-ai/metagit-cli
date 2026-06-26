@@ -15,7 +15,6 @@ from metagit.core.config.models import MetagitConfig
 from metagit.core.workspace.catalog_models import CatalogError, CatalogMutationResult
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 
-
 JsonResponder = Callable[[int, dict[str, Any]], None]
 
 
@@ -68,12 +67,8 @@ class CatalogApiHandler:
                 description=payload.get("description"),
                 agent_instructions=payload.get("agent_instructions"),
                 protected=payload.get("protected"),
-                tags=payload.get("tags")
-                if isinstance(payload.get("tags"), dict)
-                else None,
-                metadata=payload.get("metadata")
-                if isinstance(payload.get("metadata"), dict)
-                else None,
+                tags=payload.get("tags") if isinstance(payload.get("tags"), dict) else None,
+                metadata=payload.get("metadata") if isinstance(payload.get("metadata"), dict) else None,
                 ensure=bool(payload.get("ensure", True)),
             )
             self._respond_mutation(mutation, respond)
@@ -113,9 +108,7 @@ class CatalogApiHandler:
                 url=payload.get("url"),
                 sync=payload.get("sync"),
                 agent_instructions=payload.get("agent_instructions"),
-                tags=payload.get("tags")
-                if isinstance(payload.get("tags"), dict)
-                else None,
+                tags=payload.get("tags") if isinstance(payload.get("tags"), dict) else None,
                 protected=payload.get("protected"),
             )
             if isinstance(built, CatalogError):

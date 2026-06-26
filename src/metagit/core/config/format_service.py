@@ -10,14 +10,14 @@ from pydantic import BaseModel
 
 from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.config.documentation_models import compact_documentation_list
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.config.payload_compact import prepare_format_payload
 from metagit.core.config.schema_urls import (
     METAGIT_APPCONFIG_SCHEMA_URL,
     METAGIT_CONFIG_SCHEMA_URL,
 )
-from metagit.core.config.documentation_models import compact_documentation_list
-from metagit.core.config.payload_compact import prepare_format_payload
 from metagit.core.config.yaml_order import order_payload
 from metagit.core.config.yaml_roundtrip import format_yaml_document
 
@@ -126,9 +126,7 @@ class ConfigFormatService:
             exclude_defaults=not include_defaults,
             mode="json",
         )
-        body = prepare_format_payload(
-            body, AppConfig, include_defaults=include_defaults
-        )
+        body = prepare_format_payload(body, AppConfig, include_defaults=include_defaults)
         ordered_body = order_payload(body, AppConfig)
         return format_yaml_document(
             original_text,
@@ -154,9 +152,7 @@ class ConfigFormatService:
         formatted: str,
     ) -> FormatFileResult:
         normalized_original = (
-            original_text
-            if original_text.endswith("\n") or not original_text
-            else f"{original_text}\n"
+            original_text if original_text.endswith("\n") or not original_text else f"{original_text}\n"
         )
         return FormatFileResult(
             target=target,

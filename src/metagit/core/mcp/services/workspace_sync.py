@@ -55,16 +55,12 @@ class WorkspaceSyncService:
             for future in as_completed(futures):
                 results.append(future.result())
 
-        results.sort(
-            key=lambda item: (item.get("project_name", ""), item.get("repo_name", ""))
-        )
+        results.sort(key=lambda item: (item.get("project_name", ""), item.get("repo_name", "")))
         summary = {
             "total": len(results),
             "ok": sum(1 for item in results if item.get("ok")),
             "skipped": sum(1 for item in results if item.get("skipped")),
-            "failed": sum(
-                1 for item in results if not item.get("ok") and not item.get("skipped")
-            ),
+            "failed": sum(1 for item in results if not item.get("ok") and not item.get("skipped")),
             "dry_run": dry_run,
         }
         return {"ok": summary["failed"] == 0, "results": results, "summary": summary}

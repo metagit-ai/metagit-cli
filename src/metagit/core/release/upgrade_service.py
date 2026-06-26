@@ -96,9 +96,7 @@ class VersionUpgradeService:
                 install_method=method,
                 command=command,
                 check=check,
-                message=(
-                    f"Update available. Re-run with --apply to execute: {command}"
-                ),
+                message=(f"Update available. Re-run with --apply to execute: {command}"),
             )
 
         argv = shlex.split(command)

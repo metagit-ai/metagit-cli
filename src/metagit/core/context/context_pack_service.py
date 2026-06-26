@@ -52,9 +52,7 @@ class ContextPackService:
         max_tokens: Optional[int] = None,
     ) -> ContextPackResult:
         """Assemble a context pack for tier 0, 1, or 2 (see module docstring)."""
-        resolved_definition_root = definition_root or str(
-            Path(config_path).expanduser().resolve().parent
-        )
+        resolved_definition_root = definition_root or str(Path(config_path).expanduser().resolve().parent)
         resolved_session_root = session_root or resolved_definition_root
         map_result = self._map.build(
             config=config,
@@ -99,9 +97,7 @@ class ContextPackService:
             )
             session_store = SessionStore(workspace_root=resolved_session_root)
             since = session_store.get_last_session_at()
-            objectives_list = (
-                ObjectiveService(workspace_root=resolved_session_root).list().objectives
-            )
+            objectives_list = ObjectiveService(workspace_root=resolved_session_root).list().objectives
             active_oid = next(
                 (o.id for o in objectives_list if o.status == "in_progress"),
                 None,

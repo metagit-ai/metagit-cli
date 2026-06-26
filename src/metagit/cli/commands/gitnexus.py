@@ -66,9 +66,7 @@ def gitnexus_group() -> None:
     help="Pass --exact-only to contract sync",
 )
 @click.option("--verbose", is_flag=True, default=False, help="Verbose contract sync")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON result"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON result")
 @click.pass_context
 def gitnexus_group_sync(
     ctx: click.Context,
@@ -102,9 +100,7 @@ def gitnexus_group_sync(
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
             raise loaded
-        root = workspace_root or str(
-            Path(app_config.workspace.path).expanduser().resolve()
-        )
+        root = workspace_root or str(Path(app_config.workspace.path).expanduser().resolve())
         result = GitNexusGroupSyncService().sync_workspace(
             loaded,
             root,

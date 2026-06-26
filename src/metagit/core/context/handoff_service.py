@@ -51,9 +51,7 @@ class HandoffService:
         self._store.save_handoffs(rows)
         return row
 
-    def claim(
-        self, handoff_id: str, *, claimed_by: str, note: Optional[str]
-    ) -> HandoffItem:
+    def claim(self, handoff_id: str, *, claimed_by: str, note: Optional[str]) -> HandoffItem:
         return self._transition(
             handoff_id,
             to_status="claimed",
@@ -63,9 +61,7 @@ class HandoffService:
             claimed_by=claimed_by,
         )
 
-    def complete(
-        self, handoff_id: str, *, actor: str, note: Optional[str]
-    ) -> HandoffItem:
+    def complete(self, handoff_id: str, *, actor: str, note: Optional[str]) -> HandoffItem:
         return self._transition(
             handoff_id,
             to_status="completed",

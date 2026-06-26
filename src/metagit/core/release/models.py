@@ -15,13 +15,9 @@ class LatestReleaseInfo(BaseModel):
     """Published release metadata from GitHub or PyPI."""
 
     version: str = Field(description="Normalized release version (no leading v)")
-    tag_name: str | None = Field(
-        default=None, description="Git tag when source is github"
-    )
+    tag_name: str | None = Field(default=None, description="Git tag when source is github")
     name: str | None = Field(default=None, description="Human-readable release title")
-    published_at: datetime | None = Field(
-        default=None, description="UTC publish timestamp when known"
-    )
+    published_at: datetime | None = Field(default=None, description="UTC publish timestamp when known")
     html_url: str | None = Field(default=None, description="Release page URL")
     body: str | None = Field(default=None, description="Release notes markdown")
     source: Literal["github", "pypi"] = Field(description="Where metadata came from")
@@ -32,9 +28,7 @@ class VersionCheckResult(BaseModel):
 
     installed_version: str
     latest_release: LatestReleaseInfo | None = None
-    pypi_version: str | None = Field(
-        default=None, description="Latest version on PyPI (metagit-cli)"
-    )
+    pypi_version: str | None = Field(default=None, description="Latest version on PyPI (metagit-cli)")
     update_available: bool = Field(
         default=False,
         description="True when a published release is newer than installed",
@@ -69,9 +63,7 @@ class VersionUpgradeResult(BaseModel):
         default=False,
         description="True when already on the latest published release",
     )
-    install_method: InstallMethod = Field(
-        description="Detected install channel for the running package"
-    )
+    install_method: InstallMethod = Field(description="Detected install channel for the running package")
     command: str | None = Field(
         default=None,
         description="Upgrade command that was or would be executed",

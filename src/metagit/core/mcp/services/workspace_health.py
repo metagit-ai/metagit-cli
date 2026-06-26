@@ -10,11 +10,11 @@ from typing import Any, Optional
 
 from metagit.core.appconfig.models import WorkspaceDedupeConfig
 from metagit.core.config.models import MetagitConfig
-from metagit.core.workspace import workspace_dedupe
 from metagit.core.mcp.gate import WorkspaceGate
 from metagit.core.mcp.services.gitnexus_registry import GitNexusRegistryAdapter
 from metagit.core.mcp.services.repo_git_stats import inspect_repo_state
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.workspace import workspace_dedupe
 from metagit.core.workspace.health_models import (
     HealthRecommendation,
     RepoHealthRow,
@@ -73,21 +73,13 @@ class WorkspaceHealthService:
 
         for row in rows:
             repo_path = str(row.get("repo_path", ""))
-            inspect_git = (
-                row.get("exists")
-                and row.get("is_git_repo")
-                and (check_git_status or check_stale_branches)
-            )
+            inspect_git = row.get("exists") and row.get("is_git_repo") and (check_git_status or check_stale_branches)
             inspected = inspect_repo_state(repo_path=repo_path) if inspect_git else {}
             gn_status = gitnexus_map.get(repo_path) if check_gitnexus else None
             head_raw = inspected.get("head_commit_age_days")
-            head_age_days = (
-                float(head_raw) if isinstance(head_raw, (int, float)) else None
-            )
+            head_age_days = float(head_raw) if isinstance(head_raw, (int, float)) else None
             merge_raw = inspected.get("merge_base_age_days")
-            merge_age_days = (
-                float(merge_raw) if isinstance(merge_raw, (int, float)) else None
-            )
+            merge_age_days = float(merge_raw) if isinstance(merge_raw, (int, float)) else None
             ahead_raw = inspected.get("ahead")
             behind_raw = inspected.get("behind")
             repo_rows.append(
@@ -98,25 +90,15 @@ class WorkspaceHealthService:
                     status=str(row.get("status", "")),
                     exists=bool(row.get("exists")),
                     is_git_repo=bool(row.get("is_git_repo")),
-                    branch=str(inspected.get("branch"))
-                    if inspected.get("branch") is not None
-                    else None,
+                    branch=str(inspected.get("branch")) if inspected.get("branch") is not None else None,
                     dirty=bool(inspected.get("dirty"))
                     if check_git_status and inspected.get("dirty") is not None
                     else None,
-                    ahead=int(ahead_raw)
-                    if check_git_status and isinstance(ahead_raw, int)
-                    else None,
-                    behind=int(behind_raw)
-                    if check_git_status and isinstance(behind_raw, int)
-                    else None,
+                    ahead=int(ahead_raw) if check_git_status and isinstance(ahead_raw, int) else None,
+                    behind=int(behind_raw) if check_git_status and isinstance(behind_raw, int) else None,
                     gitnexus_status=gn_status,
-                    head_commit_age_days=head_age_days
-                    if check_stale_branches
-                    else None,
-                    merge_base_age_days=merge_age_days
-                    if check_stale_branches
-                    else None,
+                    head_commit_age_days=head_age_days if check_stale_branches else None,
+                    merge_base_age_days=merge_age_days if check_stale_branches else None,
                 )
             )
 
@@ -143,10 +125,7 @@ class WorkspaceHealthService:
                             HealthRecommendation(
                                 severity="warning",
                                 action="review_branch_age",
-                                message=(
-                                    "HEAD commit is stale "
-                                    f"({head_age_days:.0f}d); merge or archive."
-                                ),
+                                message=(f"HEAD commit is stale ({head_age_days:.0f}d); merge or archive."),
                                 project_name=row.get("project_name"),
                                 repo_name=row.get("repo_name"),
                                 repo_path=repo_path,
@@ -158,19 +137,13 @@ class WorkspaceHealthService:
                             HealthRecommendation(
                                 severity="info",
                                 action="review_branch_age",
-                                message=(
-                                    "HEAD commit is aging "
-                                    f"({head_age_days:.0f}d since last commit on HEAD)."
-                                ),
+                                message=(f"HEAD commit is aging ({head_age_days:.0f}d since last commit on HEAD)."),
                                 project_name=row.get("project_name"),
                                 repo_name=row.get("repo_name"),
                                 repo_path=repo_path,
                             )
                         )
-                if (
-                    merge_age_days is not None
-                    and merge_age_days >= integration_stale_days
-                ):
+                if merge_age_days is not None and merge_age_days >= integration_stale_days:
                     integration_stale_count += 1
                     recommendations.append(
                         HealthRecommendation(
@@ -255,8 +228,7 @@ class WorkspaceHealthService:
                 HealthRecommendation(
                     severity="critical",
                     action="fix_config",
-                    message=gate_status.reason
-                    or "Workspace configuration is not active.",
+                    message=gate_status.reason or "Workspace configuration is not active.",
                 ),
             )
 
@@ -306,20 +278,14 @@ class WorkspaceHealthService:
         for url, grouped in by_url.items():
             if len(grouped) < 2:
                 continue
-            names = ", ".join(
-                f"{item['project_name']}/{item['repo_name']}" for item in grouped
-            )
+            names = ", ".join(f"{item['project_name']}/{item['repo_name']}" for item in grouped)
             action = "review_config"
             message = f"Multiple repos share URL {url}: {names}"
             if dedupe is not None and dedupe.enabled:
                 action = "resync_canonical"
-                message = (
-                    f"{message}. Dedupe is enabled; run project sync to refresh mounts."
-                )
+                message = f"{message}. Dedupe is enabled; run project sync to refresh mounts."
             elif dedupe is not None and not dedupe.enabled:
-                message = (
-                    f"{message}. Consider enabling workspace.dedupe in app config."
-                )
+                message = f"{message}. Consider enabling workspace.dedupe in app config."
             warnings.append(
                 HealthRecommendation(
                     severity="info",
@@ -329,9 +295,7 @@ class WorkspaceHealthService:
             )
         return warnings
 
-    def _broken_mount_warnings(
-        self, rows: list[dict[str, Any]]
-    ) -> list[HealthRecommendation]:
+    def _broken_mount_warnings(self, rows: list[dict[str, Any]]) -> list[HealthRecommendation]:
         """Recommend repair when a configured repo path is a broken symlink."""
         warnings: list[HealthRecommendation] = []
         for row in rows:
@@ -384,9 +348,7 @@ class WorkspaceHealthService:
             )
         return warnings
 
-    def _sort_recommendations(
-        self, recommendations: list[HealthRecommendation]
-    ) -> list[HealthRecommendation]:
+    def _sort_recommendations(self, recommendations: list[HealthRecommendation]) -> list[HealthRecommendation]:
         """Sort recommendations by severity."""
         order = {"critical": 0, "warning": 1, "info": 2}
         return sorted(recommendations, key=lambda item: order.get(item.severity, 3))

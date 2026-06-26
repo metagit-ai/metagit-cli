@@ -1,13 +1,14 @@
 #! /usr/bin/env python3
 
+from contextlib import suppress
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical
-from textual.widgets import Input, Static, ListView, ListItem, Label
-from textual.binding import Binding
 from pydantic import BaseModel, Field, field_validator
 from rapidfuzz import fuzz, process
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Horizontal, Vertical
+from textual.widgets import Input, Label, ListItem, ListView, Static
 
 """
 This is a fuzzy finder that uses Textual and rapidfuzz to find items in a list.
@@ -27,44 +28,28 @@ class FuzzyFinderTarget(BaseModel):
 class FuzzyFinderConfig(BaseModel):
     """Configuration for a fuzzy finder using Textual and rapidfuzz."""
 
-    items: List[Union[str, Any]] = Field(
-        ..., description="List of items to search. Can be strings or objects."
-    )
-    display_field: Optional[str] = Field(
-        None, description="Field name to use for display/search if items are objects."
-    )
+    items: List[Union[str, Any]] = Field(..., description="List of items to search. Can be strings or objects.")
+    display_field: Optional[str] = Field(None, description="Field name to use for display/search if items are objects.")
     score_threshold: float = Field(
         70.0,
         ge=0.0,
         le=100.0,
         description="Minimum score (0-100) for a match to be included.",
     )
-    max_results: int = Field(
-        10, ge=1, description="Maximum number of results to display."
-    )
+    max_results: int = Field(10, ge=1, description="Maximum number of results to display.")
     scorer: str = Field(
         "partial_ratio",
         description="Fuzzy matching scorer: 'partial_ratio', 'ratio', or 'token_sort_ratio'.",
     )
-    prompt_text: str = Field(
-        "> ", description="Prompt text displayed in the input field."
-    )
-    case_sensitive: bool = Field(
-        False, description="Whether matching is case-sensitive."
-    )
+    prompt_text: str = Field("> ", description="Prompt text displayed in the input field.")
+    case_sensitive: bool = Field(False, description="Whether matching is case-sensitive.")
     multi_select: bool = Field(False, description="Allow selecting multiple items.")
-    enable_preview: bool = Field(
-        False, description="Enable preview pane for selected item."
-    )
-    preview_field: Optional[str] = Field(
-        None, description="Field name to use for preview if items are objects."
-    )
+    enable_preview: bool = Field(False, description="Enable preview pane for selected item.")
+    preview_field: Optional[str] = Field(None, description="Field name to use for preview if items are objects.")
     preview_header: Optional[str] = Field(None, description="Header for preview pane.")
     sort_items: bool = Field(True, description="Whether to sort the items.")
     # Styling options
-    highlight_color: str = Field(
-        "bold white bg:#4444aa", description="Color/style for highlighted items."
-    )
+    highlight_color: str = Field("bold white bg:#4444aa", description="Color/style for highlighted items.")
     normal_color: str = Field("white", description="Color/style for normal items.")
     prompt_color: str = Field("bold cyan", description="Color/style for prompt text.")
     separator_color: str = Field("gray", description="Color/style for separator line.")
@@ -84,9 +69,7 @@ class FuzzyFinderConfig(BaseModel):
         ge=0,
         description="Total candidates available before filtering/capping (for UI status text).",
     )
-    query_mode_label: str = Field(
-        "filtered", description="Label used in UI status text for matched results."
-    )
+    query_mode_label: str = Field("filtered", description="Label used in UI status text for matched results.")
 
     @field_validator("items")
     @classmethod
@@ -116,9 +99,7 @@ class FuzzyFinderConfig(BaseModel):
     def validate_preview_field(cls, v: Optional[str], info: Any) -> Optional[str]:
         """Ensure preview_field is valid if enable_preview is True."""
         if info.data.get("enable_preview") and not v:
-            raise ValueError(
-                "preview_field must be specified when enable_preview is True."
-            )
+            raise ValueError("preview_field must be specified when enable_preview is True.")
         if (
             v
             and info.data.get("items")
@@ -176,10 +157,7 @@ class FuzzyFinderConfig(BaseModel):
             # Determine the key to use for color lookup
             if self.color_field:
                 # Use specified color field
-                if isinstance(item, str):
-                    color_key = item
-                else:
-                    color_key = str(getattr(item, self.color_field))
+                color_key = item if isinstance(item, str) else str(getattr(item, self.color_field))
             elif self.display_field and not isinstance(item, str):
                 # Use display field
                 color_key = str(getattr(item, self.display_field))
@@ -328,17 +306,11 @@ class FuzzyFinderApp(App):
         try:
             meta = self.query_one("#results_meta", Static)
             shown_count = len(self.current_results)
-            total_count = (
-                self.config.total_count
-                if self.config.total_count is not None
-                else len(self.config.items)
-            )
+            total_count = self.config.total_count if self.config.total_count is not None else len(self.config.items)
             cap_count = self.config.max_results
             mode_label = self.config.query_mode_label
             query_label = query if query else "all"
-            meta.update(
-                f"Showing {shown_count}/{total_count} ({mode_label}, limit={cap_count}) | query: {query_label}"
-            )
+            meta.update(f"Showing {shown_count}/{total_count} ({mode_label}, limit={cap_count}) | query: {query_label}")
         except Exception:
             return
 
@@ -378,9 +350,7 @@ class FuzzyFinderApp(App):
             results_list.append(item)
 
         # Set the ListView's index to match our highlighted_index
-        if self.current_results and 0 <= self.highlighted_index < len(
-            self.current_results
-        ):
+        if self.current_results and 0 <= self.highlighted_index < len(self.current_results):
             results_list.index = self.highlighted_index
 
     def _apply_custom_color(self, item: ListItem, color_spec: str) -> None:
@@ -427,9 +397,7 @@ class FuzzyFinderApp(App):
 
         preview_pane = self.query_one("#preview_pane", Static)
 
-        if not self.current_results or self.highlighted_index >= len(
-            self.current_results
-        ):
+        if not self.current_results or self.highlighted_index >= len(self.current_results):
             preview_pane.update("No preview available")
             return
 
@@ -451,9 +419,7 @@ class FuzzyFinderApp(App):
         if event.list_view.id == "results_list" and self.current_results:
             # Update highlighted index based on selection
             results_list = self.query_one("#results_list", ListView)
-            if results_list.index is not None and 0 <= results_list.index < len(
-                self.current_results
-            ):
+            if results_list.index is not None and 0 <= results_list.index < len(self.current_results):
                 self.highlighted_index = results_list.index
                 self.selected_item = self.current_results[self.highlighted_index]
                 self.exit(self.selected_item)
@@ -463,9 +429,7 @@ class FuzzyFinderApp(App):
         if event.list_view.id == "results_list" and self.current_results:
             # Keep our highlighted_index in sync with ListView
             results_list = self.query_one("#results_list", ListView)
-            if results_list.index is not None and 0 <= results_list.index < len(
-                self.current_results
-            ):
+            if results_list.index is not None and 0 <= results_list.index < len(self.current_results):
                 self.highlighted_index = results_list.index
                 if self.config.enable_preview:
                     self._update_preview()
@@ -481,10 +445,7 @@ class FuzzyFinderApp(App):
 
     def action_cursor_down(self) -> None:
         """Move cursor down."""
-        if (
-            self.current_results
-            and self.highlighted_index < len(self.current_results) - 1
-        ):
+        if self.current_results and self.highlighted_index < len(self.current_results) - 1:
             self.highlighted_index += 1
             self._update_results_list()
             self._scroll_to_highlighted()
@@ -548,9 +509,7 @@ class FuzzyFinderApp(App):
         # First try to get the current selection from the ListView
         try:
             results_list = self.query_one("#results_list", ListView)
-            if results_list.index is not None and 0 <= results_list.index < len(
-                self.current_results
-            ):
+            if results_list.index is not None and 0 <= results_list.index < len(self.current_results):
                 self.highlighted_index = results_list.index
         except Exception:
             pass
@@ -571,23 +530,16 @@ class FuzzyFinderApp(App):
         try:
             items_to_search = self.config.items
             if self.config.sort_items:
-                try:
-                    # Sort items based on their display value
+                # Sort items based on their display value when possible.
+                with suppress(Exception):
                     items_to_search = sorted(
                         items_to_search,
                         key=lambda item: str(self.config.get_display_value(item) or ""),
                     )
-                except Exception:
-                    # If sorting fails, proceed without sorting
-                    pass
 
-            choices_with_originals = [
-                (self.config.get_display_value(item), item) for item in items_to_search
-            ]
+            choices_with_originals = [(self.config.get_display_value(item), item) for item in items_to_search]
             # Check for exceptions
-            choice_exceptions = [
-                c[0] for c in choices_with_originals if isinstance(c[0], Exception)
-            ]
+            choice_exceptions = [c[0] for c in choices_with_originals if isinstance(c[0], Exception)]
             if choice_exceptions:
                 return choice_exceptions[0]
 
@@ -617,9 +569,7 @@ class FuzzyFinderApp(App):
                 if score < self.config.score_threshold:
                     continue
 
-                choice_lower = (
-                    result_str.lower() if not self.config.case_sensitive else result_str
-                )
+                choice_lower = result_str.lower() if not self.config.case_sensitive else result_str
 
                 # Calculate custom score based on match type
                 custom_score = score
@@ -635,9 +585,7 @@ class FuzzyFinderApp(App):
                     length_bonus = min(100, (len(choice_lower) - len(query_lower)) * 10)
                     custom_score += length_bonus
 
-                scored_results.append(
-                    (custom_score, result_str, choices_with_originals[index][1])
-                )
+                scored_results.append((custom_score, result_str, choices_with_originals[index][1]))
 
             # Sort by custom score (highest first) and then by original string length (shorter first for same score)
             scored_results.sort(key=lambda x: (-x[0], len(x[1])))
@@ -687,9 +635,7 @@ def fuzzyfinder(query: str, collection: List[str]) -> List[str]:
     from rapidfuzz import fuzz, process
 
     # Use rapidfuzz to find matches
-    results = process.extract(
-        query, collection, scorer=fuzz.partial_ratio, limit=len(collection)
-    )
+    results = process.extract(query, collection, scorer=fuzz.partial_ratio, limit=len(collection))
 
     # Return items with score >= 70
     return [item for item, score, _ in results if score >= 70]

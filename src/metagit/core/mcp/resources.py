@@ -41,9 +41,7 @@ class ResourcePublisher:
                 return {"uri": uri, "data": {"active_project": None}}
             meta = SessionStore(workspace_root=workspace_root).get_workspace_meta()
             session = (
-                SessionStore(workspace_root=workspace_root).get_project_session(
-                    project_name=meta.active_project
-                )
+                SessionStore(workspace_root=workspace_root).get_project_session(project_name=meta.active_project)
                 if meta.active_project
                 else None
             )

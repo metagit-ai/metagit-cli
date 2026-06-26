@@ -13,9 +13,7 @@ class GitNexusRegistryAdapter:
     """Resolve GitNexus index metadata for local repository paths."""
 
     def __init__(self, registry_path: Optional[Path] = None) -> None:
-        self._registry_path = (
-            registry_path or Path.home() / ".gitnexus" / "registry.json"
-        )
+        self._registry_path = registry_path or Path.home() / ".gitnexus" / "registry.json"
 
     def load_entries(self) -> list[dict[str, Any]]:
         """Load registry entries or return an empty list."""

@@ -73,8 +73,7 @@ class WorkspaceSemanticSearchService:
             "ok": any_ok,
             "query": trimmed,
             "results": results,
-            "note": "Requires GitNexus index and optional embeddings; "
-            "register repos with `gitnexus analyze`.",
+            "note": "Requires GitNexus index and optional embeddings; register repos with `gitnexus analyze`.",
         }
 
     def _run_query(

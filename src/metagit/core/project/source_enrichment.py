@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 
 from metagit.core.project.source_models import (
     DiscoveredRepo,
-    SourceSpec,
     SourceProvider,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:
@@ -58,10 +58,7 @@ def enrich_discovered_repos(
         return repos
 
     if len(repos) > _ENRICHMENT_WARN_THRESHOLD and not spec.refresh_metadata:
-        logger.warning(
-            "Skipping per-repo topic enrichment for "
-            f"{len(repos)} repos; use --refresh-metadata to force"
-        )
+        logger.warning(f"Skipping per-repo topic enrichment for {len(repos)} repos; use --refresh-metadata to force")
         return repos
 
     provider = registry.get_provider_by_name(_provider_display_name(spec.provider))
@@ -74,9 +71,7 @@ def enrich_discovered_repos(
         owner, name = _owner_repo_from_full_name(repo.full_name)
         metadata_result = provider.get_repository_metadata(owner, name)
         if isinstance(metadata_result, Exception):
-            logger.warning(
-                f"Metadata enrichment failed for {repo.full_name}: {metadata_result}"
-            )
+            logger.warning(f"Metadata enrichment failed for {repo.full_name}: {metadata_result}")
             enriched.append(repo)
             continue
 

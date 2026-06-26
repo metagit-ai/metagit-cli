@@ -14,9 +14,7 @@ def inspect_repo_state(repo_path: str) -> dict[str, str | bool | int | float | N
     """Return branch, dirty flag, ahead/behind, uncommitted count, and age metrics."""
     try:
         repo = Repo(repo_path)
-        branch = (
-            str(repo.active_branch.name) if not repo.head.is_detached else "DETACHED"
-        )
+        branch = str(repo.active_branch.name) if not repo.head.is_detached else "DETACHED"
         dirty = repo.is_dirty(untracked_files=True)
         ahead, behind = _ahead_behind(repo=repo)
         uncommitted = _uncommitted_count(repo=repo, dirty=dirty)
@@ -91,10 +89,7 @@ def merge_base_age_days(repo: Repo) -> Optional[float]:
     Signals how stale the integration point with the remote default branch is.
     """
     try:
-        if repo.head.is_detached:
-            head_ref = str(repo.head.commit.hexsha)
-        else:
-            head_ref = "HEAD"
+        head_ref = str(repo.head.commit.hexsha) if repo.head.is_detached else "HEAD"
         default_ref = _resolve_origin_default(repo=repo)
         if default_ref is None:
             return None

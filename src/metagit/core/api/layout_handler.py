@@ -48,15 +48,9 @@ class LayoutApiHandler:
             if flags is None:
                 return True
             if parsed_path.startswith("/v2/projects/"):
-                from_name = unquote(
-                    parsed_path.removeprefix("/v2/projects/")
-                    .removesuffix("/rename")
-                    .strip("/")
-                )
+                from_name = unquote(parsed_path.removeprefix("/v2/projects/").removesuffix("/rename").strip("/"))
                 payload = flags.get("body") or {}
-                to_name = str(
-                    payload.get("to_name") or self._first(params, "to_name") or ""
-                ).strip()
+                to_name = str(payload.get("to_name") or self._first(params, "to_name") or "").strip()
                 result = self._service.rename_project(
                     config,
                     self._config_path,
@@ -73,11 +67,7 @@ class LayoutApiHandler:
                 return True
 
             if "/v2/repos/" in parsed_path and parsed_path.endswith("/rename"):
-                remainder = (
-                    parsed_path.removeprefix("/v2/repos/")
-                    .removesuffix("/rename")
-                    .strip("/")
-                )
+                remainder = parsed_path.removeprefix("/v2/repos/").removesuffix("/rename").strip("/")
                 if "/" not in remainder:
                     respond(
                         400,
@@ -114,11 +104,7 @@ class LayoutApiHandler:
             if flags is None:
                 return True
             if "/v2/repos/" in parsed_path:
-                remainder = (
-                    parsed_path.removeprefix("/v2/repos/")
-                    .removesuffix("/move")
-                    .strip("/")
-                )
+                remainder = parsed_path.removeprefix("/v2/repos/").removesuffix("/move").strip("/")
                 if "/" not in remainder:
                     respond(
                         400,
@@ -190,9 +176,7 @@ class LayoutApiHandler:
             value = raw[0] if raw else str(default).lower()
             return value.lower() in {"1", "true", "yes"}
 
-        manifest_only = _bool_param("manifest_only") or bool(
-            payload.get("manifest_only", False)
-        )
+        manifest_only = _bool_param("manifest_only") or bool(payload.get("manifest_only", False))
         return {
             "body": payload,
             "dry_run": _bool_param("dry_run") or bool(payload.get("dry_run", False)),

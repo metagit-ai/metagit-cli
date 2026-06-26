@@ -53,9 +53,7 @@ class AgentInstructionsResolver:
         if config.workspace:
             workspace_text = _normalized(config.workspace.agent_instructions)
             if workspace_text:
-                layers.append(
-                    AgentInstructionLayer(layer="workspace", text=workspace_text)
-                )
+                layers.append(AgentInstructionLayer(layer="workspace", text=workspace_text))
         if project:
             project_text = _normalized(project.agent_instructions)
             if project_text:

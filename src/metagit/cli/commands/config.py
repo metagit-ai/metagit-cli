@@ -17,9 +17,9 @@ from metagit.cli.config_patch_ops import (
 )
 from metagit.cli.json_output import emit_json
 from metagit.core.appconfig import AppConfig
-from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
+from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
 
@@ -45,9 +45,7 @@ def config(ctx: click.Context, config_path: str) -> None:
         if "logger" not in ctx.obj:
             from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
-            ctx.obj["logger"] = UnifiedLogger(
-                LoggerConfig(log_level="INFO", minimal_console=True)
-            )
+            ctx.obj["logger"] = UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
     except Exception as e:
         logger = ctx.obj.get("logger")
         if logger:
@@ -64,9 +62,7 @@ def config(ctx: click.Context, config_path: str) -> None:
     default=False,
     help="Re-serialize from the loaded model (readable YAML, not the file on disk)",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def config_show(ctx: click.Context, normalized: bool, as_json: bool) -> None:
     """Show metagit configuration (source file by default)."""
@@ -88,9 +84,7 @@ def config_show(ctx: click.Context, normalized: bool, as_json: bool) -> None:
             click.echo(raw, nl=raw.endswith("\n"))
             return
 
-        output = dump_config_dict(
-            config_result.model_dump(mode="json", exclude_none=True)
-        )
+        output = dump_config_dict(config_result.model_dump(mode="json", exclude_none=True))
         click.echo(output, nl=False)
         if not output.endswith("\n"):
             click.echo()
@@ -135,9 +129,7 @@ def config_create(
     logger = ctx.obj["logger"]
 
     try:
-        config_file = create_metagit_config(
-            name=name, description=description, url=url, kind=kind, as_yaml=True
-        )
+        config_file = create_metagit_config(name=name, description=description, url=url, kind=kind, as_yaml=True)
         if isinstance(config_file, Exception):
             raise config_file
     except Exception as e:
@@ -254,24 +246,16 @@ def providers(
         # Show current configuration
         if show:
             click.echo("Current Provider Configuration:")
-            click.echo(
-                f"  GitHub: {'Enabled' if app_config.providers.github.enabled else 'Disabled'}"
-            )
+            click.echo(f"  GitHub: {'Enabled' if app_config.providers.github.enabled else 'Disabled'}")
             if app_config.providers.github.api_token:
-                click.echo(
-                    f"    Token: {'*' * 10}{app_config.providers.github.api_token[-4:]}"
-                )
+                click.echo(f"    Token: {'*' * 10}{app_config.providers.github.api_token[-4:]}")
             else:
                 click.echo("    Token: Not set")
             click.echo(f"    Base URL: {app_config.providers.github.base_url}")
 
-            click.echo(
-                f"  GitLab: {'Enabled' if app_config.providers.gitlab.enabled else 'Disabled'}"
-            )
+            click.echo(f"  GitLab: {'Enabled' if app_config.providers.gitlab.enabled else 'Disabled'}")
             if app_config.providers.gitlab.api_token:
-                click.echo(
-                    f"    Token: {'*' * 10}{app_config.providers.gitlab.api_token[-4:]}"
-                )
+                click.echo(f"    Token: {'*' * 10}{app_config.providers.gitlab.api_token[-4:]}")
             else:
                 click.echo("    Token: Not set")
             click.echo(f"    Base URL: {app_config.providers.gitlab.base_url}")
@@ -402,11 +386,7 @@ def config_info(ctx: click.Context) -> None:
             value=current_config.kind or "N/A",
             console=True,
         )
-        project_count = (
-            len(current_config.workspace.projects)
-            if current_config.workspace.projects
-            else 0
-        )
+        project_count = len(current_config.workspace.projects) if current_config.workspace.projects else 0
         logger.config_element(
             name="project_count",
             value=project_count,
@@ -421,9 +401,7 @@ def config_info(ctx: click.Context) -> None:
                 )
     else:
         logger.echo("No project config file found!")
-        logger.echo(
-            "Create a new config file with 'metagit config create' or 'metagit init'"
-        )
+        logger.echo("Create a new config file with 'metagit config create' or 'metagit init'")
 
 
 @config.command("example")
@@ -480,9 +458,7 @@ def config_example(
 
 
 @config.command("tree")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def config_tree(ctx: click.Context, as_json: bool) -> None:
     """Show schema-backed field tree for .metagit.yml (same model as web Config Studio)."""
@@ -524,9 +500,7 @@ def config_tree(ctx: click.Context, as_json: bool) -> None:
     default=None,
     help="Write preview YAML to this path instead of stdout",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def config_preview(
     ctx: click.Context,
@@ -604,9 +578,7 @@ def config_preview(
     default=False,
     help="Include updated schema tree in JSON output",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def config_patch(
     ctx: click.Context,
@@ -727,9 +699,7 @@ def config_graph_export(
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
             raise loaded
-        root = workspace_root or str(
-            Path(app_config.workspace.path).expanduser().resolve()
-        )
+        root = workspace_root or str(Path(app_config.workspace.path).expanduser().resolve())
         result = GraphCypherExportService().export(
             loaded,
             root,
@@ -862,9 +832,7 @@ def config_graph_suggest(
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
             raise loaded
-        root = workspace_root or str(
-            Path(app_config.workspace.path).expanduser().resolve()
-        )
+        root = workspace_root or str(Path(app_config.workspace.path).expanduser().resolve())
         service = GraphRelationshipSuggestService()
         selected_types = list(dependency_types) if dependency_types else None
         selected_ids = list(candidate_ids) if candidate_ids else None

@@ -68,10 +68,7 @@ class ProviderRegistry:
         self.clear()
 
         # Configure GitHub provider
-        if (
-            app_config.providers.github.enabled
-            and app_config.providers.github.api_token
-        ):
+        if app_config.providers.github.enabled and app_config.providers.github.api_token:
             try:
                 github_provider = GitHubProvider(
                     api_token=app_config.providers.github.api_token,
@@ -82,10 +79,7 @@ class ProviderRegistry:
                 pass  # GitHub provider not available
 
         # Configure GitLab provider
-        if (
-            app_config.providers.gitlab.enabled
-            and app_config.providers.gitlab.api_token
-        ):
+        if app_config.providers.gitlab.enabled and app_config.providers.gitlab.api_token:
             try:
                 gitlab_provider = GitLabProvider(
                     api_token=app_config.providers.gitlab.api_token,

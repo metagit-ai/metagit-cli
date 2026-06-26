@@ -15,9 +15,7 @@ from yaml.constructor import ConstructorError
 LegacyYAMLLoader = (os.getenv("LEGACY_YAML_LOADER", "false")).lower() == "true"
 
 
-def no_duplicates_constructor(
-    loader: yaml.Loader, node: yaml.Node, deep: bool = False
-) -> Union[Any, Exception]:
+def no_duplicates_constructor(loader: yaml.Loader, node: yaml.Node, deep: bool = False) -> Union[Any, Exception]:
     """Check for duplicate keys."""
     try:
         mapping = {}
@@ -38,17 +36,13 @@ def no_duplicates_constructor(
         return e
 
 
-yaml.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, no_duplicates_constructor
-)
+yaml.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, no_duplicates_constructor)
 
 
 class ExtLoaderMeta(type):
     """External yaml loader metadata class."""
 
-    def __new__(
-        metacls, __name__: str, __bases__: Any, __dict__: Any
-    ) -> Union[Any, Exception]:
+    def __new__(metacls, __name__: str, __bases__: Any, __dict__: Any) -> Union[Any, Exception]:
         """Add constructers to class."""
         try:
             cls = super().__new__(metacls, __name__, __bases__, __dict__)
@@ -76,9 +70,7 @@ class ExtLoader(yaml.Loader, metaclass=ExtLoaderMeta):
     def construct_include(self, node: yaml.Node) -> Union[Any, Exception]:
         """Include file referenced at node."""
         try:
-            file_name = os.path.abspath(
-                os.path.join(self._root, self.construct_scalar(node))
-            )
+            file_name = os.path.abspath(os.path.join(self._root, self.construct_scalar(node)))
             extension = os.path.splitext(file_name)[1].lstrip(".")
             with open(file_name) as f:
                 if extension in ("yaml", "yml"):
@@ -95,10 +87,7 @@ class ExtLoader(yaml.Loader, metaclass=ExtLoaderMeta):
                         includedata.append(line.strip())
                         line = f.readline()
                         cnt += 1
-                    if cnt == 1:
-                        data = "".join(includedata)
-                    else:
-                        data = '"' + "\\n".join(includedata) + '"'
+                    data = "".join(includedata) if cnt == 1 else '"' + "\\n".join(includedata) + '"'
             return data
         except Exception as e:
             return e

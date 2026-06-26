@@ -39,9 +39,7 @@ def exit_on_catalog_mutation(
         elif ok:
             entity = getattr(result, "entity", "entity")
             operation = getattr(result, "operation", "updated")
-            name = getattr(result, "repo_name", None) or getattr(
-                result, "project_name", ""
-            )
+            name = getattr(result, "repo_name", None) or getattr(result, "project_name", "")
             if operation == "noop":
                 click.echo(f"{entity} unchanged (ensure): {name}")
             else:
@@ -67,15 +65,11 @@ def exit_on_layout_mutation(
         elif ok:
             operation = getattr(result, "operation", "updated")
             entity = getattr(result, "entity", "entity")
-            name = getattr(result, "repo_name", None) or getattr(
-                result, "project_name", ""
-            )
+            name = getattr(result, "repo_name", None) or getattr(result, "project_name", "")
             if data.get("dry_run"):
                 click.echo(f"dry-run {entity} {operation}: {name}")
                 for step in data.get("disk_steps", []):
-                    click.echo(
-                        f"  {step.get('action')}: {step.get('source')} -> {step.get('target')}"
-                    )
+                    click.echo(f"  {step.get('action')}: {step.get('source')} -> {step.get('target')}")
             else:
                 click.echo(f"{entity} {operation}: {name}")
                 for warning in data.get("warnings", []):

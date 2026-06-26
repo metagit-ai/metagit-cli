@@ -10,8 +10,8 @@ from typing import Any
 import click
 
 from metagit.core.config.patch_service import PatchResult, PreviewResult, TreeResult
-from metagit.core.web.models import ConfigOpKind, ConfigOperation, ConfigPatchRequest
 from metagit.core.utils.logging import UnifiedLogger
+from metagit.core.web.models import ConfigOperation, ConfigOpKind, ConfigPatchRequest
 
 
 def parse_cli_value(raw: str) -> Any:
@@ -51,9 +51,7 @@ def load_operations_file(path: str) -> list[ConfigOperation]:
         if "operations" in payload:
             request = ConfigPatchRequest.model_validate(payload)
             return list(request.operations)
-        raise click.ClickException(
-            f"{path} must be a JSON array of operations or an object with 'operations'"
-        )
+        raise click.ClickException(f"{path} must be a JSON array of operations or an object with 'operations'")
     raise click.ClickException(f"{path} must contain a JSON object or array")
 
 
@@ -67,21 +65,15 @@ def resolve_operations(
     """Resolve operations from --file or a single --op/--path/--value triplet."""
     if operations_file:
         if op or path or value is not None:
-            raise click.ClickException(
-                "Use either --file or --op/--path/--value, not both"
-            )
+            raise click.ClickException("Use either --file or --op/--path/--value, not both")
         return load_operations_file(operations_file)
     if not op or not path:
-        raise click.ClickException(
-            "Provide --file <path.json> or --op <kind> --path <field.path>"
-        )
+        raise click.ClickException("Provide --file <path.json> or --op <kind> --path <field.path>")
     try:
         op_kind = ConfigOpKind(op.lower())
     except ValueError as exc:
         allowed = ", ".join(item.value for item in ConfigOpKind)
-        raise click.ClickException(
-            f"Invalid --op '{op}'; must be one of: {allowed}"
-        ) from exc
+        raise click.ClickException(f"Invalid --op '{op}'; must be one of: {allowed}") from exc
     parsed_value = parse_cli_value(value) if value is not None else None
     if op_kind == ConfigOpKind.SET and parsed_value is None:
         raise click.ClickException("--op set requires --value")

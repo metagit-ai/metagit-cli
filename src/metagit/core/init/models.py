@@ -20,9 +20,7 @@ class InitPromptSpec(BaseModel):
         None,
         description="Built-in default resolver when default is not set",
     )
-    required: bool = Field(
-        default=True, description="Whether a non-empty value is required"
-    )
+    required: bool = Field(default=True, description="Whether a non-empty value is required")
     secret: bool = Field(default=False, description="Hide input in interactive prompts")
 
 
@@ -31,12 +29,8 @@ class InitTemplateFileSpec(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    template: str = Field(
-        ..., description="Source filename inside the template directory"
-    )
-    output: str = Field(
-        ..., description="Relative output path from init target directory"
-    )
+    template: str = Field(..., description="Source filename inside the template directory")
+    output: str = Field(..., description="Relative output path from init target directory")
     optional: bool = Field(
         default=False,
         description="When true, skip writing if rendered content is empty",

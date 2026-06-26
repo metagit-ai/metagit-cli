@@ -31,9 +31,7 @@ def _parse_tag_filters_from_query(tag_values: list[str]) -> dict[str, str] | Non
     return parsed or None
 
 
-def _first(
-    params: dict[str, list[str]], key: str, default: str | None = None
-) -> str | None:
+def _first(params: dict[str, list[str]], key: str, default: str | None = None) -> str | None:
     """Return the first query value for a key, or default if missing or empty."""
     values = params.get(key)
     if not values:
@@ -109,22 +107,14 @@ def build_server(root: str, host: str, port: int) -> ThreadingHTTPServer:
                     limit_val = 10
                 limit_val = max(1, min(limit_val, 500))
                 project_raw = _first(params, "project")
-                project_filter = (
-                    project_raw.strip()
-                    if isinstance(project_raw, str) and project_raw.strip()
-                    else None
-                )
+                project_filter = project_raw.strip() if isinstance(project_raw, str) and project_raw.strip() else None
                 result = service.search(
                     config=config,
                     workspace_root=root_resolved,
                     query=_first(params, "q", "") or "",
                     project=project_filter,
-                    exact=(_first(params, "exact", "false") or "false").lower()
-                    == "true",
-                    synced_only=(
-                        _first(params, "synced_only", "false") or "false"
-                    ).lower()
-                    == "true",
+                    exact=(_first(params, "exact", "false") or "false").lower() == "true",
+                    synced_only=(_first(params, "synced_only", "false") or "false").lower() == "true",
                     tags=_parse_tag_filters_from_query(params.get("tag", [])),
                     limit=limit_val,
                 )
@@ -133,30 +123,19 @@ def build_server(root: str, host: str, port: int) -> ThreadingHTTPServer:
 
             if parsed.path == "/v1/repos/resolve":
                 project_raw = _first(params, "project")
-                project_filter = (
-                    project_raw.strip()
-                    if isinstance(project_raw, str) and project_raw.strip()
-                    else None
-                )
+                project_filter = project_raw.strip() if isinstance(project_raw, str) and project_raw.strip() else None
                 resolved = service.resolve_one(
                     config=config,
                     workspace_root=root_resolved,
                     query=_first(params, "q", "") or "",
                     project=project_filter,
-                    exact=(_first(params, "exact", "false") or "false").lower()
-                    == "true",
-                    synced_only=(
-                        _first(params, "synced_only", "true") or "true"
-                    ).lower()
-                    == "true",
+                    exact=(_first(params, "exact", "false") or "false").lower() == "true",
+                    synced_only=(_first(params, "synced_only", "true") or "true").lower() == "true",
                     tags=_parse_tag_filters_from_query(params.get("tag", [])),
                 )
                 if resolved.match is not None:
                     code = 200
-                elif (
-                    resolved.error is not None
-                    and resolved.error.kind == "ambiguous_match"
-                ):
+                elif resolved.error is not None and resolved.error.kind == "ambiguous_match":
                     code = 409
                 else:
                     code = 404

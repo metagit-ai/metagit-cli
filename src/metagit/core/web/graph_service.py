@@ -9,8 +9,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from metagit.core.config.models import MetagitConfig
 from metagit.core.config.graph_resolver import resolve_graph_endpoint_id
+from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
@@ -70,10 +70,7 @@ class WorkspaceGraphService:
     ) -> WorkspaceGraphView:
         """Return diagram-ready nodes and edges."""
         rows = self._index.build_index(config=config, workspace_root=workspace_root)
-        project_names = {
-            project.name
-            for project in (config.workspace.projects if config.workspace else [])
-        }
+        project_names = {project.name for project in (config.workspace.projects if config.workspace else [])}
         nodes: list[GraphViewNode] = []
         node_ids: set[str] = set()
 

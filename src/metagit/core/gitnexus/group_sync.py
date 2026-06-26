@@ -140,9 +140,7 @@ class GitNexusGroupRunner:
             raise RuntimeError(f"gitnexus {action} failed: {exc}") from exc
         if completed.returncode != 0:
             output = ((completed.stdout or "") + (completed.stderr or "")).strip()
-            raise RuntimeError(
-                f"gitnexus {action} failed (exit {completed.returncode}): {output}"
-            )
+            raise RuntimeError(f"gitnexus {action} failed (exit {completed.returncode}): {output}")
         return completed
 
     def _parse_json_stdout(self, stdout: str) -> dict[str, Any]:
@@ -180,11 +178,7 @@ def load_group_repo_paths(group_yaml: Path) -> dict[str, str]:
     repos = payload.get("repos")
     if not isinstance(repos, dict):
         return {}
-    return {
-        str(key): str(value)
-        for key, value in repos.items()
-        if isinstance(key, str) and isinstance(value, str)
-    }
+    return {str(key): str(value) for key, value in repos.items() if isinstance(key, str) and isinstance(value, str)}
 
 
 class GitNexusGroupSyncService:
@@ -233,9 +227,7 @@ class GitNexusGroupSyncService:
         if not self._runner.group_exists(resolved_name):
             if not create_group:
                 result.ok = False
-                result.warnings.append(
-                    f'group "{resolved_name}" does not exist; pass create_group=true'
-                )
+                result.warnings.append(f'group "{resolved_name}" does not exist; pass create_group=true')
                 return result
             self._runner.create_group(resolved_name)
             result.created_group = True
@@ -317,14 +309,8 @@ class GitNexusGroupSyncService:
                 result.warnings.append(str(exc))
 
         if result.skipped:
-            missing_registry = sum(
-                1
-                for item in result.skipped
-                if item.get("reason") == "not_in_gitnexus_registry"
-            )
+            missing_registry = sum(1 for item in result.skipped if item.get("reason") == "not_in_gitnexus_registry")
             if missing_registry:
-                result.warnings.append(
-                    f"{missing_registry} repos are not indexed; run gitnexus analyze"
-                )
+                result.warnings.append(f"{missing_registry} repos are not indexed; run gitnexus analyze")
 
         return result

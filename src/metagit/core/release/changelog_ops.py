@@ -179,9 +179,7 @@ def _section_for_commit(subject: str) -> str:
 def validate_changelog_update(changed_paths: set[str]) -> ChangelogValidationResult:
     """Require CHANGELOG.md when product code changes."""
     meaningful = sorted(
-        path
-        for path in changed_paths
-        if any(path.startswith(prefix) for prefix in _CHANGELOG_REQUIRED_PREFIXES)
+        path for path in changed_paths if any(path.startswith(prefix) for prefix in _CHANGELOG_REQUIRED_PREFIXES)
     )
     if not meaningful:
         return ChangelogValidationResult(

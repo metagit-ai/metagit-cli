@@ -70,10 +70,7 @@ def find_duplicate_identities(
             if exclude_project == project.name and exclude_repo_name == existing.name:
                 continue
             existing_identity = build_repo_identity(existing)
-            if (
-                existing_identity is not None
-                and existing_identity.repo_key == target.repo_key
-            ):
+            if existing_identity is not None and existing_identity.repo_key == target.repo_key:
                 matches.append((project.name, existing.name))
     return matches
 
@@ -106,10 +103,7 @@ def ensure_symlink(mount: Path, target: Path) -> tuple[bool, Optional[str]]:
     if mount.is_symlink():
         try:
             current = Path(os.readlink(mount))
-            if not current.is_absolute():
-                current = (mount.parent / current).resolve()
-            else:
-                current = current.resolve()
+            current = (mount.parent / current).resolve() if not current.is_absolute() else current.resolve()
             if current == target_resolved:
                 return False, None
         except OSError:
@@ -134,6 +128,8 @@ def list_canonical_references(
     """
     Map repo_key -> list of (project_name, repo_name) manifest entries referencing it.
     """
+    _ = workspace_path
+    _ = dedupe
     references: dict[str, list[tuple[str, str]]] = {}
     if not config.workspace:
         return references
@@ -142,9 +138,7 @@ def list_canonical_references(
             identity = build_repo_identity(repo)
             if identity is None:
                 continue
-            references.setdefault(identity.repo_key, []).append(
-                (project.name, repo.name)
-            )
+            references.setdefault(identity.repo_key, []).append((project.name, repo.name))
     return references
 
 

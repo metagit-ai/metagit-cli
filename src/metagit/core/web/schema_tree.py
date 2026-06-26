@@ -11,7 +11,7 @@ from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
 
 from metagit.core.config.example_generator import ConfigExampleGenerator
-from metagit.core.web.models import ConfigOpKind, ConfigOperation, SchemaFieldNode
+from metagit.core.web.models import ConfigOperation, ConfigOpKind, SchemaFieldNode
 
 _PATH_SEGMENT_RE = re.compile(r"([^.\[\]]+)|\[(\d+|\*)\]")
 
@@ -230,9 +230,7 @@ class SchemaTreeService:
     ) -> bool:
         if field_dump is not None:
             return True
-        if field_info.is_required() and value is not None:
-            return True
-        return False
+        return bool(field_info.is_required() and value is not None)
 
     def _disable_at_path(
         self,
@@ -362,11 +360,7 @@ class SchemaTreeService:
             annotation = self._unwrap_optional(field_info.annotation)
             next_segment = segments[index + 1]
             if isinstance(next_segment, int) and get_origin(annotation) is list:
-                bucket = (
-                    self._materialize_field(parent, segment, field_info)
-                    if mutate
-                    else parent.get(segment)
-                )
+                bucket = self._materialize_field(parent, segment, field_info) if mutate else parent.get(segment)
                 if not isinstance(bucket, list):
                     parent = bucket
                     current_class = self._list_item_type(annotation)
@@ -383,10 +377,7 @@ class SchemaTreeService:
                     current_class = self._list_item_type(annotation)
                     index += 2
                 continue
-            if mutate:
-                parent = self._materialize_field(parent, segment, field_info)
-            else:
-                parent = parent.get(segment)
+            parent = self._materialize_field(parent, segment, field_info) if mutate else parent.get(segment)
             if parent is None:
                 raise KeyError("path segment is not present")
             if isinstance(annotation, type) and issubclass(annotation, BaseModel):
@@ -427,9 +418,13 @@ class SchemaTreeService:
             parent = parent[segment]
             index += 1
         leaf = segments[-1]
-        if isinstance(leaf, str) and self._is_sensitive(leaf):
-            if isinstance(value, str) and (value.startswith("***") or value == ""):
-                return
+        if (
+            isinstance(leaf, str)
+            and self._is_sensitive(leaf)
+            and isinstance(value, str)
+            and (value.startswith("***") or value == "")
+        ):
+            return
         if isinstance(leaf, int):
             parent[leaf] = value
         else:

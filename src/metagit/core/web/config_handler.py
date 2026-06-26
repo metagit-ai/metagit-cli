@@ -262,9 +262,7 @@ class ConfigWebHandler:
             return
         target: ValidateTarget = target_raw
         results: list[dict[str, Any]] = []
-        targets: list[ConfigTarget] = (
-            ["metagit", "appconfig"] if target == "both" else [target]
-        )
+        targets: list[ConfigTarget] = ["metagit", "appconfig"] if target == "both" else [target]
         for item in targets:
             if item == "metagit":
                 errors = self._validation_errors_for_metagit()
@@ -448,9 +446,7 @@ class ConfigWebHandler:
         if payload is None:
             return None
         try:
-            parsed = ConfigPreviewRequest.model_validate(
-                {"style": payload.get("style", style), **payload}
-            )
+            parsed = ConfigPreviewRequest.model_validate({"style": payload.get("style", style), **payload})
         except ValidationError as exc:
             respond(
                 400,

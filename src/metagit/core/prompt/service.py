@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
+from metagit.core.appconfig.models import WorkspaceDedupeConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
 from metagit.core.prompt.catalog import (
@@ -22,7 +23,6 @@ from metagit.core.prompt.models import (
     PromptKind,
     PromptScope,
 )
-from metagit.core.appconfig.models import WorkspaceDedupeConfig
 from metagit.core.workspace.agent_instructions import AgentInstructionsResolver
 from metagit.core.workspace.dedupe_resolver import resolve_effective_dedupe
 from metagit.core.workspace.models import WorkspaceProject
@@ -58,10 +58,7 @@ class PromptService:
         """Emit a prompt for the requested kind and scope."""
         if not is_kind_allowed(kind, scope):
             allowed = ", ".join(kinds_for_scope(scope))
-            raise PromptServiceError(
-                f"prompt kind {kind!r} is not available for scope {scope!r}; "
-                f"allowed: {allowed}"
-            )
+            raise PromptServiceError(f"prompt kind {kind!r} is not available for scope {scope!r}; allowed: {allowed}")
 
         project, repo = self._resolve_scope_targets(
             config=config,
@@ -79,9 +76,7 @@ class PromptService:
         if kind == "instructions":
             text = composition.effective
             if not text:
-                raise PromptServiceError(
-                    f"no agent_instructions configured for scope {scope!r}"
-                )
+                raise PromptServiceError(f"no agent_instructions configured for scope {scope!r}")
             return PromptEmitResult(
                 kind=kind,
                 scope=scope,
@@ -107,9 +102,7 @@ class PromptService:
         )
         sections: list[str] = [body]
         if include_instructions and composition.effective:
-            sections.append(
-                "---\n\n## Manifest instructions (composed)\n\n" + composition.effective
-            )
+            sections.append("---\n\n## Manifest instructions (composed)\n\n" + composition.effective)
         return PromptEmitResult(
             kind=kind,
             scope=scope,
@@ -137,9 +130,7 @@ class PromptService:
     ) -> tuple[Optional[WorkspaceProject], Optional[ProjectPath]]:
         if scope == "workspace":
             if project_name or repo_name:
-                raise PromptServiceError(
-                    "workspace scope does not accept --project or --repo"
-                )
+                raise PromptServiceError("workspace scope does not accept --project or --repo")
             return None, None
 
         if not project_name or not project_name.strip():
@@ -163,9 +154,7 @@ class PromptService:
             raise PromptServiceError("repo scope requires --repo")
         repo = self._resolver.find_repo(project, repo_name=repo_name)
         if repo is None:
-            raise PromptServiceError(
-                f"repo {repo_name!r} not found in project {project_name!r}"
-            )
+            raise PromptServiceError(f"repo {repo_name!r} not found in project {project_name!r}")
         return project, repo
 
     def _metadata(
@@ -195,9 +184,7 @@ class PromptService:
             "repo_count": repo_count,
             "focused_project": project.name if project else None,
             "focused_repo": repo.name if repo else None,
-            "workspace_dedupe_enabled": (
-                workspace_dedupe.enabled if workspace_dedupe is not None else None
-            ),
+            "workspace_dedupe_enabled": (workspace_dedupe.enabled if workspace_dedupe is not None else None),
             "project_dedupe_override": project_dedupe_override,
             "effective_dedupe_enabled": effective_dedupe,
         }

@@ -53,17 +53,13 @@ def _apply_step(step: LayoutStep) -> LayoutStep:
 
 def _apply_rename_or_move(step: LayoutStep) -> LayoutStep:
     if not step.source or not step.target:
-        return step.model_copy(
-            update={"applied": False, "detail": "missing source or target"}
-        )
+        return step.model_copy(update={"applied": False, "detail": "missing source or target"})
     source = Path(step.source)
     target = Path(step.target)
     if not source.exists():
         return step.model_copy(update={"applied": True, "detail": "source missing"})
     if target.exists():
-        return step.model_copy(
-            update={"applied": False, "detail": f"target already exists: {target}"}
-        )
+        return step.model_copy(update={"applied": False, "detail": f"target already exists: {target}"})
     target.parent.mkdir(parents=True, exist_ok=True)
     try:
         os.rename(source, target)
@@ -89,9 +85,7 @@ def _apply_unlink(step: LayoutStep) -> LayoutStep:
 
 def _apply_symlink(step: LayoutStep) -> LayoutStep:
     if not step.source or not step.target:
-        return step.model_copy(
-            update={"applied": False, "detail": "missing source or target"}
-        )
+        return step.model_copy(update={"applied": False, "detail": "missing source or target"})
     from metagit.core.workspace import workspace_dedupe
 
     mount = Path(step.target)
@@ -105,16 +99,13 @@ def _apply_symlink(step: LayoutStep) -> LayoutStep:
 
 def _apply_vscode(step: LayoutStep) -> LayoutStep:
     if not step.source or not step.target:
-        return step.model_copy(
-            update={"applied": False, "detail": "missing project dir or name"}
-        )
+        return step.model_copy(update={"applied": False, "detail": "missing project dir or name"})
     project_dir = Path(step.source)
     project_name = step.target
     repo_names = [
         entry.name
         for entry in project_dir.iterdir()
-        if entry.name != "workspace.code-workspace"
-        and (entry.is_dir() or entry.is_symlink())
+        if entry.name != "workspace.code-workspace" and (entry.is_dir() or entry.is_symlink())
     ]
     if not repo_names:
         return step.model_copy(update={"applied": True, "detail": "no repos to index"})
@@ -128,9 +119,7 @@ def _apply_vscode(step: LayoutStep) -> LayoutStep:
 
 def _apply_session(step: LayoutStep) -> LayoutStep:
     if not step.source or not step.target:
-        return step.model_copy(
-            update={"applied": False, "detail": "missing session paths"}
-        )
+        return step.model_copy(update={"applied": False, "detail": "missing session paths"})
     source = Path(step.source)
     target = Path(step.target)
     if not source.is_file():

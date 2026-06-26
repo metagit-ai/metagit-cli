@@ -8,6 +8,7 @@ from pathlib import Path
 
 import click
 import yaml
+
 from metagit.core.config.manifest_gate import (
     ManifestGateInvalid,
     ManifestGateOutcome,
@@ -102,9 +103,7 @@ def detect_project(ctx: click.Context, path: str, output: str) -> None:
     }
 
     if output == "yaml":
-        yaml_output = yaml.safe_dump(
-            full_result, default_flow_style=False, sort_keys=False, indent=2
-        )
+        yaml_output = yaml.safe_dump(full_result, default_flow_style=False, sort_keys=False, indent=2)
         click.echo(yaml_output)
     elif output == "json":
         json_output = json.dumps(full_result, indent=2)
@@ -149,9 +148,7 @@ def detect_repo_map(ctx: click.Context, path: str, output: str) -> None:
         "details": details.model_dump(mode="json"),
     }
     if output == "yaml":
-        yaml_output = yaml.safe_dump(
-            result, default_flow_style=False, sort_keys=False, indent=2
-        )
+        yaml_output = yaml.safe_dump(result, default_flow_style=False, sort_keys=False, indent=2)
         click.echo(yaml_output)
     elif output == "json":
         json_output = json.dumps(result, indent=2)
@@ -388,14 +385,10 @@ def detect_repository(
         if output == "all":
             # Output all detection data including MetagitRecord fields
             try:
-                result = detection_manager.model_dump(
-                    exclude_none=True, exclude_defaults=True, mode="json"
-                )
+                result = detection_manager.model_dump(exclude_none=True, exclude_defaults=True, mode="json")
                 if isinstance(result, Exception):
                     raise result
-                result = yaml.safe_dump(
-                    result, default_flow_style=False, sort_keys=False, indent=2
-                )
+                result = yaml.safe_dump(result, default_flow_style=False, sort_keys=False, indent=2)
                 if isinstance(result, Exception):
                     raise result
             except Exception as e:
@@ -423,9 +416,7 @@ def detect_repository(
                     "tenant_id",
                 }
             )
-            result = yaml.safe_dump(
-                config_data, default_flow_style=False, sort_keys=False, indent=2
-            )
+            result = yaml.safe_dump(config_data, default_flow_style=False, sort_keys=False, indent=2)
         elif output == "summary":
             result = detection_manager.summary()
             if isinstance(result, Exception):
@@ -450,8 +441,7 @@ def detect_repository(
             agent_mode = bool(ctx.obj.get("agent_mode", False))
             if save_target.is_file() and force and agent_mode:
                 raise click.UsageError(
-                    "Overwrite with --force is disabled in agent mode; "
-                    "remove the existing config file first"
+                    "Overwrite with --force is disabled in agent mode; remove the existing config file first"
                 )
 
             gate = evaluate_existing_manifest(save_target, force=force)
@@ -471,8 +461,7 @@ def detect_repository(
                 and not force
                 and not agent_mode
                 and not click.confirm(
-                    f"Configuration file at '{config_path}' already exists. "
-                    "Do you want to overwrite it?"
+                    f"Configuration file at '{config_path}' already exists. Do you want to overwrite it?"
                 )
             ):
                 click.echo("Save operation aborted.")
