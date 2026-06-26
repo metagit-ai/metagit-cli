@@ -84,12 +84,8 @@ def autodetect_agent_targets(
             resolve_agents_directory(vendor, scope, project_root=project_root),
         ]
         if vendor in TARGET_PATHS:
-            candidates.append(
-                resolve_skills_directory(vendor, scope, project_root=project_root)
-            )
-        if any(
-            candidate.exists() or candidate.parent.exists() for candidate in candidates
-        ):
+            candidates.append(resolve_skills_directory(vendor, scope, project_root=project_root))
+        if any(candidate.exists() or candidate.parent.exists() for candidate in candidates):
             resolved.append(vendor)
     return resolved
 

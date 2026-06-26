@@ -54,13 +54,9 @@ class WorkspaceLayoutService:
         _ = dedupe
         source = from_name.strip()
         target = to_name.strip()
-        err = validate_layout_name(source, label="from_name") or validate_layout_name(
-            target, label="to_name"
-        )
+        err = validate_layout_name(source, label="from_name") or validate_layout_name(target, label="to_name")
         if err:
-            return self._error(
-                "rename", "project", source, kind="invalid_name", message=err
-            )
+            return self._error("rename", "project", source, kind="invalid_name", message=err)
         if source == target:
             return self._error(
                 "rename",
@@ -212,9 +208,7 @@ class WorkspaceLayoutService:
         project_key = project_name.strip()
         source = from_name.strip()
         target = to_name.strip()
-        err = validate_layout_name(source, label="from_name") or validate_layout_name(
-            target, label="to_name"
-        )
+        err = validate_layout_name(source, label="from_name") or validate_layout_name(target, label="to_name")
         if err:
             return self._error(
                 "rename",
@@ -289,9 +283,7 @@ class WorkspaceLayoutService:
                 f"{project_key}.repos[].name: {source} -> {target}",
             ],
         )
-        plan.warnings.extend(
-            self._git_warnings(repo_mount_path(root, project_key, source))
-        )
+        plan.warnings.extend(self._git_warnings(repo_mount_path(root, project_key, source)))
 
         old_mount = repo_mount_path(root, project_key, source)
         new_mount = repo_mount_path(root, project_key, target)
@@ -308,12 +300,8 @@ class WorkspaceLayoutService:
             if dedupe_enabled(dedupe) and old_mount.is_symlink():
                 identity = workspace_dedupe.build_repo_identity(repo)
                 if identity and dedupe:
-                    canonical = workspace_dedupe.canonical_path(
-                        root, dedupe, identity.repo_key
-                    )
-                    plan.disk_steps.append(
-                        LayoutStep(action="unlink", source=str(old_mount))
-                    )
+                    canonical = workspace_dedupe.canonical_path(root, dedupe, identity.repo_key)
+                    plan.disk_steps.append(LayoutStep(action="unlink", source=str(old_mount)))
                     plan.disk_steps.append(
                         LayoutStep(
                             action="symlink",
@@ -469,9 +457,7 @@ class WorkspaceLayoutService:
                 source_project_name,
                 repo_name=repo_key,
                 kind="not_found",
-                message=(
-                    f"repo '{repo_key}' not found in project '{source_project_name}'"
-                ),
+                message=(f"repo '{repo_key}' not found in project '{source_project_name}'"),
             )
         if project_is_protected(source_project) and not force:
             return self._error(
@@ -480,9 +466,7 @@ class WorkspaceLayoutService:
                 source_project_name,
                 repo_name=repo_key,
                 kind="protected",
-                message=(
-                    f"project '{source_project_name}' is protected (use force=True)"
-                ),
+                message=(f"project '{source_project_name}' is protected (use force=True)"),
             )
         if project_is_protected(target_project) and not force:
             return self._error(
@@ -491,9 +475,7 @@ class WorkspaceLayoutService:
                 target_project_name,
                 repo_name=repo_key,
                 kind="protected",
-                message=(
-                    f"project '{target_project_name}' is protected (use force=True)"
-                ),
+                message=(f"project '{target_project_name}' is protected (use force=True)"),
             )
         if repo_is_protected(source_project, repo) and not force:
             return self._error(
@@ -513,9 +495,7 @@ class WorkspaceLayoutService:
                 source_project_name,
                 repo_name=repo_key,
                 kind="already_exists",
-                message=(
-                    f"repo '{repo_key}' already exists in project '{target_project_name}'"
-                ),
+                message=(f"repo '{repo_key}' already exists in project '{target_project_name}'"),
             )
 
         root = sync_root_path(workspace_path)
@@ -543,12 +523,8 @@ class WorkspaceLayoutService:
             if dedupe_enabled(dedupe) and old_mount.is_symlink() and dedupe:
                 identity = workspace_dedupe.build_repo_identity(repo)
                 if identity:
-                    canonical = workspace_dedupe.canonical_path(
-                        root, dedupe, identity.repo_key
-                    )
-                    plan.disk_steps.append(
-                        LayoutStep(action="unlink", source=str(old_mount))
-                    )
+                    canonical = workspace_dedupe.canonical_path(root, dedupe, identity.repo_key)
+                    plan.disk_steps.append(LayoutStep(action="unlink", source=str(old_mount)))
                     plan.disk_steps.append(
                         LayoutStep(
                             action="mkdir",
@@ -595,15 +571,9 @@ class WorkspaceLayoutService:
             )
 
         if existing_target is not None and force:
-            target_project.repos = [
-                item for item in target_project.repos if item.name != repo_key
-            ]
+            target_project.repos = [item for item in target_project.repos if item.name != repo_key]
 
-        pop_index = next(
-            index
-            for index, item in enumerate(source_project.repos)
-            if item.name == repo_key
-        )
+        pop_index = next(index for index, item in enumerate(source_project.repos) if item.name == repo_key)
         moved_repo = source_project.repos.pop(pop_index)
         target_project.repos.append(moved_repo)
 
@@ -623,9 +593,7 @@ class WorkspaceLayoutService:
                     message=str(save_err),
                 )
         except LayoutExecutionError as exc:
-            target_project.repos = [
-                item for item in target_project.repos if item.name != repo_key
-            ]
+            target_project.repos = [item for item in target_project.repos if item.name != repo_key]
             source_project.repos.append(moved_repo)
             return self._error(
                 "move",

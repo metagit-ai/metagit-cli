@@ -63,9 +63,7 @@ class ProjectContextService:
         store = SessionStore(workspace_root=workspace_root)
         prior_meta = store.get_workspace_meta()
         if save_previous and prior_meta.active_project:
-            prior_session = store.get_project_session(
-                project_name=prior_meta.active_project
-            )
+            prior_session = store.get_project_session(project_name=prior_meta.active_project)
             store.save_project_session(session=prior_session)
 
         bundle = self._build_bundle(
@@ -151,12 +149,8 @@ class ProjectContextService:
                 config=config,
                 workspace_root=workspace_root,
                 project_name=project_name,
-                repo_paths=[
-                    row["repo_path"] for row in project_rows if row.get("exists")
-                ],
-                session_overrides=store.get_project_session(
-                    project_name=project_name
-                ).env_overrides
+                repo_paths=[row["repo_path"] for row in project_rows if row.get("exists")],
+                session_overrides=store.get_project_session(project_name=project_name).env_overrides
                 if restore_session
                 else {},
             )
@@ -261,9 +255,7 @@ class ProjectContextService:
             "session": session.model_dump(mode="json"),
         }
 
-    def _find_project(
-        self, config: MetagitConfig, project_name: str
-    ) -> Optional[WorkspaceProject]:
+    def _find_project(self, config: MetagitConfig, project_name: str) -> Optional[WorkspaceProject]:
         """Locate workspace project by name."""
         if not config.workspace:
             return None
@@ -292,11 +284,7 @@ class ProjectContextService:
             inspected = inspect_repo_state(repo_path=str(row["repo_path"]))
             if inspected.get("ok"):
                 branch = str(inspected["branch"]) if inspected.get("branch") else None
-                dirty = (
-                    bool(inspected["dirty"])
-                    if inspected.get("dirty") is not None
-                    else None
-                )
+                dirty = bool(inspected["dirty"]) if inspected.get("dirty") is not None else None
             else:
                 inspect_error = str(inspected.get("error", "inspect failed"))
         return ProjectRepoContext(
@@ -337,9 +325,7 @@ class ProjectContextService:
             try:
                 exports[variable.name] = validate_env_value(str(variable.ref))
             except ValueError:
-                hints.append(
-                    f"Variable {variable.name} was skipped because its ref looks sensitive."
-                )
+                hints.append(f"Variable {variable.name} was skipped because its ref looks sensitive.")
         for key, value in session_overrides.items():
             exports[key] = value
         return ProjectContextEnv(export=exports, hints=hints)
@@ -366,9 +352,7 @@ class ProjectContextService:
                 return str(row.get("repo_path"))
         return None
 
-    def _match_repo_target(
-        self, rows: list[dict[str, Any]], target: str
-    ) -> Optional[dict[str, Any]]:
+    def _match_repo_target(self, rows: list[dict[str, Any]], target: str) -> Optional[dict[str, Any]]:
         """Match repo by name or resolved path."""
         normalized = target.strip()
         for row in rows:

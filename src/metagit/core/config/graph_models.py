@@ -47,9 +47,7 @@ class GraphRelationship(BaseModel):
     to: GraphEndpoint = Field(..., description="Relationship target")
     type: str = Field(
         default="depends_on",
-        description=(
-            "Relationship type (depends_on, documents, consumes, owns, related, …)"
-        ),
+        description=("Relationship type (depends_on, documents, consumes, owns, related, …)"),
     )
     label: Optional[str] = Field(None, description="Short label for graph UIs")
     description: Optional[str] = Field(

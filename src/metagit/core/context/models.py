@@ -111,10 +111,7 @@ class Objective(BaseModel):
     @classmethod
     def validate_id_slug(cls, value: str) -> str:
         if not _OBJECTIVE_ID_PATTERN.match(value):
-            raise ValueError(
-                "objective id must match slug pattern "
-                "[alphanumeric, underscore, dot, hyphen]"
-            )
+            raise ValueError("objective id must match slug pattern [alphanumeric, underscore, dot, hyphen]")
         return value
 
     @field_validator("title")

@@ -49,9 +49,7 @@ class GitProvider(ABC):
         pass
 
     @abstractmethod
-    def get_repository_metrics(
-        self, owner: str, repo: str
-    ) -> Union[Metrics, Exception]:
+    def get_repository_metrics(self, owner: str, repo: str) -> Union[Metrics, Exception]:
         """
         Get repository metrics from the provider.
 
@@ -65,9 +63,7 @@ class GitProvider(ABC):
         pass
 
     @abstractmethod
-    def get_repository_metadata(
-        self, owner: str, repo: str
-    ) -> Union[Dict[str, Any], Exception]:
+    def get_repository_metadata(self, owner: str, repo: str) -> Union[Dict[str, Any], Exception]:
         """
         Get additional repository metadata.
 

@@ -1,23 +1,20 @@
-import yaml
 from typing import Optional
-from metagit.core.detect.models import ProjectScanContext, DiscoveryResult
+
+import yaml
+
+from metagit.core.detect.models import DiscoveryResult, ProjectScanContext
 
 
 class DockerDetector:
     name = "DockerDetector"
 
     def should_run(self, ctx: ProjectScanContext) -> bool:
-        return any(
-            "dockerfile" in p.name.lower() or "docker-compose" in p.name.lower()
-            for p in ctx.all_files
-        )
+        return any("dockerfile" in p.name.lower() or "docker-compose" in p.name.lower() for p in ctx.all_files)
 
     def run(self, ctx: ProjectScanContext) -> Optional[DiscoveryResult]:
         dockerfiles = [p for p in ctx.all_files if "dockerfile" in p.name.lower()]
         composefiles = [
-            p
-            for p in ctx.all_files
-            if "docker-compose" in p.name.lower() and p.suffix in {".yml", ".yaml"}
+            p for p in ctx.all_files if "docker-compose" in p.name.lower() and p.suffix in {".yml", ".yaml"}
         ]
 
         containers = []

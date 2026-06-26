@@ -116,9 +116,7 @@ class SourceManifestSyncService:
             for source in selected:
                 if source.mode != SourceSyncMode.RECONCILE:
                     continue
-                source_removals = [
-                    repo for repo in combined.to_remove if repo.source_id == source.id
-                ]
+                source_removals = [repo for repo in combined.to_remove if repo.source_id == source.id]
                 if not source_removals:
                     continue
                 approval = ApprovalService(workspace_root=session_root).request(
@@ -126,9 +124,7 @@ class SourceManifestSyncService:
                     payload={
                         "project": project_name,
                         "source_id": source.id,
-                        "to_remove": [
-                            repo.model_dump(mode="json") for repo in source_removals
-                        ],
+                        "to_remove": [repo.model_dump(mode="json") for repo in source_removals],
                     },
                     requested_by=requested_by,
                 )
@@ -140,23 +136,19 @@ class SourceManifestSyncService:
                     config.workspace.projects[index] = updated
                     break
 
-        save_result = MetagitConfigManager(config_path=config_path).save_config(
-            config, config_path
-        )
+        save_result = MetagitConfigManager(config_path=config_path).save_config(config, config_path)
         if isinstance(save_result, Exception):
             result.ok = False
-            result.errors.append(
-                SourceSyncError(kind="save_failed", message=str(save_result))
-            )
+            result.errors.append(SourceSyncError(kind="save_failed", message=str(save_result)))
             return result
 
         result.applied = True
 
         if sync_clones and result.ok:
+            from metagit.core.project.manager import project_manager_from_app
             from metagit.core.project.source_sync_runner import (
                 resolve_workspace_project,
             )
-            from metagit.core.project.manager import project_manager_from_app
 
             refreshed = resolve_workspace_project(config, project_name)
             if refreshed is not None:

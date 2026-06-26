@@ -33,9 +33,7 @@ def call_click_command(cmd, *args, **kwargs):
     # check positional arguments list
     for arg in (a for a in cmd.params if isinstance(a, click.Argument)):
         if arg.name not in arg_values:
-            raise click.BadParameter(
-                "Missing required positionalparameter '{}'".format(arg.name)
-            )
+            raise click.BadParameter("Missing required positionalparameter '{}'".format(arg.name))
 
     # build parameter lists
     opts_list = sum([[o.opts[0], str(arg_values[n])] for n, o in opts.items()], [])

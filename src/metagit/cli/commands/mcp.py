@@ -34,9 +34,7 @@ def serve(ctx: click.Context, root: Optional[str], status_once: bool) -> None:
     runtime = MetagitMcpRuntime(root=root)
     if status_once:
         snapshot = runtime.status_snapshot()
-        click.echo(
-            f"mcp_state={snapshot['state']} root={snapshot['root'] or 'none'} tools={snapshot['tools']}"
-        )
+        click.echo(f"mcp_state={snapshot['state']} root={snapshot['root'] or 'none'} tools={snapshot['tools']}")
         return
 
     logger = ctx.obj.get("logger") if ctx.obj else None
@@ -91,17 +89,11 @@ def install(
     )
     if not selected_targets:
         if logger:
-            logger.warning(
-                "No targets selected. Use --target to choose targets explicitly."
-            )
+            logger.warning("No targets selected. Use --target to choose targets explicitly.")
         else:
-            click.echo(
-                "No targets selected. Use --target to choose targets explicitly."
-            )
+            click.echo("No targets selected. Use --target to choose targets explicitly.")
         return
-    results = install_mcp_for_targets(
-        targets=selected_targets, scope=scope, server_name=server_name
-    )
+    results = install_mcp_for_targets(targets=selected_targets, scope=scope, server_name=server_name)
     for result in results:
         if logger:
             logger.success(f"[{result.target}] {result.details} -> {result.path}")

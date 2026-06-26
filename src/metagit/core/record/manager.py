@@ -45,9 +45,7 @@ class RecordStorageBackend(ABC):
         pass
 
     @abstractmethod
-    async def update_record(
-        self, record_id: str, record: MetagitRecord
-    ) -> Union[bool, Exception]:
+    async def update_record(self, record_id: str, record: MetagitRecord) -> Union[bool, Exception]:
         """Update an existing record."""
         pass
 
@@ -68,9 +66,7 @@ class RecordStorageBackend(ABC):
         pass
 
     @abstractmethod
-    async def list_records(
-        self, page: int = 1, size: int = 20
-    ) -> Union[List[MetagitRecord], Exception]:
+    async def list_records(self, page: int = 1, size: int = 20) -> Union[List[MetagitRecord], Exception]:
         """List all records with pagination."""
         pass
 
@@ -162,9 +158,7 @@ class LocalFileStorageBackend(RecordStorageBackend):
         except Exception as e:
             return e
 
-    async def update_record(
-        self, record_id: str, record: MetagitRecord
-    ) -> Union[bool, Exception]:
+    async def update_record(self, record_id: str, record: MetagitRecord) -> Union[bool, Exception]:
         """Update an existing record."""
         try:
             record_file = self.storage_dir / f"{record_id}.json"
@@ -187,9 +181,7 @@ class LocalFileStorageBackend(RecordStorageBackend):
             # Update index
             index_data = self._load_index()
             if record_id in index_data["records"]:
-                index_data["records"][record_id]["updated_at"] = record_data[
-                    "updated_at"
-                ]
+                index_data["records"][record_id]["updated_at"] = record_data["updated_at"]
                 self._save_index(index_data)
 
             return True
@@ -223,9 +215,7 @@ class LocalFileStorageBackend(RecordStorageBackend):
     ) -> Union[Dict[str, Any], Exception]:
         """Search records with optional filters."""
         try:
-            all_records = await self.list_records(
-                page=1, size=1000
-            )  # Get all for search
+            all_records = await self.list_records(page=1, size=1000)  # Get all for search
             if isinstance(all_records, Exception):
                 return all_records
 
@@ -242,10 +232,7 @@ class LocalFileStorageBackend(RecordStorageBackend):
                 filtered_records = [
                     record
                     for record in filtered_records
-                    if all(
-                        getattr(record, key, None) == value
-                        for key, value in filters.items()
-                    )
+                    if all(getattr(record, key, None) == value for key, value in filters.items())
                 ]
 
             # Pagination
@@ -263,9 +250,7 @@ class LocalFileStorageBackend(RecordStorageBackend):
         except Exception as e:
             return e
 
-    async def list_records(
-        self, page: int = 1, size: int = 20
-    ) -> Union[List[MetagitRecord], Exception]:
+    async def list_records(self, page: int = 1, size: int = 20) -> Union[List[MetagitRecord], Exception]:
         """List all records with pagination."""
         try:
             index_data = self._load_index()
@@ -308,9 +293,7 @@ class OpenSearchStorageBackend(RecordStorageBackend):
         """Retrieve a record by ID."""
         return await self.opensearch_service.get_record(record_id)
 
-    async def update_record(
-        self, record_id: str, record: MetagitRecord
-    ) -> Union[bool, Exception]:
+    async def update_record(self, record_id: str, record: MetagitRecord) -> Union[bool, Exception]:
         """Update an existing record."""
         return await self.opensearch_service.update_record(record_id, record)
 
@@ -333,14 +316,10 @@ class OpenSearchStorageBackend(RecordStorageBackend):
             size=size,
         )
 
-    async def list_records(
-        self, page: int = 1, size: int = 20
-    ) -> Union[List[MetagitRecord], Exception]:
+    async def list_records(self, page: int = 1, size: int = 20) -> Union[List[MetagitRecord], Exception]:
         """List all records with pagination."""
         try:
-            search_result = await self.opensearch_service.search_records(
-                query="*", page=page, size=size
-            )
+            search_result = await self.opensearch_service.search_records(query="*", page=page, size=size)
             if isinstance(search_result, Exception):
                 return search_result
 
@@ -374,9 +353,7 @@ class MetagitRecordManager:
         """
         self.storage_backend = storage_backend
         self.config_manager: MetagitConfigManager = metagit_config_manager
-        self.logger = logger or UnifiedLogger(
-            LoggerConfig(log_level="INFO", minimal_console=True)
-        )
+        self.logger = logger or UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
         self.record: Optional[MetagitRecord] = None
 
     def create_record_from_config(
@@ -402,9 +379,7 @@ class MetagitRecordManager:
             # Get config from parameter or config manager
             if config is None:
                 if self.config_manager is None:
-                    return ValueError(
-                        "No config provided and no config_manager available"
-                    )
+                    return ValueError("No config provided and no config_manager available")
 
                 config_result = self.config_manager.load_config()
                 if isinstance(config_result, Exception):
@@ -484,9 +459,7 @@ class MetagitRecordManager:
 
         return await self.storage_backend.get_record(record_id)
 
-    async def update_record(
-        self, record_id: str, record: MetagitRecord
-    ) -> Union[bool, Exception]:
+    async def update_record(self, record_id: str, record: MetagitRecord) -> Union[bool, Exception]:
         """
         Update an existing record.
 
@@ -539,13 +512,9 @@ class MetagitRecordManager:
         if self.storage_backend is None:
             return ValueError("No storage backend configured")
 
-        return await self.storage_backend.search_records(
-            query=query, filters=filters, page=page, size=size
-        )
+        return await self.storage_backend.search_records(query=query, filters=filters, page=page, size=size)
 
-    async def list_records(
-        self, page: int = 1, size: int = 20
-    ) -> Union[List[MetagitRecord], Exception]:
+    async def list_records(self, page: int = 1, size: int = 20) -> Union[List[MetagitRecord], Exception]:
         """
         List all records with pagination.
 
@@ -561,9 +530,7 @@ class MetagitRecordManager:
 
         return await self.storage_backend.list_records(page=page, size=size)
 
-    def save_record_to_file(
-        self, record: MetagitRecord, file_path: Path
-    ) -> Union[None, Exception]:
+    def save_record_to_file(self, record: MetagitRecord, file_path: Path) -> Union[None, Exception]:
         """
         Save a record to a local YAML file.
 

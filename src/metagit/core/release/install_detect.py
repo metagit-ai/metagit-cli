@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
+
 from metagit.core.release.models import InstallMethod
 
 _PACKAGE_NAME = "metagit-cli"
@@ -80,7 +81,4 @@ def _is_uv_tool_install() -> bool:
         return False
     if completed.returncode != 0:
         return False
-    for line in completed.stdout.splitlines():
-        if line.strip().lower().startswith(f"{_PACKAGE_NAME} "):
-            return True
-    return False
+    return any(line.strip().lower().startswith(f"{_PACKAGE_NAME} ") for line in completed.stdout.splitlines())

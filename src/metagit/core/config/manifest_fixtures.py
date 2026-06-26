@@ -93,7 +93,4 @@ def validate_manifest_fixtures(
         return fixture_set
     if not fixture_set.fixtures:
         return ValueError(f"No manifest fixtures listed in {target_file}")
-    return [
-        validate_manifest_fixture(fixture, root=repo_root)
-        for fixture in fixture_set.fixtures
-    ]
+    return [validate_manifest_fixture(fixture, root=repo_root) for fixture in fixture_set.fixtures]

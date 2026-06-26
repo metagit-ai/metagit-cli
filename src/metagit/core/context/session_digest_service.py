@@ -63,14 +63,10 @@ class SessionDigestService:
 
         since_dt = _parse_since_iso(since)
         manifest_mtime = _manifest_mtime_utc(config_path)
-        manifest_changed = bool(
-            manifest_mtime is not None and manifest_mtime > since_dt
-        )
+        manifest_changed = bool(manifest_mtime is not None and manifest_mtime > since_dt)
 
         index = WorkspaceIndexService()
-        resolved_definition_root = definition_root or str(
-            Path(config_path).expanduser().resolve().parent
-        )
+        resolved_definition_root = definition_root or str(Path(config_path).expanduser().resolve().parent)
         repo_changes: list[SessionDigestRepoChange] = []
         for row in index.build_index(
             config,

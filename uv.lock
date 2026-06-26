@@ -214,12 +214,6 @@ wheels = [
 ]
 
 [[package]]
-name = "async"
-version = "0.6.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/47/de/9d8e0907842c56d4cbd64d7543e65f78373d1fe8e9dc33a4324aaea734e9/async-0.6.2.tar.gz", hash = "sha256:ac6894d876e45878faae493b0cf61d0e28ec417334448ac0a6ea2229d8343051", size = 30177, upload-time = "2014-11-12T17:03:40.353Z" }
-
-[[package]]
 name = "attrs"
 version = "25.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -856,17 +850,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b2/9d/c3b43da9515bd270df0f80548d9944e389870713cc1fe2b8fb35fe2bcefd/docstring_parser-0.17.0.tar.gz", hash = "sha256:583de4a309722b3315439bb31d64ba3eebada841f2e2cee23b99df001434c912", size = 27442, upload-time = "2025-07-21T07:35:01.868Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/55/e2/2537ebcff11c1ee1ff17d8d0b6f4db75873e3b0fb32c2d4a2ee31ecb310a/docstring_parser-0.17.0-py3-none-any.whl", hash = "sha256:cf2569abd23dce8099b300f9b4fa8191e9582dda731fd533daf54c4551658708", size = 36896, upload-time = "2025-07-21T07:35:00.684Z" },
-]
-
-[[package]]
-name = "dotenv"
-version = "0.9.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "python-dotenv" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/b7/545d2c10c1fc15e48653c91efde329a790f2eecfbbf2bd16003b5db2bab0/dotenv-0.9.9-py2.py3-none-any.whl", hash = "sha256:29cf74a087b31dafdb5a446b6d7e11cbce8ed2741540e2339c69fbef92c94ce9", size = 1892, upload-time = "2025-02-19T22:15:01.647Z" },
 ]
 
 [[package]]
@@ -1567,12 +1550,6 @@ wheels = [
 ]
 
 [[package]]
-name = "logging"
-version = "0.4.9.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/93/4b/979db9e44be09f71e85c9c8cfc42f258adfb7d93ce01deed2788b2948919/logging-0.4.9.6.tar.gz", hash = "sha256:26f6b50773f085042d301085bd1bf5d9f3735704db9f37c1ce6d8b85c38f2417", size = 96029, upload-time = "2013-06-04T23:43:22.086Z" }
-
-[[package]]
 name = "loguru"
 version = "0.7.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1712,13 +1689,10 @@ name = "metagit-cli"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
-    { name = "async" },
     { name = "click" },
-    { name = "dotenv" },
     { name = "gitpython" },
     { name = "jsonschema" },
     { name = "litellm" },
-    { name = "logging" },
     { name = "loguru" },
     { name = "prompt-toolkit" },
     { name = "pydantic" },
@@ -1732,7 +1706,6 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "setuptools-scm" },
     { name = "textual-dev" },
-    { name = "tomli" },
     { name = "tqdm" },
     { name = "types-tqdm" },
 ]
@@ -1792,13 +1765,11 @@ diagrams = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=23.2.1" },
-    { name = "async", specifier = ">=0.6.2" },
-    { name = "black", marker = "extra == 'dev'", specifier = ">=26.3.1" },
-    { name = "black", marker = "extra == 'format'", specifier = ">=26.3.1" },
+    { name = "black", marker = "extra == 'dev'" },
+    { name = "black", marker = "extra == 'format'" },
     { name = "black", marker = "extra == 'lint'" },
-    { name = "black", marker = "extra == 'test'", specifier = ">=26.3.1" },
+    { name = "black", marker = "extra == 'test'" },
     { name = "click", specifier = ">=8.1.7" },
-    { name = "dotenv", specifier = ">=0.9.9" },
     { name = "gitpython", specifier = ">=3.1.50" },
     { name = "httpx", marker = "extra == 'test'" },
     { name = "isort", marker = "extra == 'dev'" },
@@ -1806,7 +1777,6 @@ requires-dist = [
     { name = "isort", marker = "extra == 'lint'" },
     { name = "jsonschema", specifier = ">=4.24.0" },
     { name = "litellm", specifier = ">=1.83.7" },
-    { name = "logging", specifier = ">=0.4.9.6" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "mdtoc", marker = "extra == 'docs'" },
     { name = "mkdocs", marker = "extra == 'docs'" },
@@ -1836,7 +1806,6 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'test'" },
     { name = "setuptools-scm", specifier = ">=8.3.1" },
     { name = "textual-dev", specifier = ">=1.7.0" },
-    { name = "tomli", specifier = ">=2.2.1" },
     { name = "tqdm", specifier = ">=4.66.4" },
     { name = "types-tqdm", specifier = ">=4.67.0.20250516" },
 ]

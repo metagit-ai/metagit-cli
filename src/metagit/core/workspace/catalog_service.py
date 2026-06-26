@@ -12,8 +12,6 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.project.models import ProjectPath
-from metagit.core.workspace.workspace_dedupe import find_duplicate_identities
-from metagit.core.workspace.protection import project_is_protected, repo_is_protected
 from metagit.core.workspace.catalog_models import (
     CatalogError,
     CatalogMutationResult,
@@ -23,7 +21,9 @@ from metagit.core.workspace.catalog_models import (
     WorkspaceSummary,
 )
 from metagit.core.workspace.models import Workspace, WorkspaceProject
+from metagit.core.workspace.protection import project_is_protected, repo_is_protected
 from metagit.core.workspace.root_resolver import resolve_definition_root
+from metagit.core.workspace.workspace_dedupe import find_duplicate_identities
 
 
 def _repo_ensure_conflict(
@@ -35,15 +35,9 @@ def _repo_ensure_conflict(
         existing_url = str(existing.url) if existing.url else None
         desired_url = str(desired.url)
         if existing_url != desired_url:
-            return (
-                f"url mismatch for repo '{existing.name}': "
-                f"catalog has {existing_url!r}, requested {desired_url!r}"
-            )
+            return f"url mismatch for repo '{existing.name}': catalog has {existing_url!r}, requested {desired_url!r}"
     if desired.path is not None and existing.path != desired.path:
-        return (
-            f"path mismatch for repo '{existing.name}': "
-            f"catalog has {existing.path!r}, requested {desired.path!r}"
-        )
+        return f"path mismatch for repo '{existing.name}': catalog has {existing.path!r}, requested {desired.path!r}"
     return None
 
 
@@ -61,10 +55,7 @@ def _project_ensure_conflict(
             f"description mismatch for project '{existing.name}': "
             f"catalog has {existing.description!r}, requested {description!r}"
         )
-    if (
-        agent_instructions is not None
-        and existing.agent_instructions != agent_instructions
-    ):
+    if agent_instructions is not None and existing.agent_instructions != agent_instructions:
         return f"agent_instructions mismatch for project '{existing.name}'"
     if protected is not None and bool(existing.protected) != protected:
         return f"protected mismatch for project '{existing.name}'"
@@ -125,9 +116,7 @@ class WorkspaceCatalogService:
                 tags=dict(project.tags),
                 metadata=dict(project.metadata),
                 documentation_count=len(project.documentation or []),
-                dedupe_enabled=(
-                    project.dedupe.enabled if project.dedupe is not None else None
-                ),
+                dedupe_enabled=(project.dedupe.enabled if project.dedupe is not None else None),
                 repo_count=len(project.repos),
             ).model_dump(mode="json")
             for project in config.workspace.projects
@@ -154,9 +143,7 @@ class WorkspaceCatalogService:
                 config=config,
                 workspace_root=workspace_root,
             )
-        index_by_key = {
-            (row["project_name"], row["repo_name"]): row for row in index_rows
-        }
+        index_by_key = {(row["project_name"], row["repo_name"]): row for row in index_rows}
         repos: list[dict[str, Any]] = []
         for project in config.workspace.projects:
             if project_name and project.name != project_name:
@@ -192,6 +179,7 @@ class WorkspaceCatalogService:
         force: bool = False,
     ) -> CatalogMutationResult:
         """Add a workspace project (group) to the manifest."""
+        _ = force
         trimmed = name.strip()
         if not trimmed:
             return self._mutation_error(
@@ -298,9 +286,7 @@ class WorkspaceCatalogService:
                 project_name=trimmed,
             )
         before = len(config.workspace.projects)
-        config.workspace.projects = [
-            project for project in config.workspace.projects if project.name != trimmed
-        ]
+        config.workspace.projects = [project for project in config.workspace.projects if project.name != trimmed]
         if len(config.workspace.projects) == before:
             return self._mutation_error(
                 entity="project",
@@ -351,10 +337,7 @@ class WorkspaceCatalogService:
                 entity="repo",
                 operation="add",
                 kind="protected",
-                message=(
-                    f"project '{project_name}' is protected "
-                    "(use force=True to add repos)"
-                ),
+                message=(f"project '{project_name}' is protected (use force=True to add repos)"),
                 project_name=project_name,
                 repo_name=repo.name,
             )
@@ -365,9 +348,7 @@ class WorkspaceCatalogService:
                         entity="repo",
                         operation="add",
                         kind="already_exists",
-                        message=(
-                            f"repo '{repo.name}' already exists in project '{project_name}'"
-                        ),
+                        message=(f"repo '{repo.name}' already exists in project '{project_name}'"),
                         project_name=project_name,
                         repo_name=repo.name,
                     )
@@ -456,19 +437,15 @@ class WorkspaceCatalogService:
             (item for item in project.repos if item.name == repo_name),
             None,
         )
-        if existing_repo is not None and repo_is_protected(project, existing_repo):
-            if not force:
-                return self._mutation_error(
-                    entity="repo",
-                    operation="remove",
-                    kind="protected",
-                    message=(
-                        f"repo '{repo_name}' or project '{project_name}' is protected "
-                        "(use force=True)"
-                    ),
-                    project_name=project_name,
-                    repo_name=repo_name,
-                )
+        if existing_repo is not None and repo_is_protected(project, existing_repo) and not force:
+            return self._mutation_error(
+                entity="repo",
+                operation="remove",
+                kind="protected",
+                message=(f"repo '{repo_name}' or project '{project_name}' is protected (use force=True)"),
+                project_name=project_name,
+                repo_name=repo_name,
+            )
         before = len(project.repos)
         project.repos = [item for item in project.repos if item.name != repo_name]
         if len(project.repos) == before:
@@ -535,9 +512,7 @@ class WorkspaceCatalogService:
         project_count = len(config.workspace.projects) if config.workspace else 0
         repo_count = 0
         if config.workspace:
-            repo_count = sum(
-                len(project.repos) for project in config.workspace.projects
-            )
+            repo_count = sum(len(project.repos) for project in config.workspace.projects)
         return WorkspaceSummary(
             definition_path=str(Path(config_path).resolve()),
             workspace_root=str(Path(workspace_root).resolve()),
@@ -549,9 +524,7 @@ class WorkspaceCatalogService:
             repo_count=repo_count,
         )
 
-    def _find_project(
-        self, config: MetagitConfig, project_name: str
-    ) -> Optional[WorkspaceProject]:
+    def _find_project(self, config: MetagitConfig, project_name: str) -> Optional[WorkspaceProject]:
         if not config.workspace:
             return None
         for project in config.workspace.projects:

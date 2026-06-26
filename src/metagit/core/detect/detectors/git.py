@@ -9,9 +9,10 @@ and local dirty status.
 
 from datetime import datetime
 from typing import Optional
-from git import Repo, InvalidGitRepositoryError, NoSuchPathError
 
-from metagit.core.detect.models import Detector, ProjectScanContext, DiscoveryResult
+from git import InvalidGitRepositoryError, NoSuchPathError, Repo
+
+from metagit.core.detect.models import Detector, DiscoveryResult, ProjectScanContext
 
 
 class GitDetector(Detector):

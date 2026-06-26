@@ -44,9 +44,7 @@ def appconfig_info(ctx: click.Context) -> None:
     """
     logger = ctx.obj.get("logger") or UnifiedLogger(LoggerConfig())
     logger.config_element(name="version", value=__version__, console=True)
-    logger.config_element(
-        name="config_path", value=ctx.obj["config_path"], console=True
-    )
+    logger.config_element(name="config_path", value=ctx.obj["config_path"], console=True)
 
 
 @appconfig.command("show")
@@ -96,9 +94,7 @@ def appconfig_show(ctx: click.Context, output_format: str) -> None:
 @appconfig.command("validate")
 @click.option("--config-path", help="Path to the configuration file", default=None)
 @click.pass_context
-def appconfig_validate(
-    ctx: click.Context, config_path: Union[str, None] = None
-) -> None:
+def appconfig_validate(ctx: click.Context, config_path: Union[str, None] = None) -> None:
     """Validate a configuration file"""
     logger = ctx.obj["logger"]
     try:
@@ -148,9 +144,7 @@ def appconfig_get(ctx: click.Context, name: str, show_keys: bool, output: str) -
     """Display appconfig value"""
     try:
         config = ctx.obj["config"]
-        result = get_config(
-            appconfig=config, name=name, show_keys=show_keys, output=output
-        )
+        result = get_config(appconfig=config, name=name, show_keys=show_keys, output=output)
         if isinstance(result, Exception):
             raise result
     except Exception as e:
@@ -176,11 +170,7 @@ def appconfig_create(ctx: click.Context, config_path: str = None) -> None:
     if not os.path.exists(config_path):
         try:
             output = base_yaml.dump(
-                {
-                    "config": default_config.model_dump(
-                        exclude_none=True, exclude_defaults=False, mode="json"
-                    )
-                },
+                {"config": default_config.model_dump(exclude_none=True, exclude_defaults=False, mode="json")},
                 default_flow_style=False,
                 sort_keys=False,
                 indent=2,
@@ -226,9 +216,7 @@ def appconfig_set(ctx: click.Context, name: str, value: str) -> None:
 
 
 @appconfig.command("tree")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def appconfig_tree(ctx: click.Context, as_json: bool) -> None:
     """Show schema-backed field tree for metagit.config.yaml."""
@@ -270,9 +258,7 @@ def appconfig_tree(ctx: click.Context, as_json: bool) -> None:
     default=None,
     help="Write preview YAML to this path instead of stdout",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def appconfig_preview(
     ctx: click.Context,
@@ -350,9 +336,7 @@ def appconfig_preview(
     default=False,
     help="Include updated schema tree in JSON output",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def appconfig_patch(
     ctx: click.Context,

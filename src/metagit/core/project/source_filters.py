@@ -22,9 +22,7 @@ def _visibility_matches(repo: DiscoveredRepo, visibility: str) -> bool:
     return True
 
 
-def apply_source_filters(
-    spec: SourceSpec, repos: list[DiscoveredRepo]
-) -> list[DiscoveredRepo]:
+def apply_source_filters(spec: SourceSpec, repos: list[DiscoveredRepo]) -> list[DiscoveredRepo]:
     """Apply include/ignore and legacy discovery filters to discovered repos."""
     result = list(repos)
 
@@ -32,20 +30,14 @@ def apply_source_filters(
         result = [
             repo
             for repo in result
-            if any(
-                fnmatch.fnmatch(repo.full_name, pattern)
-                for pattern in spec.include_patterns
-            )
+            if any(fnmatch.fnmatch(repo.full_name, pattern) for pattern in spec.include_patterns)
         ]
 
     if spec.ignore_patterns:
         result = [
             repo
             for repo in result
-            if not any(
-                fnmatch.fnmatch(repo.full_name, pattern)
-                for pattern in spec.ignore_patterns
-            )
+            if not any(fnmatch.fnmatch(repo.full_name, pattern) for pattern in spec.ignore_patterns)
         ]
 
     if not spec.include_archived:
@@ -55,17 +47,13 @@ def apply_source_filters(
         result = [repo for repo in result if not repo.fork]
 
     if spec.path_prefix:
-        result = [
-            repo for repo in result if repo.full_name.startswith(spec.path_prefix)
-        ]
+        result = [repo for repo in result if repo.full_name.startswith(spec.path_prefix)]
 
     if spec.visibility != "any":
         result = [repo for repo in result if _visibility_matches(repo, spec.visibility)]
 
     if spec.ignore_languages:
         blocked = {language.lower() for language in spec.ignore_languages}
-        result = [
-            repo for repo in result if (repo.language or "").lower() not in blocked
-        ]
+        result = [repo for repo in result if (repo.language or "").lower() not in blocked]
 
     return result

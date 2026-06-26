@@ -40,9 +40,7 @@ def _require_manifest_root(root: str) -> Path:
         raise click.ClickException("Invalid manifest root")
     manifest_path = manifest_root / ".metagit.yml"
     if not manifest_path.is_file():
-        raise click.ClickException(
-            f"No .metagit.yml found under manifest root: {manifest_root}"
-        )
+        raise click.ClickException(f"No .metagit.yml found under manifest root: {manifest_root}")
     return manifest_root
 
 
@@ -445,18 +443,11 @@ def agent_create(
     resolved_root = root or project_root
     root_path = resolve_target_dir(resolved_root, create=False)
     directory_name, git_remote_url = _resolve_project_metadata(root_path)
-    vendors = (
-        [vendor] if vendor else autodetect_agent_targets(scope, project_root=root_path)
-    )
+    vendors = [vendor] if vendor else autodetect_agent_targets(scope, project_root=root_path)
     if not vendors:
-        raise click.ClickException(
-            "No vendor detected. Pass --vendor (e.g. cursor, claude_code, hermes, opencode)."
-        )
+        raise click.ClickException("No vendor detected. Pass --vendor (e.g. cursor, claude_code, hermes, opencode).")
     if len(vendors) > 1 and vendor is None:
-        raise click.ClickException(
-            f"Multiple vendors detected ({', '.join(vendors)}). "
-            "Pass --vendor to choose one."
-        )
+        raise click.ClickException(f"Multiple vendors detected ({', '.join(vendors)}). Pass --vendor to choose one.")
     selected_vendor = vendors[0]
     service = _service_for_root(resolved_root)
     write_result, install_results = service.create(
@@ -588,9 +579,7 @@ def agent_overlay_path(ctx: click.Context, template_id: str, root: str) -> None:
     logger.echo(
         f"committed: {overlay_path_for_template(manifest_root, template_id, scope=AgentOverlayScope.COMMITTED)}"
     )
-    logger.echo(
-        f"local: {overlay_path_for_template(manifest_root, template_id, scope=AgentOverlayScope.LOCAL)}"
-    )
+    logger.echo(f"local: {overlay_path_for_template(manifest_root, template_id, scope=AgentOverlayScope.LOCAL)}")
 
 
 agent.add_command(agent_overlay)

@@ -20,9 +20,7 @@ class StaticWebHandler:
         root = Path(web_root) if web_root is not None else Path(DATA_PATH) / "web"
         self._web_root = root.resolve()
 
-    def handle(
-        self, method: str, path: str, request_handler: BaseHTTPRequestHandler
-    ) -> bool:
+    def handle(self, method: str, path: str, request_handler: BaseHTTPRequestHandler) -> bool:
         """Serve static files for non-API GET requests."""
         if method != "GET":
             return False
@@ -43,16 +41,11 @@ class StaticWebHandler:
         relative = unquote(parsed_path.lstrip("/"))
         candidate = (self._web_root / relative).resolve()
         web_root_resolved = self._web_root.resolve()
-        if (
-            candidate != web_root_resolved
-            and web_root_resolved not in candidate.parents
-        ):
+        if candidate != web_root_resolved and web_root_resolved not in candidate.parents:
             return None
         return candidate
 
-    def _send_file(
-        self, file_path: Path, request_handler: BaseHTTPRequestHandler
-    ) -> None:
+    def _send_file(self, file_path: Path, request_handler: BaseHTTPRequestHandler) -> None:
         content_type, _ = mimetypes.guess_type(str(file_path))
         if content_type is None:
             content_type = "application/octet-stream"

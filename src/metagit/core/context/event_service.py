@@ -33,9 +33,7 @@ class WorkspaceEventService:
                 )
             )
 
-        for req in (
-            ApprovalService(workspace_root=self._root).list(status=None).requests
-        ):
+        for req in ApprovalService(workspace_root=self._root).list(status=None).requests:
             rows.append(
                 WorkspaceEvent(
                     timestamp=req.resolved_at or req.created_at,

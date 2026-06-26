@@ -59,9 +59,7 @@ def materialize_symlink_mount(
             tqdm.write(f"  💧 {label}: empty directory (materialized)")
             return True, None
         desc = f"  💧 {label}"
-        bar_format = (
-            "{l_bar}{bar}| {n_fmt}/{total_fmt} files [{elapsed}<{remaining}]{r_bar}"
-        )
+        bar_format = "{l_bar}{bar}| {n_fmt}/{total_fmt} files [{elapsed}<{remaining}]{r_bar}"
         with tqdm(
             total=len(jobs),
             desc=desc,

@@ -20,13 +20,9 @@ def _format_targets(
     service = ConfigFormatService()
     results: list[FormatFileResult | Exception] = []
     if metagit_path is not None:
-        results.append(
-            service.format_metagit(metagit_path, include_defaults=include_defaults)
-        )
+        results.append(service.format_metagit(metagit_path, include_defaults=include_defaults))
     if appconfig_path is not None:
-        results.append(
-            service.format_appconfig(appconfig_path, include_defaults=include_defaults)
-        )
+        results.append(service.format_appconfig(appconfig_path, include_defaults=include_defaults))
     return results
 
 

@@ -59,9 +59,7 @@ def validate_skill(skill_dir: Path) -> list[str]:
     text = skill_file.read_text(encoding="utf-8")
     match = FRONTMATTER_RE.match(text)
     if not match:
-        return [
-            "missing or malformed YAML frontmatter (must open and close with '---')"
-        ]
+        return ["missing or malformed YAML frontmatter (must open and close with '---')"]
 
     frontmatter_raw, body = match.group(1), match.group(2)
     try:
@@ -74,9 +72,7 @@ def validate_skill(skill_dir: Path) -> list[str]:
 
     missing = REQUIRED_FIELDS - frontmatter.keys()
     if missing:
-        errors.append(
-            "missing required frontmatter field(s): " + ", ".join(sorted(missing))
-        )
+        errors.append("missing required frontmatter field(s): " + ", ".join(sorted(missing)))
 
     unknown = set(frontmatter.keys()) - KNOWN_FIELDS
     if unknown:
@@ -95,9 +91,7 @@ def validate_skill(skill_dir: Path) -> list[str]:
             if len(name) > MAX_NAME_LEN:
                 errors.append(f"'name' exceeds {MAX_NAME_LEN} chars (got {len(name)})")
             if name != skill_dir.name:
-                errors.append(
-                    f"'name' ({name!r}) must match the directory name ({skill_dir.name!r})"
-                )
+                errors.append(f"'name' ({name!r}) must match the directory name ({skill_dir.name!r})")
 
     desc = frontmatter.get("description")
     if desc is not None:
@@ -108,9 +102,7 @@ def validate_skill(skill_dir: Path) -> list[str]:
             if not stripped:
                 errors.append("'description' must not be empty")
             elif len(stripped) > MAX_DESCRIPTION_LEN:
-                errors.append(
-                    f"'description' exceeds {MAX_DESCRIPTION_LEN} chars (got {len(stripped)})"
-                )
+                errors.append(f"'description' exceeds {MAX_DESCRIPTION_LEN} chars (got {len(stripped)})")
             elif len(stripped) < MIN_DESCRIPTION_LEN:
                 errors.append(
                     f"'description' is suspiciously short ({len(stripped)} chars); "
@@ -126,9 +118,7 @@ def validate_skill(skill_dir: Path) -> list[str]:
 
     metadata = frontmatter.get("metadata")
     if isinstance(metadata, dict) and metadata.get("internal") is True:
-        errors.append(
-            "public bundled skills under skills/ must not set metadata.internal: true"
-        )
+        errors.append("public bundled skills under skills/ must not set metadata.internal: true")
 
     return errors
 
@@ -141,9 +131,7 @@ def main() -> int:
         )
         return 2
 
-    skill_dirs = sorted(
-        p for p in SKILLS_DIR.iterdir() if p.is_dir() and not p.name.startswith(".")
-    )
+    skill_dirs = sorted(p for p in SKILLS_DIR.iterdir() if p.is_dir() and not p.name.startswith("."))
     if not skill_dirs:
         print(
             f"ERROR: no skill subdirectories found under {SKILLS_DIR.relative_to(REPO_ROOT)}/",
@@ -151,9 +139,7 @@ def main() -> int:
         )
         return 2
 
-    print(
-        f"Validating {len(skill_dirs)} skill(s) in {SKILLS_DIR.relative_to(REPO_ROOT)}/"
-    )
+    print(f"Validating {len(skill_dirs)} skill(s) in {SKILLS_DIR.relative_to(REPO_ROOT)}/")
     print()
 
     failed = 0

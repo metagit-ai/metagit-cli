@@ -20,9 +20,7 @@ class BootstrapSamplingService:
         self.sampling_supported = sampling_supported
         self._sampler = sampler
 
-    def generate(
-        self, context: dict[str, str], confirm_write: bool = False
-    ) -> dict[str, str]:
+    def generate(self, context: dict[str, str], confirm_write: bool = False) -> dict[str, str]:
         """Generate config draft and return write guidance."""
         if not self.sampling_supported or self._sampler is None:
             return {
@@ -40,23 +38,17 @@ class BootstrapSamplingService:
                 return {
                     "mode": "sampled",
                     "draft_yaml": draft_yaml,
-                    "write_target": ".metagit.yml"
-                    if confirm_write
-                    else ".metagit.generated.yml",
+                    "write_target": ".metagit.yml" if confirm_write else ".metagit.generated.yml",
                 }
             errors = [validation["error"]]
 
         return {
             "mode": "plan_only",
-            "prompt_package": self._build_prompt(
-                context=context, validation_errors=errors
-            ),
+            "prompt_package": self._build_prompt(context=context, validation_errors=errors),
             "write_target": ".metagit.generated.yml",
         }
 
-    def _build_prompt(
-        self, context: dict[str, str], validation_errors: Optional[list[str]] = None
-    ) -> str:
+    def _build_prompt(self, context: dict[str, str], validation_errors: Optional[list[str]] = None) -> str:
         errors = "\n".join(validation_errors or [])
         return (
             "Create a valid .metagit.yml using this context.\n"

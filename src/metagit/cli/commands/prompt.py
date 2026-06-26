@@ -91,9 +91,7 @@ def prompt(ctx: click.Context) -> None:
 
 
 @prompt.command("list")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def prompt_list(ctx: click.Context, as_json: bool) -> None:
     """List available prompt kinds and valid scopes."""
@@ -132,9 +130,7 @@ def prompt_list(ctx: click.Context, as_json: bool) -> None:
     default=False,
     help="Omit composed manifest instructions from operational prompts",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.option(
     "--text-only",
     is_flag=True,
@@ -165,9 +161,7 @@ def prompt_workspace(
 
 
 @prompt.command("project")
-@click.option(
-    "--project", "-p", "project_name", required=True, help="Workspace project name"
-)
+@click.option("--project", "-p", "project_name", required=True, help="Workspace project name")
 @click.option(
     "--definition",
     "-c",
@@ -211,9 +205,7 @@ def prompt_project(
 
 
 @prompt.command("repo")
-@click.option(
-    "--project", "-p", "project_name", required=True, help="Workspace project name"
-)
+@click.option("--project", "-p", "project_name", required=True, help="Workspace project name")
 @click.option("--repo", "-n", "repo_name", required=True, help="Repository name")
 @click.option(
     "--definition",

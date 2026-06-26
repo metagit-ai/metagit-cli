@@ -30,12 +30,8 @@ class AgentTemplateRegistry:
         manifest_root: Optional[Path] = None,
     ) -> None:
         self._bundled_root = bundled_root or Path(DATA_PATH) / "agent-templates"
-        self._manifest_root = (
-            Path(manifest_root).resolve() if manifest_root is not None else None
-        )
-        self._committed_overlay_root = resolve_committed_overlay_root(
-            self._manifest_root
-        )
+        self._manifest_root = Path(manifest_root).resolve() if manifest_root is not None else None
+        self._committed_overlay_root = resolve_committed_overlay_root(self._manifest_root)
         self._local_overlay_root = resolve_local_overlay_root(self._manifest_root)
 
     @property
@@ -90,15 +86,11 @@ class AgentTemplateRegistry:
             self._merged_manifest_payload(template_id),
         )
 
-    def load_bundled_manifest(
-        self, template_id: str
-    ) -> Optional[AgentTemplateManifest]:
+    def load_bundled_manifest(self, template_id: str) -> Optional[AgentTemplateManifest]:
         """Load bundled-only manifest."""
         return self._load_bundled_manifest(template_id)
 
-    def load_overlay_manifest(
-        self, template_id: str
-    ) -> Optional[AgentTemplateManifest]:
+    def load_overlay_manifest(self, template_id: str) -> Optional[AgentTemplateManifest]:
         """Load merged committed + local overlay manifests on top of bundled."""
         return self._validate_merged_payload(
             self._merged_manifest_payload(template_id, include_bundled=False),
@@ -133,9 +125,7 @@ class AgentTemplateRegistry:
     def resolve_source_file(self, template_id: str, filename: str) -> Path | None:
         """Resolve a template source with local > committed > bundled precedence."""
         bundled_dir = (
-            self._bundled_template_dir(template_id)
-            if self._bundled_template_dir(template_id).is_dir()
-            else None
+            self._bundled_template_dir(template_id) if self._bundled_template_dir(template_id).is_dir() else None
         )
         overlay_dirs = self._overlay_dirs_for_template(template_id)
         return resolve_template_file(
@@ -203,12 +193,8 @@ class AgentTemplateRegistry:
         if include_bundled:
             bundled = self._load_bundled_manifest(template_id)
             payloads.append(bundled.model_dump() if bundled is not None else None)
-        payloads.append(
-            self._load_scope_overlay_payload(self._committed_overlay_root, template_id)
-        )
-        payloads.append(
-            self._load_scope_overlay_payload(self._local_overlay_root, template_id)
-        )
+        payloads.append(self._load_scope_overlay_payload(self._committed_overlay_root, template_id))
+        payloads.append(self._load_scope_overlay_payload(self._local_overlay_root, template_id))
         merged: dict[str, Any] | None = None
         for payload in payloads:
             merged = merge_manifest_payloads(merged, payload)
@@ -244,9 +230,7 @@ class AgentTemplateRegistry:
                 ids.add(entry.name)
         return ids
 
-    def _load_bundled_manifest(
-        self, template_id: str
-    ) -> Optional[AgentTemplateManifest]:
+    def _load_bundled_manifest(self, template_id: str) -> Optional[AgentTemplateManifest]:
         manifest_path = self._bundled_template_dir(template_id) / "template.yaml"
         if not manifest_path.is_file():
             return None

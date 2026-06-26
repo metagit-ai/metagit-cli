@@ -68,9 +68,7 @@ class SyncJobStore:
             status = self._jobs.get(job_id)
             if status is None:
                 return
-            self._jobs[job_id] = status.model_copy(
-                update={"state": "failed", "error": error}
-            )
+            self._jobs[job_id] = status.model_copy(update={"state": "failed", "error": error})
 
     def get(self, job_id: str) -> SyncJobStatus | None:
         """Return a snapshot of job status, or None if unknown."""

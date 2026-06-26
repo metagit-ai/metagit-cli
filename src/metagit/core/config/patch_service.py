@@ -73,10 +73,7 @@ class ConfigPatchService:
     ) -> TreeResult | Exception:
         """Build schema tree for the config at config_path."""
         resolved = str(Path(config_path).resolve())
-        if target == "metagit":
-            loaded = self._load_metagit(resolved)
-        else:
-            loaded = self._load_appconfig(resolved)
+        loaded = self._load_metagit(resolved) if target == "metagit" else self._load_appconfig(resolved)
         if isinstance(loaded, Exception):
             return loaded
         model_class = MetagitConfig if target == "metagit" else AppConfig

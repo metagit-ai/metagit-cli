@@ -36,9 +36,7 @@ class WorkspaceProject(BaseModel):
     """Model for workspace project."""
 
     name: str = Field(..., description="Workspace project name")
-    description: Optional[str] = Field(
-        None, description="Human-readable description of this workspace project"
-    )
+    description: Optional[str] = Field(None, description="Human-readable description of this workspace project")
     agent_instructions: Optional[str] = Field(
         None,
         validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
@@ -47,16 +45,12 @@ class WorkspaceProject(BaseModel):
     dedupe: Optional[ProjectDedupeOverride] = Field(
         default=None,
         description=(
-            "Optional override of app-config workspace.dedupe for this project "
-            "(currently supports enabled only)"
+            "Optional override of app-config workspace.dedupe for this project (currently supports enabled only)"
         ),
     )
     protected: Optional[bool] = Field(
         False,
-        description=(
-            "If true, catalog and layout mutations on this project and its repos "
-            "require force"
-        ),
+        description=("If true, catalog and layout mutations on this project and its repos require force"),
     )
     tags: dict[str, str] = Field(
         default_factory=dict,
@@ -64,10 +58,7 @@ class WorkspaceProject(BaseModel):
     )
     documentation: Optional[List[DocumentationSource]] = Field(
         None,
-        description=(
-            "Documentation sources for this workspace project group "
-            "(paths, URLs, graph metadata)"
-        ),
+        description=("Documentation sources for this workspace project group (paths, URLs, graph metadata)"),
     )
     metadata: dict[str, Any] = Field(
         default_factory=dict,
@@ -84,9 +75,7 @@ class WorkspaceProject(BaseModel):
         seen: set[str] = set()
         for source in self.sources:
             if source.id in seen:
-                raise ValueError(
-                    f"duplicate sources[].id '{source.id}' in project '{self.name}'"
-                )
+                raise ValueError(f"duplicate sources[].id '{source.id}' in project '{self.name}'")
             seen.add(source.id)
         return self
 
@@ -120,9 +109,7 @@ class WorkspaceProject(BaseModel):
 class Workspace(BaseModel):
     """Model for workspace configuration."""
 
-    description: Optional[str] = Field(
-        None, description="Human-readable description of this workspace"
-    )
+    description: Optional[str] = Field(None, description="Human-readable description of this workspace")
     agent_instructions: Optional[str] = Field(
         None,
         validation_alias=AliasChoices("agent_instructions", "agent_prompt"),

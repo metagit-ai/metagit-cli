@@ -31,14 +31,10 @@ class AgentCatalogService:
 
     registry: AgentTemplateRegistry = field(default_factory=AgentTemplateRegistry)
 
-    def list_catalog(
-        self, *, manifest_root: Path | None = None
-    ) -> AgentCatalogEnvelope:
+    def list_catalog(self, *, manifest_root: Path | None = None) -> AgentCatalogEnvelope:
         """Return sorted catalog entries with delegation index applied."""
         working_registry = (
-            self.registry
-            if manifest_root is None
-            else AgentTemplateRegistry(manifest_root=manifest_root)
+            self.registry if manifest_root is None else AgentTemplateRegistry(manifest_root=manifest_root)
         )
         entries: list[AgentCatalogEntry] = []
         for template_id in working_registry.list_template_ids():
@@ -57,9 +53,7 @@ class AgentCatalogService:
                     status=manifest.status,
                     version=manifest.version,
                     source=source,
-                    overlay_path=str(overlay_path)
-                    if overlay_path is not None
-                    else None,
+                    overlay_path=str(overlay_path) if overlay_path is not None else None,
                     ui=manifest.ui,
                     prompt_kinds=list(manifest.prompt_kinds),
                     mcp_tools=list(manifest.mcp_tools),
@@ -125,17 +119,11 @@ class AgentCatalogService:
     ) -> list[AgentValidationIssue]:
         """Validate bundled and optional overlay templates."""
         working_registry = (
-            self.registry
-            if manifest_root is None
-            else AgentTemplateRegistry(manifest_root=manifest_root)
+            self.registry if manifest_root is None else AgentTemplateRegistry(manifest_root=manifest_root)
         )
         issues: list[AgentValidationIssue] = []
         known_kinds = {item.kind for item in list_prompt_catalog()}
-        template_ids = (
-            [template_id]
-            if template_id is not None
-            else working_registry.list_template_ids()
-        )
+        template_ids = [template_id] if template_id is not None else working_registry.list_template_ids()
         known_ids = set(working_registry.list_template_ids())
         for current_id in template_ids:
             manifest = working_registry.load_manifest(current_id)

@@ -89,11 +89,7 @@ class CrossProjectDependencyService:
             depth=max(1, depth),
         )
         graph_status = self._registry.summarize_for_paths(
-            repo_paths=[
-                node.repo_path
-                for node in filtered_nodes
-                if node.repo_path and node.kind == "repo"
-            ]
+            repo_paths=[node.repo_path for node in filtered_nodes if node.repo_path and node.kind == "repo"]
         )
         for node in filtered_nodes:
             if node.repo_path and node.kind == "repo":
@@ -180,10 +176,7 @@ class CrossProjectDependencyService:
     ) -> list[DependencyEdge]:
         """Collect dependency edges from all enabled collectors."""
         edges: list[DependencyEdge] = []
-        project_names = {
-            project.name
-            for project in (config.workspace.projects if config.workspace else [])
-        }
+        project_names = {project.name for project in (config.workspace.projects if config.workspace else [])}
 
         if selected_types.intersection({"declared", "ref"}):
             edges.extend(
@@ -196,9 +189,7 @@ class CrossProjectDependencyService:
             )
 
         if selected_types.intersection({"shared_config", "url_match"}):
-            edges.extend(
-                self._shared_config_edges(rows=rows, include_external=include_external)
-            )
+            edges.extend(self._shared_config_edges(rows=rows, include_external=include_external))
 
         if "imports" in selected_types:
             edges.extend(
@@ -275,10 +266,7 @@ class CrossProjectDependencyService:
             from_id = f"repo:{row['project_name']}/{row['repo_name']}"
             tags = row.get("tags") or {}
             for key, value in tags.items():
-                if (
-                    str(key).lower() in {"project", "depends_on"}
-                    and value in project_names
-                ):
+                if str(key).lower() in {"project", "depends_on"} and value in project_names:
                     edges.append(
                         DependencyEdge(
                             from_id=from_id,
@@ -326,11 +314,7 @@ class CrossProjectDependencyService:
 
         if include_external:
             return edges
-        return [
-            edge
-            for edge in edges
-            if self._edge_is_internal(edge=edge, project_names=project_names)
-        ]
+        return [edge for edge in edges if self._edge_is_internal(edge=edge, project_names=project_names)]
 
     def _shared_config_edges(
         self,
@@ -435,10 +419,9 @@ class CrossProjectDependencyService:
         if source_id.startswith("project:"):
             source_project = source_id.split(":", 1)[1]
             for node in nodes:
-                if node.kind == "repo" and node.project_name == source_project:
-                    if node.id not in visited:
-                        visited.add(node.id)
-                        queue.append((node.id, 0))
+                if node.kind == "repo" and node.project_name == source_project and node.id not in visited:
+                    visited.add(node.id)
+                    queue.append((node.id, 0))
         while queue:
             node_id, distance = queue.popleft()
             if distance >= depth:
@@ -449,9 +432,7 @@ class CrossProjectDependencyService:
                 visited.add(neighbor)
                 queue.append((neighbor, distance + 1))
 
-        filtered_edges = [
-            edge for edge in edges if edge.from_id in visited and edge.to_id in visited
-        ]
+        filtered_edges = [edge for edge in edges if edge.from_id in visited and edge.to_id in visited]
         filtered_nodes = [node for node in nodes if node.id in visited]
         return filtered_nodes, filtered_edges
 
@@ -465,34 +446,20 @@ class CrossProjectDependencyService:
     ) -> ImpactSummary:
         """Summarize risk and affected projects."""
         affected_projects = sorted(
-            {
-                node.project_name
-                for node in nodes
-                if node.project_name and node.project_name != source_project
-            }
+            {node.project_name for node in nodes if node.project_name and node.project_name != source_project}
         )
         affected_repos = sorted(
-            {
-                node.label
-                for node in nodes
-                if node.kind == "repo" and node.project_name != source_project
-            }
+            {node.label for node in nodes if node.kind == "repo" and node.project_name != source_project}
         )
         notes: list[str] = []
         stale_count = sum(1 for status in graph_status.values() if status == "stale")
-        missing_count = sum(
-            1 for status in graph_status.values() if status == "missing"
-        )
+        missing_count = sum(1 for status in graph_status.values() if status == "missing")
         if stale_count:
-            notes.append(
-                f"{stale_count} repositories have stale GitNexus indexes; run gitnexus analyze."
-            )
+            notes.append(f"{stale_count} repositories have stale GitNexus indexes; run gitnexus analyze.")
         if missing_count:
             notes.append(f"{missing_count} repositories are not indexed in GitNexus.")
         if "imports" in selected_types:
-            notes.append(
-                "Import edges use manifest scanning; run GitNexus analyze for symbol-level graphs."
-            )
+            notes.append("Import edges use manifest scanning; run GitNexus analyze for symbol-level graphs.")
 
         risk = "low"
         if len(affected_projects) >= 3 or len(edges) >= 8:

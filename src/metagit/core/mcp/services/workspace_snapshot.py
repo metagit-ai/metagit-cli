@@ -3,6 +3,7 @@
 Workspace snapshot create and restore for MCP tools.
 """
 
+import contextlib
 import json
 import os
 import uuid
@@ -69,11 +70,7 @@ class WorkspaceSnapshotService:
                 project_name=active_project,
             )
 
-        session_ref = (
-            os.path.join(".metagit", "sessions", f"{active_project}.json")
-            if active_project
-            else None
-        )
+        session_ref = os.path.join(".metagit", "sessions", f"{active_project}.json") if active_project else None
         snapshot = WorkspaceSnapshot(
             snapshot_id=snapshot_id,
             active_project=active_project,
@@ -97,9 +94,7 @@ class WorkspaceSnapshotService:
         restore_session: bool = True,
     ) -> WorkspaceSnapshotRestoreResult:
         """Restore session metadata from a snapshot; does not mutate git state."""
-        snapshot = self._load_snapshot(
-            workspace_root=workspace_root, snapshot_id=snapshot_id
-        )
+        snapshot = self._load_snapshot(workspace_root=workspace_root, snapshot_id=snapshot_id)
         if snapshot is None:
             return WorkspaceSnapshotRestoreResult(
                 ok=False,
@@ -157,9 +152,7 @@ class WorkspaceSnapshotService:
                 ahead = int(ahead_val) if isinstance(ahead_val, int) else None
                 behind = int(behind_val) if isinstance(behind_val, int) else None
                 uncommitted_val = inspected.get("uncommitted_count")
-                uncommitted = (
-                    int(uncommitted_val) if isinstance(uncommitted_val, int) else None
-                )
+                uncommitted = int(uncommitted_val) if isinstance(uncommitted_val, int) else None
             else:
                 inspect_error = str(inspected.get("error", "inspect failed"))
         return SnapshotRepoState(
@@ -183,15 +176,11 @@ class WorkspaceSnapshotService:
             json.dumps(snapshot.model_dump(mode="json"), indent=2) + "\n",
             encoding="utf-8",
         )
-        try:
+        with contextlib.suppress(OSError):
             os.chmod(path, 0o600)
-        except OSError:
-            pass
         return path
 
-    def _load_snapshot(
-        self, workspace_root: str, snapshot_id: str
-    ) -> Optional[WorkspaceSnapshot]:
+    def _load_snapshot(self, workspace_root: str, snapshot_id: str) -> Optional[WorkspaceSnapshot]:
         """Load snapshot by id."""
         path = Path(workspace_root) / ".metagit" / "snapshots" / f"{snapshot_id}.json"
         if not path.is_file():

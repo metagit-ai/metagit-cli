@@ -19,7 +19,6 @@ import subprocess
 import sys
 from dataclasses import dataclass
 
-
 MAJOR_RX = re.compile(r"^(feat|fix|refactor|perf)(\([^)]+\))?!:")
 MINOR_RX = re.compile(r"^feat(\([^)]+\))?:")
 PATCH_RX = re.compile(r"^(fix|refactor|perf)(\([^)]+\))?:")

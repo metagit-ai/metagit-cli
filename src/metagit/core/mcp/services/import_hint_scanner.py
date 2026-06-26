@@ -8,9 +8,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-_PATH_DEP_PATTERN = re.compile(
-    r"(?:file:|path:)\s*['\"]?([^'\"\s]+)['\"]?", re.IGNORECASE
-)
+_PATH_DEP_PATTERN = re.compile(r"(?:file:|path:)\s*['\"]?([^'\"\s]+)['\"]?", re.IGNORECASE)
 _GO_REPLACE_PATTERN = re.compile(r"^\s*replace\s+[^\s]+\s+=>\s+(.+)$", re.MULTILINE)
 _TERRAFORM_MODULE_PATTERN = re.compile(r'source\s*=\s*"([^"]+)"', re.IGNORECASE)
 
@@ -116,9 +114,7 @@ class ImportHintScanner:
                     hints.append(
                         {
                             "to_id": target_id,
-                            "evidence": [
-                                f"{file_path}: dependency {dep_name} -> {dep_ref}"
-                            ],
+                            "evidence": [f"{file_path}: dependency {dep_name} -> {dep_ref}"],
                         }
                     )
         return hints

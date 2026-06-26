@@ -17,7 +17,6 @@ from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.agent_instructions import AgentInstructionsResolver
 from metagit.core.workspace.models import WorkspaceProject
 
-
 _STACK_FILENAMES: tuple[str, ...] = (
     "pyproject.toml",
     "package.json",
@@ -119,14 +118,9 @@ class RepoCardService:
         is_git_repo = bool(row["is_git_repo"])
         status = str(row["status"])
         inspected: dict[str, Any]
-        if exists and is_git_repo:
-            inspected = dict(inspect_repo_state(repo_path=repo_path))
-        else:
-            inspected = {}
+        inspected = dict(inspect_repo_state(repo_path=repo_path)) if exists and is_git_repo else {}
 
-        branch, dirty, ahead, behind, head_age_days = self._git_fields_from_inspect(
-            inspected
-        )
+        branch, dirty, ahead, behind, head_age_days = self._git_fields_from_inspect(inspected)
 
         url: Optional[str]
         description: Optional[str]

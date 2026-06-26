@@ -163,13 +163,9 @@ class ManagedRepoSearchService:
         if sync_enabled is False and row_sync:
             return False
         row_tags = row.get("tags") or {}
-        if tags and any(row_tags.get(key) != value for key, value in tags.items()):
-            return False
-        return True
+        return not (tags and any(row_tags.get(key) != value for key, value in tags.items()))
 
-    def _sort_matches(
-        self, *, matches: list[ManagedRepoMatch], sort: str
-    ) -> list[ManagedRepoMatch]:
+    def _sort_matches(self, *, matches: list[ManagedRepoMatch], sort: str) -> list[ManagedRepoMatch]:
         """Sort matches by score, project, or repository name."""
         normalized = sort.lower()
         if normalized == "name":
@@ -191,9 +187,7 @@ class ManagedRepoSearchService:
             key=lambda item: (-item.score, item.project_name, item.repo_name),
         )
 
-    def _match_row(
-        self, *, row: dict[str, Any], query: str, exact: bool
-    ) -> tuple[int, list[str]]:
+    def _match_row(self, *, row: dict[str, Any], query: str, exact: bool) -> tuple[int, list[str]]:
         reasons: list[str] = []
         q = query.strip()
         if not q or q == "*":

@@ -108,13 +108,9 @@ class AgentDispatchService:
         repo: str | None,
     ) -> None:
         if manifest.scope == AgentScopeLevel.REPO and (not project or not repo):
-            raise ValueError(
-                "repo-scoped templates require --project and --repo for dispatch-plan"
-            )
+            raise ValueError("repo-scoped templates require --project and --repo for dispatch-plan")
         if manifest.scope == AgentScopeLevel.PROJECT and not project:
-            raise ValueError(
-                "project-scoped templates require --project for dispatch-plan"
-            )
+            raise ValueError("project-scoped templates require --project for dispatch-plan")
         if repo and not project:
             raise ValueError("--repo requires --project")
 
@@ -144,9 +140,7 @@ class AgentDispatchService:
         scope: Literal["project", "user"],
     ) -> AgentDispatchInstall:
         vendor_spec = manifest.vendors.get(vendor)
-        primary_name = (
-            vendor_spec.filename if vendor_spec is not None else f"{manifest.id}.md"
-        )
+        primary_name = vendor_spec.filename if vendor_spec is not None else f"{manifest.id}.md"
         install_as = vendor_spec.install_as if vendor_spec is not None else "agent"
         artifact_path = resolve_vendor_artifact_path(
             vendor,
@@ -223,28 +217,17 @@ class AgentDispatchService:
         repo_label: str,
     ) -> str:
         vendor_spec = manifest.vendors.get(vendor)
-        primary_name = (
-            vendor_spec.filename if vendor_spec is not None else f"{manifest.id}.md"
-        )
+        primary_name = vendor_spec.filename if vendor_spec is not None else f"{manifest.id}.md"
         install_as = vendor_spec.install_as if vendor_spec is not None else "agent"
         invoke_name = primary_name if install_as == "skill" else Path(primary_name).stem
         if vendor == "cursor":
             return f"@{invoke_name} — {task_label} ({repo_label})"
         if vendor == "claude_code":
-            return (
-                f"Use the Agent tool with subagent `{invoke_name}`: "
-                f"{task_label} in {repo_label}"
-            )
+            return f"Use the Agent tool with subagent `{invoke_name}`: {task_label} in {repo_label}"
         if vendor == "github_copilot":
-            return (
-                f"Assign agent `{primary_name}` under `.github/agents/` for "
-                f"{task_label} in {repo_label}"
-            )
+            return f"Assign agent `{primary_name}` under `.github/agents/` for {task_label} in {repo_label}"
         if vendor == "opencode":
-            return (
-                f"Invoke OpenCode subagent `{invoke_name}` (mode: subagent) for "
-                f"{task_label} in {repo_label}"
-            )
+            return f"Invoke OpenCode subagent `{invoke_name}` (mode: subagent) for {task_label} in {repo_label}"
         if vendor in {"hermes", "openclaw", "windsurf", "codex"}:
             return f"Load skill `{invoke_name}` for {task_label} in {repo_label}"
         return f"Invoke `{invoke_name}` for {task_label} in {repo_label}"
@@ -331,9 +314,7 @@ class AgentDispatchService:
             return "context-pack", "project"
         if manifest.prompt_kinds:
             kind = manifest.prompt_kinds[0]
-            scope: Literal["workspace", "project", "repo"] = (
-                "project" if project else "workspace"
-            )
+            scope: Literal["workspace", "project", "repo"] = "project" if project else "workspace"
             return kind, scope
         return "session-start", "workspace"
 

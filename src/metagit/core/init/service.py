@@ -9,12 +9,12 @@ from typing import Optional
 
 import click
 
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.manifest_gate import (
     ManifestGateInvalid,
     evaluate_existing_manifest,
     manifest_gate_error_message,
 )
-from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.init.models import InitTemplateManifest
 from metagit.core.init.prompts import collect_answers, load_answers_file
 from metagit.core.init.registry import InitTemplateRegistry
@@ -158,9 +158,7 @@ class InitService:
             kind_value = ProjectKind(kind)
         except ValueError as exc:
             allowed = ", ".join(item.value for item in ProjectKind)
-            raise click.ClickException(
-                f"Invalid kind {kind!r}; expected one of: {allowed}"
-            ) from exc
+            raise click.ClickException(f"Invalid kind {kind!r}; expected one of: {allowed}") from exc
 
         manager = MetagitConfigManager()
         config_result = manager.create_config(

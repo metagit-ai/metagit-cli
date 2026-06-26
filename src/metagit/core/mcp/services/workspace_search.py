@@ -7,10 +7,9 @@ import json
 import os
 import shutil
 import subprocess
-from pathlib import Path
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any, Optional
-
 
 # Directory names that exclude a file when they appear as any path segment.
 _SCAFFOLD_PATH_SEGMENTS: frozenset[str] = frozenset(
@@ -226,9 +225,8 @@ class WorkspaceSearchService:
             repo_name = str(row.get("repo_name", ""))
             project_name = str(row.get("project_name", ""))
             keys = {repo_path, repo_name, project_name, f"{project_name}/{repo_name}"}
-            if selectors.intersection(keys):
-                if row.get("exists"):
-                    selected.append(repo_path)
+            if selectors.intersection(keys) and row.get("exists"):
+                selected.append(repo_path)
         return selected
 
     def _compose_query(self, query: str, preset: Optional[str]) -> str:
@@ -442,11 +440,7 @@ class WorkspaceSearchService:
             except OSError:
                 completed = None
             if completed and completed.returncode in {0, 1}:
-                lines = [
-                    line.strip()
-                    for line in completed.stdout.splitlines()
-                    if line.strip()
-                ]
+                lines = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
                 return lines[:max_results]
         return self._list_files_fallback(
             root=root,
@@ -476,9 +470,7 @@ class WorkspaceSearchService:
                 results.append(str(file_path))
         return results[:max_results]
 
-    def _categorize_files(
-        self, files: list[dict[str, str]]
-    ) -> dict[str, list[dict[str, str]]]:
+    def _categorize_files(self, files: list[dict[str, str]]) -> dict[str, list[dict[str, str]]]:
         """Group discovered files into coarse categories."""
         categories: dict[str, list[dict[str, str]]] = {}
         for item in files:
@@ -511,11 +503,7 @@ class WorkspaceSearchService:
 
     def _filter_scaffold_hits(self, hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Drop hits whose file paths traverse local dev/cache directories."""
-        return [
-            hit
-            for hit in hits
-            if not self._path_has_scaffold_segment(str(hit.get("file_path", "")))
-        ]
+        return [hit for hit in hits if not self._path_has_scaffold_segment(str(hit.get("file_path", "")))]
 
     @staticmethod
     def _path_has_scaffold_segment(file_path: str) -> bool:
@@ -526,17 +514,13 @@ class WorkspaceSearchService:
 
     def _iter_searchable_files(self, root: Path) -> Iterator[Path]:
         """Walk a repo tree, skipping scaffold directories."""
-        for dirpath, dirnames, filenames in os.walk(
-            root, topdown=True, followlinks=False
-        ):
+        for dirpath, dirnames, filenames in os.walk(root, topdown=True, followlinks=False):
             current = Path(dirpath)
             rel_dir = str(current.relative_to(root))
             if rel_dir != "." and self._path_has_scaffold_segment(rel_dir):
                 dirnames.clear()
                 continue
-            dirnames[:] = [
-                name for name in dirnames if name not in _SCAFFOLD_PATH_SEGMENTS
-            ]
+            dirnames[:] = [name for name in dirnames if name not in _SCAFFOLD_PATH_SEGMENTS]
             for name in filenames:
                 file_path = current / name
                 rel_file = str(file_path.relative_to(root))

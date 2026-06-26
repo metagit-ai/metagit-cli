@@ -22,12 +22,12 @@ from metagit.core.agent.models import (
     AgentTemplateManifest,
     AgentWriteResult,
 )
-from metagit.core.config.manager import MetagitConfigManager
-from metagit.core.config.models import MetagitConfig
 from metagit.core.agent.overlay import init_overlay_from_bundled
 from metagit.core.agent.paths import resolve_agents_directory, resolve_skills_directory
 from metagit.core.agent.registry import AgentTemplateRegistry
 from metagit.core.agent.renderer import AgentTemplateRenderer
+from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.config.models import MetagitConfig
 from metagit.core.init.models import InitTemplateFileSpec
 from metagit.core.init.prompts import collect_answers, load_answers_file
 from metagit.core.skills.installer import (
@@ -228,9 +228,7 @@ class AgentService:
         for relative_output, content in rendered_pairs:
             destination = output_dir / relative_output
             if destination.exists() and not force:
-                raise click.ClickException(
-                    f"Refusing to overwrite existing file: {destination} (use --force)"
-                )
+                raise click.ClickException(f"Refusing to overwrite existing file: {destination} (use --force)")
             if not dry_run:
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_text(content, encoding="utf-8")
@@ -295,9 +293,7 @@ class AgentService:
             destination = agents_dir / primary_name
 
         if destination.exists() and not force:
-            raise click.ClickException(
-                f"Refusing to overwrite existing agent: {destination} (use --force)"
-            )
+            raise click.ClickException(f"Refusing to overwrite existing agent: {destination} (use --force)")
         written: list[str] = []
         if not dry_run:
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -413,14 +409,10 @@ class AgentService:
     ) -> AgentOverlayInitResult:
         """Scaffold an editable workspace overlay from a bundled template."""
         if self.manifest_root is None:
-            raise click.ClickException(
-                "Manifest root is required for overlay init (pass --root)"
-            )
+            raise click.ClickException("Manifest root is required for overlay init (pass --root)")
         bundled = self.registry.load_bundled_manifest(template_id)
         if bundled is None:
-            raise click.ClickException(
-                f"No bundled template to overlay: {template_id!r}"
-            )
+            raise click.ClickException(f"No bundled template to overlay: {template_id!r}")
         try:
             return init_overlay_from_bundled(
                 template_id=template_id,

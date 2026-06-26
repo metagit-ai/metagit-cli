@@ -20,9 +20,7 @@ def _looks_like_url(value: str) -> bool:
     return trimmed.startswith("http://") or trimmed.startswith("https://")
 
 
-def should_use_literal_block(
-    value: str, *, wrap_width: int = DEFAULT_WRAP_WIDTH
-) -> bool:
+def should_use_literal_block(value: str, *, wrap_width: int = DEFAULT_WRAP_WIDTH) -> bool:
     """Return True when a string should use YAML literal block (``|``) style."""
     if not value:
         return False
@@ -123,6 +121,7 @@ class _ReadableYamlDumper(yaml.SafeDumper):
     """Dumper tuned for terminal-friendly config output."""
 
     def increase_indent(self, flow: bool = False, indentless: bool = False) -> Any:
+        _ = indentless
         return super().increase_indent(flow, False)
 
 

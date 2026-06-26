@@ -23,10 +23,7 @@ from metagit.core.web.static_handler import StaticWebHandler
 def _resolve_workspace_root(root: str, workspace_path: str) -> str:
     """Resolve workspace sync root from appconfig path (relative to manifest root)."""
     path = Path(workspace_path).expanduser()
-    if not path.is_absolute():
-        path = (Path(root) / path).resolve()
-    else:
-        path = path.resolve()
+    path = (Path(root) / path).resolve() if not path.is_absolute() else path.resolve()
     return str(path)
 
 

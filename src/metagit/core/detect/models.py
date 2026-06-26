@@ -9,8 +9,8 @@ and detection manager configuration.
 
 import os
 from enum import Enum
-from typing import List, Optional, Any, Protocol, runtime_checkable
 from pathlib import Path
+from typing import Any, List, Optional, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
@@ -23,18 +23,10 @@ class LanguageDetection(BaseModel):
     """Model for language detection results."""
 
     primary: str = Field(default="Unknown", description="Primary programming language")
-    secondary: List[str] = Field(
-        default_factory=list, description="Secondary programming languages"
-    )
-    frameworks: List[str] = Field(
-        default_factory=list, description="Detected frameworks"
-    )
-    package_managers: List[str] = Field(
-        default_factory=list, description="Detected package managers"
-    )
-    build_tools: List[str] = Field(
-        default_factory=list, description="Detected build tools"
-    )
+    secondary: List[str] = Field(default_factory=list, description="Secondary programming languages")
+    frameworks: List[str] = Field(default_factory=list, description="Detected frameworks")
+    package_managers: List[str] = Field(default_factory=list, description="Detected package managers")
+    build_tools: List[str] = Field(default_factory=list, description="Detected build tools")
 
     class Config:
         use_enum_values = True
@@ -44,16 +36,10 @@ class LanguageDetection(BaseModel):
 class ProjectTypeDetection(BaseModel):
     """Model for project type detection results."""
 
-    type: ProjectType = Field(
-        default=ProjectType.OTHER, description="Detected project type"
-    )
-    domain: ProjectDomain = Field(
-        default=ProjectDomain.OTHER, description="Detected project domain"
-    )
+    type: ProjectType = Field(default=ProjectType.OTHER, description="Detected project type")
+    domain: ProjectDomain = Field(default=ProjectDomain.OTHER, description="Detected project domain")
     confidence: float = Field(default=0.0, description="Confidence score (0.0 to 1.0)")
-    indicators: List[str] = Field(
-        default_factory=list, description="Indicators used for detection"
-    )
+    indicators: List[str] = Field(default_factory=list, description="Indicators used for detection")
 
     class Config:
         use_enum_values = True
@@ -64,9 +50,7 @@ class BranchInfo(BaseModel):
     """Model for branch information."""
 
     name: str = Field(..., description="Branch name")
-    is_remote: bool = Field(
-        default=False, description="Whether this is a remote branch"
-    )
+    is_remote: bool = Field(default=False, description="Whether this is a remote branch")
 
 
 class BranchStrategy(str, Enum):
@@ -84,9 +68,7 @@ class BranchStrategy(str, Enum):
 class GitBranchAnalysis(LoggingModel):
     """Model for Git branch analysis results."""
 
-    branches: List[BranchInfo] = Field(
-        default_factory=list, description="List of branches"
-    )
+    branches: List[BranchInfo] = Field(default_factory=list, description="List of branches")
     strategy_guess: Optional[BranchStrategy] = Field(
         default=BranchStrategy.UNKNOWN, description="Detected branching strategy"
     )
@@ -179,12 +161,8 @@ class CIConfigAnalysis(LoggingModel):
     """Model for CI/CD configuration analysis results."""
 
     detected_tool: Optional[str] = Field(None, description="Detected CI/CD tool")
-    ci_config_path: Optional[str] = Field(
-        None, description="Path to CI/CD configuration file"
-    )
-    config_content: Optional[str] = Field(
-        None, description="Content of CI/CD configuration file"
-    )
+    ci_config_path: Optional[str] = Field(None, description="Path to CI/CD configuration file")
+    config_content: Optional[str] = Field(None, description="Content of CI/CD configuration file")
     pipeline_count: int = Field(default=0, description="Number of detected pipelines")
     triggers: Optional[List[str]] = Field(default=[], description="Detected triggers")
 
@@ -265,25 +243,13 @@ class DetectionManagerConfig(BaseModel):
     Configuration for DetectionManager specifying which analysis methods are enabled.
     """
 
-    branch_analysis_enabled: bool = Field(
-        default=True, description="Enable Git branch analysis"
-    )
-    ci_config_analysis_enabled: bool = Field(
-        default=True, description="Enable CI/CD configuration analysis"
-    )
-    directory_summary_enabled: bool = Field(
-        default=True, description="Enable directory summary analysis"
-    )
-    directory_details_enabled: bool = Field(
-        default=True, description="Enable detailed directory analysis"
-    )
+    branch_analysis_enabled: bool = Field(default=True, description="Enable Git branch analysis")
+    ci_config_analysis_enabled: bool = Field(default=True, description="Enable CI/CD configuration analysis")
+    directory_summary_enabled: bool = Field(default=True, description="Enable directory summary analysis")
+    directory_details_enabled: bool = Field(default=True, description="Enable detailed directory analysis")
     # Future analysis methods
-    commit_analysis_enabled: bool = Field(
-        default=False, description="Enable Git commit analysis"
-    )
-    tag_analysis_enabled: bool = Field(
-        default=False, description="Enable Git tag analysis"
-    )
+    commit_analysis_enabled: bool = Field(default=False, description="Enable Git commit analysis")
+    tag_analysis_enabled: bool = Field(default=False, description="Enable Git tag analysis")
     data_file_type_source: Optional[str] = Field(
         default=os.path.join(DATA_PATH, "file-types.json"),
         description="Source of data file types",

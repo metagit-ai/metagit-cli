@@ -34,9 +34,7 @@ def _check_markers(feature_id: str, surface: str, markers: list[dict]) -> list[s
             continue
         text = target.read_text(encoding="utf-8")
         if needle not in text:
-            errors.append(
-                f"{feature_id}.{surface}: {rel_path} missing marker {needle!r}"
-            )
+            errors.append(f"{feature_id}.{surface}: {rel_path} missing marker {needle!r}")
     return errors
 
 

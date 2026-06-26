@@ -65,10 +65,7 @@ def run_source_sync(
             errors=[
                 SourceSyncError(
                     kind="project_not_found",
-                    message=(
-                        f"Project '{request.project_name}' not found in workspace "
-                        "configuration"
-                    ),
+                    message=(f"Project '{request.project_name}' not found in workspace configuration"),
                 )
             ],
         )
@@ -103,11 +100,7 @@ def run_source_sync(
     if not request.apply or request.mode == SourceSyncMode.DISCOVER:
         return result
 
-    if (
-        request.mode == SourceSyncMode.RECONCILE
-        and len(plan.to_remove) > 0
-        and not request.confirm_reconcile
-    ):
+    if request.mode == SourceSyncMode.RECONCILE and len(plan.to_remove) > 0 and not request.confirm_reconcile:
         result.ok = False
         result.errors.append(
             SourceSyncError(
@@ -127,9 +120,7 @@ def run_source_sync(
     save_result = config_manager.save_config(config, config_path)
     if isinstance(save_result, Exception):
         result.ok = False
-        result.errors.append(
-            SourceSyncError(kind="save_failed", message=str(save_result))
-        )
+        result.errors.append(SourceSyncError(kind="save_failed", message=str(save_result)))
         return result
 
     result.applied = True

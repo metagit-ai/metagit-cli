@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shlex
 import shutil
@@ -57,9 +58,7 @@ def _project_names_from_manifest(definition_path: Path) -> list[str]:
     loaded = manager.load_config()
     if isinstance(loaded, Exception) or not loaded.workspace:
         return []
-    return sorted(
-        {project.name for project in loaded.workspace.projects if project.name}
-    )
+    return sorted({project.name for project in loaded.workspace.projects if project.name})
 
 
 def _repo_names_from_manifest(
@@ -143,9 +142,7 @@ def _completion_class(shell: str) -> type[ShellComplete]:
     key = shell.strip().lower()
     if key not in mapping:
         supported = ", ".join(SUPPORTED_SHELLS)
-        raise click.ClickException(
-            f"Unsupported shell {shell!r}; expected one of: {supported}"
-        )
+        raise click.ClickException(f"Unsupported shell {shell!r}; expected one of: {supported}")
     return mapping[key]
 
 
@@ -172,18 +169,14 @@ def default_install_path(shell_name: str) -> Path:
     if key == "bash":
         xdg = os.environ.get("XDG_DATA_HOME")
         if xdg:
-            return (
-                Path(xdg).expanduser() / "bash-completion" / "completions" / "metagit"
-            )
+            return Path(xdg).expanduser() / "bash-completion" / "completions" / "metagit"
         return home / ".local" / "share" / "bash-completion" / "completions" / "metagit"
     if key == "fish":
         xdg = os.environ.get("XDG_CONFIG_HOME")
         config_home = Path(xdg).expanduser() if xdg else home / ".config"
         return config_home / "fish" / "completions" / "metagit.fish"
     supported = ", ".join(SUPPORTED_SHELLS)
-    raise click.ClickException(
-        f"Unsupported shell {shell_name!r}; expected one of: {supported}"
-    )
+    raise click.ClickException(f"Unsupported shell {shell_name!r}; expected one of: {supported}")
 
 
 def install_completion_script(
@@ -197,10 +190,8 @@ def install_completion_script(
     resolved.parent.mkdir(parents=True, exist_ok=True)
     resolved.write_text(script, encoding="utf-8")
     if shell_name.strip().lower() == "zsh":
-        try:
+        with contextlib.suppress(OSError):
             os.chmod(resolved, 0o644)
-        except OSError:
-            pass
     return resolved
 
 
@@ -235,6 +226,7 @@ def metagit_executable() -> str:
 
 def verify_completion_callback(prog_name: str = "metagit") -> tuple[bool, str]:
     """Check that completion env invocation returns a non-empty script."""
+    _ = prog_name
     executable = metagit_executable()
     env = os.environ.copy()
     env[_COMPLETION_ENV] = "zsh_source"
@@ -267,14 +259,8 @@ def format_install_message(shell_name: str, path: Path) -> str:
             f"  autoload -Uz compinit && compinit"
         )
     if key == "bash":
-        return (
-            f"Installed bash completion: {path}\n"
-            "Restart your shell or source the file to activate."
-        )
-    return (
-        f"Installed fish completion: {path}\n"
-        "Restart fish or run: source ~/.config/fish/config.fish"
-    )
+        return f"Installed bash completion: {path}\nRestart your shell or source the file to activate."
+    return f"Installed fish completion: {path}\nRestart fish or run: source ~/.config/fish/config.fish"
 
 
 __all__ = [

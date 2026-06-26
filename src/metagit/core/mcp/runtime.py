@@ -9,34 +9,11 @@ import sys
 from pathlib import Path
 from typing import Any, Literal, Optional, cast
 
-from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.agent.service import AgentService
 from metagit.core.appconfig import AppConfig
-from metagit.core.mcp.gate import WorkspaceGate
-from metagit.core.mcp.models import McpActivationState, WorkspaceStatus
-from metagit.core.mcp.resources import ResourcePublisher
-from metagit.core.mcp.root_resolver import WorkspaceRootResolver
-from metagit.core.mcp.services.bootstrap_sampling import BootstrapSamplingService
-from metagit.core.mcp.services.discovery_context import DiscoveryContextService
-from metagit.core.mcp.services.ops_log import OperationsLogService
-from metagit.core.mcp.services.project_context import ProjectContextService
-from metagit.core.mcp.services.repo_ops import RepoOperationsService
-from metagit.core.mcp.services.workspace_snapshot import WorkspaceSnapshotService
-from metagit.core.mcp.services.upstream_hints import UpstreamHintService
-from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
-from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
-from metagit.core.release.release_check_service import ReleaseCheckService
-from metagit.core.release.upgrade_service import VersionUpgradeService
-from metagit.core.mcp.services.workspace_semantic_search import (
-    WorkspaceSemanticSearchService,
-)
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
-from metagit.core.gitnexus.group_sync import GitNexusGroupSyncService
-from metagit.core.mcp.services.cross_project_dependencies import (
-    CrossProjectDependencyService,
-)
-from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
-from metagit.core.mcp.services.session_store import SessionStore
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.event_service import WorkspaceEventService
@@ -46,22 +23,45 @@ from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.session_begin_service import SessionBeginService
 from metagit.core.context.session_digest_service import SessionDigestService
-from metagit.core.workspace.catalog_models import CatalogError
-from metagit.core.workspace.catalog_service import WorkspaceCatalogService
-from metagit.core.workspace.layout_context import resolve_sync_context
-from metagit.core.workspace.root_resolver import resolve_sync_root
-from metagit.core.workspace.layout_service import WorkspaceLayoutService
-from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
+from metagit.core.gitnexus.group_sync import GitNexusGroupSyncService
+from metagit.core.mcp.gate import WorkspaceGate
+from metagit.core.mcp.models import McpActivationState, WorkspaceStatus
+from metagit.core.mcp.resources import ResourcePublisher
+from metagit.core.mcp.root_resolver import WorkspaceRootResolver
+from metagit.core.mcp.services.bootstrap_sampling import BootstrapSamplingService
+from metagit.core.mcp.services.cross_project_dependencies import (
+    CrossProjectDependencyService,
+)
+from metagit.core.mcp.services.discovery_context import DiscoveryContextService
+from metagit.core.mcp.services.ops_log import OperationsLogService
+from metagit.core.mcp.services.project_context import ProjectContextService
+from metagit.core.mcp.services.repo_ops import RepoOperationsService
+from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.mcp.services.source_sync import run_mcp_source_sync
+from metagit.core.mcp.services.upstream_hints import UpstreamHintService
+from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
+from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
+from metagit.core.mcp.services.workspace_semantic_search import (
+    WorkspaceSemanticSearchService,
+)
+from metagit.core.mcp.services.workspace_snapshot import WorkspaceSnapshotService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
 from metagit.core.mcp.services.workspace_template import WorkspaceTemplateService
 from metagit.core.mcp.tool_registry import ToolRegistry
-from metagit.core.project.search_service import ManagedRepoSearchService
-from metagit.core.agent.service import AgentService
 from metagit.core.mcp.tools.bootstrap_plan_only import (
     metagit_bootstrap_config_plan_only,
 )
 from metagit.core.mcp.tools.workspace_status import metagit_workspace_status
+from metagit.core.project.search_service import ManagedRepoSearchService
+from metagit.core.release.release_check_service import ReleaseCheckService
+from metagit.core.release.upgrade_service import VersionUpgradeService
+from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
+from metagit.core.workspace.catalog_models import CatalogError
+from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace.layout_context import resolve_sync_context
+from metagit.core.workspace.layout_service import WorkspaceLayoutService
+from metagit.core.workspace.root_resolver import resolve_sync_root
 
 
 class InvalidToolArgumentsError(Exception):
@@ -841,9 +841,7 @@ class MetagitMcpRuntime:
                 {
                     "name": name,
                     "description": f"Metagit MCP tool: {name}",
-                    "inputSchema": self._tool_schemas.get(
-                        name, {"type": "object", "properties": {}}
-                    ),
+                    "inputSchema": self._tool_schemas.get(name, {"type": "object", "properties": {}}),
                 }
             )
         return {"tools": tools}
@@ -854,9 +852,7 @@ class MetagitMcpRuntime:
         status, config = self._resolve_status_and_config()
         allowed = set(self._registry.list_tools(status=status))
         if name not in allowed:
-            raise InvalidToolArgumentsError(
-                f"Tool not available in current state: {name}"
-            )
+            raise InvalidToolArgumentsError(f"Tool not available in current state: {name}")
 
         result = self._dispatch_tool(
             name=name,
@@ -893,9 +889,7 @@ class MetagitMcpRuntime:
                     },
                 ]
             )
-        resources.append(
-            {"uri": "metagit://workspace/ops-log", "name": "Operations Log"}
-        )
+        resources.append({"uri": "metagit://workspace/ops-log", "name": "Operations Log"})
         return {"resources": resources}
 
     def _handle_resources_read(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -946,11 +940,7 @@ class MetagitMcpRuntime:
         if name == "metagit_workspace_search":
             repos = self._build_repo_index(status=status, config=config)
             raw_repos = arguments.get("repos")
-            repo_selectors = (
-                [str(item) for item in raw_repos]
-                if isinstance(raw_repos, list)
-                else None
-            )
+            repo_selectors = [str(item) for item in raw_repos] if isinstance(raw_repos, list) else None
             repo_paths = self._search_service.filter_repo_paths(
                 repo_rows=repos,
                 repos=repo_selectors,
@@ -966,12 +956,8 @@ class MetagitMcpRuntime:
                     repo_paths=repo_paths,
                     preset=arguments.get("preset"),
                     max_results=int(arguments.get("max_results", 25)),
-                    paths=[str(item) for item in raw_paths]
-                    if isinstance(raw_paths, list)
-                    else None,
-                    exclude=[str(item) for item in raw_exclude]
-                    if isinstance(raw_exclude, list)
-                    else None,
+                    paths=[str(item) for item in raw_paths] if isinstance(raw_paths, list) else None,
+                    exclude=[str(item) for item in raw_exclude] if isinstance(raw_exclude, list) else None,
                     context_lines=int(arguments.get("context_lines", 0)),
                     include_paths=bool(arguments.get("include_paths", False)),
                     intent=arguments.get("intent"),
@@ -993,16 +979,10 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_semantic_search":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "semantic workspace search requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("semantic workspace search requires an active workspace")
             repos = self._build_repo_index(status=status, config=config)
             raw_sem_repos = arguments.get("repos")
-            sem_selectors = (
-                [str(item) for item in raw_sem_repos]
-                if isinstance(raw_sem_repos, list)
-                else None
-            )
+            sem_selectors = [str(item) for item in raw_sem_repos] if isinstance(raw_sem_repos, list) else None
             repo_paths = self._search_service.filter_repo_paths(
                 repo_rows=repos,
                 repos=sem_selectors,
@@ -1027,9 +1007,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_repo_search":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "managed repo search requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("managed repo search requires an active workspace")
             query = str(arguments.get("query", "")).strip()
             if not query:
                 raise InvalidToolArgumentsError("query is required")
@@ -1045,20 +1023,14 @@ class MetagitMcpRuntime:
             if limit_val < 1:
                 raise InvalidToolArgumentsError("limit must be at least 1")
             raw_status = arguments.get("status")
-            status_filter = (
-                [str(item) for item in raw_status]
-                if isinstance(raw_status, list)
-                else None
-            )
+            status_filter = [str(item) for item in raw_status] if isinstance(raw_status, list) else None
             sort_val = str(arguments.get("sort", "score"))
             if sort_val not in {"score", "project", "name"}:
                 raise InvalidToolArgumentsError("sort must be score, project, or name")
             has_url = arguments.get("has_url")
             has_url_val = bool(has_url) if isinstance(has_url, bool) else None
             sync_enabled = arguments.get("sync_enabled")
-            sync_enabled_val = (
-                bool(sync_enabled) if isinstance(sync_enabled, bool) else None
-            )
+            sync_enabled_val = bool(sync_enabled) if isinstance(sync_enabled, bool) else None
             result = self._managed_repo_search.search(
                 config=config,
                 workspace_root=status.root_path,
@@ -1080,9 +1052,7 @@ class MetagitMcpRuntime:
             if not blocker:
                 raise InvalidToolArgumentsError("blocker is required")
             repos = self._build_repo_index(status=status, config=config)
-            return {
-                "hints": self._hints_service.rank(blocker=blocker, repo_context=repos)
-            }
+            return {"hints": self._hints_service.rank(blocker=blocker, repo_context=repos)}
 
         if name == "metagit_repo_inspect":
             repo_path = str(arguments.get("repo_path", "")).strip()
@@ -1100,28 +1070,18 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_sync":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "workspace sync requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("workspace sync requires an active workspace")
             repos = self._build_repo_index(status=status, config=config)
             raw_repos = arguments.get("repos")
-            repo_selectors = (
-                [str(item) for item in raw_repos]
-                if isinstance(raw_repos, list)
-                else ["all"]
-            )
+            repo_selectors = [str(item) for item in raw_repos] if isinstance(raw_repos, list) else ["all"]
             only_if = str(arguments.get("only_if", "any"))
             if only_if not in {"any", "missing", "dirty", "behind_origin"}:
-                raise InvalidToolArgumentsError(
-                    "only_if must be any, missing, dirty, or behind_origin"
-                )
+                raise InvalidToolArgumentsError("only_if must be any, missing, dirty, or behind_origin")
             max_parallel_raw = arguments.get("max_parallel", 4)
             try:
                 max_parallel = int(max_parallel_raw)
             except (TypeError, ValueError) as exc:
-                raise InvalidToolArgumentsError(
-                    "max_parallel must be an integer"
-                ) from exc
+                raise InvalidToolArgumentsError("max_parallel must be an integer") from exc
             if max_parallel < 1:
                 raise InvalidToolArgumentsError("max_parallel must be at least 1")
             return self._workspace_sync.sync_many(
@@ -1136,9 +1096,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_project_context_switch":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "project context requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("project context requires an active workspace")
             project_name = str(arguments.get("project_name", "")).strip()
             if not project_name:
                 raise InvalidToolArgumentsError("project_name is required")
@@ -1155,9 +1113,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_state_snapshot":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "workspace snapshot requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("workspace snapshot requires an active workspace")
             return self._workspace_snapshot.create(
                 config=config,
                 workspace_root=status.root_path,
@@ -1170,9 +1126,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_state_restore":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "workspace snapshot restore requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("workspace snapshot restore requires an active workspace")
             snapshot_id = str(arguments.get("snapshot_id", "")).strip()
             if not snapshot_id:
                 raise InvalidToolArgumentsError("snapshot_id is required")
@@ -1186,32 +1140,20 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_health_check":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "workspace health check requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("workspace health check requires an active workspace")
             raw_warn = arguments.get("branch_head_warning_days")
             raw_crit = arguments.get("branch_head_critical_days")
             raw_integration = arguments.get("integration_stale_days")
             try:
                 branch_warn = float(raw_warn) if raw_warn is not None else 180.0
                 branch_crit = float(raw_crit) if raw_crit is not None else 365.0
-                integration_td = (
-                    float(raw_integration) if raw_integration is not None else 90.0
-                )
+                integration_td = float(raw_integration) if raw_integration is not None else 90.0
             except (TypeError, ValueError) as exc:
-                raise InvalidToolArgumentsError(
-                    "branch age thresholds must be numbers"
-                ) from exc
+                raise InvalidToolArgumentsError("branch age thresholds must be numbers") from exc
             if branch_warn < 0 or branch_crit < 0 or integration_td < 0:
-                raise InvalidToolArgumentsError(
-                    "branch age thresholds must be non-negative"
-                )
+                raise InvalidToolArgumentsError("branch age thresholds must be non-negative")
             loaded_app = AppConfig.load()
-            dedupe_cfg = (
-                loaded_app.workspace.dedupe
-                if not isinstance(loaded_app, Exception)
-                else None
-            )
+            dedupe_cfg = loaded_app.workspace.dedupe if not isinstance(loaded_app, Exception) else None
             return self._workspace_health.check(
                 config=config,
                 workspace_root=status.root_path,
@@ -1228,9 +1170,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_context_pack":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "context pack requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("context pack requires an active workspace")
             if "tier" not in arguments:
                 raise InvalidToolArgumentsError("tier is required")
             tier_raw = arguments.get("tier")
@@ -1244,16 +1184,8 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError("tier must be 0, 1, or 2")
             project_raw = arguments.get("project_name")
             repo_raw = arguments.get("repo_name")
-            project_opt = (
-                str(project_raw).strip()
-                if isinstance(project_raw, str) and project_raw.strip()
-                else None
-            )
-            repo_opt = (
-                str(repo_raw).strip()
-                if isinstance(repo_raw, str) and repo_raw.strip()
-                else None
-            )
+            project_opt = str(project_raw).strip() if isinstance(project_raw, str) and project_raw.strip() else None
+            repo_opt = str(repo_raw).strip() if isinstance(repo_raw, str) and repo_raw.strip() else None
             max_tokens_raw = arguments.get("max_tokens")
             max_tokens: int | None = None
             if max_tokens_raw is not None:
@@ -1291,21 +1223,11 @@ class MetagitMcpRuntime:
 
         if name == "metagit_session_begin":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "session begin requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("session begin requires an active workspace")
             project_raw = arguments.get("project_name")
             repo_raw = arguments.get("repo_name")
-            project_opt = (
-                str(project_raw).strip()
-                if isinstance(project_raw, str) and project_raw.strip()
-                else None
-            )
-            repo_opt = (
-                str(repo_raw).strip()
-                if isinstance(repo_raw, str) and repo_raw.strip()
-                else None
-            )
+            project_opt = str(project_raw).strip() if isinstance(project_raw, str) and project_raw.strip() else None
+            repo_opt = str(repo_raw).strip() if isinstance(repo_raw, str) and repo_raw.strip() else None
             max_tokens_raw = arguments.get("max_tokens")
             max_tokens: int | None = None
             if max_tokens_raw is not None:
@@ -1342,9 +1264,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_session_digest":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "session digest requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("session digest requires an active workspace")
             config_path = str(Path(status.root_path) / ".metagit.yml")
             definition_root = status.root_path
             app_config = AppConfig.load()
@@ -1353,15 +1273,9 @@ class MetagitMcpRuntime:
                 if not isinstance(app_config, Exception)
                 else definition_root
             )
-            objectives = (
-                ObjectiveService(workspace_root=definition_root).list().objectives
-            )
+            objectives = ObjectiveService(workspace_root=definition_root).list().objectives
             active_objective_id = next(
-                (
-                    objective.id
-                    for objective in objectives
-                    if objective.status == "in_progress"
-                ),
+                (objective.id for objective in objectives if objective.status == "in_progress"),
                 None,
             )
             session_store = SessionStore(workspace_root=definition_root)
@@ -1472,18 +1386,12 @@ class MetagitMcpRuntime:
             if payload is None or not isinstance(payload, dict):
                 raise InvalidToolArgumentsError("payload object is required")
             requested_raw = arguments.get("requested_by")
-            requested_by = (
-                str(requested_raw).strip()
-                if isinstance(requested_raw, str)
-                else "agent"
-            )
+            requested_by = str(requested_raw).strip() if isinstance(requested_raw, str) else "agent"
             if not requested_by:
                 requested_by = "agent"
             idempotency_raw = arguments.get("idempotency_key")
             idempotency_key = (
-                str(idempotency_raw).strip()
-                if isinstance(idempotency_raw, str) and idempotency_raw.strip()
-                else None
+                str(idempotency_raw).strip() if isinstance(idempotency_raw, str) and idempotency_raw.strip() else None
             )
             req = ApprovalService(workspace_root=status.root_path).request(
                 action=action,
@@ -1523,11 +1431,7 @@ class MetagitMcpRuntime:
             appr_id_raw = arguments.get("approval_id")
             appr_id = str(appr_id_raw).strip() if isinstance(appr_id_raw, str) else ""
             decision_raw = arguments.get("decision")
-            decision_val = (
-                str(decision_raw).strip().lower()
-                if isinstance(decision_raw, str)
-                else ""
-            )
+            decision_val = str(decision_raw).strip().lower() if isinstance(decision_raw, str) else ""
             if not appr_id:
                 raise InvalidToolArgumentsError("approval_id is required")
             if decision_val not in ("approved", "denied"):
@@ -1580,9 +1484,7 @@ class MetagitMcpRuntime:
             if isinstance(payload_raw, dict):
                 payload = payload_raw
             svc = HandoffService(workspace_root=status.root_path)
-            row = svc.create(
-                title=title_raw.strip(), created_by=created_by, payload=payload
-            )
+            row = svc.create(title=title_raw.strip(), created_by=created_by, payload=payload)
             return row.model_dump(mode="json")
 
         if name == "metagit_handoff_claim":
@@ -1596,11 +1498,7 @@ class MetagitMcpRuntime:
             claimed_by_raw = arguments.get("claimed_by", "agent")
             claimed_by = str(claimed_by_raw).strip() or "agent"
             note_raw = arguments.get("note")
-            note_opt = (
-                str(note_raw).strip()
-                if isinstance(note_raw, str) and note_raw.strip()
-                else None
-            )
+            note_opt = str(note_raw).strip() if isinstance(note_raw, str) and note_raw.strip() else None
             svc = HandoffService(workspace_root=status.root_path)
             try:
                 row = svc.claim(hid, claimed_by=claimed_by, note=note_opt)
@@ -1619,11 +1517,7 @@ class MetagitMcpRuntime:
             actor_raw = arguments.get("actor", "agent")
             actor = str(actor_raw).strip() or "agent"
             note_raw = arguments.get("note")
-            note_opt = (
-                str(note_raw).strip()
-                if isinstance(note_raw, str) and note_raw.strip()
-                else None
-            )
+            note_opt = str(note_raw).strip() if isinstance(note_raw, str) and note_raw.strip() else None
             svc = HandoffService(workspace_root=status.root_path)
             try:
                 row = svc.complete(hid, actor=actor, note=note_opt)
@@ -1637,19 +1531,13 @@ class MetagitMcpRuntime:
                     "events requires an active workspace",
                 )
             since_raw = arguments.get("since")
-            since_opt = (
-                str(since_raw).strip()
-                if isinstance(since_raw, str) and since_raw.strip()
-                else None
-            )
+            since_opt = str(since_raw).strip() if isinstance(since_raw, str) and since_raw.strip() else None
             svc = WorkspaceEventService(workspace_root=status.root_path)
             return svc.list_events(since=since_opt).model_dump(mode="json")
 
         if name == "metagit_repo_card":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "repo card requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("repo card requires an active workspace")
             proj_name = str(arguments.get("project_name", "")).strip()
             rname = str(arguments.get("repo_name", "")).strip()
             if not proj_name:
@@ -1669,9 +1557,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_discover":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "workspace discover requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("workspace discover requires an active workspace")
             intent = arguments.get("intent")
             pattern = arguments.get("pattern")
             if not intent and not pattern:
@@ -1682,11 +1568,7 @@ class MetagitMcpRuntime:
             selectors = (
                 [str(item) for item in raw_repos]
                 if isinstance(raw_repos, list)
-                else (
-                    [str(item) for item in raw_scope]
-                    if isinstance(raw_scope, list)
-                    else None
-                )
+                else ([str(item) for item in raw_scope] if isinstance(raw_scope, list) else None)
             )
             repo_paths = self._search_service.filter_repo_paths(
                 repo_rows=repos,
@@ -1703,9 +1585,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_project_template_apply":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "template apply requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("template apply requires an active workspace")
             template = str(arguments.get("template", "")).strip()
             raw_targets = arguments.get("target_projects")
             if not template:
@@ -1723,18 +1603,12 @@ class MetagitMcpRuntime:
 
         if name == "metagit_cross_project_dependencies":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "cross-project dependencies require an active workspace"
-                )
+                raise InvalidToolArgumentsError("cross-project dependencies require an active workspace")
             source_project = str(arguments.get("source_project", "")).strip()
             if not source_project:
                 raise InvalidToolArgumentsError("source_project is required")
             raw_types = arguments.get("dependency_types")
-            dependency_types = (
-                [str(item) for item in raw_types]
-                if isinstance(raw_types, list)
-                else None
-            )
+            dependency_types = [str(item) for item in raw_types] if isinstance(raw_types, list) else None
             depth_raw = arguments.get("depth", 2)
             try:
                 depth_val = int(depth_raw)
@@ -1748,30 +1622,20 @@ class MetagitMcpRuntime:
                 source_project=source_project,
                 dependency_types=dependency_types,
                 depth=depth_val,
-                include_external_repos=bool(
-                    arguments.get("include_external_repos", False)
-                ),
+                include_external_repos=bool(arguments.get("include_external_repos", False)),
             ).model_dump(mode="json")
 
         if name == "metagit_export_workspace_graph_cypher":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "graph cypher export requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("graph cypher export requires an active workspace")
             gitnexus_repo = arguments.get("gitnexus_repo")
-            repo_name = (
-                str(gitnexus_repo).strip()
-                if isinstance(gitnexus_repo, str) and gitnexus_repo.strip()
-                else None
-            )
+            repo_name = str(gitnexus_repo).strip() if isinstance(gitnexus_repo, str) and gitnexus_repo.strip() else None
             return self._graph_cypher_export.export(
                 config=config,
                 workspace_root=status.root_path,
                 gitnexus_repo=repo_name,
                 include_structure=bool(arguments.get("include_structure", True)),
-                include_documentation=bool(
-                    arguments.get("include_documentation", False)
-                ),
+                include_documentation=bool(arguments.get("include_documentation", False)),
                 manual_only=bool(arguments.get("manual_only", False)),
                 with_schema=bool(arguments.get("with_schema", True)),
             ).model_dump(mode="json")
@@ -1781,9 +1645,7 @@ class MetagitMcpRuntime:
             "metagit_apply_graph_relationships",
         }:
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "graph relationship tools require an active workspace"
-                )
+                raise InvalidToolArgumentsError("graph relationship tools require an active workspace")
             config_path, _ = self._catalog_paths(status=status, config=config)
             suggest_args = self._graph_suggest_tool_args(arguments)
             if name == "metagit_suggest_graph_relationships":
@@ -1803,15 +1665,9 @@ class MetagitMcpRuntime:
 
         if name == "metagit_gitnexus_group_sync":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "gitnexus group sync requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("gitnexus group sync requires an active workspace")
             group_name = arguments.get("group_name")
-            resolved_group = (
-                str(group_name).strip()
-                if isinstance(group_name, str) and group_name.strip()
-                else None
-            )
+            resolved_group = str(group_name).strip() if isinstance(group_name, str) and group_name.strip() else None
             return self._gitnexus_group_sync.sync_workspace(
                 config=config,
                 workspace_root=status.root_path,
@@ -1826,9 +1682,7 @@ class MetagitMcpRuntime:
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_list":
-            config_path, workspace_root = self._catalog_paths(
-                status=status, config=config
-            )
+            config_path, workspace_root = self._catalog_paths(status=status, config=config)
             return self._workspace_catalog.list_workspace(
                 config=config,
                 config_path=config_path,
@@ -1836,13 +1690,9 @@ class MetagitMcpRuntime:
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_projects_list":
-            config_path, workspace_root = self._catalog_paths(
-                status=status, config=config
-            )
+            config_path, workspace_root = self._catalog_paths(status=status, config=config)
             _ = (config_path, workspace_root)
-            return self._workspace_catalog.list_projects(config=config).model_dump(
-                mode="json"
-            )
+            return self._workspace_catalog.list_projects(config=config).model_dump(mode="json")
 
         if name == "metagit_workspace_project_add":
             config_path, _ = self._catalog_paths(status=status, config=config)
@@ -1866,9 +1716,7 @@ class MetagitMcpRuntime:
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_repos_list":
-            config_path, workspace_root = self._catalog_paths(
-                status=status, config=config
-            )
+            config_path, workspace_root = self._catalog_paths(status=status, config=config)
             _ = config_path
             project_filter = arguments.get("project_name")
             return self._workspace_catalog.list_repos(
@@ -1888,9 +1736,7 @@ class MetagitMcpRuntime:
                 url=arguments.get("url"),
                 sync=arguments.get("sync"),
                 agent_instructions=arguments.get("agent_instructions"),
-                tags=arguments.get("tags")
-                if isinstance(arguments.get("tags"), dict)
-                else None,
+                tags=arguments.get("tags") if isinstance(arguments.get("tags"), dict) else None,
                 protected=arguments.get("protected"),
             )
             if isinstance(built, CatalogError):
@@ -1916,9 +1762,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_project_source_sync":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "project source sync requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("project source sync requires an active workspace")
             config_path, _ = self._catalog_paths(status=status, config=config)
             app_config = AppConfig.load()
             if isinstance(app_config, Exception):
@@ -1945,9 +1789,7 @@ class MetagitMcpRuntime:
             "metagit_workspace_repo_rename",
             "metagit_workspace_repo_move",
         }:
-            config_path, definition_root = self._catalog_paths(
-                status=status, config=config
-            )
+            config_path, definition_root = self._catalog_paths(status=status, config=config)
             sync_root, dedupe = resolve_sync_context(definition_root)
             dry_run = bool(arguments.get("dry_run", False))
             move_disk = bool(arguments.get("move_disk", True))
@@ -1993,22 +1835,14 @@ class MetagitMcpRuntime:
 
         if name == "metagit_session_update":
             if not config or not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "session update requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("session update requires an active workspace")
             project_name = str(arguments.get("project_name", "")).strip()
             if not project_name:
                 raise InvalidToolArgumentsError("project_name is required")
             recent = arguments.get("recent_repos")
-            recent_repos = (
-                [str(item) for item in recent] if isinstance(recent, list) else None
-            )
+            recent_repos = [str(item) for item in recent] if isinstance(recent, list) else None
             env_raw = arguments.get("env_overrides")
-            env_overrides = (
-                {str(k): str(v) for k, v in env_raw.items()}
-                if isinstance(env_raw, dict)
-                else None
-            )
+            env_overrides = {str(k): str(v) for k, v in env_raw.items()} if isinstance(env_raw, dict) else None
             try:
                 return self._project_context.update_session(
                     config=config,
@@ -2024,9 +1858,7 @@ class MetagitMcpRuntime:
 
         if name == "metagit_agent_catalog":
             if not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "agent catalog requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("agent catalog requires an active workspace")
             service = AgentService(manifest_root=Path(status.root_path))
             envelope = service.catalog.list_catalog(
                 manifest_root=Path(status.root_path),
@@ -2035,39 +1867,21 @@ class MetagitMcpRuntime:
 
         if name == "metagit_agent_dispatch_plan":
             if not status.root_path:
-                raise InvalidToolArgumentsError(
-                    "agent dispatch plan requires an active workspace"
-                )
+                raise InvalidToolArgumentsError("agent dispatch plan requires an active workspace")
             template_id = str(arguments.get("template_id", "")).strip()
             if not template_id:
                 raise InvalidToolArgumentsError("template_id is required")
             vendor = str(arguments.get("vendor", "claude_code")).strip()
             scope_raw = arguments.get("scope", "project")
-            scope_val = (
-                str(scope_raw).strip()
-                if isinstance(scope_raw, str) and scope_raw.strip()
-                else "project"
-            )
+            scope_val = str(scope_raw).strip() if isinstance(scope_raw, str) and scope_raw.strip() else "project"
             if scope_val not in {"project", "user"}:
                 raise InvalidToolArgumentsError("scope must be project or user")
             project_raw = arguments.get("project_name")
             repo_raw = arguments.get("repo_name")
             task_raw = arguments.get("task")
-            project_opt = (
-                str(project_raw).strip()
-                if isinstance(project_raw, str) and project_raw.strip()
-                else None
-            )
-            repo_opt = (
-                str(repo_raw).strip()
-                if isinstance(repo_raw, str) and repo_raw.strip()
-                else None
-            )
-            task_opt = (
-                str(task_raw).strip()
-                if isinstance(task_raw, str) and task_raw.strip()
-                else None
-            )
+            project_opt = str(project_raw).strip() if isinstance(project_raw, str) and project_raw.strip() else None
+            repo_opt = str(repo_raw).strip() if isinstance(repo_raw, str) and repo_raw.strip() else None
+            task_opt = str(task_raw).strip() if isinstance(task_raw, str) and task_raw.strip() else None
             service = AgentService(manifest_root=Path(status.root_path))
             try:
                 plan = service.dispatch_plan(
@@ -2112,37 +1926,23 @@ class MetagitMcpRuntime:
         raise ValueError(f"Unsupported tool: {name}")
 
     def _resolve_status_and_config(self) -> tuple[WorkspaceStatus, Any]:
-        resolved_root = self._resolver.resolve(
-            cwd=os.getcwd(), cli_root=self._root_override
-        )
+        resolved_root = self._resolver.resolve(cwd=os.getcwd(), cli_root=self._root_override)
         status = self._gate.evaluate(root_path=resolved_root)
         config = None
         if status.state == McpActivationState.ACTIVE and status.root_path:
-            manager = MetagitConfigManager(
-                config_path=Path(status.root_path) / ".metagit.yml"
-            )
+            manager = MetagitConfigManager(config_path=Path(status.root_path) / ".metagit.yml")
             loaded = manager.load_config()
             config = None if isinstance(loaded, Exception) else loaded
         return status, config
 
-    def _build_repo_index(
-        self, status: WorkspaceStatus, config: Any
-    ) -> list[dict[str, Any]]:
-        if (
-            status.state != McpActivationState.ACTIVE
-            or not config
-            or not status.root_path
-        ):
+    def _build_repo_index(self, status: WorkspaceStatus, config: Any) -> list[dict[str, Any]]:
+        if status.state != McpActivationState.ACTIVE or not config or not status.root_path:
             return []
-        return self._index_service.build_index(
-            config=config, workspace_root=status.root_path
-        )
+        return self._index_service.build_index(config=config, workspace_root=status.root_path)
 
     def _catalog_paths(self, status: WorkspaceStatus, config: Any) -> tuple[str, str]:
         if not config or not status.root_path:
-            raise InvalidToolArgumentsError(
-                "catalog operations require an active workspace"
-            )
+            raise InvalidToolArgumentsError("catalog operations require an active workspace")
         config_path = str(Path(status.root_path) / ".metagit.yml")
         return config_path, status.root_path
 
@@ -2152,23 +1952,11 @@ class MetagitMcpRuntime:
     ) -> dict[str, Any]:
         """Normalize MCP arguments for graph relationship suggest/apply."""
         dependency_types = arguments.get("dependency_types")
-        selected_types = (
-            [str(item) for item in dependency_types]
-            if isinstance(dependency_types, list)
-            else None
-        )
+        selected_types = [str(item) for item in dependency_types] if isinstance(dependency_types, list) else None
         candidate_ids = arguments.get("candidate_ids")
-        selected_ids = (
-            [str(item) for item in candidate_ids]
-            if isinstance(candidate_ids, list)
-            else None
-        )
+        selected_ids = [str(item) for item in candidate_ids] if isinstance(candidate_ids, list) else None
         min_confidence = arguments.get("min_confidence", "medium")
-        confidence = (
-            str(min_confidence)
-            if min_confidence in {"high", "medium", "all"}
-            else "medium"
-        )
+        confidence = str(min_confidence) if min_confidence in {"high", "medium", "all"} else "medium"
         depth_raw = arguments.get("depth", 3)
         depth = int(depth_raw) if isinstance(depth_raw, int) else 3
         return {
@@ -2245,11 +2033,7 @@ class MetagitMcpRuntime:
                         "role": "user",
                         "content": {
                             "type": "text",
-                            "text": (
-                                "Create a valid .metagit.yml from this context. "
-                                "Output YAML only.\n"
-                                f"{context}"
-                            ),
+                            "text": (f"Create a valid .metagit.yml from this context. Output YAML only.\n{context}"),
                         },
                     }
                 ],
@@ -2276,9 +2060,8 @@ class MetagitMcpRuntime:
     def _extract_sampling_text(self, sampling_result: dict[str, Any]) -> Optional[str]:
         """Extract sampled text from sampling/createMessage result."""
         content = sampling_result.get("content")
-        if isinstance(content, dict):
-            if content.get("type") == "text":
-                return content.get("text")
+        if isinstance(content, dict) and content.get("type") == "text":
+            return content.get("text")
         if isinstance(content, list):
             for item in content:
                 if isinstance(item, dict) and item.get("type") == "text":

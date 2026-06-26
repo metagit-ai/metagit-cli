@@ -1,6 +1,8 @@
-import hcl2
 from typing import Optional
-from metagit.core.detect.models import ProjectScanContext, DiscoveryResult
+
+import hcl2
+
+from metagit.core.detect.models import DiscoveryResult, ProjectScanContext
 
 
 def classify_module_source(source: str) -> str:

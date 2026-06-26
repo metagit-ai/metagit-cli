@@ -39,43 +39,27 @@ class LoggerProtocol(Protocol):
 
     # === Print helpers ===
     def print_info(self, message: str) -> Union[None, Exception]: ...
-    def print_debug(
-        self, message: str, title: str = "Debug Information"
-    ) -> Union[None, Exception]: ...
-    def print_debug_json(
-        self, data: dict[str, Any], title: str = "Debug JSON Data"
-    ) -> Union[None, Exception]: ...
-    def print_json(
-        self, data: dict[str, Any], title: str = "JSON Data"
-    ) -> Union[None, Exception]: ...
+    def print_debug(self, message: str, title: str = "Debug Information") -> Union[None, Exception]: ...
+    def print_debug_json(self, data: dict[str, Any], title: str = "Debug JSON Data") -> Union[None, Exception]: ...
+    def print_json(self, data: dict[str, Any], title: str = "JSON Data") -> Union[None, Exception]: ...
     def print_error(self, error_message: str) -> Union[None, Exception]: ...
     def print_success(self, message: str) -> Union[None, Exception]: ...
     def print_input(self, input_data: dict[str, Any]) -> Union[None, Exception]: ...
     def print_output(self, output_data: Any) -> Union[None, Exception]: ...
-    def print_agent_message(
-        self, agent_name: str, message: str, style: str = "agent"
-    ) -> Union[None, Exception]: ...
+    def print_agent_message(self, agent_name: str, message: str, style: str = "agent") -> Union[None, Exception]: ...
     def print_task_status(
         self, task_name: str, status: str, details: Optional[str] = None
     ) -> Union[None, Exception]: ...
-    def print_crew_status(
-        self, message: str, status_type: str = "info"
-    ) -> Union[None, Exception]: ...
+    def print_crew_status(self, message: str, status_type: str = "info") -> Union[None, Exception]: ...
 
     # === Console formatting ===
-    def header(
-        self, text: str, console: Optional[bool] = None
-    ) -> Union[None, Exception]: ...
+    def header(self, text: str, console: Optional[bool] = None) -> Union[None, Exception]: ...
     def footer(self, text: str, console: bool = True) -> Union[None, Exception]: ...
     def line(self, console: bool = True) -> Union[None, Exception]: ...
     def success(self, text: str, console: bool = True) -> Union[None, Exception]: ...
     def proc_out(self, text: str, console: bool = True) -> Union[None, Exception]: ...
-    def echo(
-        self, text: str, color: str = "", dim: bool = False, console: bool = True
-    ) -> Union[None, Exception]: ...
-    def param(
-        self, text: str, value: str, status: str, console: bool = True
-    ) -> Union[None, Exception]: ...
+    def echo(self, text: str, color: str = "", dim: bool = False, console: bool = True) -> Union[None, Exception]: ...
+    def param(self, text: str, value: str, status: str, console: bool = True) -> Union[None, Exception]: ...
     def config_element(
         self,
         name: str = "",
@@ -95,29 +79,21 @@ class LoggerConfig(BaseModel):
 
     # Logging configuration
     name: Optional[str] = Field(default="metagit", description="Logger name.")
-    log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"] = (
-        Field(default="INFO", description="Logging level.")
+    log_level: Literal["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG", "TRACE"] = Field(
+        default="INFO", description="Logging level."
     )
     log_to_file: bool = Field(default=False, description="Whether to log to a file.")
     log_file_path: str = Field(default="app.log", description="Path to the log file.")
-    json_logs: bool = Field(
-        default=False, description="Whether to output logs in JSON format."
-    )
+    json_logs: bool = Field(default=False, description="Whether to output logs in JSON format.")
     rotation: str = Field(default="10 MB", description="Log file rotation policy.")
     retention: str = Field(default="7 days", description="Log file retention policy.")
     backtrace: bool = Field(default=False, description="Enable backtrace in logs.")
     diagnose: bool = Field(default=False, description="Enable diagnose in logs.")
 
     # Console output configuration
-    minimal_console: bool = Field(
-        default=False, description="Use minimal console output format."
-    )
-    use_rich_console: bool = Field(
-        default=True, description="Whether to use rich console formatting."
-    )
-    terse: bool = Field(
-        default=False, description="Use terse output format (no borders or titles)."
-    )
+    minimal_console: bool = Field(default=False, description="Use minimal console output format.")
+    use_rich_console: bool = Field(default=True, description="Whether to use rich console formatting.")
+    terse: bool = Field(default=False, description="Use terse output format (no borders or titles).")
 
     class Config:
         env_prefix = "LOG_"
@@ -288,9 +264,7 @@ class UnifiedLogger(LoggerProtocol):
                     while frame and frame.f_code.co_filename == logging.__file__:
                         frame = frame.f_back
                         depth += 1
-                    logger.opt(depth=depth, exception=record.exc_info).log(
-                        level, record.getMessage()
-                    )
+                    logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
             logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
             return None
@@ -304,9 +278,7 @@ class UnifiedLogger(LoggerProtocol):
         except Exception as e:
             return e
 
-    def print_debug(
-        self, message: str, title: str = "Debug Information"
-    ) -> Union[None, Exception]:
+    def print_debug(self, message: str, title: str = "Debug Information") -> Union[None, Exception]:
         """Print debug messages with rich formatting."""
         try:
             if self.debug_mode:
@@ -316,9 +288,7 @@ class UnifiedLogger(LoggerProtocol):
         except Exception as e:
             return e
 
-    def print_agent_message(
-        self, agent_name: str, message: str, style: str = "agent"
-    ) -> Union[None, Exception]:
+    def print_agent_message(self, agent_name: str, message: str, style: str = "agent") -> Union[None, Exception]:
         """Print a message from an agent with rich formatting."""
         try:
             self._format_output(message, style, agent_name)
@@ -336,17 +306,12 @@ class UnifiedLogger(LoggerProtocol):
             if details:
                 content += f"\n\n{details}"
             self._format_output(content, "task", "Task Update")
-            logger.info(
-                f"Task {task_name} - Status: {status}"
-                + (f" - {details}" if details else "")
-            )
+            logger.info(f"Task {task_name} - Status: {status}" + (f" - {details}" if details else ""))
             return None
         except Exception as e:
             return e
 
-    def print_crew_status(
-        self, message: str, status_type: str = "info"
-    ) -> Union[None, Exception]:
+    def print_crew_status(self, message: str, status_type: str = "info") -> Union[None, Exception]:
         """Print crew status messages with rich formatting."""
         try:
             self._format_output(message, status_type, "Crew Status")
@@ -400,9 +365,7 @@ class UnifiedLogger(LoggerProtocol):
         except Exception as e:
             return e
 
-    def print_json(
-        self, data: dict[str, Any], title: str = "JSON Data"
-    ) -> Union[None, Exception]:
+    def print_json(self, data: dict[str, Any], title: str = "JSON Data") -> Union[None, Exception]:
         """Print JSON data with rich formatting and syntax highlighting."""
         try:
             json_str = json.dumps(data, indent=2)
@@ -412,9 +375,7 @@ class UnifiedLogger(LoggerProtocol):
         except Exception as e:
             return e
 
-    def print_debug_json(
-        self, data: dict[str, Any], title: str = "Debug JSON Data"
-    ) -> Union[None, Exception]:
+    def print_debug_json(self, data: dict[str, Any], title: str = "Debug JSON Data") -> Union[None, Exception]:
         """Print JSON data only if in debug mode."""
         try:
             if self.debug_mode:
@@ -472,9 +433,7 @@ class UnifiedLogger(LoggerProtocol):
         except Exception as e:
             return e
 
-    def _format_output(
-        self, message: str, style: str, title: Union[str, None] = None
-    ) -> Union[None, Exception]:
+    def _format_output(self, message: str, style: str, title: Union[str, None] = None) -> Union[None, Exception]:
         """
         Helper to format and print output using rich console.
         Args:
@@ -515,9 +474,7 @@ class UnifiedLogger(LoggerProtocol):
         except Exception as e:
             return e
 
-    def param(
-        self, text: str, value: str, status: str, console: bool = True
-    ) -> Union[None, Exception]:
+    def param(self, text: str, value: str, status: str, console: bool = True) -> Union[None, Exception]:
         """Prints a parameter line"""
         try:
             if console:
@@ -540,9 +497,7 @@ class UnifiedLogger(LoggerProtocol):
         """Prints a config element"""
         try:
             if console:
-                self.console.print(
-                    f"[bold white]  {name}[/bold white]{separator}{value}"
-                )
+                self.console.print(f"[bold white]  {name}[/bold white]{separator}{value}")
             else:
                 print(f"  {name}{separator}{value}")
             return None
@@ -591,9 +546,7 @@ class UnifiedLogger(LoggerProtocol):
         except Exception as e:
             return e
 
-    def echo(
-        self, text: str, color: str = "", dim: bool = False, console: bool = True
-    ) -> Union[None, Exception]:
+    def echo(self, text: str, color: str = "", dim: bool = False, console: bool = True) -> Union[None, Exception]:
         """
         Echo text to console with optional color and dimming.
         Args:

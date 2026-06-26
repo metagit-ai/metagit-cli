@@ -4,7 +4,7 @@ Bounded operations log for MCP runtime.
 """
 
 from collections import deque
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 
 class OperationsLogService:

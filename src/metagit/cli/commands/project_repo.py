@@ -17,18 +17,18 @@ from metagit.core.appconfig import AppConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import project_manager_from_app
 from metagit.core.project.models import ProjectPath
+from metagit.core.project.repo_promote_service import RepoPromoteService
 from metagit.core.utils.common import open_editor
+from metagit.core.utils.logging import UnifiedLogger
+from metagit.core.workspace import workspace_dedupe
 from metagit.core.workspace.catalog_models import CatalogMutationResult
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
-from metagit.core.workspace.layout_resolver import active_project_resolution_error
-from metagit.core.workspace.layout_service import WorkspaceLayoutService
-from metagit.core.workspace import workspace_dedupe
-from metagit.core.project.repo_promote_service import RepoPromoteService
 from metagit.core.workspace.dedupe_resolver import (
     resolve_dedupe_for_layout,
     resolve_effective_dedupe_for_project,
 )
-from metagit.core.utils.logging import UnifiedLogger
+from metagit.core.workspace.layout_resolver import active_project_resolution_error
+from metagit.core.workspace.layout_service import WorkspaceLayoutService
 
 
 @click.group(name="repo")
@@ -82,9 +82,7 @@ def repo_select(ctx: click.Context) -> None:
 
 
 @repo.command("list")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def repo_list(ctx: click.Context, as_json: bool) -> None:
     """List repositories for the current workspace project."""
@@ -104,17 +102,12 @@ def repo_list(ctx: click.Context, as_json: bool) -> None:
         return
     for row in (result.data or {}).get("repos", []):
         repo_row = row.get("repo", {})
-        click.echo(
-            f"{repo_row.get('name')} path={row.get('configured_path')} "
-            f"status={row.get('status') or 'unknown'}"
-        )
+        click.echo(f"{repo_row.get('name')} path={row.get('configured_path')} status={row.get('status') or 'unknown'}")
 
 
 @repo.command("remove")
 @click.option("--name", "-n", required=True, help="Repository name")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def repo_remove(ctx: click.Context, name: str, as_json: bool) -> None:
     """Remove a repository from the manifest (does not delete files)."""
@@ -133,16 +126,12 @@ def repo_remove(ctx: click.Context, name: str, as_json: bool) -> None:
 
 
 @repo.command("rename")
-@click.option(
-    "--name", "-n", "from_name", required=True, help="Current repository name"
-)
+@click.option("--name", "-n", "from_name", required=True, help="Current repository name")
 @click.argument("to_name")
 @click.option("--dry-run", is_flag=True, default=False)
 @click.option("--manifest-only", is_flag=True, default=False)
 @click.option("--force", is_flag=True, default=False)
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def repo_rename(
     ctx: click.Context,
@@ -185,9 +174,7 @@ def repo_rename(
 @click.option("--dry-run", is_flag=True, default=False)
 @click.option("--manifest-only", is_flag=True, default=False)
 @click.option("--force", is_flag=True, default=False)
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def repo_move(
     ctx: click.Context,
@@ -249,9 +236,7 @@ def repo_move(
     is_flag=True,
     help="Succeed without changes when the repo already exists with matching url/path",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def repo_add(
     ctx: click.Context,
@@ -348,35 +333,21 @@ def repo_add(
                 exit_on_catalog_mutation(mutation, as_json=True)
                 return
             if not mutation.ok:
-                raise click.ClickException(
-                    mutation.error.message
-                    if mutation.error
-                    else "Failed to add repository"
-                )
+                raise click.ClickException(mutation.error.message if mutation.error else "Failed to add repository")
             repo_name = mutation.repo_name or project_path.name
             if mutation.operation == "noop":
-                logger.info(
-                    f"Repository '{repo_name}' already present in project '{project}'"
-                )
+                logger.info(f"Repository '{repo_name}' already present in project '{project}'")
             else:
-                logger.info(
-                    f"Successfully added repository '{repo_name}' to project '{project}'"
-                )
-            logger.info(
-                f"You can now use `metagit repo sync --project {project}` to sync the repository"
-            )
+                logger.info(f"Successfully added repository '{repo_name}' to project '{project}'")
+            logger.info(f"You can now use `metagit repo sync --project {project}` to sync the repository")
             return
 
         if isinstance(result, Exception):
             raise result
 
         repo_name = result.name if result.name else "repository"
-        logger.info(
-            f"Successfully added repository '{repo_name}' to project '{project}'"
-        )
-        logger.info(
-            f"You can now use `metagit repo sync --project {project}` to sync the repository"
-        )
+        logger.info(f"Successfully added repository '{repo_name}' to project '{project}'")
+        logger.info(f"You can now use `metagit repo sync --project {project}` to sync the repository")
 
     except Exception as e:
         logger.warning(f"Failed to add repository: {e}")
@@ -407,9 +378,7 @@ def repo_add(
     default=False,
     help="Promote protected repos",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def repo_promote(
     ctx: click.Context,
@@ -482,8 +451,7 @@ def repo_promote(
         return
 
     logger.info(
-        f"Promoted '{result.repo_name}' in project '{result.project_name}' "
-        f"to git-managed clone at {result.mount_path}"
+        f"Promoted '{result.repo_name}' in project '{result.project_name}' to git-managed clone at {result.mount_path}"
     )
 
 
@@ -548,9 +516,7 @@ def repo_prune(
     click.echo(f"  project: {project}")
     click.echo(f"  project sync folder: {project_sync_folder}")
 
-    ignore_hidden = (
-        False if include_hidden else bool(app_config.workspace.ui_ignore_hidden)
-    )
+    ignore_hidden = False if include_hidden else bool(app_config.workspace.ui_ignore_hidden)
     candidates = project_manager.list_unmanaged_sync_directories(
         local_config,
         project,
@@ -582,9 +548,7 @@ def repo_prune(
         click.echo("No unmanaged sync directories found under the project sync folder.")
         return
 
-    click.echo(
-        f"Found {len(candidates)} unmanaged entr{'y' if len(candidates) == 1 else 'ies'}:"
-    )
+    click.echo(f"Found {len(candidates)} unmanaged entr{'y' if len(candidates) == 1 else 'ies'}:")
     for path in candidates:
         click.echo(f"  - {path}")
 
@@ -593,16 +557,12 @@ def repo_prune(
         return
 
     if ctx.obj.get("agent_mode") and not force:
-        raise click.UsageError(
-            "Interactive prune prompts are disabled in agent mode; use --force or --dry-run"
-        )
+        raise click.UsageError("Interactive prune prompts are disabled in agent mode; use --force or --dry-run")
 
     removed = 0
     for path in candidates:
         rel = path.name
-        if not force and not click.confirm(
-            f"Remove unmanaged path {rel!r} at {path}?", default=False
-        ):
+        if not force and not click.confirm(f"Remove unmanaged path {rel!r} at {path}?", default=False):
             continue
         try:
             project_manager.remove_sync_directory(path)

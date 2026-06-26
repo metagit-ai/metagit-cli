@@ -86,9 +86,7 @@ def normalize_documentation_entries(
         if isinstance(item, dict):
             normalized.append(dict(item))
             continue
-        raise ValueError(
-            "documentation entries must be strings or objects with kind/path/url"
-        )
+        raise ValueError("documentation entries must be strings or objects with kind/path/url")
     return normalized
 
 
@@ -99,9 +97,7 @@ class DocumentationSource(BaseModel):
 
     kind: str = Field(
         ...,
-        description=(
-            "Source type (markdown, web, confluence, sharepoint, wiki, api, other)"
-        ),
+        description=("Source type (markdown, web, confluence, sharepoint, wiki, api, other)"),
     )
     path: Optional[str] = Field(
         None,

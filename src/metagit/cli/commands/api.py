@@ -40,10 +40,7 @@ def serve(root: str, host: str, port: int, status_once: bool) -> None:
         server.server_close()
         return
     try:
-        click.echo(
-            f"Serving metagit API on http://{host}:{bound_port}/ "
-            f"(workspace root {root_abs})"
-        )
+        click.echo(f"Serving metagit API on http://{host}:{bound_port}/ (workspace root {root_abs})")
         server.serve_forever()
     except KeyboardInterrupt:
         click.echo("Shutting down.")

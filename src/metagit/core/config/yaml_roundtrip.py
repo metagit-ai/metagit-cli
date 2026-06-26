@@ -60,9 +60,7 @@ def format_yaml_document(
             model,
             strip_absent_model_fields=strip_absent_model_fields,
         )
-        merged.yaml_set_start_comment(
-            f"{schema_language_server_directive(schema_url)}\n"
-        )
+        merged.yaml_set_start_comment(f"{schema_language_server_directive(schema_url)}\n")
         output_root: CommentedMap = merged
     else:
         wrapper = document.get(wrapper_key)
@@ -77,9 +75,7 @@ def format_yaml_document(
         output_root = CommentedMap()
         output_root[wrapper_key] = merged_inner
         _copy_map_key_comment(document, output_root, wrapper_key, wrapper_key)
-        output_root.yaml_set_start_comment(
-            f"{schema_language_server_directive(schema_url)}\n"
-        )
+        output_root.yaml_set_start_comment(f"{schema_language_server_directive(schema_url)}\n")
 
     out = StringIO()
     yaml.dump(output_root, out)
@@ -109,11 +105,7 @@ def _merge_map(
         child_model = nested_model(field_info.annotation)
 
         if child_model is not None and isinstance(payload_value, dict):
-            source_map = (
-                source_value
-                if isinstance(source_value, CommentedMap)
-                else CommentedMap()
-            )
+            source_map = source_value if isinstance(source_value, CommentedMap) else CommentedMap()
             merged[field_name] = _merge_map(
                 source_map,
                 payload_value,
@@ -121,11 +113,7 @@ def _merge_map(
                 strip_absent_model_fields=strip_absent_model_fields,
             )
         elif child_model is not None and isinstance(payload_value, list):
-            source_list = (
-                source_value
-                if isinstance(source_value, CommentedSeq)
-                else CommentedSeq()
-            )
+            source_list = source_value if isinstance(source_value, CommentedSeq) else CommentedSeq()
             merged[field_name] = _merge_list(
                 source_list,
                 payload_value,
@@ -169,9 +157,7 @@ def _merge_list(
             used_indices=used_indices,
         )
         if isinstance(payload_item, dict):
-            source_map = (
-                source_item if isinstance(source_item, CommentedMap) else CommentedMap()
-            )
+            source_map = source_item if isinstance(source_item, CommentedMap) else CommentedMap()
             merged.append(
                 _merge_map(
                     source_map,

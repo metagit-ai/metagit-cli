@@ -9,17 +9,17 @@ from typing import Optional
 import click
 
 from metagit.core.appconfig.models import AppConfig
-from metagit.core.config.models import MetagitConfig
 from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.config.models import MetagitConfig
+from metagit.core.project.source_manifest_sync import (
+    SourceManifestSyncService,
+    upsert_project_source,
+)
 from metagit.core.project.source_models import (
     ProjectSource,
     SourceSpec,
     SourceSyncMode,
     SourceSyncResult,
-)
-from metagit.core.project.source_manifest_sync import (
-    SourceManifestSyncService,
-    upsert_project_source,
 )
 from metagit.core.project.source_sync_runner import (
     SourceSyncRunRequest,
@@ -82,17 +82,11 @@ def log_source_sync_plan(logger: UnifiedLogger, result: SourceSyncResult) -> Non
     logger.info(f"Planned remove: {len(plan.to_remove)}")
     logger.info(f"Unchanged: {plan.unchanged}")
     if plan.to_add:
-        logger.info(
-            "Add candidates: " + ", ".join(repo.name for repo in plan.to_add[:20])
-        )
+        logger.info("Add candidates: " + ", ".join(repo.name for repo in plan.to_add[:20]))
     if plan.to_update:
-        logger.info(
-            "Update candidates: " + ", ".join(repo.name for repo in plan.to_update[:20])
-        )
+        logger.info("Update candidates: " + ", ".join(repo.name for repo in plan.to_update[:20]))
     if plan.to_remove:
-        logger.warning(
-            "Remove candidates: " + ", ".join(repo.name for repo in plan.to_remove[:20])
-        )
+        logger.warning("Remove candidates: " + ", ".join(repo.name for repo in plan.to_remove[:20]))
 
 
 @click.group(name="source")
@@ -138,9 +132,7 @@ def source(ctx: click.Context) -> None:
     show_default=True,
     help="Include forks",
 )
-@click.option(
-    "--path-prefix", default=None, help="Optional namespace/repo prefix filter"
-)
+@click.option("--path-prefix", default=None, help="Optional namespace/repo prefix filter")
 @click.option(
     "--include-pattern",
     "include_patterns",
@@ -275,9 +267,7 @@ def source_sync(
         )
     else:
         if not provider:
-            raise click.UsageError(
-                "--provider is required unless --from-manifest is set"
-            )
+            raise click.UsageError("--provider is required unless --from-manifest is set")
         try:
             spec = build_source_spec_from_cli(
                 provider=provider,
@@ -302,11 +292,7 @@ def source_sync(
             if not source_id:
                 raise click.UsageError("--write-source requires --source-id")
             project = next(
-                (
-                    item
-                    for item in local_config.workspace.projects
-                    if item.name == project_name
-                ),
+                (item for item in local_config.workspace.projects if item.name == project_name),
                 None,
             )
             if project is None:
@@ -334,9 +320,7 @@ def source_sync(
                 if item.name == project_name:
                     local_config.workspace.projects[index] = updated
                     break
-            save_result = MetagitConfigManager(config_path=config_path).save_config(
-                local_config, config_path
-            )
+            save_result = MetagitConfigManager(config_path=config_path).save_config(local_config, config_path)
             if isinstance(save_result, Exception):
                 raise click.UsageError(str(save_result)) from save_result
 

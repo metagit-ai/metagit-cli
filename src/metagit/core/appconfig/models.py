@@ -57,8 +57,7 @@ class WorkspaceConfig(BaseModel):
     session_path: str = Field(
         default=".metagit/sessions",
         description=(
-            "Path for workspace session state (metadata/objectives). "
-            "Relative paths resolve from workspace root."
+            "Path for workspace session state (metadata/objectives). Relative paths resolve from workspace root."
         ),
     )
     default_project: Optional[str] = Field(
@@ -73,15 +72,9 @@ class WorkspaceConfig(BaseModel):
         default_factory=WorkspaceDedupeConfig,
         description="Optional workspace-scoped repository deduplication settings",
     )
-    ui_show_preview: Optional[bool] = Field(
-        default=True, description="Show preview in fuzzy finder console UI"
-    )
-    ui_menu_length: Optional[int] = Field(
-        default=10, description="Number of items to show in menu"
-    )
-    ui_preview_height: Optional[int] = Field(
-        default=3, description="Height of preview in fuzzy finder console UI"
-    )
+    ui_show_preview: Optional[bool] = Field(default=True, description="Show preview in fuzzy finder console UI")
+    ui_menu_length: Optional[int] = Field(default=10, description="Number of items to show in menu")
+    ui_preview_height: Optional[int] = Field(default=3, description="Height of preview in fuzzy finder console UI")
     ui_ignore_hidden: bool = Field(
         default=True,
         description="When true, hide dotfiles and dot-directories from repo picker UI",
@@ -100,9 +93,7 @@ class LLM(BaseModel):
     provider: str = Field(default="openrouter", description="LLM provider")
     provider_model: str = Field(default="gpt-4o-mini", description="LLM provider model")
     embedder: str = Field(default="ollama", description="Embedding provider")
-    embedder_model: str = Field(
-        default="nomic-embed-text", description="Embedding model"
-    )
+    embedder_model: str = Field(default="nomic-embed-text", description="Embedding model")
     api_key: str = Field(default="", description="API key for LLM provider")
 
     class Config:
@@ -159,13 +150,9 @@ class Profile(BaseModel):
 class GitHubProvider(BaseModel):
     """Model for GitHub provider configuration in AppConfig."""
 
-    enabled: bool = Field(
-        default=False, description="Whether GitHub provider is enabled"
-    )
+    enabled: bool = Field(default=False, description="Whether GitHub provider is enabled")
     api_token: str = Field(default="", description="GitHub API token")
-    base_url: str = Field(
-        default="https://api.github.com", description="GitHub API base URL"
-    )
+    base_url: str = Field(default="https://api.github.com", description="GitHub API base URL")
 
     class Config:
         """Pydantic configuration."""
@@ -176,13 +163,9 @@ class GitHubProvider(BaseModel):
 class GitLabProvider(BaseModel):
     """Model for GitLab provider configuration in AppConfig."""
 
-    enabled: bool = Field(
-        default=False, description="Whether GitLab provider is enabled"
-    )
+    enabled: bool = Field(default=False, description="Whether GitLab provider is enabled")
     api_token: str = Field(default="", description="GitLab API token")
-    base_url: str = Field(
-        default="https://gitlab.com/api/v4", description="GitLab API base URL"
-    )
+    base_url: str = Field(default="https://gitlab.com/api/v4", description="GitLab API base URL")
 
     class Config:
         """Pydantic configuration."""
@@ -193,12 +176,8 @@ class GitLabProvider(BaseModel):
 class Providers(BaseModel):
     """Model for Git provider configuration in AppConfig."""
 
-    github: GitHubProvider = Field(
-        default_factory=GitHubProvider, description="GitHub provider configuration"
-    )
-    gitlab: GitLabProvider = Field(
-        default_factory=GitLabProvider, description="GitLab provider configuration"
-    )
+    github: GitHubProvider = Field(default_factory=GitHubProvider, description="GitHub provider configuration")
+    gitlab: GitLabProvider = Field(default_factory=GitLabProvider, description="GitLab provider configuration")
 
     class Config:
         """Pydantic configuration."""
@@ -243,15 +222,9 @@ class AppConfig(BaseModel):
         description="The path to the package manager data",
     )
     llm: LLM = Field(default=LLM(), description="The LLM configuration")
-    workspace: WorkspaceConfig = Field(
-        default=WorkspaceConfig(), description="The workspace configuration"
-    )
-    profiles: List[Profile] = Field(
-        default=[Profile()], description="The profiles available to this appconfig"
-    )
-    providers: Providers = Field(
-        default=Providers(), description="Git provider plugin configuration"
-    )
+    workspace: WorkspaceConfig = Field(default=WorkspaceConfig(), description="The workspace configuration")
+    profiles: List[Profile] = Field(default=[Profile()], description="The profiles available to this appconfig")
+    providers: Providers = Field(default=Providers(), description="Git provider plugin configuration")
 
     @classmethod
     def load(cls, config_path: str = None) -> Union["AppConfig", Exception]:
@@ -266,9 +239,7 @@ class AppConfig(BaseModel):
         """
         try:
             if not config_path:
-                config_path = os.path.join(
-                    Path.home(), ".config", "metagit", "config.yml"
-                )
+                config_path = os.path.join(Path.home(), ".config", "metagit", "config.yml")
 
             config_file = Path(config_path)
             if not config_file.exists():
@@ -277,16 +248,11 @@ class AppConfig(BaseModel):
             with config_file.open("r") as f:
                 config_data = yaml.safe_load(f)
 
-            if "config" in config_data:
-                config = cls(**config_data["config"])
-            else:
-                config = cls(**config_data)
+            config = cls(**config_data["config"]) if "config" in config_data else cls(**config_data)
 
             # Override with environment variables
             config = cls._override_from_environment(config)
-            os.environ.setdefault(
-                "METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path
-            )
+            os.environ.setdefault("METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path)
 
             return config
 
@@ -340,19 +306,13 @@ class AppConfig(BaseModel):
         if os.getenv("METAGIT_WORKSPACE_SESSION_PATH"):
             config.workspace.session_path = os.getenv("METAGIT_WORKSPACE_SESSION_PATH")
         if os.getenv("METAGIT_WORKSPACE_DEFAULT_PROJECT"):
-            config.workspace.default_project = os.getenv(
-                "METAGIT_WORKSPACE_DEFAULT_PROJECT"
-            )
+            config.workspace.default_project = os.getenv("METAGIT_WORKSPACE_DEFAULT_PROJECT")
         if os.getenv("METAGIT_WORKSPACE_DEDUPE_ENABLED"):
-            config.workspace.dedupe.enabled = (
-                os.getenv("METAGIT_WORKSPACE_DEDUPE_ENABLED", "").lower() == "true"
-            )
+            config.workspace.dedupe.enabled = os.getenv("METAGIT_WORKSPACE_DEDUPE_ENABLED", "").lower() == "true"
 
         # GitHub provider configuration
         if os.getenv("METAGIT_GITHUB_ENABLED"):
-            config.providers.github.enabled = (
-                os.getenv("METAGIT_GITHUB_ENABLED").lower() == "true"
-            )
+            config.providers.github.enabled = os.getenv("METAGIT_GITHUB_ENABLED").lower() == "true"
         if os.getenv("METAGIT_GITHUB_API_TOKEN"):
             config.providers.github.api_token = os.getenv("METAGIT_GITHUB_API_TOKEN")
         if os.getenv("METAGIT_GITHUB_BASE_URL"):
@@ -360,9 +320,7 @@ class AppConfig(BaseModel):
 
         # GitLab provider configuration
         if os.getenv("METAGIT_GITLAB_ENABLED"):
-            config.providers.gitlab.enabled = (
-                os.getenv("METAGIT_GITLAB_ENABLED").lower() == "true"
-            )
+            config.providers.gitlab.enabled = os.getenv("METAGIT_GITLAB_ENABLED").lower() == "true"
         if os.getenv("METAGIT_GITLAB_API_TOKEN"):
             config.providers.gitlab.api_token = os.getenv("METAGIT_GITLAB_API_TOKEN")
         if os.getenv("METAGIT_GITLAB_BASE_URL"):
@@ -382,20 +340,14 @@ class AppConfig(BaseModel):
         """
         try:
             if not config_path:
-                config_path = os.path.join(
-                    Path.home(), ".config", "metagit", "config.yml"
-                )
+                config_path = os.path.join(Path.home(), ".config", "metagit", "config.yml")
 
             config_file = Path(config_path)
             config_file.parent.mkdir(parents=True, exist_ok=True)
 
             with config_file.open("w") as f:
                 yaml.dump(
-                    {
-                        "config": self.model_dump(
-                            exclude_none=True, exclude_unset=True, mode="json"
-                        )
-                    },
+                    {"config": self.model_dump(exclude_none=True, exclude_unset=True, mode="json")},
                     f,
                     default_flow_style=False,
                     sort_keys=False,

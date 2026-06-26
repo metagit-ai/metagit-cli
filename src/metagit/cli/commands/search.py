@@ -33,12 +33,8 @@ def _parse_tag_filters(tag_values: tuple[str, ...]) -> dict[str, str] | None:
     show_default=True,
     help="Path to the Metagit workspace definition file",
 )
-@click.option(
-    "--project", default=None, help="Limit to a single workspace project name"
-)
-@click.option(
-    "--exact", is_flag=True, default=False, help="Require exact repository name match"
-)
+@click.option("--project", default=None, help="Limit to a single workspace project name")
+@click.option("--exact", is_flag=True, default=False, help="Require exact repository name match")
 @click.option(
     "--synced-only",
     is_flag=True,
@@ -64,9 +60,7 @@ def _parse_tag_filters(tag_values: tuple[str, ...]) -> dict[str, str] | None:
     show_default=True,
 )
 @click.option("--limit", default=10, type=int, show_default=True)
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print matches as JSON"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print matches as JSON")
 @click.option(
     "--path-only",
     is_flag=True,

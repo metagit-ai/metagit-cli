@@ -54,9 +54,7 @@ def run_mcp_source_sync(
         if not project_name:
             return {
                 "ok": False,
-                "errors": [
-                    {"kind": "invalid_arguments", "message": "project_name is required"}
-                ],
+                "errors": [{"kind": "invalid_arguments", "message": "project_name is required"}],
             }
         from metagit.core.project.source_manifest_sync import SourceManifestSyncService
         from metagit.core.workspace.root_resolver import resolve_session_root
@@ -70,8 +68,7 @@ def run_mcp_source_sync(
             source_id=_optional_str(arguments.get("source_id")),
             apply=bool(arguments.get("apply", False)),
             force=bool(arguments.get("force", False)),
-            sync_clones=bool(arguments.get("sync", False))
-            and bool(arguments.get("apply", False)),
+            sync_clones=bool(arguments.get("sync", False)) and bool(arguments.get("apply", False)),
             session_root=resolve_session_root(config_path),
             requested_by=str(arguments.get("requested_by", "mcp")),
         )
@@ -81,9 +78,7 @@ def run_mcp_source_sync(
     if not project_name:
         return {
             "ok": False,
-            "errors": [
-                {"kind": "invalid_arguments", "message": "project_name is required"}
-            ],
+            "errors": [{"kind": "invalid_arguments", "message": "project_name is required"}],
         }
 
     try:

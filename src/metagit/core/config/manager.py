@@ -62,9 +62,7 @@ class MetagitConfigManager:
         """
         try:
             if not Path(self.config_path).exists():
-                return FileNotFoundError(
-                    f"Configuration file not found: {self.config_path}"
-                )
+                return FileNotFoundError(f"Configuration file not found: {self.config_path}")
 
             with open(self.config_path, "r", encoding="utf-8") as f:
                 yaml_data = yaml.safe_load(f)
@@ -153,17 +151,13 @@ class MetagitConfigManager:
         try:
             config_to_save = config or self._config
             if config_to_save is None:
-                return ValueError(
-                    "No configuration to save. Load a config first or provide one."
-                )
+                return ValueError("No configuration to save. Load a config first or provide one.")
 
             save_path = Path(output_path or self.config_path)
             if auto_format:
                 from metagit.core.config.format_service import ConfigFormatService
 
-                original_text = (
-                    save_path.read_text(encoding="utf-8") if save_path.is_file() else ""
-                )
+                original_text = save_path.read_text(encoding="utf-8") if save_path.is_file() else ""
                 formatted = ConfigFormatService().render_metagit(
                     config_to_save,
                     original_text=original_text,
@@ -192,9 +186,7 @@ def create_metagit_config(
     """
     Create a top level .metagit.yml configuration file.
     """
-    logger = logger or UnifiedLogger(
-        LoggerConfig(log_level="INFO", minimal_console=True)
-    )
+    logger = logger or UnifiedLogger(LoggerConfig(log_level="INFO", minimal_console=True))
     if name is None:
         try:
             git_repo = Repo(Path.cwd())
@@ -210,9 +202,7 @@ def create_metagit_config(
         kind = "application"
     try:
         config_manager = MetagitConfigManager()
-        config_result = config_manager.create_config(
-            name=name, description=description, url=url, kind=kind
-        )
+        config_result = config_manager.create_config(name=name, description=description, url=url, kind=kind)
         if isinstance(config_result, Exception):
             raise config_result
     except Exception as e:

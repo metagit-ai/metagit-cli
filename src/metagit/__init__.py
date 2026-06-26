@@ -7,8 +7,8 @@ Metagit detection tool
 """
 
 import os
-from os import path
 from importlib.metadata import PackageNotFoundError, version
+from os import path
 
 here = path.abspath(path.dirname(__file__))
 
@@ -22,8 +22,6 @@ except ImportError:
 
 
 SCRIPT_PATH = os.path.abspath(os.path.split(__file__)[0])
-CONFIG_PATH = os.getenv(
-    "METAGIT_CONFIG", os.path.join(SCRIPT_PATH, (".metagit.config.yml"))
-)
+CONFIG_PATH = os.getenv("METAGIT_CONFIG", os.path.join(SCRIPT_PATH, (".metagit.config.yml")))
 DATA_PATH = os.getenv("METAGIT_DATA", os.path.join(SCRIPT_PATH, "data"))
 DEFAULT_CONFIG = os.path.join(DATA_PATH, "metagit.config.yaml")

@@ -23,9 +23,7 @@ def gitcache():
 @gitcache.command()
 @click.argument("source")
 @click.option("--name", "-n", help="Custom cache name")
-@click.option(
-    "--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory"
-)
+@click.option("--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory")
 @click.option("--timeout", "-t", default=60, help="Cache timeout in minutes")
 @click.option("--max-size", "-s", default=10.0, help="Maximum cache size in GB")
 @click.option("--async", "use_async", is_flag=True, help="Use async operations")
@@ -67,9 +65,7 @@ def cache(
 
 
 @gitcache.command()
-@click.option(
-    "--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory"
-)
+@click.option("--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory")
 def list(cache_root: str):
     """List all cache entries."""
     try:
@@ -97,9 +93,7 @@ def list(cache_root: str):
                 if entry.remote_commit_hash:
                     click.echo(f"    Remote: {entry.remote_commit_hash[:8]}...")
                 if entry.has_upstream_changes:
-                    click.echo(
-                        f"    ⚠️  Has upstream changes: {entry.upstream_changes_summary}"
-                    )
+                    click.echo(f"    ⚠️  Has upstream changes: {entry.upstream_changes_summary}")
 
             click.echo()
 
@@ -108,9 +102,7 @@ def list(cache_root: str):
 
 
 @gitcache.command()
-@click.option(
-    "--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory"
-)
+@click.option("--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory")
 def stats(cache_root: str):
     """Show cache statistics."""
     try:
@@ -137,9 +129,7 @@ def stats(cache_root: str):
 
 @gitcache.command()
 @click.argument("name")
-@click.option(
-    "--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory"
-)
+@click.option("--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory")
 @click.option("--async", "use_async", is_flag=True, help="Use async operations")
 def refresh(name: str, cache_root: str, use_async: bool):
     """Refresh a cache entry."""
@@ -147,10 +137,7 @@ def refresh(name: str, cache_root: str, use_async: bool):
         config = GitCacheConfig(cache_root=Path(cache_root))
         manager = GitCacheManager(config)
 
-        if use_async:
-            entry = asyncio.run(manager.refresh_cache_entry_async(name))
-        else:
-            entry = manager.refresh_cache_entry(name)
+        entry = asyncio.run(manager.refresh_cache_entry_async(name)) if use_async else manager.refresh_cache_entry(name)
 
         if isinstance(entry, Exception):
             click.echo(f"Error: {entry}", err=True)
@@ -165,9 +152,7 @@ def refresh(name: str, cache_root: str, use_async: bool):
 
 @gitcache.command()
 @click.argument("name")
-@click.option(
-    "--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory"
-)
+@click.option("--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory")
 def remove(name: str, cache_root: str):
     """Remove a cache entry."""
     try:
@@ -187,16 +172,13 @@ def remove(name: str, cache_root: str):
 
 
 @gitcache.command()
-@click.option(
-    "--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory"
-)
+@click.option("--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory")
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
 def clear(cache_root: str, yes: bool):
     """Clear all cache entries."""
     try:
-        if not yes:
-            if not click.confirm("Are you sure you want to clear all cache entries?"):
-                return
+        if not yes and not click.confirm("Are you sure you want to clear all cache entries?"):
+            return
 
         config = GitCacheConfig(cache_root=Path(cache_root))
         manager = GitCacheManager(config)
@@ -215,9 +197,7 @@ def clear(cache_root: str, yes: bool):
 
 @gitcache.command()
 @click.argument("name")
-@click.option(
-    "--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory"
-)
+@click.option("--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory")
 def path(name: str, cache_root: str):
     """Get the path to a cached repository."""
     try:
@@ -243,9 +223,7 @@ def path(name: str, cache_root: str):
 
 @gitcache.command()
 @click.argument("name")
-@click.option(
-    "--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory"
-)
+@click.option("--cache-root", "-c", default="./.metagit/.cache", help="Cache root directory")
 def details(name: str, cache_root: str):
     """Get detailed information about a cache entry."""
     try:
@@ -296,9 +274,7 @@ def details(name: str, cache_root: str):
             if details.get("remote_branch"):
                 click.echo(f"Remote Branch: {details['remote_branch']}")
 
-            click.echo(
-                f"Has Upstream Changes: {details.get('has_upstream_changes', False)}"
-            )
+            click.echo(f"Has Upstream Changes: {details.get('has_upstream_changes', False)}")
 
             if details.get("upstream_changes_summary"):
                 click.echo(f"Changes Summary: {details['upstream_changes_summary']}")
@@ -310,20 +286,12 @@ def details(name: str, cache_root: str):
             if "current_local_commit_hash" in details:
                 click.echo("\nCurrent Git Information:")
                 click.echo("-" * 25)
-                click.echo(
-                    f"Current Local Commit: {details['current_local_commit_hash'][:8]}..."
-                )
+                click.echo(f"Current Local Commit: {details['current_local_commit_hash'][:8]}...")
                 click.echo(f"Current Local Branch: {details['current_local_branch']}")
-                click.echo(
-                    f"Current Remote Commit: {details['current_remote_commit_hash'][:8]}..."
-                )
+                click.echo(f"Current Remote Commit: {details['current_remote_commit_hash'][:8]}...")
                 click.echo(f"Current Remote Branch: {details['current_remote_branch']}")
-                click.echo(
-                    f"Current Has Changes: {details['current_has_upstream_changes']}"
-                )
-                click.echo(
-                    f"Current Changes Summary: {details['current_upstream_changes_summary']}"
-                )
+                click.echo(f"Current Has Changes: {details['current_has_upstream_changes']}")
+                click.echo(f"Current Changes Summary: {details['current_upstream_changes_summary']}")
                 click.echo(f"Diff Check Time: {details['diff_check_timestamp']}")
 
             if "diff_check_error" in details:

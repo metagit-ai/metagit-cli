@@ -9,12 +9,13 @@ import click
 import yaml
 
 from metagit.cli.commands.project_repo import repo, repo_select
+from metagit.cli.commands.project_source import source
 from metagit.cli.json_output import (
     emit_json,
     exit_on_catalog_mutation,
     exit_on_layout_mutation,
 )
-from metagit.cli.commands.project_source import source
+from metagit.cli.shell_completion import complete_projects
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
@@ -24,21 +25,18 @@ from metagit.core.utils.click import call_click_command_with_ctx
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
-from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace.layout_resolver import (
     active_project_resolution_error,
     project_exists_in_manifest,
     resolve_active_project_name,
 )
-from metagit.core.workspace.root_resolver import resolve_session_root
+from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace.models import WorkspaceProject
-from metagit.cli.shell_completion import complete_projects
+from metagit.core.workspace.root_resolver import resolve_session_root
 
 
 @click.group(name="project", invoke_without_command=True)
-@click.option(
-    "--config", "-c", default=".metagit.yml", help="Path to the metagit definition file"
-)
+@click.option("--config", "-c", default=".metagit.yml", help="Path to the metagit definition file")
 @click.option(
     "--project",
     "-p",
@@ -86,9 +84,7 @@ project.add_command(source)
     default=False,
     help="List all workspace projects (catalog view) instead of one project YAML",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def project_list(ctx: click.Context, list_all: bool, as_json: bool) -> None:
     """List project configuration (YAML, JSON, or all projects)."""
@@ -100,11 +96,7 @@ def project_list(ctx: click.Context, list_all: bool, as_json: bool) -> None:
     use_catalog = (
         list_all
         or project is None
-        or (
-            project
-            and not explicit_project
-            and not project_exists_in_manifest(local_config, project)
-        )
+        or (project and not explicit_project and not project_exists_in_manifest(local_config, project))
     )
     if use_catalog:
         service = WorkspaceCatalogService()
@@ -147,9 +139,7 @@ def project_list(ctx: click.Context, list_all: bool, as_json: bool) -> None:
             )
 
             if not workspace_project:
-                logger.error(
-                    f"Project '{project}' not found in workspace configuration"
-                )
+                logger.error(f"Project '{project}' not found in workspace configuration")
                 ctx.abort()
 
             project_dict = workspace_project.model_dump(exclude_none=True)
@@ -176,9 +166,7 @@ def project_list(ctx: click.Context, list_all: bool, as_json: bool) -> None:
     is_flag=True,
     help="Succeed without changes when the project already exists with matching fields",
 )
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def project_add(
     ctx: click.Context,
@@ -205,9 +193,7 @@ def project_add(
 
 @project.command("remove")
 @click.argument("name")
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def project_remove(ctx: click.Context, name: str, as_json: bool) -> None:
     """Remove a workspace project from the manifest."""
@@ -227,9 +213,7 @@ def project_remove(ctx: click.Context, name: str, as_json: bool) -> None:
 @click.option("--dry-run", is_flag=True, default=False)
 @click.option("--manifest-only", is_flag=True, default=False)
 @click.option("--force", is_flag=True, default=False)
-@click.option(
-    "--json", "as_json", is_flag=True, default=False, help="Print JSON for agents"
-)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
 def project_rename(
     ctx: click.Context,
@@ -331,9 +315,7 @@ def project_sync(ctx: click.Context, hydrate: bool, refresh_sources: bool) -> No
             )
 
             if not workspace_project:
-                logger.error(
-                    f"Project '{project}' not found in workspace configuration"
-                )
+                logger.error(f"Project '{project}' not found in workspace configuration")
                 ctx.abort()
 
         if refresh_sources and project != "local":

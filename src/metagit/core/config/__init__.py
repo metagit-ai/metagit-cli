@@ -6,9 +6,9 @@ This package provides Pydantic models and methods for parsing and validating
 .metagit.yml configuration files.
 """
 
-from .manager import MetagitConfigManager
 from .documentation_models import DocumentationSource, normalize_documentation_entries
 from .graph_models import GraphEndpoint, GraphRelationship, WorkspaceGraph
+from .manager import MetagitConfigManager
 from .models import (
     CICD,
     AlertingChannel,

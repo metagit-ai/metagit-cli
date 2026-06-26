@@ -105,10 +105,7 @@ class GraphCypherExportService:
     ) -> GraphCypherExportResult:
         """Export manifest graph data as Cypher statements and MCP tool calls."""
         rows = self._index.build_index(config=config, workspace_root=workspace_root)
-        project_names = {
-            project.name
-            for project in (config.workspace.projects if config.workspace else [])
-        }
+        project_names = {project.name for project in (config.workspace.projects if config.workspace else [])}
         workspace_name = config.name or "workspace"
         target_repo = gitnexus_repo or workspace_name
 
@@ -225,6 +222,7 @@ class GraphCypherExportService:
         edges: list[GraphCypherEdge],
         warnings: list[str],
     ) -> None:
+        _ = warnings
         if not config.documentation:
             return
         for index, entry in enumerate(config.documentation):
@@ -275,9 +273,7 @@ class GraphCypherExportService:
                 project_names=project_names,
             )
             if not from_id or not to_id:
-                warnings.append(
-                    f"skipped relationship {rel.id or rel.type}: unresolved endpoint"
-                )
+                warnings.append(f"skipped relationship {rel.id or rel.type}: unresolved endpoint")
                 continue
             self._ensure_endpoint_nodes(from_id, nodes, project_names, rows)
             self._ensure_endpoint_nodes(to_id, nodes, project_names, rows)
@@ -325,12 +321,7 @@ class GraphCypherExportService:
                 return
             project, repo = body.split("/", 1)
             row = next(
-                (
-                    item
-                    for item in rows
-                    if item.get("project_name") == project
-                    and item.get("repo_name") == repo
-                ),
+                (item for item in rows if item.get("project_name") == project and item.get("repo_name") == repo),
                 None,
             )
             nodes[node_id] = GraphCypherNode(
@@ -339,11 +330,7 @@ class GraphCypherExportService:
                 label=repo,
                 project=project,
                 repo=repo,
-                path=str(
-                    (row or {}).get("configured_path")
-                    or (row or {}).get("repo_path")
-                    or ""
-                ),
+                path=str((row or {}).get("configured_path") or (row or {}).get("repo_path") or ""),
             )
 
     def _build_statements(
@@ -372,9 +359,7 @@ class GraphCypherExportService:
         )
 
     def _create_edge_statement(self, edge: GraphCypherEdge) -> str:
-        rel_props = {
-            key: value for key, value in edge.properties.items() if value is not None
-        }
+        rel_props = {key: value for key, value in edge.properties.items() if value is not None}
         return (
             "MATCH "
             f"(a:MetagitEntity {{id: {_literal_string(edge.from_id)}}}), "

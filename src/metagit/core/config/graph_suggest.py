@@ -163,9 +163,7 @@ class GraphRelationshipSuggestService:
             project_names=project_names,
         )
 
-        allowed_edge_types = {
-            _REQUEST_TO_EDGE_TYPE.get(item, item) for item in selected_types
-        }
+        allowed_edge_types = {_REQUEST_TO_EDGE_TYPE.get(item, item) for item in selected_types}
         merged_edges: dict[tuple[str, str, str], Any] = {}
         for project in config.workspace.projects:
             result = self._dependencies.map_dependencies(
@@ -323,10 +321,7 @@ class GraphRelationshipSuggestService:
         dependency_types: Optional[list[str]],
         include_declared: bool,
     ) -> set[str]:
-        if dependency_types:
-            selected = {item.lower() for item in dependency_types}
-        else:
-            selected = set(_PROMOTABLE_DEFAULT)
+        selected = {item.lower() for item in dependency_types} if dependency_types else set(_PROMOTABLE_DEFAULT)
         if include_declared:
             selected.update({"declared", "ref"})
         return selected
@@ -358,9 +353,7 @@ class GraphRelationshipSuggestService:
             to_endpoint = node_id_to_endpoint(to_id)
             if from_endpoint is None or to_endpoint is None:
                 continue
-            signatures.add(
-                _relationship_signature(from_endpoint, to_endpoint, rel.type)
-            )
+            signatures.add(_relationship_signature(from_endpoint, to_endpoint, rel.type))
         return signatures
 
     def _build_relationship_id(
@@ -371,15 +364,9 @@ class GraphRelationshipSuggestService:
         rel_type: str,
     ) -> str:
         from_label = (
-            f"{from_endpoint.project}-{from_endpoint.repo}"
-            if from_endpoint.repo
-            else str(from_endpoint.project)
+            f"{from_endpoint.project}-{from_endpoint.repo}" if from_endpoint.repo else str(from_endpoint.project)
         )
-        to_label = (
-            f"{to_endpoint.project}-{to_endpoint.repo}"
-            if to_endpoint.repo
-            else str(to_endpoint.project)
-        )
+        to_label = f"{to_endpoint.project}-{to_endpoint.repo}" if to_endpoint.repo else str(to_endpoint.project)
         return f"{_slug(from_label)}-to-{_slug(to_label)}-{rel_type}"
 
     def _filter_candidate_ids(

@@ -1,8 +1,11 @@
+import contextlib
 import os
-import tomli
 from pathlib import Path
 from typing import Optional
-from metagit.core.detect.models import ProjectScanContext, DiscoveryResult
+
+import tomli
+
+from metagit.core.detect.models import DiscoveryResult, ProjectScanContext
 
 
 class PythonDetector:
@@ -34,30 +37,18 @@ class PythonDetector:
             with open(pyproject, "rb") as f:
                 data = tomli.load(f)
                 # Handle both Poetry and PEP 621
-                try:
+                with contextlib.suppress(KeyError):
                     deps.extend(data["tool"]["poetry"]["dependencies"].keys())
-                except KeyError:
-                    pass
-                try:
+                with contextlib.suppress(KeyError):
                     deps.extend(data["project"]["dependencies"])
-                except KeyError:
-                    pass
 
         reqs = root / "requirements.txt"
         if reqs.exists():
             with reqs.open("r") as f:
-                deps.extend(
-                    [
-                        line.strip().split("==")[0]
-                        for line in f
-                        if line.strip() and not line.startswith("#")
-                    ]
-                )
+                deps.extend([line.strip().split("==")[0] for line in f if line.strip() and not line.startswith("#")])
 
         setup = root / "setup.py"
         if setup.exists():
-            deps.append(
-                "[from setup.py]"
-            )  # You could parse with `ast`, but keep it simple here
+            deps.append("[from setup.py]")  # You could parse with `ast`, but keep it simple here
 
         return sorted(set(deps))

@@ -25,6 +25,7 @@ def prepare_format_payload(
     include_defaults: bool,
 ) -> dict[str, Any]:
     """Build a format payload with optional default fields omitted."""
+    _ = model
     if include_defaults:
         return payload
     compact = prune_empty_dict_nodes(payload)

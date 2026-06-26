@@ -148,9 +148,7 @@ class AgentTemplateManifest(BaseModel):
     def _validate_schema_version(cls, value: str) -> str:
         major = value.split(".", maxsplit=1)[0]
         if major != "1":
-            raise ValueError(
-                f"unsupported agent template schema major version: {value!r}"
-            )
+            raise ValueError(f"unsupported agent template schema major version: {value!r}")
         return value
 
 

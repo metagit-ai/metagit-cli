@@ -20,18 +20,18 @@ from metagit.core.appconfig.models import (
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
-from metagit.core.workspace import workspace_dedupe
-from metagit.core.workspace.hydrate import materialize_symlink_mount
 from metagit.core.utils.common import create_vscode_workspace
+from metagit.core.utils.files import parse_gitignore, should_ignore_path
 from metagit.core.utils.fuzzyfinder import (
     FuzzyFinder,
     FuzzyFinderConfig,
     FuzzyFinderTarget,
 )
-from metagit.core.utils.files import parse_gitignore, should_ignore_path
 from metagit.core.utils.logging import UnifiedLogger
 from metagit.core.utils.userprompt import UserPrompt
+from metagit.core.workspace import workspace_dedupe
 from metagit.core.workspace.dedupe_resolver import resolve_effective_dedupe
+from metagit.core.workspace.hydrate import materialize_symlink_mount
 from metagit.core.workspace.layout_resolver import (
     find_project,
     list_project_names,
@@ -120,19 +120,14 @@ class ProjectManager:
                     break
 
             if not target_project:
-                raise ValueError(
-                    f"Project '{project_name}' not found in workspace configuration"
-                )
+                raise ValueError(f"Project '{project_name}' not found in workspace configuration")
 
             if repo is None and agent_mode:
                 return ValueError(
-                    "Interactive repo add is disabled in agent mode; "
-                    "pass --name/--path/--url or use catalog/MCP tools"
+                    "Interactive repo add is disabled in agent mode; pass --name/--path/--url or use catalog/MCP tools"
                 )
             if repo is None:
-                self.logger.debug(
-                    "No repository data provided. Prompting for information..."
-                )
+                self.logger.debug("No repository data provided. Prompting for information...")
                 repo_result = UserPrompt.prompt_for_model(
                     ProjectPath,
                     title="Add git repository or local path to project group",
@@ -153,17 +148,13 @@ class ProjectManager:
                 if isinstance(repo_result, Exception):
                     return repo_result
                 if repo_result.path is None and repo_result.url is None:
-                    raise ValueError(
-                        "No local path or remote URL provided. Please provide one of them."
-                    )
+                    raise ValueError("No local path or remote URL provided. Please provide one of them.")
                 repo = repo_result
 
             # Check if name already exists in the project
             for existing_repo in target_project.repos:
                 if existing_repo.name == repo.name:
-                    raise ValueError(
-                        f"Repository '{repo.name}' already exists in project '{project_name}'"
-                    )
+                    raise ValueError(f"Repository '{repo.name}' already exists in project '{project_name}'")
 
             duplicates = workspace_dedupe.find_duplicate_identities(
                 metagit_config,
@@ -172,8 +163,7 @@ class ProjectManager:
             if duplicates:
                 locations = ", ".join(f"{proj}/{name}" for proj, name in duplicates)
                 raise ValueError(
-                    "Repo identity already registered as "
-                    f"{locations}; reuse that entry or enable workspace dedupe"
+                    f"Repo identity already registered as {locations}; reuse that entry or enable workspace dedupe"
                 )
 
             # Add the repository to the project
@@ -281,9 +271,7 @@ class ProjectManager:
                 tqdm.write(f"  ⏭️  {repo.name}: not a symlink")
         return ok
 
-    def _create_vscode_workspace(
-        self, project: WorkspaceProject, project_dir: str
-    ) -> Union[str, Exception]:
+    def _create_vscode_workspace(self, project: WorkspaceProject, project_dir: str) -> Union[str, Exception]:
         """
         Create a VS Code workspace file for the project.
 
@@ -334,10 +322,7 @@ class ProjectManager:
         This method is called by the thread pool executor.
         """
         mount_path = os.path.join(project_dir, repo.name)
-        if (
-            self._dedupe is not None
-            and self._dedupe.scope == WorkspaceDedupeScope.WORKSPACE
-        ):
+        if self._dedupe is not None and self._dedupe.scope == WorkspaceDedupeScope.WORKSPACE:
             self._sync_repo_deduped(
                 repo=repo,
                 project_name=project_name,
@@ -362,6 +347,7 @@ class ProjectManager:
         position: int,
     ) -> None:
         """Sync using canonical storage and a per-project symlink mount."""
+        _ = project_name
         if self._dedupe is None:
             return
         identity = workspace_dedupe.build_repo_identity(repo)
@@ -424,9 +410,7 @@ class ProjectManager:
         if error:
             tqdm.write(f"Failed to mount {repo.name}: {error}")
             return
-        bar_format = (
-            "{l_bar}Symlinked{r_bar}" if changed else "{l_bar} 🟠 Already exists{r_bar}"
-        )
+        bar_format = "{l_bar}Symlinked{r_bar}" if changed else "{l_bar} 🟠 Already exists{r_bar}"
         with tqdm(total=1, desc=desc, position=position, bar_format=bar_format) as pbar:
             pbar.update(1)
 
@@ -448,9 +432,7 @@ class ProjectManager:
             tqdm.write(f"Failed to mount {repo.name}: {error}")
             return
         desc = f"  🔗 {repo.name}"
-        bar_format = (
-            "{l_bar}Mounted{r_bar}" if changed else "{l_bar} 🟠 Already exists{r_bar}"
-        )
+        bar_format = "{l_bar}Mounted{r_bar}" if changed else "{l_bar} 🟠 Already exists{r_bar}"
         with tqdm(total=1, desc=desc, position=position, bar_format=bar_format) as pbar:
             pbar.update(1)
 
@@ -537,11 +519,7 @@ class ProjectManager:
                 pbar.set_description(f"  ✅ {desc} Cloned")
             except git.exc.GitCommandError as e:
                 pbar.set_description(f"  ❌ {desc} Failed")
-                tqdm.write(
-                    f"Failed to clone repository {repo.name}.\n"
-                    f"URL: {repo.url}\n"
-                    f"Error: {e.stderr}"
-                )
+                tqdm.write(f"Failed to clone repository {repo.name}.\nURL: {repo.url}\nError: {e.stderr}")
 
     def list_unmanaged_sync_directories(
         self,
@@ -560,11 +538,7 @@ class ProjectManager:
         if project == "local":
             workspace_project = metagit_config.local_workspace_project
         else:
-            matches = [
-                p
-                for p in (metagit_config.workspace.projects or [])
-                if p.name == project
-            ]
+            matches = [p for p in (metagit_config.workspace.projects or []) if p.name == project]
             if not matches:
                 return []
             workspace_project = matches[0]
@@ -623,17 +597,11 @@ class ProjectManager:
                     hint = f" Available projects: {', '.join(available)}."
                 else:
                     hint = " No workspace projects are defined in .metagit.yml."
-                return ValueError(
-                    f"Project '{project}' not found in workspace configuration.{hint}"
-                )
+                return ValueError(f"Project '{project}' not found in workspace configuration.{hint}")
 
         if not Path(project_path).exists(follow_symlinks=True):
-            self.logger.warning(
-                f"Project path does not exist for project: {project_path}"
-            )
-            self.logger.warning(
-                f"You can sync the project with `metagit workspace sync --project {project_path}`"
-            )
+            self.logger.warning(f"Project path does not exist for project: {project_path}")
+            self.logger.warning(f"You can sync the project with `metagit workspace sync --project {project_path}`")
             return
         project_dict = {}
         ignore_patterns = parse_gitignore(Path(project_path) / ".gitignore")
@@ -693,9 +661,7 @@ class ProjectManager:
             if repo.name in project_dict:
                 # Update the description with management status and repo description
                 summary_lines = self._build_project_repo_summary(repo)
-                project_dict[repo.name] = self._append_preview_lines(
-                    project_dict[repo.name], summary_lines
-                )
+                project_dict[repo.name] = self._append_preview_lines(project_dict[repo.name], summary_lines)
             else:
                 # This repo is configured but doesn't exist on filesystem
                 description_parts = [
@@ -707,9 +673,7 @@ class ProjectManager:
                 ]
 
                 description_parts.extend(self._build_project_repo_summary(repo))
-                project_dict[repo.name] = self._build_preview_sections(
-                    description_parts
-                )
+                project_dict[repo.name] = self._build_preview_sections(description_parts)
 
         # Add unmanaged status to items that exist on filesystem but not in config
         for item_name in list(project_dict.keys()):
@@ -725,9 +689,7 @@ class ProjectManager:
             is_symlink = target_path.is_symlink()
 
             # Set color: white for directories, light blue for symlinks
-            color = (
-                "#87ceeb" if is_symlink else "white"
-            )  # light blue for symlinks, white for directories
+            color = "#87ceeb" if is_symlink else "white"  # light blue for symlinks, white for directories
 
             # Set opacity: 1.0 if managed (exists in project list), 0.5 if not managed
             opacity = 1.0 if target in managed_repos else 0.5
@@ -788,9 +750,7 @@ class ProjectManager:
     def _build_project_repo_summary(repo: ProjectPath) -> List[str]:
         """Build metadata lines for configured project repositories."""
         summary_lines = ["Status: ✅ Managed"]
-        summary_lines.append(
-            f"Description: {repo.description or 'No description available'}"
-        )
+        summary_lines.append(f"Description: {repo.description or 'No description available'}")
         if repo.path:
             summary_lines.append(f"Path: {repo.path}")
         if repo.url:

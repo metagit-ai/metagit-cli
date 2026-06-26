@@ -33,7 +33,6 @@ import subprocess
 import sys
 from dataclasses import dataclass
 
-
 LEGACY_SEMVER_NO_V = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 
 
@@ -190,10 +189,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min-keep-version",
         default="0.8.0",
-        help=(
-            "Keep targeted semver tags >= this version when not using --delete-any-target "
-            "(default: 0.8.0)."
-        ),
+        help=("Keep targeted semver tags >= this version when not using --delete-any-target (default: 0.8.0)."),
     )
     parser.add_argument(
         "--no-safety-floor",

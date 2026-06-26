@@ -219,9 +219,7 @@ class UserPrompt:
                     field_data[field_name] = value
                 else:
                     # For optional fields, prompt directly with [Optional] indicator
-                    value = prompt_instance._prompt_for_optional_field(
-                        field_name, field_info
-                    )
+                    value = prompt_instance._prompt_for_optional_field(field_name, field_info)
                     if isinstance(value, Exception):
                         return value
                     # Only assign if a value was provided (not None)
@@ -233,27 +231,18 @@ class UserPrompt:
                 return model_class(**field_data)
             except ValidationError as e:
                 pk = _promptkit()
-                error_text = pk.FormattedText(
-                    [("class:error", f"\n❌ Validation error: {e}\n")]
-                )
+                error_text = pk.FormattedText([("class:error", f"\n❌ Validation error: {e}\n")])
                 _safe_print_formatted_text(error_text)
                 if _retry_count >= _MAX_VALIDATION_RETRIES:
-                    return ValueError(
-                        f"Validation failed after {_MAX_VALIDATION_RETRIES} attempts: {e}"
-                    )
-                failed_fields = {
-                    str(err["loc"][0]) for err in e.errors() if err.get("loc")
-                }
+                    return ValueError(f"Validation failed after {_MAX_VALIDATION_RETRIES} attempts: {e}")
+                failed_fields = {str(err["loc"][0]) for err in e.errors() if err.get("loc")}
                 corrected_data = dict(field_data)
                 for failed_field in failed_fields:
                     corrected_data.pop(failed_field, None)
                 for field_name, field_info in model_fields.items():
                     if field_name not in corrected_data:
                         continue
-                    if (
-                        corrected_data[field_name] is None
-                        and not field_info.is_required()
-                    ):
+                    if corrected_data[field_name] is None and not field_info.is_required():
                         corrected_data.pop(field_name, None)
                 return UserPrompt.prompt_for_model(
                     model_class,
@@ -265,9 +254,7 @@ class UserPrompt:
         except Exception as e:
             return e
 
-    def _prompt_for_field(
-        self, field_name: str, field_info: Any
-    ) -> Union[Any, Exception]:
+    def _prompt_for_field(self, field_name: str, field_info: Any) -> Union[Any, Exception]:
         """
         Prompt the user for a specific field value.
 
@@ -325,16 +312,10 @@ class UserPrompt:
             # Get user input with validation
             while True:
                 try:
-                    user_input = self.session.prompt(
-                        prompt_text, validator=validator
-                    ).strip()
+                    user_input = self.session.prompt(prompt_text, validator=validator).strip()
 
                     # Handle default value
-                    if (
-                        not user_input
-                        and default_value is not None
-                        and default_value != ...
-                    ):
+                    if not user_input and default_value is not None and default_value != ...:
                         return default_value
 
                     # Handle empty input for required fields
@@ -354,25 +335,19 @@ class UserPrompt:
                     converted_value = self._convert_input(user_input, field_type)
                     if isinstance(converted_value, Exception):
                         # This should be caught by the validator, but as a fallback
-                        error_text = pk.FormattedText(
-                            [("class:error", f"❌ {converted_value}\n")]
-                        )
+                        error_text = pk.FormattedText([("class:error", f"❌ {converted_value}\n")])
                         _safe_print_formatted_text(error_text)
                         continue
                     return converted_value
 
                 except pk.PTValidationError as e:
-                    error_text = pk.FormattedText(
-                        [("class:error", f"❌ {e.message}\n")]
-                    )
+                    error_text = pk.FormattedText([("class:error", f"❌ {e.message}\n")])
                     _safe_print_formatted_text(error_text)
                     continue
         except Exception as e:
             return e
 
-    def _prompt_for_optional_field(
-        self, field_name: str, field_info: Any
-    ) -> Union[Any, Exception]:
+    def _prompt_for_optional_field(self, field_name: str, field_info: Any) -> Union[Any, Exception]:
         """
         Prompt the user for an optional field value.
 
@@ -439,45 +414,33 @@ class UserPrompt:
             # Get user input with validation
             while True:
                 try:
-                    user_input = self.session.prompt(
-                        prompt_text, validator=validator
-                    ).strip()
+                    user_input = self.session.prompt(prompt_text, validator=validator).strip()
 
                     # Handle empty input for optional fields - return None
                     if not user_input:
                         return None
 
                     # Handle default value
-                    if (
-                        not user_input
-                        and default_value is not None
-                        and default_value != ...
-                    ):
+                    if not user_input and default_value is not None and default_value != ...:
                         return default_value
 
                     # Convert and return the input
                     converted_value = self._convert_input(user_input, field_type)
                     if isinstance(converted_value, Exception):
                         # This should be caught by the validator, but as a fallback
-                        error_text = pk.FormattedText(
-                            [("class:error", f"❌ {converted_value}\n")]
-                        )
+                        error_text = pk.FormattedText([("class:error", f"❌ {converted_value}\n")])
                         _safe_print_formatted_text(error_text)
                         continue
                     return converted_value
 
                 except pk.PTValidationError as e:
-                    error_text = pk.FormattedText(
-                        [("class:error", f"❌ {e.message}\n")]
-                    )
+                    error_text = pk.FormattedText([("class:error", f"❌ {e.message}\n")])
                     _safe_print_formatted_text(error_text)
                     continue
         except Exception as e:
             return e
 
-    def _create_field_validator(
-        self, field_type: Any, field_info: Any = None
-    ) -> Union[Any, Exception]:
+    def _create_field_validator(self, field_type: Any, field_info: Any = None) -> Union[Any, Exception]:
         """
         Create a validator for the given field type.
 
@@ -501,10 +464,7 @@ class UserPrompt:
 
                 # Method 1: Check if field_info.annotation is bool
                 if field_info and hasattr(field_info, "annotation"):
-                    if (
-                        hasattr(field_info.annotation, "__origin__")
-                        and field_info.annotation.__origin__ is Union
-                    ):
+                    if hasattr(field_info.annotation, "__origin__") and field_info.annotation.__origin__ is Union:
                         # Handle Optional[bool], which is Union[bool, None]
                         if bool in field_info.annotation.__args__:
                             is_bool_field = True
@@ -514,9 +474,7 @@ class UserPrompt:
                 if is_bool_field:
                     if text.strip().lower() in ["true", "false", "y", "n", "yes", "no"]:
                         return True
-                    raise pk.PTValidationError(
-                        message="Please enter 'true', 'false', 'y', or 'n'"
-                    )
+                    raise pk.PTValidationError(message="Please enter 'true', 'false', 'y', or 'n'")
 
                 # For other types, try to convert
                 try:
@@ -557,18 +515,12 @@ class UserPrompt:
                 list,
                 List,
             ):
-                item_type = (
-                    target_type.__args__[0] if target_type.__args__ else str
-                )  # Default to list of strings
+                item_type = target_type.__args__[0] if target_type.__args__ else str  # Default to list of strings
                 # Split by comma and strip whitespace
                 items = [item.strip() for item in user_input.split(",")]
                 # Convert each item to the target type
-                converted_list = [
-                    UserPrompt._convert_input(item, item_type) for item in items
-                ]
-                exception_items = [
-                    item for item in converted_list if isinstance(item, Exception)
-                ]
+                converted_list = [UserPrompt._convert_input(item, item_type) for item in items]
+                exception_items = [item for item in converted_list if isinstance(item, Exception)]
                 if exception_items:
                     return exception_items[0]
                 return converted_list
@@ -592,9 +544,7 @@ class UserPrompt:
             try:
                 return target_type(user_input)
             except (ValueError, TypeError) as exc:
-                raise ValueError(
-                    f"Cannot convert '{user_input}' to type {target_type.__name__}"
-                ) from exc
+                raise ValueError(f"Cannot convert '{user_input}' to type {target_type.__name__}") from exc
         except Exception as e:
             return e
 
@@ -657,9 +607,7 @@ class UserPrompt:
                     return True
                 if response in ["n", "no"]:
                     return False
-                error_text = pk.FormattedText(
-                    [("class:error", "❌ Please enter 'y' or 'n'.\n")]
-                )
+                error_text = pk.FormattedText([("class:error", "❌ Please enter 'y' or 'n'.\n")])
                 _safe_print_formatted_text(error_text)
         except Exception as e:
             return e
@@ -684,9 +632,7 @@ class UserPrompt:
             An instance of the specified Pydantic model
         """
         try:
-            return UserPrompt.prompt_for_model(
-                model_class, existing_data, title, fields_to_prompt
-            )
+            return UserPrompt.prompt_for_model(model_class, existing_data, title, fields_to_prompt)
         except Exception as e:
             return e
 

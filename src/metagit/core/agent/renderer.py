@@ -30,6 +30,7 @@ class AgentTemplateRenderer(InitTemplateRenderer):
         file_spec: InitTemplateFileSpec,
         context: dict[str, str],
     ) -> str:
+        _ = template_dir
         source = self._resolve_source(file_spec.template)
         if source is None or not source.is_file():
             raise FileNotFoundError(f"template file not found: {file_spec.template}")

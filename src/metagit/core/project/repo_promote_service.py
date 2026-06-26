@@ -98,19 +98,14 @@ class RepoPromoteService:
         if repo_is_protected(project, repo_entry) and not force:
             base.error = RepoPromoteError(
                 kind="protected",
-                message=(
-                    f"repo '{repo_name}' is protected (use force=True to promote)"
-                ),
+                message=(f"repo '{repo_name}' is protected (use force=True to promote)"),
             )
             return base
 
         if not repo_entry.path:
             base.error = RepoPromoteError(
                 kind="not_local_path",
-                message=(
-                    f"repo '{repo_name}' has no local path; "
-                    "promote applies only to path-based entries"
-                ),
+                message=(f"repo '{repo_name}' has no local path; promote applies only to path-based entries"),
             )
             return base
 
@@ -133,8 +128,7 @@ class RepoPromoteService:
             base.error = RepoPromoteError(
                 kind="no_url",
                 message=(
-                    "could not resolve a git remote URL; "
-                    "pass url= or ensure the source is a git repo with origin"
+                    "could not resolve a git remote URL; pass url= or ensure the source is a git repo with origin"
                 ),
             )
             return base
@@ -167,8 +161,7 @@ class RepoPromoteService:
             base.error = RepoPromoteError(
                 kind="duplicate_identity",
                 message=(
-                    f"url already registered as {locations}; "
-                    "remove the duplicate entry or enable workspace dedupe"
+                    f"url already registered as {locations}; remove the duplicate entry or enable workspace dedupe"
                 ),
             )
             return base

@@ -117,9 +117,7 @@ def open_editor(editor: str, path: str) -> Union[None, Exception]:
         return e
 
 
-def _flatten_dict_gen(
-    d: MutableMapping, parent_key: str, sep: str
-) -> Generator[Any, None, None]:
+def _flatten_dict_gen(d: MutableMapping, parent_key: str, sep: str) -> Generator[Any, None, None]:
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
         if isinstance(v, MutableMapping):
@@ -128,9 +126,7 @@ def _flatten_dict_gen(
             yield new_key, v
 
 
-def flatten_dict(
-    d: MutableMapping, parent_key: str = "", sep: str = "."
-) -> Union[Dict[Any, Any], Exception]:
+def flatten_dict(d: MutableMapping, parent_key: str = "", sep: str = ".") -> Union[Dict[Any, Any], Exception]:
     try:
         return dict(_flatten_dict_gen(d, parent_key, sep))
     except Exception as e:
@@ -165,9 +161,7 @@ def to_yaml(value: Any) -> Union[str, Any, Exception]:
         return e
 
 
-def pretty(
-    d: Dict[Any, Any], indent: int = 10, result: str = ""
-) -> Union[str, Exception]:
+def pretty(d: Dict[Any, Any], indent: int = 10, result: str = "") -> Union[str, Exception]:
     """Pretty up output in Jinja template"""
     try:
         for key, value in d.items():
@@ -334,9 +328,7 @@ def is_git_repository(path: Union[str, Path]) -> bool:
     return (path_obj / ".git").exists() and (path_obj / ".git").is_dir()
 
 
-def get_relative_path(
-    base_path: Union[str, Path], target_path: Union[str, Path]
-) -> str:
+def get_relative_path(base_path: Union[str, Path], target_path: Union[str, Path]) -> str:
     """Get the relative path from base_path to target_path."""
     base = Path(base_path).resolve()
     target = Path(target_path).resolve()

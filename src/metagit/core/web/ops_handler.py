@@ -27,16 +27,12 @@ from metagit.core.mcp.services.source_sync import run_mcp_source_sync
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
-from metagit.core.project.source_manifest_sync import SourceManifestSyncService
 from metagit.core.project.manager import project_manager_from_app
+from metagit.core.project.source_manifest_sync import SourceManifestSyncService
 from metagit.core.utils.common import open_editor
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.web.graph_service import WorkspaceGraphService
 from metagit.core.web.job_store import SyncJobStore
-from metagit.core.web.pipeline_status_service import (
-    PipelineQueryOptions,
-    PipelineStatusService,
-)
 from metagit.core.web.models import (
     ApprovalResolveRequest,
     ObjectiveEditRequest,
@@ -46,6 +42,10 @@ from metagit.core.web.models import (
     SessionBeginRequest,
     SourceSyncRequest,
     SyncJobRequest,
+)
+from metagit.core.web.pipeline_status_service import (
+    PipelineQueryOptions,
+    PipelineStatusService,
 )
 from metagit.core.workspace.root_resolver import (
     resolve_definition_root,
@@ -90,9 +90,7 @@ class OpsWebHandler:
         self._sync = WorkspaceSyncService()
         self._graph = WorkspaceGraphService()
         self._pipelines = PipelineStatusService()
-        self._logger = UnifiedLogger(
-            LoggerConfig(log_level="ERROR", minimal_console=True)
-        )
+        self._logger = UnifiedLogger(LoggerConfig(log_level="ERROR", minimal_console=True))
 
     def handle(
         self,
@@ -311,11 +309,7 @@ class OpsWebHandler:
         since = session_store.get_last_session_at()
         objectives = ObjectiveService(workspace_root=session_root).list().objectives
         active_objective_id = next(
-            (
-                objective.id
-                for objective in objectives
-                if objective.status == "in_progress"
-            ),
+            (objective.id for objective in objectives if objective.status == "in_progress"),
             None,
         )
         digest = SessionDigestService.build(
@@ -445,11 +439,7 @@ class OpsWebHandler:
             workspace_root=self._workspace_root,
             definition_root=definition_root,
         )
-        allowed_paths = {
-            str(Path(str(row.get("repo_path", ""))).resolve())
-            for row in rows
-            if row.get("repo_path")
-        }
+        allowed_paths = {str(Path(str(row.get("repo_path", ""))).resolve()) for row in rows if row.get("repo_path")}
         if resolved not in allowed_paths:
             respond(
                 403,
@@ -506,9 +496,7 @@ class OpsWebHandler:
         project_name = str(project_raw).strip() if project_raw else None
         if project_name == "":
             project_name = None
-        dedupe = (
-            app_config.workspace.dedupe if app_config.workspace is not None else None
-        )
+        dedupe = app_config.workspace.dedupe if app_config.workspace is not None else None
         result = self._health.check(
             config=config,
             workspace_root=self._workspace_root,
@@ -545,12 +533,8 @@ class OpsWebHandler:
             limit = max(1, min(int(raw_limit), 1000))
         except ValueError:
             limit = 200
-        include_unsynced = (params.get("include_unsynced") or ["true"])[
-            0
-        ].strip().lower() != "false"
-        repo_filters = tuple(
-            value.strip() for value in params.get("repo", []) if value.strip()
-        )
+        include_unsynced = (params.get("include_unsynced") or ["true"])[0].strip().lower() != "false"
+        repo_filters = tuple(value.strip() for value in params.get("repo", []) if value.strip())
 
         result = self._pipelines.pipeline_status(
             config=config,
@@ -573,12 +557,8 @@ class OpsWebHandler:
         if config is None:
             return
         params = parse_qs(query.lstrip("?"))
-        include_inferred = (
-            params.get("include_inferred", ["true"])[0].lower() != "false"
-        )
-        include_structure = (
-            params.get("include_structure", ["true"])[0].lower() != "false"
-        )
+        include_inferred = params.get("include_inferred", ["true"])[0].lower() != "false"
+        include_structure = params.get("include_structure", ["true"])[0].lower() != "false"
         view = self._graph.build_view(
             config,
             self._workspace_root,
@@ -623,9 +603,7 @@ class OpsWebHandler:
         if app_config is None:
             return
         include_hidden = bool(payload.get("include_hidden", False))
-        ignore_hidden = (
-            False if include_hidden else bool(app_config.workspace.ui_ignore_hidden)
-        )
+        ignore_hidden = False if include_hidden else bool(app_config.workspace.ui_ignore_hidden)
         try:
             project_manager = project_manager_from_app(
                 app_config,
@@ -651,10 +629,7 @@ class OpsWebHandler:
             200,
             {
                 "ok": True,
-                "candidates": [
-                    {"path": str(path.resolve()), "name": path.name}
-                    for path in candidates
-                ],
+                "candidates": [{"path": str(path.resolve()), "name": path.name} for path in candidates],
             },
         )
 
@@ -716,11 +691,7 @@ class OpsWebHandler:
         resolved_paths: list[Path] = []
         for item in raw_paths:
             candidate = Path(str(item)).expanduser()
-            resolved = (
-                candidate.resolve()
-                if candidate.is_absolute()
-                else (project_sync / candidate).resolve()
-            )
+            resolved = candidate.resolve() if candidate.is_absolute() else (project_sync / candidate).resolve()
             if project_sync != resolved and project_sync not in resolved.parents:
                 respond(
                     400,
@@ -924,11 +895,7 @@ class OpsWebHandler:
                 requested_by="web",
             )
             if not manifest_result.ok:
-                message = (
-                    manifest_result.errors[0].message
-                    if manifest_result.errors
-                    else "manifest source sync failed"
-                )
+                message = manifest_result.errors[0].message if manifest_result.errors else "manifest source sync failed"
                 self._job_store.fail(job_id, message)
                 self._job_store.append_event(
                     job_id,

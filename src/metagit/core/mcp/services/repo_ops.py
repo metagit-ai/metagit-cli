@@ -20,9 +20,7 @@ class RepoOperationsService:
             repo = Repo(repo_path)
             return {
                 "ok": True,
-                "branch": str(repo.active_branch.name)
-                if not repo.head.is_detached
-                else "DETACHED",
+                "branch": str(repo.active_branch.name) if not repo.head.is_detached else "DETACHED",
                 "dirty": repo.is_dirty(untracked_files=True),
             }
         except Exception as exc:

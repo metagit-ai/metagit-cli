@@ -52,9 +52,7 @@ def serve(
     appconfig_path = appconfig
     if appconfig_path is None:
         if ctx.obj is None:
-            raise click.ClickException(
-                "Missing app config; pass --appconfig or run via metagit CLI."
-            )
+            raise click.ClickException("Missing app config; pass --appconfig or run via metagit CLI.")
         appconfig_path = str(ctx.obj["config_path"])
     server = build_web_server(
         root=root_abs,

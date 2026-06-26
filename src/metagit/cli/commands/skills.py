@@ -115,9 +115,7 @@ def skills_install(
         disable_targets=list(disable_targets),
     )
     if not selected_targets:
-        logger.warning(
-            "No targets selected. Use --target to choose targets explicitly."
-        )
+        logger.warning("No targets selected. Use --target to choose targets explicitly.")
         return
     try:
         selected_skills = resolve_skill_names(list(skills) if skills else None)

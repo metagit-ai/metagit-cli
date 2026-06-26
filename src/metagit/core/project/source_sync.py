@@ -17,7 +17,6 @@ from metagit.core.project.source_enrichment import (
     topics_to_tags,
 )
 from metagit.core.project.source_filters import apply_source_filters
-from metagit.core.project.source_naming import resolve_manifest_names
 from metagit.core.project.source_models import (
     DiscoveredRepo,
     SourceProvider,
@@ -25,9 +24,10 @@ from metagit.core.project.source_models import (
     SourceSyncMode,
     SourceSyncPlan,
 )
+from metagit.core.project.source_naming import resolve_manifest_names
+from metagit.core.providers import ProviderRegistry
 from metagit.core.utils.common import normalize_git_url
 from metagit.core.utils.logging import UnifiedLogger
-from metagit.core.providers import ProviderRegistry
 from metagit.core.workspace.models import WorkspaceProject
 from metagit.core.workspace.protection import project_is_protected
 
@@ -56,9 +56,7 @@ class SourceSyncService:
             registry = ProviderRegistry()
             registry.configure_from_app_config(self._app_config)
             enriched = enrich_discovered_repos(spec, filtered, registry, self._logger)
-            self._logger.info(
-                f"Source discovery: raw={raw_count} filtered={len(enriched)}"
-            )
+            self._logger.info(f"Source discovery: raw={raw_count} filtered={len(enriched)}")
             return enriched
         except Exception as exc:
             return exc
@@ -75,19 +73,10 @@ class SourceSyncService:
             strategy=spec.name_strategy,
         )
         discovered_project_paths = [
-            self._to_project_path(
-                spec, repo, manifest_names.get(repo.clone_url, repo.name)
-            )
-            for repo in discovered
+            self._to_project_path(spec, repo, manifest_names.get(repo.clone_url, repo.name)) for repo in discovered
         ]
-        discovered_by_url = {
-            self._normalized_url(path.url): path
-            for path in discovered_project_paths
-            if path.url
-        }
-        existing_by_url = {
-            self._normalized_url(repo.url): repo for repo in project.repos if repo.url
-        }
+        discovered_by_url = {self._normalized_url(path.url): path for path in discovered_project_paths if path.url}
+        existing_by_url = {self._normalized_url(repo.url): repo for repo in project.repos if repo.url}
 
         plan = SourceSyncPlan(
             discovered_count=len(discovered),
@@ -130,9 +119,7 @@ class SourceSyncService:
 
         return plan
 
-    def apply_plan(
-        self, project: WorkspaceProject, plan: SourceSyncPlan, mode: SourceSyncMode
-    ) -> WorkspaceProject:
+    def apply_plan(self, project: WorkspaceProject, plan: SourceSyncPlan, mode: SourceSyncMode) -> WorkspaceProject:
         if mode == SourceSyncMode.DISCOVER:
             return project
 
@@ -158,11 +145,7 @@ class SourceSyncService:
                 remove_keys.add(self._normalized_url(candidate.url))
 
         if remove_keys:
-            repos = [
-                repo
-                for repo in repos
-                if not repo.url or self._normalized_url(repo.url) not in remove_keys
-            ]
+            repos = [repo for repo in repos if not repo.url or self._normalized_url(repo.url) not in remove_keys]
 
         return WorkspaceProject(
             name=project.name,
@@ -176,9 +159,7 @@ class SourceSyncService:
             repos=repos,
         )
 
-    def _discover_github(
-        self, spec: SourceSpec
-    ) -> Union[List[DiscoveredRepo], Exception]:
+    def _discover_github(self, spec: SourceSpec) -> Union[List[DiscoveredRepo], Exception]:
         provider_cfg = self._app_config.providers.github
         if not provider_cfg.enabled:
             return Exception("GitHub provider is disabled in app config")
@@ -228,9 +209,7 @@ class SourceSyncService:
             page += 1
         return discovered
 
-    def _discover_gitlab(
-        self, spec: SourceSpec
-    ) -> Union[List[DiscoveredRepo], Exception]:
+    def _discover_gitlab(self, spec: SourceSpec) -> Union[List[DiscoveredRepo], Exception]:
         provider_cfg = self._app_config.providers.gitlab
         if not provider_cfg.enabled:
             return Exception("GitLab provider is disabled in app config")
@@ -331,10 +310,7 @@ class SourceSyncService:
             return True
         if spec.refresh_metadata:
             return current.tags != incoming.tags
-        for key, value in incoming.tags.items():
-            if key not in current.tags:
-                return True
-        return False
+        return any(key not in current.tags for key, value in incoming.tags.items())
 
     def _merge_repo_update(
         self,

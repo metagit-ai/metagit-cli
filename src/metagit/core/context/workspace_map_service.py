@@ -69,10 +69,7 @@ class WorkspaceMapService:
                 name=proj["name"],
                 repo_count=proj["repo_count"],
                 description=proj.get("description"),
-                tags=[
-                    f"{key}={value}"
-                    for key, value in sorted((proj.get("tags") or {}).items())
-                ],
+                tags=[f"{key}={value}" for key, value in sorted((proj.get("tags") or {}).items())],
                 protected=bool(proj.get("protected")),
             )
             for proj in raw_projects

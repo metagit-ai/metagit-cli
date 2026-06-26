@@ -39,12 +39,8 @@ class WorkspaceIndexService:
                     repo_name=repo.name,
                 )
                 mount = Path(resolved_path)
-                exists = mount.is_dir() or (
-                    mount.is_symlink() and mount.resolve().is_dir()
-                )
-                is_git_repo = (
-                    bool(is_git_repository(resolved_path)) if exists else False
-                )
+                exists = mount.is_dir() or (mount.is_symlink() and mount.resolve().is_dir())
+                is_git_repo = bool(is_git_repository(resolved_path)) if exists else False
                 status = "synced" if exists and is_git_repo else "configured_missing"
                 project_tags = dict(project.tags)
                 repo_tags = dict(repo.tags)

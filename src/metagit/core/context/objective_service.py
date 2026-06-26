@@ -116,9 +116,7 @@ class ObjectiveService:
                 continue
             if key == "agent_notes" and isinstance(value, str):
                 merged["agent_notes"] = _append_agent_note(
-                    merged.get("agent_notes")
-                    if isinstance(merged.get("agent_notes"), str)
-                    else None,
+                    merged.get("agent_notes") if isinstance(merged.get("agent_notes"), str) else None,
                     value,
                 )
                 continue
@@ -203,7 +201,4 @@ class ObjectiveService:
     @staticmethod
     def _validate_objective_id(*, objective_id: str) -> None:
         if not _OBJECTIVE_ID_PATTERN.match(objective_id):
-            raise ValueError(
-                "objective id must match slug pattern "
-                "[alphanumeric, underscore, dot, hyphen]"
-            )
+            raise ValueError("objective id must match slug pattern [alphanumeric, underscore, dot, hyphen]")

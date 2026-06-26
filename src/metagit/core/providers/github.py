@@ -70,9 +70,7 @@ class GitHubProvider(GitProvider):
 
         return {}
 
-    def get_repository_metrics(
-        self, owner: str, repo: str
-    ) -> Union[Metrics, Exception]:
+    def get_repository_metrics(self, owner: str, repo: str) -> Union[Metrics, Exception]:
         """Get repository metrics from GitHub API."""
         try:
             if not self.api_token:
@@ -135,9 +133,7 @@ class GitHubProvider(GitProvider):
         except Exception as e:
             return Exception(f"Failed to get GitHub metrics: {e}")
 
-    def get_repository_metadata(
-        self, owner: str, repo: str
-    ) -> Union[Dict[str, Any], Exception]:
+    def get_repository_metadata(self, owner: str, repo: str) -> Union[Dict[str, Any], Exception]:
         """Get additional repository metadata from GitHub API."""
         try:
             if not self.api_token:
@@ -151,11 +147,7 @@ class GitHubProvider(GitProvider):
             # Get topics
             topics_url = f"{self.api_base}/repos/{owner}/{repo}/topics"
             topics_response = self.session.get(topics_url)
-            topics_data = (
-                topics_response.json()
-                if topics_response.status_code == 200
-                else {"names": []}
-            )
+            topics_data = topics_response.json() if topics_response.status_code == 200 else {"names": []}
 
             metadata = {
                 "name": repo_data.get("name"),
@@ -166,11 +158,7 @@ class GitHubProvider(GitProvider):
                 "updated_at": repo_data.get("updated_at"),
                 "pushed_at": repo_data.get("pushed_at"),
                 "default_branch": repo_data.get("default_branch"),
-                "license": (
-                    repo_data.get("license", {}).get("name")
-                    if repo_data.get("license")
-                    else None
-                ),
+                "license": (repo_data.get("license", {}).get("name") if repo_data.get("license") else None),
                 "archived": repo_data.get("archived", False),
                 "fork": repo_data.get("fork", False),
                 "private": repo_data.get("private", False),
@@ -188,9 +176,7 @@ class GitHubProvider(GitProvider):
         except Exception as e:
             return Exception(f"Failed to get GitHub metadata: {e}")
 
-    def _calculate_commit_frequency(
-        self, commits_data: List[Dict[str, Any]]
-    ) -> CommitFrequency:
+    def _calculate_commit_frequency(self, commits_data: List[Dict[str, Any]]) -> CommitFrequency:
         """Calculate commit frequency from recent commits."""
         if not commits_data or len(commits_data) < 2:
             return CommitFrequency.MONTHLY
