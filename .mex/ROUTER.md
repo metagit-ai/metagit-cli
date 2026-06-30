@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-06-26
+last_updated: 2026-06-30
 ---
 
 # Session Bootstrap
@@ -33,7 +33,7 @@ Then read this file fully before doing anything else in this session.
 - **`agent_mode`** / **`METAGIT_AGENT_MODE`**: disables interactive CLI (fuzzy finder, prompts, editor); `metagit appconfig show --format json` exposes full config including `workspace.dedupe` (default **disabled**).
 - **Workspace layout** (`WorkspaceLayoutService`): rename/move projects and repos (manifest + sync folders, dedupe-aware, session migration); CLI, MCP, HTTP v2 — see `docs/reference/workspace-layout-api.md`.
 - `.metagit.yml` manager/model pipeline for load/create/save/validate operations.
-- MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply, **context packs** `metagit_context_pack` / `metagit_repo_card`), resources for health/context, protocol-framed stdio loop, and runtime tests.
+- MCP runtime with state-aware gating, tool/resource handlers (search, **semantic search**, sync, cross-project dependencies, project context, snapshots, health check with branch-age staleness, file discover, template apply, **context packs** `metagit_context_pack` / `metagit_repo_card`), **layered MCP resources** (Phases 1–4: catalog, map, session/digest, objectives/approvals/handoffs/events, prompts capability, dispatch `mcp_resources` — `docs/reference/mcp-layered-resources-spec.md`), protocol-framed stdio loop, and runtime tests.
 - Workspace index/search/upstream hint services, `ManagedRepoSearchService` for managed-only repo matching, local read-only HTTP routes under `metagit.core.api` (**`GET /v2/workspace/grep`** + **`GET /v2/workspace/grep/info`** via `GrepApiHandler`), **`metagit workspace grep`** CLI group (search + `info`), MCP **`metagit_workspace_search`** / **`metagit_workspace_grep_info`**, bundled **`metagit-workspace-grep`** skill, and guarded repo inspect/sync flows.
 - Skill scaffold + local wrapper scripts in `skills/*/scripts` for token-efficient agent workflows, including `metagit-projects` for OpenClaw/Hermes workspace project lifecycle (check-before-create, register in `.metagit.yml`).
 - `docs/skills.md` documents global install, `metagit skills install`, and bundled skill overview.

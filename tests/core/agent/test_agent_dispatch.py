@@ -54,6 +54,8 @@ def test_dispatch_plan_repo_implementer_handoff(tmp_path: Path) -> None:
     assert plan.template_id == "repo-implementer"
     assert plan.install.needed is True
     assert plan.handoff.prompt_kind == "subagent-handoff"
+    assert plan.handoff.mcp_resources
+    assert "metagit://repo/my-api/backend/card" in plan.handoff.mcp_resources
     assert "subagent-handoff" in plan.handoff.prompt
     assert "--project my-api" in plan.handoff.context_pack
     assert "--repo backend" in plan.handoff.context_pack
@@ -134,6 +136,8 @@ def test_mcp_agent_dispatch_plan(tmp_path: Path) -> None:
     payload = json.loads(response["result"]["content"][0]["text"])
     assert payload["template_id"] == "repo-implementer"
     assert payload["handoff"]["prompt_kind"] == "subagent-handoff"
+    assert payload["handoff"]["mcp_resources"]
+    assert payload["handoff"]["mcp_resources"][0] == "metagit://catalog"
 
 
 def test_mcp_agent_catalog_lists_templates(tmp_path: Path) -> None:

@@ -6,51 +6,64 @@ Resource publishing for Metagit MCP runtime.
 from typing import Any, Optional
 
 from metagit.core.config.models import MetagitConfig
+from metagit.core.mcp.models import WorkspaceStatus
+from metagit.core.mcp.resource_service import ResourceContext, ResourceService, resource_json_text
 from metagit.core.mcp.services.ops_log import OperationsLogService
-from metagit.core.mcp.services.session_store import SessionStore
 
 
 class ResourcePublisher:
     """Serve MCP resources for workspace config and status views."""
 
     def __init__(self, ops_log: OperationsLogService) -> None:
-        self._ops_log = ops_log
+        self._service = ResourceService(ops_log=ops_log)
+
+    @property
+    def service(self) -> ResourceService:
+        """Underlying layered resource service."""
+        return self._service
 
     def get_resource(
         self,
         uri: str,
+        *,
+        status: WorkspaceStatus,
         config: MetagitConfig | None = None,
-        repos_status: list[dict[str, Any]] | None = None,
+        config_path: str = "",
         workspace_root: Optional[str] = None,
+        session_root: Optional[str] = None,
+        definition_root: Optional[str] = None,
+        repos_status: list[dict[str, Any]] | None = None,
         health_payload: Optional[dict[str, Any]] = None,
+        workspace_dedupe: Any = None,
     ) -> dict[str, Any]:
-        """Return a resource payload for known URIs."""
-        if uri == "metagit://workspace/config":
-            return {
-                "uri": uri,
-                "data": config.model_dump(exclude_none=True) if config else {},
-            }
-        if uri == "metagit://workspace/repos/status":
-            return {"uri": uri, "data": repos_status or []}
-        if uri == "metagit://workspace/ops-log":
-            return {"uri": uri, "data": self._ops_log.list_entries()}
-        if uri == "metagit://workspace/health":
-            return {"uri": uri, "data": health_payload or {}}
-        if uri == "metagit://workspace/context":
-            if not workspace_root:
-                return {"uri": uri, "data": {"active_project": None}}
-            meta = SessionStore(workspace_root=workspace_root).get_workspace_meta()
-            session = (
-                SessionStore(workspace_root=workspace_root).get_project_session(project_name=meta.active_project)
-                if meta.active_project
-                else None
-            )
-            return {
-                "uri": uri,
-                "data": {
-                    "active_project": meta.active_project,
-                    "last_switch_at": meta.last_switch_at,
-                    "session": session.model_dump(mode="json") if session else None,
-                },
-            }
-        return {"uri": uri, "error": "Unknown resource URI"}
+        """Return a legacy resource payload dict for known URIs."""
+        resolved_workspace = workspace_root or status.root_path or ""
+        resolved_session = session_root or status.root_path or resolved_workspace
+        resolved_definition = definition_root or status.root_path or resolved_workspace
+        context = ResourceContext(
+            status=status,
+            config=config,
+            config_path=config_path or (f"{status.root_path}/.metagit.yml" if status.root_path else ""),
+            workspace_root=resolved_workspace,
+            session_root=resolved_session,
+            definition_root=resolved_definition,
+            repos_status=repos_status or [],
+            health_payload=health_payload,
+            workspace_dedupe=workspace_dedupe,
+        )
+        result = self._service.read(uri, context)
+        if result.error:
+            return {"uri": uri, "error": result.error}
+        if result.mime_type == "text/plain":
+            return {"uri": uri, "mime_type": result.mime_type, "text": result.text or ""}
+        return {"uri": uri, "data": result.data}
+
+    def read_resource(
+        self,
+        uri: str,
+        *,
+        context: ResourceContext,
+    ) -> tuple[str, str]:
+        """Return MCP mime type and serialized text for ``resources/read``."""
+        result = self._service.read(uri, context)
+        return result.mime_type, resource_json_text(result)

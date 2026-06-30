@@ -20,6 +20,7 @@ from metagit.core.agent.paths import (
 )
 from metagit.core.agent.registry import AgentTemplateRegistry
 from metagit.core.config.models import MetagitConfig
+from metagit.core.mcp.resource_catalog import recommended_mcp_resources
 from metagit.core.workspace.agent_instructions import AgentInstructionsResolver
 from metagit.core.workspace.models import WorkspaceProject
 
@@ -274,6 +275,12 @@ class AgentDispatchService:
             prompt_kind=prompt_kind,
             prompt_scope=prompt_scope,
             effective_instructions=effective,
+            mcp_resources=recommended_mcp_resources(
+                project=project,
+                repo=repo,
+                prompt_kind=prompt_kind,
+                prompt_scope=prompt_scope,
+            ),
         )
 
     def _context_pack_command(

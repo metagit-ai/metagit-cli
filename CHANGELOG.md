@@ -9,7 +9,7 @@
 
 
 ### Added
-- `metagit project select --repo <name>` (and `project repo select`, `workspace select`): skip the picker TUI and open the named repository in the configured editor
+- **MCP layered resources (Phases 1–4):** token-efficient `resources/read` ladder (`metagit://catalog`, map, session/digest, objectives, approvals/pending, handoffs/open, events/recent, layered prompts, project/repo drill-down); MCP `prompts/list` + `prompts/get`; `handoff.mcp_resources` on dispatch plans; spec at `docs/reference/mcp-layered-resources-spec.md`; skill `metagit-mcp-resources`
 - `metagit tui`: Textual hub to browse common CLI workflows, run commands, and configure `metagit.config.yaml` via an interactive wizard (`--wizard` opens the wizard directly)
 
 ### Fixed

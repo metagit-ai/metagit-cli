@@ -24,7 +24,8 @@ This page contains the auto-generated documentation for the `metagit` command-li
 - **`metagit_workspace_semantic_search`** runs `npx gitnexus query -r <registry>` per selected repo (`query` required; optional `repos`, `task_context`, `goal`, `limit_per_repo`, `timeout_seconds`) for GitNexus-ranked processes.
 - **`metagit_workspace_discover`** lists files by `intent` or `pattern` with optional `categorize` grouping (requires `intent` or `pattern`).
 - **`metagit_project_template_apply`** previews or applies bundled templates from `src/metagit/data/templates/` (`dry_run` default; `confirm_apply` required for writes).
-- **Resources (active gate):** `metagit://workspace/health`, `metagit://workspace/context` (active project session from `.metagit/sessions/`).
+- **Resources:** Start with `metagit://catalog`. Phase 1–4 URIs include `gate/status`, `workspace/map`, `session/meta`, `session/digest`, `objectives`, `approvals/pending`, `handoffs/open`, `events/recent`, `prompt/catalog`, dynamic `prompt/{scope}/{kind}`, `project/{project}/summary`, `repo/{project}/{repo}/card`, `workspace/config` (summary default), `workspace/repos/status?summary=1`, `workspace/health`, `workspace/context` (alias). Spec: [mcp-layered-resources-spec.md](reference/mcp-layered-resources-spec.md). Skill: `metagit-mcp-resources`.
+- **Prompts capability:** `prompts/list` and `prompts/get` (names like `workspace/session-start`) mirror prompt resources.
 - **Project context (active gate):**
   - `metagit_project_context_switch` — set active workspace project; return repo branch/dirty summary, safe env exports (`METAGIT_*`), and restored session fields from `.metagit/sessions/<project>.json`.
   - `metagit_session_update` — persist `agent_notes`, `recent_repos`, and non-secret `env_overrides` before switching away.

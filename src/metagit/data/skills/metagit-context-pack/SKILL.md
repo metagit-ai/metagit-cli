@@ -154,7 +154,7 @@ PROMPT_TEXT="$(metagit prompt workspace -k session-start --text-only -c .metagit
 | Hermes system / bootstrap template | Include `session-start` prompt text; store or summarize pack JSON |
 | Pre-turn shell hook | Run commands above; append stdout to conversation context or state file |
 | Subagent task prompt | Pass tier-1 JSON for target `--project`/`--repo` plus `subagent-handoff` prompt |
-| MCP-connected Hermes | Prefer `metagit_context_pack` (tier 2) then `metagit://workspace/*` resources |
+| MCP-connected Hermes | Prefer MCP resources (`metagit://catalog` → map → prompts) or `metagit_context_pack` tier 2 once per session; see **`metagit-mcp-resources`** |
 
 **Token-tight bootstrap:**
 
@@ -210,7 +210,19 @@ metagit config validate -c .metagit.yml
 | `context objective list/set` | `metagit_objective_list` / `metagit_objective_upsert` |
 | `context approval request/list/approve/deny` | `metagit_approval_request` / `metagit_approval_list` / `metagit_approval_resolve` |
 
-Use CLI when operating shell-only (`METAGIT_AGENT_MODE=true`); use MCP when the IDE host exposes metagit tools.
+Use CLI when operating shell-only (`METAGIT_AGENT_MODE=true`); use MCP resources/tools when the IDE host exposes metagit (see **`metagit-mcp-resources`** for the read ladder).
+
+## MCP resource ladder (read-only)
+
+| Step | URI |
+|------|-----|
+| 1 | `metagit://catalog` |
+| 2 | `metagit://workspace/map` |
+| 3 | `metagit://prompt/workspace/session-start?instructions=0` |
+| 4 | `metagit://session/meta` |
+| Scoped | `metagit://project/{P}/summary`, `metagit://repo/{P}/{R}/card` |
+
+Use tool `metagit_session_begin` once when a full bootstrap envelope must update the session boundary.
 
 ## Output contract
 

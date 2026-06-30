@@ -279,6 +279,7 @@ class AgentDispatchHandoff(BaseModel):
     prompt_kind: str
     prompt_scope: Literal["workspace", "project", "repo"]
     effective_instructions: str = ""
+    mcp_resources: list[str] = Field(default_factory=list)
 
 
 class AgentDispatchPlan(BaseModel):

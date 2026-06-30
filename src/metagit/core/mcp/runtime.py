@@ -26,6 +26,9 @@ from metagit.core.context.session_digest_service import SessionDigestService
 from metagit.core.gitnexus.group_sync import GitNexusGroupSyncService
 from metagit.core.mcp.gate import WorkspaceGate
 from metagit.core.mcp.models import McpActivationState, WorkspaceStatus
+from metagit.core.mcp.prompt_mcp import get_mcp_prompt, list_mcp_prompts
+from metagit.core.mcp.resource_catalog import list_static_descriptors
+from metagit.core.mcp.resource_service import ResourceContext
 from metagit.core.mcp.resources import ResourcePublisher
 from metagit.core.mcp.root_resolver import WorkspaceRootResolver
 from metagit.core.mcp.services.bootstrap_sampling import BootstrapSamplingService
@@ -789,6 +792,10 @@ class MetagitMcpRuntime:
                 result = self._handle_resources_list()
             elif method == "resources/read":
                 result = self._handle_resources_read(params=params)
+            elif method == "prompts/list":
+                result = self._handle_prompts_list()
+            elif method == "prompts/get":
+                result = self._handle_prompts_get(params=params)
             elif method == "ping":
                 result = {}
             else:
@@ -828,9 +835,39 @@ class MetagitMcpRuntime:
             "serverInfo": {"name": "metagit-mcp", "version": "0.1.0"},
             "capabilities": {
                 "tools": {"listChanged": False},
-                "resources": {"listChanged": False},
+                "resources": {"subscribe": False, "listChanged": True},
+                "prompts": {"listChanged": False},
             },
         }
+
+    def _handle_prompts_list(self) -> dict[str, Any]:
+        status, _ = self._resolve_status_and_config()
+        active = status.state == McpActivationState.ACTIVE
+        return list_mcp_prompts(active=active)
+
+    def _handle_prompts_get(self, params: dict[str, Any]) -> dict[str, Any]:
+        name = params.get("name")
+        if not name or not isinstance(name, str):
+            raise ValueError("name is required")
+        status, config = self._resolve_status_and_config()
+        if status.state != McpActivationState.ACTIVE or config is None or not status.root_path:
+            raise ValueError("prompts/get requires an active workspace gate")
+        context = self._build_resource_context(
+            status=status,
+            config=config,
+            repos=[],
+            health_payload=None,
+        )
+        arguments = params.get("arguments")
+        args = arguments if isinstance(arguments, dict) else {}
+        return get_mcp_prompt(
+            config=config,
+            name=name,
+            arguments=args,
+            config_path=context.config_path,
+            workspace_root=context.workspace_root,
+            workspace_dedupe=context.workspace_dedupe,
+        )
 
     def _handle_tools_list(self) -> dict[str, Any]:
         status, _ = self._resolve_status_and_config()
@@ -867,30 +904,44 @@ class MetagitMcpRuntime:
 
     def _handle_resources_list(self) -> dict[str, Any]:
         status, _ = self._resolve_status_and_config()
-        resources = []
-        if status.state == McpActivationState.ACTIVE:
-            resources.extend(
-                [
-                    {
-                        "uri": "metagit://workspace/config",
-                        "name": "Workspace Config",
-                    },
-                    {
-                        "uri": "metagit://workspace/repos/status",
-                        "name": "Workspace Repos Status",
-                    },
-                    {
-                        "uri": "metagit://workspace/health",
-                        "name": "Workspace Health",
-                    },
-                    {
-                        "uri": "metagit://workspace/context",
-                        "name": "Workspace Context",
-                    },
-                ]
-            )
-        resources.append({"uri": "metagit://workspace/ops-log", "name": "Operations Log"})
+        resources = [
+            {
+                "uri": item.uri,
+                "name": item.name,
+                "description": item.description,
+                "mimeType": item.mime_type,
+            }
+            for item in list_static_descriptors(gate_state=status.state)
+        ]
         return {"resources": resources}
+
+    def _build_resource_context(
+        self,
+        status: WorkspaceStatus,
+        config: Any,
+        repos: list[dict[str, Any]],
+        health_payload: dict[str, Any] | None,
+    ) -> ResourceContext:
+        definition_root = status.root_path or ""
+        config_path = str(Path(definition_root) / ".metagit.yml") if definition_root else ""
+        app_config = AppConfig.load()
+        sync_root = (
+            resolve_sync_root(definition_root, app_config.workspace.path)
+            if definition_root and not isinstance(app_config, Exception)
+            else definition_root
+        )
+        workspace_dedupe = None if isinstance(app_config, Exception) else app_config.workspace.dedupe
+        return ResourceContext(
+            status=status,
+            config=config,
+            config_path=config_path,
+            workspace_root=sync_root or definition_root,
+            session_root=definition_root,
+            definition_root=definition_root,
+            repos_status=repos,
+            health_payload=health_payload,
+            workspace_dedupe=workspace_dedupe,
+        )
 
     def _handle_resources_read(self, params: dict[str, Any]) -> dict[str, Any]:
         uri = params.get("uri")
@@ -899,24 +950,26 @@ class MetagitMcpRuntime:
         status, config = self._resolve_status_and_config()
         repos = self._build_repo_index(status=status, config=config)
         health_payload = None
-        if uri == "metagit://workspace/health" and config and status.root_path:
-            health_payload = self._workspace_health.check(
-                config=config,
-                workspace_root=status.root_path,
-            ).model_dump(mode="json")
-        payload = self._resources.get_resource(
-            uri=uri,
+        if config and status.root_path:
+            parsed = str(uri)
+            if parsed.startswith("metagit://workspace/health"):
+                health_payload = self._workspace_health.check(
+                    config=config,
+                    workspace_root=status.root_path,
+                ).model_dump(mode="json")
+        context = self._build_resource_context(
+            status=status,
             config=config,
-            repos_status=repos,
-            workspace_root=status.root_path,
+            repos=repos,
             health_payload=health_payload,
         )
+        mime_type, text = self._resources.read_resource(uri=str(uri), context=context)
         return {
             "contents": [
                 {
                     "uri": uri,
-                    "mimeType": "application/json",
-                    "text": json.dumps(payload),
+                    "mimeType": mime_type,
+                    "text": text,
                 }
             ]
         }
