@@ -54,6 +54,19 @@ export default function TerrainDetailPanel({ node, onClose }: TerrainDetailPanel
           </div>
         ) : null}
         <div>
+          <dt>Tile state</dt>
+          <dd>{node.visual.state_label}</dd>
+        </div>
+        <div>
+          <dt>Local pressure</dt>
+          <dd>
+            {node.visual.local_pressure} (unpushed + uncommitted)
+            {node.visual.elevation !== 0
+              ? ` · elevation ${node.visual.elevation.toFixed(2)}`
+              : ' · flat'}
+          </dd>
+        </div>
+        <div>
           <dt>Default branch</dt>
           <dd>{node.git.default_branch ?? '—'}</dd>
         </div>

@@ -411,12 +411,25 @@ export interface TerrainAgentState {
 export interface TerrainVisualState {
   elevation: number
   sync_color:
+    | 'synced_main'
+    | 'main_local_work'
+    | 'behind_remote'
+    | 'behind_heavy'
+    | 'feature_branch'
+    | 'develop_branch'
+    | 'hotfix_branch'
+    | 'detached'
+    | 'other_branch'
+    | 'conflict'
+    | 'gray'
+    | 'unknown'
     | 'deep_red'
     | 'orange'
     | 'neutral_blue'
     | 'green'
     | 'bright_green'
-    | 'gray'
+  state_label: string
+  local_pressure: number
   surface_fracture: number
   fissure_glow: number
   crack_severity: number

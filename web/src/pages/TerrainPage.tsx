@@ -191,11 +191,11 @@ export default function TerrainPage() {
       </div>
 
       <footer className={styles.legend} aria-label="Terrain legend">
-        <span>Elevation: ahead ↑ · behind ↓</span>
-        <span>Colors: red behind · blue synced · green ahead</span>
-        <span>Layouts: hierarchy · grid · sphere wrap</span>
-        <span>Solid style: flat tiles, no shader animations</span>
-        <span>Beacons: CI status · Borders: branch kind</span>
+        <span>Flat green: synced on default branch, clean</span>
+        <span>Bulge up: unpushed commits + uncommitted files</span>
+        <span>Depressed: behind remote · colors: branch kind</span>
+        <span>Layouts: hierarchy · grid · sphere · solid/rich styles</span>
+        <span>Beacons: CI status</span>
       </footer>
     </div>
   )

@@ -26,16 +26,25 @@ from metagit.core.web.pipeline_status_service import (
 
 TILE_SPACING = 2.8
 PROJECT_SPACING = 24.0
-ELEVATION_SCALE = 0.18
+FLAT_ELEVATION = 0.0
+LOCAL_WORK_SCALE = 0.16
+BEHIND_SCALE = 0.14
 MAX_ELEVATION = 4.0
+MIN_ELEVATION = -3.0
 
 SyncColor = Literal[
-    "deep_red",
-    "orange",
-    "neutral_blue",
-    "green",
-    "bright_green",
+    "synced_main",
+    "main_local_work",
+    "behind_remote",
+    "behind_heavy",
+    "feature_branch",
+    "develop_branch",
+    "hotfix_branch",
+    "detached",
+    "other_branch",
+    "conflict",
     "gray",
+    "unknown",
 ]
 ActivityLevel = Literal["active", "recent", "inactive", "abandoned"]
 BranchKind = Literal["default", "feature", "develop", "hotfix", "detached", "other"]
@@ -114,6 +123,8 @@ class TerrainVisualState(BaseModel):
 
     elevation: float = 0.0
     sync_color: SyncColor = "gray"
+    state_label: str = "Unknown"
+    local_pressure: int = 0
     surface_fracture: float = Field(default=0.0, ge=0.0, le=1.0)
     fissure_glow: float = Field(default=0.0, ge=0.0, le=1.0)
     crack_severity: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -321,7 +332,7 @@ class RepositoryTerrainService:
         url_raw = row.get("url")
         url = str(url_raw) if isinstance(url_raw, str) else None
         local_status = str(row.get("status", "unknown"))
-        sync_color: SyncColor = "gray" if not exists else "neutral_blue"
+        sync_color: SyncColor = "unknown"
         if local_status == "configured_missing":
             sync_color = "gray"
 
@@ -343,7 +354,7 @@ class RepositoryTerrainService:
             pipeline=None,
             activity=TerrainActivity(),
             agent=TerrainAgentState(),
-            visual=TerrainVisualState(sync_color=sync_color),
+            visual=TerrainVisualState(sync_color=sync_color, state_label="Manifest entry"),
         )
 
     def _load_pipeline_map(
@@ -611,22 +622,87 @@ def _agent_state(repo_path: str) -> TerrainAgentState:
     )
 
 
-def _visual_state(git: TerrainGitState, activity: TerrainActivity) -> TerrainVisualState:
-    elevation = (git.ahead - git.behind) * ELEVATION_SCALE
-    elevation = max(-MAX_ELEVATION, min(MAX_ELEVATION, elevation))
+def _local_pressure(git: TerrainGitState) -> int:
+    """Unpushed commits plus uncommitted file changes."""
+    return git.ahead + git.uncommitted_count
 
-    if not git.branch and git.ahead == 0 and git.behind == 0:
-        sync_color: SyncColor = "gray"
-    elif git.behind > 5:
-        sync_color = "deep_red"
-    elif git.behind > 0:
-        sync_color = "orange"
-    elif git.ahead > 5:
-        sync_color = "bright_green"
-    elif git.ahead > 0:
-        sync_color = "green"
+
+def _is_synced_main(git: TerrainGitState) -> bool:
+    return (
+        git.branch_kind == "default"
+        and not git.dirty
+        and git.ahead == 0
+        and git.behind == 0
+        and not git.merge_conflicts
+        and not git.detached_head
+    )
+
+
+def _branch_sync_color(branch_kind: BranchKind) -> SyncColor:
+    mapping: dict[BranchKind, SyncColor] = {
+        "default": "main_local_work",
+        "feature": "feature_branch",
+        "develop": "develop_branch",
+        "hotfix": "hotfix_branch",
+        "detached": "detached",
+        "other": "other_branch",
+    }
+    return mapping.get(branch_kind, "other_branch")
+
+
+def _state_label(sync_color: SyncColor, git: TerrainGitState, pressure: int) -> str:
+    labels: dict[SyncColor, str] = {
+        "synced_main": "Synced on default branch",
+        "main_local_work": "Default branch with local or unpushed work",
+        "behind_remote": "Behind remote — pull to resync",
+        "behind_heavy": "Heavily behind remote",
+        "feature_branch": "Feature branch",
+        "develop_branch": "Develop branch",
+        "hotfix_branch": "Hotfix branch",
+        "detached": "Detached HEAD",
+        "other_branch": "Non-default branch",
+        "conflict": "Merge conflicts",
+        "gray": "Missing or unavailable",
+        "unknown": "Awaiting git enrichment",
+    }
+    base = labels.get(sync_color, "Repository state")
+    if pressure > 0 and sync_color not in {"conflict", "gray", "unknown"}:
+        return f"{base} · {pressure} local change unit(s)"
+    return base
+
+
+def _visual_state(git: TerrainGitState, activity: TerrainActivity) -> TerrainVisualState:
+    pressure = _local_pressure(git)
+    sync_color: SyncColor = "gray"
+    elevation = FLAT_ELEVATION
+
+    if git.merge_conflicts:
+        sync_color = "conflict"
+        elevation = min(pressure * LOCAL_WORK_SCALE + 0.45, MAX_ELEVATION)
+    elif _is_synced_main(git):
+        sync_color = "synced_main"
+        elevation = FLAT_ELEVATION
+    elif git.behind > 0 and pressure == 0 and git.branch_kind == "default":
+        sync_color = "behind_heavy" if git.behind > 5 else "behind_remote"
+        elevation = max(-git.behind * BEHIND_SCALE, MIN_ELEVATION)
+    elif git.branch_kind == "default":
+        sync_color = "main_local_work"
+        elevation = min(pressure * LOCAL_WORK_SCALE, MAX_ELEVATION)
+        if git.behind > 0:
+            elevation -= min(git.behind * BEHIND_SCALE * 0.45, MAX_ELEVATION * 0.5)
+            elevation = max(elevation, MIN_ELEVATION)
     else:
-        sync_color = "neutral_blue"
+        sync_color = _branch_sync_color(git.branch_kind)
+        elevation = min(pressure * LOCAL_WORK_SCALE, MAX_ELEVATION)
+        if git.behind > 0:
+            elevation -= min(git.behind * BEHIND_SCALE * 0.35, MAX_ELEVATION * 0.4)
+            elevation = max(elevation, MIN_ELEVATION)
+
+    if not git.branch and pressure == 0 and git.behind == 0 and not git.merge_conflicts:
+        sync_color = "gray"
+        elevation = FLAT_ELEVATION
+
+    elevation = max(MIN_ELEVATION, min(MAX_ELEVATION, elevation))
 
     fracture = min(1.0, git.modified_count * 0.12) if git.dirty else 0.0
     fissure = min(1.0, git.untracked_count * 0.15) if git.untracked_count else 0.0
@@ -634,15 +710,19 @@ def _visual_state(git: TerrainGitState, activity: TerrainActivity) -> TerrainVis
 
     darken = 0.0
     fade = 0.0
-    if activity.level == "inactive":
-        darken = 0.35
+    if sync_color in {"behind_remote", "behind_heavy"}:
+        darken = 0.2 if sync_color == "behind_remote" else 0.35
+    elif activity.level == "inactive":
+        darken = 0.25
     elif activity.level == "abandoned":
-        darken = 0.55
-        fade = 0.45
+        darken = 0.45
+        fade = 0.35
 
     return TerrainVisualState(
         elevation=elevation,
         sync_color=sync_color,
+        state_label=_state_label(sync_color, git, pressure),
+        local_pressure=pressure,
         surface_fracture=fracture,
         fissure_glow=fissure,
         crack_severity=crack,

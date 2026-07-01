@@ -29,13 +29,26 @@ export { DEFAULT_VIEW_OPTIONS, type TerrainViewOptions }
 type TerrainVisualPreferences = TerrainViewOptions['visual']
 
 const SYNC_COLORS: Record<string, THREE.Color> = {
+  synced_main: new THREE.Color(0x22c55e),
+  main_local_work: new THREE.Color(0x4ade80),
+  behind_remote: new THREE.Color(0xfb923c),
+  behind_heavy: new THREE.Color(0xef4444),
+  feature_branch: new THREE.Color(0x06b6d4),
+  develop_branch: new THREE.Color(0xa855f7),
+  hotfix_branch: new THREE.Color(0xf59e0b),
+  detached: new THREE.Color(0xe2e8f0),
+  other_branch: new THREE.Color(0x818cf8),
+  conflict: new THREE.Color(0xdc2626),
+  gray: new THREE.Color(0x64748b),
+  unknown: new THREE.Color(0x475569),
   deep_red: new THREE.Color(0xb91c1c),
   orange: new THREE.Color(0xea580c),
   neutral_blue: new THREE.Color(0x3b82f6),
   green: new THREE.Color(0x22c55e),
   bright_green: new THREE.Color(0x84cc16),
-  gray: new THREE.Color(0x64748b),
 }
+
+const FLAT_TILE_HEIGHT = 0.36
 
 const PIPELINE_COLORS: Record<string, THREE.Color> = {
   passed: new THREE.Color(0x22c55e),
@@ -88,13 +101,13 @@ function ownershipColor(owner: string | null | undefined): THREE.Color {
 function tileHeight(
   node: RepositoryTerrainNode,
   layers: TerrainLayerState,
-  visual: TerrainVisualPreferences,
+  _visual: TerrainVisualPreferences,
 ): number {
-  const base = visual.style === 'solid' ? 0.42 : 0.35
-  if (!layers.terrain || visual.style === 'solid') {
-    return base
+  if (!layers.terrain) {
+    return FLAT_TILE_HEIGHT
   }
-  return base + Math.max(0.15, node.visual.elevation + 0.35)
+  const elevation = node.visual.elevation ?? 0
+  return Math.max(0.18, FLAT_TILE_HEIGHT + elevation)
 }
 
 function tileColor(
@@ -682,7 +695,10 @@ export class RepositoryTerrainScene {
     const dummy = new THREE.Object3D()
     let changed = false
     this.nodes.forEach((node, index) => {
-      if (node.activity.pulse_intensity <= 0) {
+      if (node.visual.local_pressure <= 0 && node.visual.sync_color !== 'synced_main') {
+        return
+      }
+      if (node.visual.sync_color === 'synced_main') {
         return
       }
       const slot = this.layoutSlots[index]
@@ -690,7 +706,8 @@ export class RepositoryTerrainScene {
         return
       }
       const baseHeight = tileHeight(node, this.layers, this.viewOptions.visual)
-      const pulse = 1 + Math.sin(elapsed * 3 + index) * 0.04 * node.activity.pulse_intensity
+      const pulse =
+        1 + Math.sin(elapsed * 3 + index) * 0.03 * Math.min(node.visual.local_pressure, 6)
       const height = baseHeight * pulse
       placeTileOnSlot(dummy, slot, height, sphereLayout)
       this.objects?.tiles.setMatrixAt(index, dummy.matrix)

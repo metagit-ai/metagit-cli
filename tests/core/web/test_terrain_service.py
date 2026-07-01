@@ -42,7 +42,7 @@ def test_build_manifest_view_is_fast_skeleton(tmp_path: Path) -> None:
     assert len(view.projects) == 2
     assert view.projects[0].name == "alpha"
     node = view.nodes[0]
-    assert node.visual.sync_color in {"gray", "neutral_blue"}
+    assert node.visual.sync_color in {"gray", "unknown"}
     assert node.git.branch is None
     assert node.pipeline is None
 
@@ -175,20 +175,52 @@ def test_build_view_places_nodes_and_dependencies(tmp_path: Path) -> None:
     assert len(view.regions) >= 1
 
 
-def test_visual_state_elevation_from_ahead_behind() -> None:
+def test_visual_state_local_pressure_elevation() -> None:
     from metagit.core.web.terrain_service import (
         TerrainActivity,
         TerrainGitState,
         _visual_state,
     )
 
-    git = TerrainGitState(ahead=5, behind=0, branch="main", branch_kind="default")
-    visual = _visual_state(git, TerrainActivity(level="active", pulse_intensity=0.5))
-    assert visual.elevation > 0
-    assert visual.sync_color in {"green", "bright_green"}
+    synced = TerrainGitState(
+        branch="main",
+        branch_kind="default",
+        ahead=0,
+        behind=0,
+        dirty=False,
+    )
+    synced_visual = _visual_state(synced, TerrainActivity())
+    assert synced_visual.sync_color == "synced_main"
+    assert synced_visual.elevation == 0.0
+    assert synced_visual.local_pressure == 0
+
+    local_work = TerrainGitState(
+        branch="main",
+        branch_kind="default",
+        ahead=3,
+        behind=0,
+        dirty=True,
+        uncommitted_count=2,
+        modified_count=1,
+    )
+    local_visual = _visual_state(local_work, TerrainActivity())
+    assert local_visual.sync_color == "main_local_work"
+    assert local_visual.elevation > 0
+    assert local_visual.local_pressure == 5
+
+    feature = TerrainGitState(
+        branch="feature/auth",
+        branch_kind="feature",
+        ahead=2,
+        behind=0,
+        dirty=False,
+    )
+    feature_visual = _visual_state(feature, TerrainActivity())
+    assert feature_visual.sync_color == "feature_branch"
+    assert feature_visual.elevation > 0
 
     git_behind = TerrainGitState(ahead=0, behind=6, branch="main", branch_kind="default")
     visual_behind = _visual_state(git_behind, TerrainActivity(level="inactive"))
     assert visual_behind.elevation < 0
-    assert visual_behind.sync_color == "deep_red"
+    assert visual_behind.sync_color == "behind_heavy"
     assert visual_behind.darken_factor > 0

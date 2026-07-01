@@ -127,9 +127,11 @@ The Sessions tab shows a compact begin-session summary rather than the full raw 
 
 | Signal | Visualization |
 |--------|----------------|
-| Ahead/behind drift | Tile elevation + color (red behind, blue synced, green ahead) |
-| Branch kind | Tile border (feature, develop, hotfix, animated detached HEAD) |
-| Working tree | Surface darkening; dirty/untracked intensity in DTO `visual.*` |
+| Synced default branch (clean, no unpushed work) | **Flat green** tile at baseline height |
+| Local / unpushed work | **Bulges upward** proportional to unpushed commits + uncommitted files |
+| Behind remote (needs pull) | **Depressed** orange/red tile |
+| Non-default branch | **Branch color** (feature=cyan, develop=purple, hotfix=amber, etc.) |
+| Merge conflicts | Red tile with surface crack shaders |
 | CI/CD | Beacon above each tile (pass/fail/running/pending) |
 | Activity | Pulse on recently active repos; darkened/faded when inactive |
 | Dependencies | Toggleable arcs between consumer and dependency repos |

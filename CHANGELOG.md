@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- **Repository Terrain:** Three.js 3D operational map at `/terrain` — progressive load, per-project filter, layout modes (hierarchy, grid matrix, sphere wrap), solid/rich visual styles, repository tiles with drift/CI/dependency signals; `GET /v3/ops/terrain`
+- **Repository Terrain:** Three.js 3D operational map at `/terrain` — tiles encode git state (flat green synced main, bulge for local/unpushed work, depression when behind remote, branch colors); progressive load, per-project filter, layout modes, visual styles; `GET /v3/ops/terrain`
 
 ## [0.12.0] - 2026-07-01
 

@@ -46,6 +46,8 @@ function node(
     visual: {
       elevation: 0,
       sync_color: 'neutral_blue',
+      state_label: 'Test',
+      local_pressure: 0,
       surface_fracture: 0,
       fissure_glow: 0,
       crack_severity: 0,
