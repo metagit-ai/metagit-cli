@@ -82,11 +82,9 @@ def execute_repo_select(
         )
 
     if isinstance(selected_repo, Exception):
-        logger.error(f"Failed to select project repo: {selected_repo}")
-        ctx.abort()
+        raise click.ClickException(str(selected_repo))
     if selected_repo is None:
-        logger.info("No repo selected")
-        ctx.abort()
+        raise click.ClickException("No repo selected")
     logger.info(f"Selected repo: {selected_repo}")
     if agent_mode:
         return
