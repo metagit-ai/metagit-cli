@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import contextlib
-import fcntl
 import hashlib
 import json
 import os
@@ -20,6 +19,11 @@ from metagit.core.context.models import (
 from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.state.base import BackendBundle, StateToken
 from metagit.core.state.errors import StateConflictError
+
+try:
+    import fcntl
+except ImportError:
+    fcntl = None  # type: ignore[assignment,misc]  # Windows has no advisory file locks
 
 
 def _token_for_bytes(raw: bytes) -> StateToken:
