@@ -8,6 +8,18 @@ export default defineConfig({
   build: {
     outDir: '../src/metagit/data/web',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three')) {
+            return 'three-vendor'
+          }
+          if (id.includes('/components/terrain/terrainScene') || id.includes('/components/terrain/terrainTileMaterial')) {
+            return 'terrain-scene'
+          }
+        },
+      },
+    },
   },
   server: {
     proxy: {

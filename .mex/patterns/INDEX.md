@@ -32,6 +32,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [mcp-layered-resources.md](mcp-layered-resources.md) | Adding/extending MCP layered resources (catalog, map, prompts, scoped URIs) |
 | [mcp-project-context.md](mcp-project-context.md) | Project context switch, session store, or workspace snapshot MCP tools |
 | [metagit-web-api.md](metagit-web-api.md) | Adding or changing Pydantic models and routes for `metagit web serve` |
+| [repository-terrain-web.md](repository-terrain-web.md) | Repository Terrain 3D view, DTO layer, or `/v3/ops/terrain` |
 | [modality-parity.md](modality-parity.md) | Shipping a feature across CLI, MCP, and web — shared services + parity registry |
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |
 | [changelog-release.md](changelog-release.md) | Updating `CHANGELOG.md`, docs publishing, and semantic-release note promotion |
