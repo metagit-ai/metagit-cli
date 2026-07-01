@@ -209,10 +209,11 @@ class LocalFileBackend:
                 f"state conflict for {path.name}: expected token {expected!r}, found {current!r}",
             )
         serialized = json.dumps(payload, indent=2) + "\n"
-        path.write_text(serialized, encoding="utf-8")
+        raw = serialized.encode("utf-8")
+        path.write_bytes(raw)
         with contextlib.suppress(OSError):
             os.chmod(path, 0o600)
-        return _token_for_bytes(serialized.encode("utf-8"))
+        return _token_for_bytes(raw)
 
     @contextlib.contextmanager
     def _file_lock(self, path: Path):

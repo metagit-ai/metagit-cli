@@ -7,6 +7,7 @@
 
 ### Fixed
 - **Windows CI:** guard optional `fcntl` import in `LocalFileBackend` so state modules load on platforms without advisory file locks
+- **Windows state tokens:** write state JSON with `write_bytes` so CAS tokens match on-disk bytes (avoid CRLF translation from `write_text`)
 
 ## [0.11.0] - 2026-06-26
 
