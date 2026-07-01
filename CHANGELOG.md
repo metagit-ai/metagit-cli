@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixed
+- **Repository Terrain:** detail panel state labels include branch name for non-default git states
+
 ### Added
 - **Repository Terrain:** Three.js 3D operational map at `/terrain` — tiles encode git state (flat green synced main, bulge for local/unpushed work, depression when behind remote, branch colors); progressive load, per-project filter, layout modes, visual styles; `GET /v3/ops/terrain`
 

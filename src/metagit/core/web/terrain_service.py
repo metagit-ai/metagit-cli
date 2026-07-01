@@ -666,6 +666,8 @@ def _state_label(sync_color: SyncColor, git: TerrainGitState, pressure: int) -> 
         "unknown": "Awaiting git enrichment",
     }
     base = labels.get(sync_color, "Repository state")
+    if git.branch and sync_color not in {"synced_main", "gray", "unknown"}:
+        base = f"{base} · {git.branch}"
     if pressure > 0 and sync_color not in {"conflict", "gray", "unknown"}:
         return f"{base} · {pressure} local change unit(s)"
     return base
