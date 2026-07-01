@@ -59,6 +59,7 @@ from metagit.core.web.pipeline_status_service import (
     PipelineQueryOptions,
     PipelineStatusService,
 )
+from metagit.core.web.terrain_service import RepositoryTerrainService
 from metagit.core.workspace.root_resolver import (
     resolve_definition_root,
     resolve_session_root,
@@ -102,6 +103,7 @@ class OpsWebHandler:
         self._sync = WorkspaceSyncService()
         self._graph = WorkspaceGraphService()
         self._pipelines = PipelineStatusService()
+        self._terrain = RepositoryTerrainService()
         self._logger = UnifiedLogger(LoggerConfig(log_level="ERROR", minimal_console=True))
 
     def handle(
@@ -119,6 +121,10 @@ class OpsWebHandler:
 
         if method == "GET" and parsed_path == "/v3/ops/graph":
             self._get_graph(query, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/terrain":
+            self._get_terrain(query, respond)
             return True
 
         if method == "GET" and parsed_path == "/v3/ops/pipelines/providers":
@@ -775,6 +781,38 @@ class OpsWebHandler:
             self._workspace_root,
             include_inferred=include_inferred,
             include_structure=include_structure,
+        )
+        respond(200, view.model_dump(mode="json"))
+
+    def _get_terrain(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        app_config = self._load_appconfig(respond)
+        if app_config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        project = params.get("project", [None])[0]
+        project_filter = str(project).strip() if project else None
+        detail_raw = params.get("detail", ["enriched"])[0].strip().lower()
+        detail_level = "manifest" if detail_raw == "manifest" else "enriched"
+        include_pipelines = params.get("include_pipelines", ["false"])[0].lower() == "true"
+        include_inferred = params.get("include_inferred", ["true"])[0].lower() != "false"
+        limit_raw = params.get("limit", ["2000"])[0]
+        try:
+            limit = max(1, min(int(limit_raw), 5000))
+        except ValueError:
+            limit = 2000
+        view = self._terrain.build_view(
+            config=config,
+            app_config=app_config,
+            workspace_root=self._workspace_root,
+            definition_root=self._root,
+            project_filter=project_filter,
+            detail_level=detail_level,
+            include_pipelines=include_pipelines,
+            include_inferred_deps=include_inferred,
+            limit=limit,
         )
         respond(200, view.model_dump(mode="json"))
 

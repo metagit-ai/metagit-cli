@@ -41,6 +41,9 @@ export default function Layout() {
           <NavLink to="/workspace" className={navLinkClass}>
             Workspace
           </NavLink>
+          <NavLink to="/terrain" className={navLinkClass}>
+            Repository Terrain
+          </NavLink>
           <NavLink to="/agents" className={navLinkClass}>
             Agents
           </NavLink>

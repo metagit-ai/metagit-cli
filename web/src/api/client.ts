@@ -361,6 +361,158 @@ export function getWorkspaceGraph(options?: {
   return requestJson<WorkspaceGraphView>(path)
 }
 
+export interface TerrainCoordinates {
+  x: number
+  y: number
+  z?: number
+  region?: string | null
+}
+
+export interface TerrainGitState {
+  branch?: string | null
+  default_branch?: string | null
+  branch_kind: 'default' | 'feature' | 'develop' | 'hotfix' | 'detached' | 'other'
+  ahead: number
+  behind: number
+  dirty: boolean
+  uncommitted_count: number
+  untracked_count: number
+  modified_count: number
+  merge_conflicts: boolean
+  detached_head: boolean
+  head_commit_age_days?: number | null
+}
+
+export interface TerrainPipelineState {
+  status: PipelineStatus | string
+  provider?: string | null
+  workflow?: string | null
+  updated_at?: string | null
+  duration_sec?: number | null
+  web_url?: string | null
+  result?: string | null
+}
+
+export interface TerrainActivity {
+  commits_24h: number
+  commits_7d: number
+  commits_30d: number
+  level: 'active' | 'recent' | 'inactive' | 'abandoned'
+  pulse_intensity: number
+}
+
+export interface TerrainAgentState {
+  has_agents_md: boolean
+  has_llms_txt: boolean
+  has_agent_instructions: boolean
+  documentation_score: number
+}
+
+export interface TerrainVisualState {
+  elevation: number
+  sync_color:
+    | 'deep_red'
+    | 'orange'
+    | 'neutral_blue'
+    | 'green'
+    | 'bright_green'
+    | 'gray'
+  surface_fracture: number
+  fissure_glow: number
+  crack_severity: number
+  darken_factor: number
+  fade_factor: number
+}
+
+export interface RepositoryTerrainNode {
+  id: string
+  project_name: string
+  repo_name: string
+  label: string
+  repo_path: string
+  configured_path?: string | null
+  exists: boolean
+  is_git_repo: boolean
+  local_status: string
+  url?: string | null
+  tags: string[]
+  ownership?: string | null
+  coordinates: TerrainCoordinates
+  git: TerrainGitState
+  pipeline?: TerrainPipelineState | null
+  activity: TerrainActivity
+  agent: TerrainAgentState
+  visual: TerrainVisualState
+  dependencies_out: number
+  dependencies_in: number
+}
+
+export interface TerrainDependency {
+  id: string
+  from_id: string
+  to_id: string
+  type: string
+  label?: string | null
+  source: 'manual' | 'inferred' | 'structure'
+  health: 'healthy' | 'outdated' | 'broken'
+  consumer_count: number
+}
+
+export interface TerrainRegion {
+  id: string
+  label: string
+  project_name: string
+  min_x: number
+  max_x: number
+  min_y: number
+  max_y: number
+}
+
+export interface TerrainProjectOption {
+  name: string
+  repo_count: number
+}
+
+export interface RepositoryTerrainResponse {
+  ok: boolean
+  fetched_at: string
+  detail_level: 'manifest' | 'enriched'
+  project_filter?: string | null
+  node_count: number
+  projects: TerrainProjectOption[]
+  nodes: RepositoryTerrainNode[]
+  dependencies: TerrainDependency[]
+  regions: TerrainRegion[]
+}
+
+export function getRepositoryTerrain(options?: {
+  project?: string
+  detail?: 'manifest' | 'enriched'
+  includePipelines?: boolean
+  includeInferred?: boolean
+  limit?: number
+}): Promise<RepositoryTerrainResponse> {
+  const params = new URLSearchParams()
+  if (options?.project) {
+    params.set('project', options.project)
+  }
+  if (options?.detail) {
+    params.set('detail', options.detail)
+  }
+  if (options?.includePipelines === true) {
+    params.set('include_pipelines', 'true')
+  }
+  if (options?.includeInferred === false) {
+    params.set('include_inferred', 'false')
+  }
+  if (typeof options?.limit === 'number') {
+    params.set('limit', String(options.limit))
+  }
+  const query = params.toString()
+  const path = query ? `/v3/ops/terrain?${query}` : '/v3/ops/terrain'
+  return requestJson<RepositoryTerrainResponse>(path)
+}
+
 export function postHealth(
   body: Record<string, unknown> = {},
 ): Promise<WorkspaceHealthResult> {

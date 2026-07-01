@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Added
+- **Repository Terrain:** Three.js 3D operational map at `/terrain` — progressive load, per-project filter, layout modes (hierarchy, grid matrix, sphere wrap), solid/rich visual styles, repository tiles with drift/CI/dependency signals; `GET /v3/ops/terrain`
 
 ## [0.12.0] - 2026-07-01
 

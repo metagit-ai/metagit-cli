@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import ThemeProvider from './theme/ThemeProvider'
@@ -7,6 +8,8 @@ import MetagitConfigPage from './pages/MetagitConfigPage'
 import AgentsPage from './pages/AgentsPage'
 import WorkspacePage from './pages/WorkspacePage'
 import './App.css'
+
+const TerrainPage = lazy(() => import('./pages/TerrainPage'))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +29,11 @@ export default function App() {
             <Route element={<Layout />}>
               <Route index element={<Navigate to="/workspace" replace />} />
               <Route path="/workspace" element={<WorkspacePage />} />
+              <Route path="/terrain" element={
+                <Suspense fallback={<p style={{ padding: '1.5rem' }}>Loading Repository Terrain…</p>}>
+                  <TerrainPage />
+                </Suspense>
+              } />
               <Route path="/agents" element={<AgentsPage />} />
               <Route path="/config/metagit" element={<MetagitConfigPage />} />
               <Route path="/config/appconfig" element={<AppconfigPage />} />

@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.11",
+    "@types/three": "^0.185.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.1",
+    "three": "^0.185.1",
     "zustand": "^5.0.13"
   },
   "devDependencies": {

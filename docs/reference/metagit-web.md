@@ -121,6 +121,35 @@ Objectives and Sessions share a lightweight polling control bar:
 
 The Sessions tab shows a compact begin-session summary rather than the full raw `session/begin` payload. On success it refreshes both the current session digest and objectives view so the workflow context stays aligned.
 
+### Repository Terrain
+
+**Repository Terrain** (`/terrain`) is a Three.js operational map of managed repositories in the current umbrella workspace.
+
+| Signal | Visualization |
+|--------|----------------|
+| Ahead/behind drift | Tile elevation + color (red behind, blue synced, green ahead) |
+| Branch kind | Tile border (feature, develop, hotfix, animated detached HEAD) |
+| Working tree | Surface darkening; dirty/untracked intensity in DTO `visual.*` |
+| CI/CD | Beacon above each tile (pass/fail/running/pending) |
+| Activity | Pulse on recently active repos; darkened/faded when inactive |
+| Dependencies | Toggleable arcs between consumer and dependency repos |
+| Ownership | Optional heatmap layer from manifest tags (`owner`, `team`, …) |
+| Agent readiness | Holographic markers when `AGENTS.md` / docs score is high |
+
+Data loads from a single normalized API:
+
+```bash
+curl -sS 'http://127.0.0.1:8787/v3/ops/terrain?include_pipelines=true'
+```
+
+Query parameters: `project`, `detail` (`manifest` | `enriched`), `include_pipelines` (default false), `include_inferred` (default true), `limit` (max 5000).
+
+The SPA loads **`detail=manifest`** first (index rows + layout only, no git/CI I/O), renders tiles immediately, then fetches **`detail=enriched`** in the background and updates the scene when git/activity/dependency data arrives.
+
+Click a tile for the detail panel (path, branches, drift, CI, activity, dependencies). Layer toggles sit in the viewport overlay (top-left); **View** controls (bottom-left) switch layout (hierarchy, grid matrix with column sizes, sphere wrap) and visual style (rich vs solid flat colors, animations on/off). Orbit, pan, and zoom use standard Three.js controls.
+
+Backend assembly lives in `RepositoryTerrainService` (`src/metagit/core/web/terrain_service.py`); the SPA uses instanced meshes for tile/beacon rendering.
+
 ### Workspace Console
 
 The **Workspace Console** is **Workspace** in the chrome (`/workspace`): catalog-level context (projects/repos index, search/filter) plus the **workspace operations** side panel (health/prune/sync style actions routed through `/v3/ops`). This is meant for situational awareness and lightweight maintenance; destructive actions remain gated as in the CLI and API.
