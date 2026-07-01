@@ -91,6 +91,9 @@ def build_web_server(
         def do_DELETE(self) -> None:
             self._dispatch("DELETE")
 
+        def do_PUT(self) -> None:
+            self._dispatch("PUT")
+
         def _dispatch(self, method: str) -> None:
             parsed = urlparse(self.path)
             events_job_id = ops_handler.sync_events_job_id(method, parsed.path)
@@ -105,6 +108,7 @@ def build_web_server(
 
             length = int(self.headers.get("Content-Length", "0") or "0")
             body = self.rfile.read(length) if length > 0 else b""
+            request_headers = dict(self.headers.items())
 
             if agent_handler.handle(
                 method,
@@ -156,6 +160,7 @@ def build_web_server(
                     parsed.query,
                     body,
                     self._json,
+                    request_headers,
                 ):
                     return
                 if StaticWebHandler.is_api_path(parsed.path):
@@ -196,6 +201,7 @@ def build_web_server(
                 parsed.query,
                 body,
                 self._json,
+                request_headers,
             ):
                 return
             if StaticWebHandler.is_api_path(parsed.path):
@@ -209,11 +215,19 @@ def build_web_server(
                 {"error": {"kind": "not_found", "message": "Unknown endpoint"}},
             )
 
-        def _json(self, status: int, payload: dict[str, Any]) -> None:
+        def _json(
+            self,
+            status: int,
+            payload: dict[str, Any],
+            headers: dict[str, str] | None = None,
+        ) -> None:
             body = json.dumps(payload).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
+            if headers:
+                for key, value in headers.items():
+                    self.send_header(key, value)
             self.end_headers()
             self.wfile.write(body)
 

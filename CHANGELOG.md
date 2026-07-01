@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Added
+- **Remote state backend:** pluggable `core/state/` package with `LocalFileBackend` (file locking + SHA-256 CAS tokens) and opt-in `RemoteHttpBackend` (stdlib `urllib`, `If-Match`/`ETag`); `state` app-config block and `METAGIT_STATE_*` env vars; whole-document ops routes; MCP `gate/status` `state_backend` diagnostics; events via `resolve_backend()`; skill `metagit-sharing-state`; docs at `docs/reference/sharing-state.md`
 
 ## [0.11.0] - 2026-06-26
 

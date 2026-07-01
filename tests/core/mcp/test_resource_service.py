@@ -177,3 +177,26 @@ def test_read_session_digest_summary() -> None:
     )
     assert result.data["view"] == "summary"
     assert "first_session" in result.data
+
+
+def test_read_gate_status_includes_state_backend() -> None:
+    config = MetagitConfig(name="demo", kind="application", workspace={"projects": []})
+    service = ResourceService(ops_log=OperationsLogService())
+    result = service.read(
+        "metagit://gate/status",
+        _active_context(config, root="/tmp/ws"),
+    )
+    assert result.data["state_backend"]["backend"] == "local"
+
+
+def test_read_events_recent_uses_state_backend(tmp_path) -> None:
+    config = MetagitConfig(name="demo", kind="application", workspace={"projects": []})
+    root = str(tmp_path)
+    service = ResourceService(ops_log=OperationsLogService())
+    result = service.read(
+        "metagit://events/recent",
+        _active_context(config, root=root),
+    )
+    assert result.error is None
+    assert result.data["schema_version"] == "1.0"
+    assert isinstance(result.data["events"], list)

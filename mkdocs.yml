@@ -19,6 +19,7 @@ nav:
     - 'Hermes orchestrator workspace': 'hermes-orchestrator-workspace.md'
     - 'Configuration exemplar': 'reference/metagit-config.md'
     - 'Workspace layout API': 'reference/workspace-layout-api.md'
+    - 'Sharing state (multi-agent)': 'reference/sharing-state.md'
     - 'Metagit Web UI': 'reference/metagit-web.md'
     - 'Skills': 'skills.md'
 markdown_extensions:

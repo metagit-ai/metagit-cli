@@ -202,6 +202,43 @@
       "title": "Providers",
       "type": "object"
     },
+    "StateConfig": {
+      "additionalProperties": false,
+      "description": "Remote or local coordination-state backend settings.",
+      "properties": {
+        "backend": {
+          "default": "local",
+          "description": "State backend selector: local JSON files or remote HTTP ops API",
+          "enum": [
+            "local",
+            "http"
+          ],
+          "title": "Backend",
+          "type": "string"
+        },
+        "url": {
+          "default": "",
+          "description": "Base URL for remote state (ops server root, e.g. http://127.0.0.1:8787)",
+          "title": "Url",
+          "type": "string"
+        },
+        "token": {
+          "default": "",
+          "description": "Bearer token for remote state requests",
+          "title": "Token",
+          "type": "string"
+        },
+        "conflict_retries": {
+          "default": 1,
+          "description": "Optimistic concurrency retries for mutating services",
+          "minimum": 0,
+          "title": "Conflict Retries",
+          "type": "integer"
+        }
+      },
+      "title": "StateConfig",
+      "type": "object"
+    },
     "WorkspaceConfig": {
       "additionalProperties": false,
       "description": "Model for workspace configuration in AppConfig.",
@@ -483,6 +520,10 @@
         }
       },
       "description": "Git provider plugin configuration"
+    },
+    "state": {
+      "$ref": "#/$defs/StateConfig",
+      "description": "Workspace coordination state backend (objectives, handoffs, approvals)"
     }
   },
   "title": "AppConfig",

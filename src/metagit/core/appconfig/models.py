@@ -3,7 +3,7 @@
 import os
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -185,6 +185,30 @@ class Providers(BaseModel):
         extra = "forbid"
 
 
+class StateConfig(BaseModel):
+    """Remote or local coordination-state backend settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    backend: Literal["local", "http"] = Field(
+        default="local",
+        description="State backend selector: local JSON files or remote HTTP ops API",
+    )
+    url: str = Field(
+        default="",
+        description="Base URL for remote state (ops server root, e.g. http://127.0.0.1:8787)",
+    )
+    token: str = Field(
+        default="",
+        description="Bearer token for remote state requests",
+    )
+    conflict_retries: int = Field(
+        default=1,
+        ge=0,
+        description="Optimistic concurrency retries for mutating services",
+    )
+
+
 class AppConfig(BaseModel):
     """Application-level settings (not the Metagit package release version — use `metagit version`)."""
 
@@ -225,6 +249,10 @@ class AppConfig(BaseModel):
     workspace: WorkspaceConfig = Field(default=WorkspaceConfig(), description="The workspace configuration")
     profiles: List[Profile] = Field(default=[Profile()], description="The profiles available to this appconfig")
     providers: Providers = Field(default=Providers(), description="Git provider plugin configuration")
+    state: StateConfig = Field(
+        default_factory=StateConfig,
+        description="Workspace coordination state backend (objectives, handoffs, approvals)",
+    )
 
     @classmethod
     def load(cls, config_path: str = None) -> Union["AppConfig", Exception]:
@@ -299,6 +327,13 @@ class AppConfig(BaseModel):
             config.api_url = os.getenv("METAGIT_API_URL")
         if os.getenv("METAGIT_API_VERSION"):
             config.api_version = os.getenv("METAGIT_API_VERSION")
+
+        if os.getenv("METAGIT_STATE_URL"):
+            config.state.url = os.getenv("METAGIT_STATE_URL", "")
+        if os.getenv("METAGIT_STATE_BACKEND"):
+            config.state.backend = os.getenv("METAGIT_STATE_BACKEND", "local")  # type: ignore[assignment]
+        if os.getenv("METAGIT_STATE_TOKEN"):
+            config.state.token = os.getenv("METAGIT_STATE_TOKEN", "")
 
         # Workspace configuration
         if os.getenv("METAGIT_WORKSPACE_PATH"):

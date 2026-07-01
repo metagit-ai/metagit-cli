@@ -39,8 +39,10 @@ Other targets: `opencode`, `claude_code`, `cursor`, `github_copilot`, `windsurf`
 
 | Skill | Use when |
 |-------|----------|
-| `metagit-context-pack` | Session start; tiered packs (map, cards, digest), objectives, approvals, repomix profiles |
+| `metagit-context-pack` | Session start; tiered packs (map, cards, digest), objectives, approvals, handoffs, repomix profiles |
 | `metagit-mcp-resources` | MCP `resources/read` ladder: catalog, map, layered prompts, project/repo drill-down |
+| `metagit-sharing-state` | Multi-agent shared coordination state (`METAGIT_STATE_URL`, MCP host env) |
+| `metagit-sharing-state` | Multi-agent shared coordination state (`METAGIT_STATE_URL`, ops backend, MCP host env) |
 | `metagit-cli` | CLI-only agent workflows: all `metagit prompt` kinds, catalog, detect, sync, layout (no MCP/API) |
 | `metagit-workspace-grep` | On-disk content search across managed repos (CLI, MCP, HTTP); not manifest `metagit search` |
 | `metagit-agent-access` | On-demand: optimize any repo for minimal-token agent onboarding (`llms.txt`, hidden README comments, AGENTS.md) |

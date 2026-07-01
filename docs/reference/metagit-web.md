@@ -167,6 +167,29 @@ curl -sS -X POST http://127.0.0.1:8787/v3/ops/session/begin \
 
 Git sync jobs accept `refresh_sources: true` and `project_name` to mirror `metagit project sync --refresh-sources` before fetch/pull/clone.
 
+### Shared coordination state
+
+Objectives, handoffs, approvals, and the events feed can be served from a
+**single canonical host** so multiple agents and the web UI share one document
+set. Run `metagit web serve` on the coordinator; clients set `state.url` or
+`METAGIT_STATE_URL` (see [Sharing state across a team](sharing-state.md)).
+
+**Whole-document routes** (used by `RemoteHttpBackend` and automation):
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `GET` | `/v3/ops/objectives` | Returns `ETag` |
+| `PUT` | `/v3/ops/objectives` | Body `{"objectives":[…]}`; `If-Match` required |
+| `GET` | `/v3/ops/approvals?status=all` | Full queue + `ETag` |
+| `PUT` | `/v3/ops/approvals` | Body `{"requests":[…]}`; `If-Match` required |
+| `GET` | `/v3/ops/handoffs` | Returns `ETag` |
+| `PUT` | `/v3/ops/handoffs` | Body `{"handoffs":[…]}`; `If-Match` required |
+| `POST` | `/v3/ops/handoffs` | Append one handoff (no prior token) |
+| `GET` | `/v3/ops/events?since=` | Incremental `WorkspaceEventsResult` |
+
+Stale `If-Match` → **412**. Granular SPA routes (`POST`/`PATCH` objectives, approval
+resolve) remain unchanged.
+
 Use the **Repositories | Explorer | Search | Graph** toggle on the workspace toolbar:
 
 - **Repositories** — filterable table of projects and repos (synced / missing) with per-repo sync actions.

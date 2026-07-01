@@ -12,7 +12,6 @@ from typing import Any
 from metagit.core.appconfig.models import WorkspaceDedupeConfig
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_service import ApprovalService
-from metagit.core.context.event_service import WorkspaceEventService
 from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
@@ -37,6 +36,7 @@ from metagit.core.mcp.services.ops_log import OperationsLogService
 from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.prompt.models import PromptKind, PromptScope
 from metagit.core.prompt.service import PromptService, PromptServiceError
+from metagit.core.state.resolver import describe_state_backend, resolve_backend
 
 
 @dataclass(frozen=True)
@@ -80,14 +80,15 @@ class ResourceService:
             return self._json(uri, payload.model_dump(mode="json"))
 
         if parsed.host == "gate" and parsed.path.strip("/") == "status":
-            return self._json(
-                uri,
-                {
-                    "state": context.status.state.value,
-                    "root_path": context.status.root_path,
-                    "reason": context.status.reason,
-                },
-            )
+            session_root = context.session_root or context.status.root_path or ""
+            payload: dict[str, Any] = {
+                "state": context.status.state.value,
+                "root_path": context.status.root_path,
+                "reason": context.status.reason,
+            }
+            if session_root:
+                payload["state_backend"] = describe_state_backend(session_root)
+            return self._json(uri, payload)
 
         if parsed.host == "workspace" and parsed.path.strip("/") == "ops-log":
             limit = query_int(parsed.query.get("limit"))
@@ -355,7 +356,7 @@ class ResourceService:
         context: ResourceContext,
     ) -> ResourceReadResult:
         since = parsed.query.get("since")
-        result = WorkspaceEventService(workspace_root=context.session_root).list_events(since=since)
+        result = resolve_backend(context.session_root).events().list_events(since=since)
         return self._json(uri, result.model_dump(mode="json"))
 
     def _read_project_summary(

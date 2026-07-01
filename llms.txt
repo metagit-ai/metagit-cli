@@ -44,10 +44,11 @@ metagit prompt workspace --kind session-start --text-only
 
 ## Bundled skills (after install)
 
-`metagit-cli`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects` — see docs/skills.md.
+`metagit-cli`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects`, `metagit-sharing-state` (multi-agent remote state) — see docs/skills.md.
 
 ## Optional
 
 - Local web UI: `metagit web serve`
 - HTTP API: `metagit api serve`
+- **Shared coordination state** (multi-agent): [docs/reference/sharing-state.md](docs/reference/sharing-state.md) — `METAGIT_STATE_URL`, ops `PUT` routes, `ETag`/`If-Match`
 - Repomix profile: `metagit context repomix --profile bugfix-local --project P --repo R`

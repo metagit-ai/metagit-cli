@@ -90,6 +90,31 @@ Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_session_b
 
 Start MCP: `metagit mcp serve` (stdio). Install config: `metagit mcp install --scope user`.
 
+### Shared coordination state (multi-agent)
+
+Objectives, handoffs, approvals, and the events feed use the same backend as the CLI.
+When several agents must share one queue, configure the **MCP server process** (not
+just the IDE shell):
+
+```bash
+export METAGIT_STATE_URL=https://coordinator.example.com:8787
+export METAGIT_STATE_TOKEN='…'
+metagit mcp serve --root /path/to/manifest-root
+```
+
+Verify: `resources/read` → `metagit://gate/status` → `state_backend.backend` is `http`.
+
+| MCP tool | Purpose |
+|----------|---------|
+| `metagit_objective_list` / `metagit_objective_upsert` / `metagit_objective_edit` | Objectives |
+| `metagit_approval_request` / `metagit_approval_list` / `metagit_approval_resolve` | Approvals |
+| `metagit_handoff_list` / `metagit_handoff_create` / `metagit_handoff_claim` / `metagit_handoff_complete` | Handoffs |
+| `metagit_events` | Event poll (optional `since` ISO cursor) |
+
+Resources: `metagit://objectives`, `approvals/pending`, `handoffs/open`, `events/recent?since=`.
+
+Skill: **`metagit-sharing-state`**. Docs: [Sharing state across a team](reference/sharing-state.md).
+
 ## Workspace content grep (not manifest search)
 
 Search **on-disk files** in managed repos. Always excludes `node_modules`, `.venv`, and similar scaffold paths.
@@ -162,9 +187,29 @@ Catalog adds support **`--ensure`** (auto-enabled in agent mode): re-run succeed
 
 ## Human ↔ agent shared state
 
-- **Objectives** — `.metagit/sessions/objectives.json`; CLI `metagit context objective …`
+- **Objectives** — `.metagit/sessions/objectives.json` (local default); CLI `metagit context objective …`
 - **Approvals** — mutating ops queue; `metagit context approval …`
+- **Handoffs** — `.metagit/sessions/handoffs.json`; CLI `metagit context handoff …`
 - **Web UI** (local): `metagit web serve` → objectives/approvals at `/v3/ops/*`
+
+### Sharing state across machines (remote backend)
+
+When multiple agents or humans must see the **same** objectives, handoffs, and
+approvals, configure a shared ops server instead of per-machine JSON files:
+
+```bash
+export METAGIT_STATE_URL=https://coordinator.example.com:8787
+export METAGIT_STATE_TOKEN='…'
+# CLI / MCP commands unchanged — stores use RemoteHttpBackend automatically
+metagit context objective list --json
+```
+
+Run `metagit web serve` on the coordinator host; set the same `state.url` in app
+config on every client. Repo clones remain local; only coordination documents are
+centralized.
+
+See [Sharing state across a team](reference/sharing-state.md) for architecture
+diagram, HTTP contract (`ETag` / `If-Match`), and troubleshooting.
 
 ## What metagit is not
 

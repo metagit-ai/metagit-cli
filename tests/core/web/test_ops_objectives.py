@@ -48,7 +48,8 @@ def test_ops_objectives_get_post_patch(tmp_path: Path) -> None:
     )
     recorder: list[tuple[int, dict]] = []
 
-    def respond(code: int, body: dict) -> None:
+    def respond(code: int, body: dict, headers: dict | None = None) -> None:
+        _ = headers
         recorder.append((code, body))
 
     assert handler.handle("GET", "/v3/ops/objectives", "", b"", respond)
@@ -149,7 +150,8 @@ def test_ops_session_get_and_begin(tmp_path: Path) -> None:
     )
     recorder: list[tuple[int, dict]] = []
 
-    def respond(code: int, body: dict) -> None:
+    def respond(code: int, body: dict, headers: dict | None = None) -> None:
+        _ = headers
         recorder.append((code, body))
 
     assert handler.handle("GET", "/v3/ops/session", "", b"", respond)

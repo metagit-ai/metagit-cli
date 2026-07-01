@@ -16,7 +16,6 @@ from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.context_pack_service import ContextPackService
-from metagit.core.context.event_service import WorkspaceEventService
 from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.models import ApprovalStatus
 from metagit.core.context.objective_service import ObjectiveService
@@ -59,6 +58,7 @@ from metagit.core.mcp.tools.workspace_status import metagit_workspace_status
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
+from metagit.core.state.resolver import resolve_backend
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
@@ -1585,8 +1585,7 @@ class MetagitMcpRuntime:
                 )
             since_raw = arguments.get("since")
             since_opt = str(since_raw).strip() if isinstance(since_raw, str) and since_raw.strip() else None
-            svc = WorkspaceEventService(workspace_root=status.root_path)
-            return svc.list_events(since=since_opt).model_dump(mode="json")
+            return resolve_backend(status.root_path).events().list_events(since=since_opt).model_dump(mode="json")
 
         if name == "metagit_repo_card":
             if not config or not status.root_path:

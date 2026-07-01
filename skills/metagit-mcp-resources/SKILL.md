@@ -16,10 +16,11 @@ the full manifest or calling `metagit_context_pack` tier 2 repeatedly.
 ## Session start (MCP)
 
 1. `resources/read` → `metagit://catalog`
-2. `metagit://workspace/map`
-3. `metagit://prompt/workspace/session-start?instructions=0` **or** `prompts/get` name `workspace/session-start`
-4. `metagit://session/meta`
-5. **Once per session window:** tool `metagit_session_begin` when a full bootstrap envelope is required (mutates boundary)
+2. `metagit://gate/status` — confirm `state_backend.backend` (`local` vs `http`) when using shared coordination state
+3. `metagit://workspace/map`
+4. `metagit://prompt/workspace/session-start?instructions=0` **or** `prompts/get` name `workspace/session-start`
+5. `metagit://session/meta`
+6. **Once per session window:** tool `metagit_session_begin` when a full bootstrap envelope is required (mutates boundary)
 
 Idle return: `metagit://session/digest/summary` (read-only; does not bump boundary).
 
@@ -53,8 +54,13 @@ Idle return: `metagit://session/digest/summary` (read-only; does not bump bounda
 
 | Need | Resource | Tool |
 |------|----------|------|
+| Backend mode | `gate/status` (`state_backend`) | — |
 | Map | `workspace/map` | `metagit_context_pack` tier 0 |
 | Repo card | `repo/{p}/{r}/card` | `metagit_repo_card` |
+| Objectives | `objectives` | `metagit_objective_*` |
+| Approvals | `approvals/pending` | `metagit_approval_*` |
+| Handoffs | `handoffs/open` | `metagit_handoff_*` |
+| Events poll | `events/recent?since=` | `metagit_events` |
 | Digest (read-only) | `session/digest` | `metagit_session_digest` |
 | Full bootstrap + boundary | — | `metagit_session_begin` |
 | Search / sync / mutations | — | respective tools |
@@ -73,6 +79,7 @@ Full URI taxonomy: `docs/reference/mcp-layered-resources-spec.md`
 
 ## Related skills
 
+- `metagit-sharing-state` — `METAGIT_STATE_URL`, MCP host env, multi-agent setup
 - `metagit-context-pack` — CLI + tool tier workflow
 - `metagit-workspace-scope` — gate and boundaries
 - `metagit-control-center` — ongoing multi-repo coordination

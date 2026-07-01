@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-06-30
+last_updated: 2026-07-01
 ---
 
 # Session Bootstrap
@@ -63,7 +63,8 @@ Then read this file fully before doing anything else in this session.
 - **`metagit fmt` / `metagit format`:** schema-ordered, readable YAML for `.metagit.yml` and `metagit.config.yaml`; preserves comments, injects yaml-language-server schema directive, 2-space indent, **88-column string wrapping** (`yaml_display`, `yaml_roundtrip`). **Default formatting omits schema-default optional fields** (empty lists/dicts, false, etc.); use **`--include-defaults`** to retain them. Web Config Studio and `metagit config patch --save` default to **auto-format on save** (`auto_format` / `--no-format`).
 - **`metagit web serve` groundwork:** Pydantic request/response models for the local web UI API live in `src/metagit/core/web/models.py` (`ConfigTreeResponse`, sync job shapes, config patch types). Thread-safe in-memory sync job tracking + SSE event buffers live in `src/metagit/core/web/job_store.py` (`SyncJobStore`).
 - **`metagit web serve` config HTTP:** `build_web_server` in `src/metagit/core/web/server.py` exposes v3 config tree/patch/validate routes via `ConfigWebHandler` (`metagit` + `appconfig` targets, `SchemaTreeService` mutations). PATCH with `save=true` returns HTTP 422 and skips disk write when validation fails; masked sensitive tokens are preserved on noop set.
-- **`metagit web serve` ops HTTP:** `OpsWebHandler` (`src/metagit/core/web/ops_handler.py`) — POST health/prune/sync/**open**, GET `/v3/ops/objectives`, POST upsert objectives, PATCH status, GET `/v3/ops/approvals`, POST resolve approvals, GET sync job status, SSE sync events; wired in `build_web_server` with workspace root from appconfig.
+- **`metagit web serve` ops HTTP:** `OpsWebHandler` (`src/metagit/core/web/ops_handler.py`) — POST health/prune/sync/**open**, GET `/v3/ops/objectives`, POST upsert objectives, PATCH status, **PUT whole-document state routes** (`/v3/ops/objectives|approvals|handoffs`), **GET/POST `/v3/ops/handoffs`**, **GET `/v3/ops/events`**, GET `/v3/ops/approvals`, POST resolve approvals, GET sync job status, SSE sync events; responses emit `ETag` for document GET/PUT; wired in `build_web_server` with workspace root from appconfig.
+- **Remote state backend:** …; MCP `gate/status` exposes `state_backend`; events tool/resource use `resolve_backend()`; skill **`metagit-sharing-state`**; docs [`docs/reference/sharing-state.md`](../docs/reference/sharing-state.md).
 - **Objectives/session parity:** web `PATCH /v3/ops/objectives/{id}` supports full partial edits (`title`, `acceptance`, `human_notes`, `agent_notes`, `repos`, `status`) and adds `GET /v3/ops/session` + `POST /v3/ops/session/begin`; MCP now mirrors agent workflows with `metagit_objective_edit` and `metagit_session_digest` alongside existing objective/session tools.
 - **`metagit web serve` static + full server:** `StaticWebHandler` serves packaged SPA from `src/metagit/data/web/`; `build_web_server` dispatches static, v2 catalog/layout, v3 config/ops; CLI `metagit web serve` (`src/metagit/cli/commands/web.py`).
 - **Context packs (tier 1 repo cards):** `RepoCardService` (`src/metagit/core/context/repo_card_service.py`) merges workspace index rows, `inspect_repo_state`, manifest fields, stack root hints (`_stack_hints`), layered agent instruction excerpts (`AgentInstructionsResolver`), and `_health_flags` (`missing_clone`, `dirty`, `behind_remote`, `stale_head_30d`). Tests under `tests/core/context/test_repo_card_service.py`.

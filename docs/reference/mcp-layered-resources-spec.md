@@ -25,7 +25,7 @@ Agents and MCP hosts that auto-subscribe to resources therefore loaded maximum c
 | URI | MIME | Gate | Description |
 |-----|------|------|-------------|
 | `metagit://catalog` | JSON | any | Resource index, read order, dynamic patterns |
-| `metagit://gate/status` | JSON | any | MCP activation state |
+| `metagit://gate/status` | JSON | any | MCP activation state + `state_backend` diagnostics (`local`/`http`, URL, env overrides) |
 | `metagit://workspace/ops-log` | JSON | any | Operations audit trail (`?limit=N`) |
 
 ### Active gate only
