@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.13.0] - 2026-07-01
+
+
+
 ### Fixed
 - **Repository Terrain:** detail panel state labels include branch name for non-default git states
 
