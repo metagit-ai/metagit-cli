@@ -48,6 +48,12 @@ metagit project sync --project local
 metagit mcp serve --root /path/to/coordinator
 ```
 
+6. **Optional — shared state for subagents:** run `metagit web serve` on the
+   coordinator and point every agent machine at it via `METAGIT_STATE_URL` so
+   objectives, handoffs, and approvals stay synchronized. See
+   [Sharing state across a team](reference/sharing-state.md) for the multi-agent
+   diagram and HTTP contract.
+
 ## Hermes session bootstrap
 
 Wire metagit into every Hermes objective **before the first tool call**. Inject output into
@@ -120,6 +126,7 @@ Or use the MCP tool from your agent host with `confirm_apply` when ready.
 
 ## Related docs
 
+- [Sharing state across a team](reference/sharing-state.md) — multi-agent remote state, ops HTTP contract
 - [Hermes & org IaC guide](hermes-iac-workspace-guide.md) — Terraform / module rollout patterns
 - [Configuration exemplar](reference/metagit-config.md) — full `.metagit.yml` field reference sample
 - [Skills](skills.md) — `metagit-projects`, `metagit-control-center`, workspace sync skills

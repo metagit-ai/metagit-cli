@@ -28,8 +28,9 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [add-prompt-catalog-kind.md](add-prompt-catalog-kind.md) | Adding a new built-in `metagit prompt` kind (catalog + template + tests) |
 | [add-managed-repo-search.md](add-managed-repo-search.md) | Extending or debugging managed-only repo search (CLI, MCP `metagit_repo_search`, local JSON API) |
 | [add-mcp-tool.md](add-mcp-tool.md) | Adding/changing MCP tools, schemas, dispatch behavior, and runtime tests |
-| [mcp-project-context.md](mcp-project-context.md) | Project context switch, session store, or workspace snapshot MCP tools |
 | [mcp-cross-project-dependencies.md](mcp-cross-project-dependencies.md) | Cross-project dependency graph MCP tool and collectors |
+| [mcp-layered-resources.md](mcp-layered-resources.md) | Adding/extending MCP layered resources (catalog, map, prompts, scoped URIs) |
+| [mcp-project-context.md](mcp-project-context.md) | Project context switch, session store, or workspace snapshot MCP tools |
 | [metagit-web-api.md](metagit-web-api.md) | Adding or changing Pydantic models and routes for `metagit web serve` |
 | [modality-parity.md](modality-parity.md) | Shipping a feature across CLI, MCP, and web — shared services + parity registry |
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |

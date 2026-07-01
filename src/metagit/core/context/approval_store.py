@@ -6,65 +6,48 @@ Persist approval queue JSON under ``<workspace_root>/.metagit/approvals/pending.
 from __future__ import annotations
 
 import contextlib
-import json
 import os
 from pathlib import Path
 
-from pydantic import ValidationError
-
 from metagit.core.context.models import ApprovalRequest
+from metagit.core.state.base import ApprovalBackend, StateToken
+from metagit.core.state.resolver import resolve_backend
 
 
 class ApprovalStore:
     """Load and save approval rows as a single JSON document."""
 
-    def __init__(self, workspace_root: str) -> None:
-        self._workspace_root = str(Path(workspace_root).expanduser().resolve())
-        approvals_dir = os.path.join(self._workspace_root, ".metagit", "approvals")
-        self._path = os.path.join(approvals_dir, "pending.json")
+    def __init__(
+        self,
+        workspace_root: str,
+        backend: ApprovalBackend | None = None,
+    ) -> None:
+        root = str(Path(workspace_root).expanduser().resolve())
+        self._backend = backend or resolve_backend(root).approvals()
+        self._token: StateToken = None
+        adapter_path = getattr(self._backend, "path", None)
+        if isinstance(adapter_path, Path):
+            self._path = adapter_path
+        else:
+            self._path = Path(root) / ".metagit" / "approvals" / "pending.json"
 
     @property
     def path(self) -> Path:
         """Absolute path to the queue file."""
-        return Path(self._path)
+        return self._path
 
     def ensure_dirs(self) -> None:
         """Create approvals directory with restrictive permissions when possible."""
-        parent = Path(self._path).parent
-        parent.mkdir(parents=True, exist_ok=True)
+        self._path.parent.mkdir(parents=True, exist_ok=True)
         with contextlib.suppress(OSError):
-            os.chmod(parent, 0o700)
+            os.chmod(self._path.parent, 0o700)
 
     def load_requests(self) -> list[ApprovalRequest]:
         """Return stored requests, or an empty list when missing or invalid."""
-        path = Path(self._path)
-        if not path.is_file():
-            return []
-        try:
-            raw_text = path.read_text(encoding="utf-8")
-            blob = json.loads(raw_text)
-        except (OSError, json.JSONDecodeError):
-            return []
-        rows = blob.get("requests") if isinstance(blob, dict) else None
-        if not isinstance(rows, list):
-            return []
-        items: list[ApprovalRequest] = []
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            try:
-                items.append(ApprovalRequest.model_validate(row))
-            except ValidationError:
-                continue
-        return items
+        rows, token = self._backend.load()
+        self._token = token
+        return rows
 
     def save_requests(self, requests: list[ApprovalRequest]) -> None:
         """Persist all requests, replacing the file contents."""
-        self.ensure_dirs()
-        payload = {"requests": [req.model_dump(mode="json") for req in requests]}
-        Path(self._path).write_text(
-            json.dumps(payload, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        with contextlib.suppress(OSError):
-            os.chmod(self._path, 0o600)
+        self._token = self._backend.save(requests, expected=self._token)

@@ -8,6 +8,7 @@ from typing import Optional
 
 from metagit.core.context.handoff_store import HandoffStore
 from metagit.core.context.models import HandoffEvent, HandoffItem, HandoffListResult
+from metagit.core.state.retry import with_state_retry
 from metagit.core.workspace.context_models import utc_now_iso
 
 
@@ -30,7 +31,6 @@ class HandoffService:
         created_by: str,
         payload: Optional[dict] = None,
     ) -> HandoffItem:
-        rows = self._store.load_handoffs()
         now = utc_now_iso()
         row = HandoffItem(
             id=uuid.uuid4().hex,
@@ -47,9 +47,7 @@ class HandoffService:
                 )
             ],
         )
-        rows.append(row)
-        self._store.save_handoffs(rows)
-        return row
+        return self._store.append_handoff(row)
 
     def claim(self, handoff_id: str, *, claimed_by: str, note: Optional[str]) -> HandoffItem:
         return self._transition(
@@ -81,29 +79,32 @@ class HandoffService:
         note: Optional[str],
         claimed_by: Optional[str],
     ) -> HandoffItem:
-        rows = self._store.load_handoffs()
-        idx = next((i for i, row in enumerate(rows) if row.id == handoff_id), None)
-        if idx is None:
-            raise ValueError(f"handoff not found: {handoff_id}")
-        now = utc_now_iso()
-        row = rows[idx]
-        events = list(row.events)
-        events.append(
-            HandoffEvent(
-                at=now,
-                by=actor.strip() or "agent",
-                action=action,
-                note=note,
+        def _run() -> HandoffItem:
+            rows = self._store.load_handoffs()
+            idx = next((i for i, row in enumerate(rows) if row.id == handoff_id), None)
+            if idx is None:
+                raise ValueError(f"handoff not found: {handoff_id}")
+            now = utc_now_iso()
+            row = rows[idx]
+            events = list(row.events)
+            events.append(
+                HandoffEvent(
+                    at=now,
+                    by=actor.strip() or "agent",
+                    action=action,
+                    note=note,
+                )
             )
-        )
-        updated = row.model_copy(
-            update={
-                "status": to_status,
-                "claimed_by": claimed_by if claimed_by is not None else row.claimed_by,
-                "updated_at": now,
-                "events": events,
-            }
-        )
-        rows[idx] = updated
-        self._store.save_handoffs(rows)
-        return updated
+            updated = row.model_copy(
+                update={
+                    "status": to_status,
+                    "claimed_by": claimed_by if claimed_by is not None else row.claimed_by,
+                    "updated_at": now,
+                    "events": events,
+                }
+            )
+            rows[idx] = updated
+            self._store.save_handoffs(rows)
+            return updated
+
+        return with_state_retry(_run)

@@ -9,8 +9,10 @@ agent_instructions: |
 
   Session start (every time):
   1. metagit_workspace_status — confirm gate is active and note workspace root.
-  2. metagit_workspace_health_check — surface missing clones, broken mounts, duplicate URLs.
-  3. Read metagit://workspace/config when you need the full manifest.
+  2. MCP ladder: metagit://catalog → workspace/map → prompt/workspace/session-start?instructions=0 → session/meta.
+  3. metagit_workspace_health_check — surface missing clones, broken mounts, duplicate URLs.
+  4. metagit_session_begin once per session window when full bootstrap must update the boundary.
+  5. Use metagit://workspace/config?view=full only when editing the manifest.
 
   New or continued work:
   - Search before create: metagit_repo_search / `metagit search` for names, URLs, tags.

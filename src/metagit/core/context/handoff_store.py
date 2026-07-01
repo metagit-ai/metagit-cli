@@ -3,58 +3,45 @@
 
 from __future__ import annotations
 
-import contextlib
-import json
-import os
 from pathlib import Path
-from typing import Optional
 
 from metagit.core.context.models import HandoffItem
 from metagit.core.mcp.services.session_store import SessionStore
+from metagit.core.state.base import HandoffBackend, StateToken
+from metagit.core.state.resolver import resolve_backend
 
 
 class HandoffStore:
     """Read and write handoff queue JSON."""
 
-    def __init__(self, workspace_root: str) -> None:
-        session = SessionStore(workspace_root=workspace_root)
-        self._path = Path(session.sessions_dir) / "handoffs.json"
+    def __init__(
+        self,
+        workspace_root: str,
+        backend: HandoffBackend | None = None,
+    ) -> None:
+        self._backend = backend or resolve_backend(workspace_root).handoffs()
+        self._token: StateToken = None
+        adapter_path = getattr(self._backend, "path", None)
+        if isinstance(adapter_path, Path):
+            self._path = adapter_path
+        else:
+            session = SessionStore(workspace_root=workspace_root)
+            self._path = Path(session.sessions_dir) / "handoffs.json"
 
     @property
     def path(self) -> Path:
         return self._path
 
     def load_handoffs(self) -> list[HandoffItem]:
-        payload = self._read_json(self._path)
-        if not payload:
-            return []
-        raw = payload.get("handoffs")
-        if not isinstance(raw, list):
-            return []
-        rows: list[HandoffItem] = []
-        for item in raw:
-            if isinstance(item, dict):
-                rows.append(HandoffItem.model_validate(item))
+        rows, token = self._backend.load()
+        self._token = token
         return rows
 
     def save_handoffs(self, rows: list[HandoffItem]) -> None:
-        self._write_json(
-            self._path,
-            {"handoffs": [row.model_dump(mode="json") for row in rows]},
-        )
+        self._token = self._backend.save(rows, expected=self._token)
 
-    def _read_json(self, path: Path) -> Optional[dict]:
-        if not path.is_file():
-            return None
-        try:
-            raw = path.read_text(encoding="utf-8")
-            data = json.loads(raw)
-            return data if isinstance(data, dict) else None
-        except (OSError, json.JSONDecodeError):
-            return None
-
-    def _write_json(self, path: Path, payload: dict) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        with contextlib.suppress(OSError):
-            os.chmod(path, 0o600)
+    def append_handoff(self, item: HandoffItem) -> HandoffItem:
+        appended = self._backend.append(item)
+        _, token = self._backend.load()
+        self._token = token
+        return appended

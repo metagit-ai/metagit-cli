@@ -82,11 +82,38 @@ metagit prompt project --kind sync-safe --project myproj --text-only
 | Shell / subprocess agent | IDE host with MCP (Cursor, Claude Desktop, OpenClaw) |
 | `METAGIT_AGENT_MODE=true` | Gate active (valid `.metagit.yml` in workspace) |
 
-Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_repo_search`, `metagit_workspace_search`, `metagit_workspace_grep_info`, `metagit_workspace_discover`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`.
+Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_session_begin`, `metagit_repo_search`, `metagit_workspace_search`, `metagit_workspace_grep_info`, `metagit_workspace_discover`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`.
+
+**MCP resources (read-only, token-efficient):** `metagit://catalog` → `workspace/map` → `prompt/workspace/session-start?instructions=0` → `session/meta`; drill into `project/{name}/summary`, `repo/{p}/{r}/card`, `objectives`, `approvals/pending`, `session/digest/summary` when scoped. MCP **`prompts/list`** + **`prompts/get`** mirror prompt resources. Install skill `metagit-mcp-resources`. Spec: [reference/mcp-layered-resources-spec.md](reference/mcp-layered-resources-spec.md).
 
 `metagit_version_check` and `metagit_version_upgrade` are available even when the workspace gate is inactive. Use `version check` (or `metagit_version_check`) to compare against the latest GitHub release and PyPI. Use `version upgrade` (or `metagit_version_upgrade` with `apply: true`) to run the detected package-manager upgrade (`uv tool upgrade metagit-cli` by default). Upgrades default to dry-run; pass `--apply` or `apply: true` explicitly.
 
 Start MCP: `metagit mcp serve` (stdio). Install config: `metagit mcp install --scope user`.
+
+### Shared coordination state (multi-agent)
+
+Objectives, handoffs, approvals, and the events feed use the same backend as the CLI.
+When several agents must share one queue, configure the **MCP server process** (not
+just the IDE shell):
+
+```bash
+export METAGIT_STATE_URL=https://coordinator.example.com:8787
+export METAGIT_STATE_TOKEN='…'
+metagit mcp serve --root /path/to/manifest-root
+```
+
+Verify: `resources/read` → `metagit://gate/status` → `state_backend.backend` is `http`.
+
+| MCP tool | Purpose |
+|----------|---------|
+| `metagit_objective_list` / `metagit_objective_upsert` / `metagit_objective_edit` | Objectives |
+| `metagit_approval_request` / `metagit_approval_list` / `metagit_approval_resolve` | Approvals |
+| `metagit_handoff_list` / `metagit_handoff_create` / `metagit_handoff_claim` / `metagit_handoff_complete` | Handoffs |
+| `metagit_events` | Event poll (optional `since` ISO cursor) |
+
+Resources: `metagit://objectives`, `approvals/pending`, `handoffs/open`, `events/recent?since=`.
+
+Skill: **`metagit-sharing-state`**. Docs: [Sharing state across a team](reference/sharing-state.md).
 
 ## Workspace content grep (not manifest search)
 
@@ -160,9 +187,29 @@ Catalog adds support **`--ensure`** (auto-enabled in agent mode): re-run succeed
 
 ## Human ↔ agent shared state
 
-- **Objectives** — `.metagit/sessions/objectives.json`; CLI `metagit context objective …`
+- **Objectives** — `.metagit/sessions/objectives.json` (local default); CLI `metagit context objective …`
 - **Approvals** — mutating ops queue; `metagit context approval …`
+- **Handoffs** — `.metagit/sessions/handoffs.json`; CLI `metagit context handoff …`
 - **Web UI** (local): `metagit web serve` → objectives/approvals at `/v3/ops/*`
+
+### Sharing state across machines (remote backend)
+
+When multiple agents or humans must see the **same** objectives, handoffs, and
+approvals, configure a shared ops server instead of per-machine JSON files:
+
+```bash
+export METAGIT_STATE_URL=https://coordinator.example.com:8787
+export METAGIT_STATE_TOKEN='…'
+# CLI / MCP commands unchanged — stores use RemoteHttpBackend automatically
+metagit context objective list --json
+```
+
+Run `metagit web serve` on the coordinator host; set the same `state.url` in app
+config on every client. Repo clones remain local; only coordination documents are
+centralized.
+
+See [Sharing state across a team](reference/sharing-state.md) for architecture
+diagram, HTTP contract (`ETag` / `If-Match`), and troubleshooting.
 
 ## What metagit is not
 

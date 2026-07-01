@@ -19,7 +19,7 @@ edges:
     condition: when adding a new MCP tool or changing tool schemas
   - target: patterns/debug-mcp-runtime.md
     condition: when MCP message loop, framing, or tool dispatch fails
-last_updated: 2026-05-15
+last_updated: 2026-06-30
 ---
 
 # MCP Runtime
@@ -40,11 +40,13 @@ last_updated: 2026-05-15
 - Workspace search uses ripgrep when `rg` is on PATH; `metagit_workspace_sync` batches guarded fetch/pull/clone across index rows.
 - `metagit_cross_project_dependencies` combines config-declared edges, manifest import hints, shared URL/path detection, and GitNexus per-repo index status.
 - Phase 3: `metagit_workspace_health_check` (branch-age / integration staleness when enabled), `metagit_workspace_discover`, `metagit_project_template_apply`, resources `metagit://workspace/health` and `metagit://workspace/context`.
+- **Layered MCP resources (Phases 1–4):** `ResourceService` + catalog — static/dynamic URIs, read-only session digest, objectives/approvals/handoffs/events, MCP `prompts/list` + `prompts/get`, dispatch `mcp_resources`; see `docs/reference/mcp-layered-resources-spec.md`.
 - Resource publisher for config/repo-status/ops-log resources.
 - Bootstrap sampling service with fallback and optional client sampling flow.
 
 ## Protocol Notes
-- Supported methods: `initialize`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `ping`.
+- Supported methods: `initialize`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `prompts/list`, `prompts/get`, `ping`.
+- **Layered resources:** start with `metagit://catalog`; escalate to map → prompts → project/repo URIs; avoid full config unless `?view=full`.
 - Invalid tool arguments normalize to JSON-RPC error `-32602` with `data.kind=invalid_arguments`.
 - Runtime tracks client sampling capability from initialize params and can call `sampling/createMessage`.
 

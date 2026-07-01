@@ -1060,3 +1060,129 @@ def test_tools_call_events_returns_result(tmp_path: Path) -> None:
     assert isinstance(payload["events"], list)
     assert len(payload["events"]) >= 1
 
+
+def test_resources_list_includes_catalog_and_map_when_active(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos:",
+                "        - name: api",
+                "          path: alpha/api",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 500, "method": "resources/list", "params": {}}
+    )
+    assert response is not None
+    uris = [item["uri"] for item in response["result"]["resources"]]
+    assert "metagit://catalog" in uris
+    assert "metagit://workspace/map" in uris
+    assert "metagit://session/meta" in uris
+
+
+def test_resources_read_map_and_prompt(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos:",
+                "        - name: api",
+                "          path: alpha/api",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    map_response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 501,
+            "method": "resources/read",
+            "params": {"uri": "metagit://workspace/map"},
+        }
+    )
+    assert map_response is not None
+    map_payload = json.loads(map_response["result"]["contents"][0]["text"])
+    assert map_payload["data"]["workspace_name"] == "workspace"
+
+    prompt_response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 502,
+            "method": "resources/read",
+            "params": {"uri": "metagit://prompt/workspace/session-start?instructions=0"},
+        }
+    )
+    assert prompt_response is not None
+    assert prompt_response["result"]["contents"][0]["mimeType"] == "text/plain"
+    assert "metagit" in prompt_response["result"]["contents"][0]["text"].lower()
+
+
+def test_prompts_list_when_active(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 503, "method": "prompts/list", "params": {}}
+    )
+    assert response is not None
+    names = [item["name"] for item in response["result"]["prompts"]]
+    assert "workspace/session-start" in names
+
+
+def test_prompts_get_session_start(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      repos: []",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 504,
+            "method": "prompts/get",
+            "params": {
+                "name": "workspace/session-start",
+                "arguments": {"instructions": "0"},
+            },
+        }
+    )
+    assert response is not None
+    assert response["result"]["messages"][0]["content"]["text"]
+

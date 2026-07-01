@@ -154,7 +154,7 @@ PROMPT_TEXT="$(metagit prompt workspace -k session-start --text-only -c .metagit
 | Hermes system / bootstrap template | Include `session-start` prompt text; store or summarize pack JSON |
 | Pre-turn shell hook | Run commands above; append stdout to conversation context or state file |
 | Subagent task prompt | Pass tier-1 JSON for target `--project`/`--repo` plus `subagent-handoff` prompt |
-| MCP-connected Hermes | Prefer `metagit_context_pack` (tier 2) then `metagit://workspace/*` resources |
+| MCP-connected Hermes | Prefer MCP resources (`metagit://catalog` → map → prompts) or `metagit_context_pack` tier 2 once per session; see **`metagit-mcp-resources`** |
 
 **Token-tight bootstrap:**
 
@@ -173,9 +173,20 @@ metagit prompt workspace -k session-start --text-only
 
 Parse pack JSON top-level keys: `workspace_name`, `tier`, `map`, `cards`, `digest`.
 
-## Multi-instance workspaces (Syncthing / shared manifest)
+## Multi-agent coordination (remote state vs Syncthing)
 
-When multiple agents on different machines share a workspace root via Syncthing:
+**Preferred:** separate machines share coordination JSON through a coordinator running
+`metagit web serve` and clients with `METAGIT_STATE_URL` / `state.url`. See skill
+**`metagit-sharing-state`** and `docs/reference/sharing-state.md`.
+
+Verify MCP host config: `resources/read` → `metagit://gate/status` → `state_backend.backend` should be `http`.
+
+**Alternative:** Syncthing (or similar) on the same manifest root — use only when remote
+state is unavailable.
+
+### Syncthing conflict zones
+
+When multiple agents share a workspace root via Syncthing:
 
 ### Conflict zones
 
@@ -207,10 +218,26 @@ metagit config validate -c .metagit.yml
 |-----|----------|
 | `context pack --tier N` | `metagit_context_pack` (required `tier`) |
 | `context repo-card` | `metagit_repo_card` |
-| `context objective list/set` | `metagit_objective_list` / `metagit_objective_upsert` |
+| `context objective list/set/complete/cancel` | `metagit_objective_list` / `metagit_objective_upsert` / `metagit_objective_edit` |
 | `context approval request/list/approve/deny` | `metagit_approval_request` / `metagit_approval_list` / `metagit_approval_resolve` |
+| `context handoff list/create/claim/complete` | `metagit_handoff_list` / `metagit_handoff_create` / `metagit_handoff_claim` / `metagit_handoff_complete` |
+| *(events poll)* | `metagit_events` (+ resource `metagit://events/recent?since=`) |
 
-Use CLI when operating shell-only (`METAGIT_AGENT_MODE=true`); use MCP when the IDE host exposes metagit tools.
+Remote state: set `METAGIT_STATE_*` on the **MCP server process**; tools unchanged. Skill: **`metagit-sharing-state`**.
+
+Use CLI when operating shell-only (`METAGIT_AGENT_MODE=true`); use MCP resources/tools when the IDE host exposes metagit (see **`metagit-mcp-resources`** for the read ladder).
+
+## MCP resource ladder (read-only)
+
+| Step | URI |
+|------|-----|
+| 1 | `metagit://catalog` |
+| 2 | `metagit://workspace/map` |
+| 3 | `metagit://prompt/workspace/session-start?instructions=0` |
+| 4 | `metagit://session/meta` |
+| Scoped | `metagit://project/{P}/summary`, `metagit://repo/{P}/{R}/card` |
+
+Use tool `metagit_session_begin` once when a full bootstrap envelope must update the session boundary.
 
 ## Output contract
 
@@ -224,6 +251,7 @@ After packing, report to the user or parent agent:
 
 ## Related skills
 
+- `metagit-sharing-state` — multi-agent remote coordination (`METAGIT_STATE_URL`)
 - `metagit-cli` — full CLI prompt and catalog reference
 - `metagit-workspace-scope` — gate and scope discovery
 - `metagit-control-center` — ongoing multi-repo coordination
