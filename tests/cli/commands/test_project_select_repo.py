@@ -86,7 +86,8 @@ def test_project_select_repo_skips_picker_and_opens_editor(tmp_path: Path, monke
 
   assert result.exit_code == 0
   assert len(opened) == 1
-  assert opened[0].endswith("/platform/backend")
+  expected = (tmp_path / ".metagit" / "platform" / "backend").resolve()
+  assert Path(opened[0]).resolve() == expected
 
 
 def test_project_select_repo_unknown_repo_exits_nonzero(tmp_path: Path) -> None:
