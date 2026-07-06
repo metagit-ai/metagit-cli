@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import yaml
@@ -12,6 +13,16 @@ REGISTRY_YAML = ROOT / "scripts" / "modality-parity.yml"
 REGISTRY_MD = ROOT / "docs" / "reference" / "modality-feature-registry.md"
 START = "<!-- registry:table:start -->"
 END = "<!-- registry:table:end -->"
+REGISTRY_DOC_DIR = Path("docs/reference")
+
+
+def _reference_href(reference: str) -> str:
+    ref_path = Path(reference)
+    if reference.startswith("docs/"):
+        return Path(
+            os.path.relpath(ref_path, REGISTRY_DOC_DIR),
+        ).as_posix()
+    return reference
 
 
 def _load_registry() -> dict:
@@ -46,7 +57,7 @@ def _build_table(features: list[dict]) -> str:
         if not isinstance(surfaces, dict):
             surfaces = {}
         reference = str(feature.get("reference_doc", "")).strip()
-        ref_cell = f"[{Path(reference).name}]({reference})" if reference else "—"
+        ref_cell = f"[{Path(reference).name}]({_reference_href(reference)})" if reference else "—"
         lines.append(
             "| "
             + " | ".join(

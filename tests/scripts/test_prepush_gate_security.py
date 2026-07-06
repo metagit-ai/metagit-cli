@@ -68,3 +68,35 @@ def test_pytest_targets_normalizes_windows_src_paths() -> None:
     gate = _prepush_gate_module()
     targets = gate.pytest_targets({r"src\metagit\core\config\models.py"})
     assert targets == ["tests/test_models.py"]
+
+
+def test_docs_link_scan_plan_full_when_unknown() -> None:
+    gate = _prepush_gate_module()
+    assert gate.docs_link_scan_plan(None) is not None
+    assert "README.md" in gate.docs_link_scan_plan(None)
+    assert gate.docs_link_scan_plan(set()) is not None
+
+
+def test_docs_link_scan_plan_skips_src_only() -> None:
+    gate = _prepush_gate_module()
+    assert gate.docs_link_scan_plan({"src/metagit/cli/main.py"}) is None
+    assert gate.docs_link_scan_plan({"tests/test_foo.py"}) is None
+
+
+def test_docs_link_scan_plan_scopes_changed_docs() -> None:
+    gate = _prepush_gate_module()
+    assert gate.docs_link_scan_plan({"docs/agents.md"}) == ["docs/agents.md"]
+
+
+def test_docs_link_scan_plan_includes_registry_when_modality_yaml_changes() -> None:
+    gate = _prepush_gate_module()
+    targets = gate.docs_link_scan_plan({"scripts/modality-parity.yml"})
+    assert targets == [gate.MODALITY_REGISTRY_MD]
+
+
+def test_docs_link_scan_plan_full_when_lychee_config_changes() -> None:
+    gate = _prepush_gate_module()
+    targets = gate.docs_link_scan_plan({"lychee.toml"})
+    assert targets is not None
+    assert "README.md" in targets
+    assert any(path.endswith("docs/agents.md") for path in targets)

@@ -12,6 +12,12 @@ Requires [lychee](https://github.com/lycheeverse/lychee): `brew install lychee` 
 
 Config: `lychee.toml` (scopes markdown only; skips generated `docs/llm*.txt` and localhost URLs).
 
+## Pre-push (context-aware)
+
+`task qa:prepush` runs lychee **only when** the diff touches `README.md`, `docs/**`, `lychee.toml`, `mkdocs.yml`, or doc generators (`scripts/modality-parity.yml`, `scripts/generate_modality_registry.py`, `scripts/check-doc-links.zsh`). Src-only changes skip the step. When triggered, lychee checks **only changed markdown files** (plus the generated modality registry when parity YAML changes); config-only triggers run the full README + `docs/**` scan.
+
+Install lychee locally to exercise the step: `brew install lychee`. If lychee is missing, prepush prints `SKIP: doc_links` (use `--strict` to fail instead).
+
 ## CI
 
 Ubuntu job in `.github/workflows/test.yaml` runs `lychee-action` on every push and pull request.
