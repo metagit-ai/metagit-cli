@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.14.0] - 2026-07-06
+
+
+
 ### Added
 - **`agent_profile`:** structured inheritable blocks on `workspace`, project, and repo scopes (`skills`, `mcp`, `rules`, `vendors`, `tier`, `inherit`); `metagit agent profile show` and `metagit agent apply`; catalog validation in `metagit config validate`
 - **Native campaigns:** `metagit campaign list|status|new|validate|set|expand` with diffable YAML under configurable `workspace.campaigns_path` (default `_campaigns/` at manifest root)
