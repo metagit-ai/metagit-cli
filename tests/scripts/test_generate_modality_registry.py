@@ -21,3 +21,10 @@ def test_reference_href_rebases_docs_paths_for_registry_location() -> None:
     assert registry._reference_href("docs/cli_reference.md") == "../cli_reference.md"
     assert registry._reference_href("docs/agents.md") == "../agents.md"
     assert registry._reference_href("docs/reference/campaigns.md") == "campaigns.md"
+
+
+def test_intro_links_modality_parity_via_github_not_relative_path() -> None:
+    registry = _registry_module()
+    intro = registry._intro(version=1, feature_count=3)
+    assert "../../scripts/modality-parity.yml" not in intro
+    assert registry.MODALITY_PARITY_GITHUB in intro

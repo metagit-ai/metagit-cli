@@ -34,3 +34,5 @@ Ubuntu job in `.github/workflows/test.yaml` runs `lychee-action` on every push a
 | License | `./LICENSE.md` | GitHub URL (outside MkDocs tree) |
 
 When editing marketing copy shared between both, update both files and run `task docs:links`.
+
+Links from `docs/**` to repo files outside the MkDocs tree (for example `scripts/modality-parity.yml`) must use GitHub blob URLs — `mkdocs build --strict` treats relative paths as internal doc links and fails CI.
