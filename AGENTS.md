@@ -47,6 +47,9 @@ metagit prompt workspace --kind session-start --text-only
 | Scoped repo text | `metagit context repomix --profile bugfix-local --project P --repo R` |
 | Latest release / notes | `metagit version check --json` |
 | Self-update | `metagit version upgrade --apply --json` |
+| Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
+| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
+| Feature registry (all modalities) | [docs/reference/modality-feature-registry.md](docs/reference/modality-feature-registry.md) |
 
 Full guide: [docs/agents.md](docs/agents.md) · Index: [llms.txt](llms.txt) · Skills: [docs/skills.md](docs/skills.md) · Docs: <https://metagit-ai.github.io/metagit-cli/agents/>
 

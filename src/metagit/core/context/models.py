@@ -104,6 +104,14 @@ class Objective(BaseModel):
     acceptance: Optional[str] = None
     human_notes: Optional[str] = None
     agent_notes: Optional[str] = None
+    mr_url: Optional[str] = Field(
+        default=None,
+        description="Merge request or pull request URL produced by this objective",
+    )
+    approval_id: Optional[str] = Field(
+        default=None,
+        description="Approval queue id when work is gated on human review",
+    )
     created_at: str
     updated_at: str
 
@@ -219,6 +227,14 @@ class HandoffItem(BaseModel):
     status: HandoffStatus = "open"
     created_by: str = "agent"
     claimed_by: Optional[str] = None
+    claim_expires_at: Optional[str] = Field(
+        default=None,
+        description="ISO timestamp when an active claim auto-releases",
+    )
+    last_heartbeat_at: Optional[str] = Field(
+        default=None,
+        description="ISO timestamp of the latest claim heartbeat",
+    )
     payload: dict[str, Any] = Field(default_factory=dict)
     created_at: str
     updated_at: str

@@ -1,5 +1,6 @@
-# Modality parity registry — keep in sync when adding user-facing workspace features.
-# Validated by scripts/check_modality_parity.py (wired into task qa:prepush).
+# Modality parity registry — master table of user-facing features and surfaces.
+# Validated by scripts/check_modality_parity.py (task qa:prepush).
+# Human table: docs/reference/modality-feature-registry.md (task generate:modality-registry).
 
 version: 1
 
@@ -7,6 +8,7 @@ features:
   - id: provider_source_sync_imperative
     description: Imperative provider discovery and manifest apply
     service: metagit.core.project.source_sync_runner.run_source_sync
+    reference_doc: docs/cli_reference.md
     surfaces:
       cli:
         markers:
@@ -22,6 +24,7 @@ features:
   - id: provider_source_sync_manifest
     description: Declarative sync from workspace.projects[].sources[]
     service: metagit.core.project.source_manifest_sync.SourceManifestSyncService
+    reference_doc: docs/cli_reference.md
     surfaces:
       cli:
         markers:
@@ -39,6 +42,7 @@ features:
   - id: source_sync_reconcile_approval
     description: Apply approved reconcile removals to the manifest
     service: metagit.core.context.approval_resolve.ApprovalResolveOrchestrator
+    reference_doc: docs/agents.md
     surfaces:
       cli:
         markers:
@@ -51,6 +55,7 @@ features:
 
   - id: project_sync_refresh_sources
     description: Manifest source refresh before git clone sync
+    reference_doc: docs/cli_reference.md
     surfaces:
       cli:
         markers:
@@ -60,3 +65,135 @@ features:
         markers:
           - path: src/metagit/core/web/models.py
             contains: refresh_sources
+
+  - id: agent_profile_apply
+    description: Structured agent_profile in manifest + vendor materialization
+    service: metagit.core.agent.profile_service.AgentProfileService
+    reference_doc: docs/reference/agent-profile.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/agent.py
+            contains: '@agent.command("apply")'
+          - path: src/metagit/cli/commands/config.py
+            contains: list_validation_issues
+      documentation:
+        markers:
+          - path: docs/reference/agent-profile.md
+            contains: "modality:agent_profile_apply"
+          - path: docs/reference/metagit-agent.md
+            contains: "modality:agent_profile_apply"
+          - path: docs/agents.md
+            contains: "modality:agent_profile_apply"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:agent_profile_apply"
+          - path: src/metagit/data/skills/metagit-control-center/SKILL.md
+            contains: "modality:agent_profile_apply"
+
+  - id: native_campaigns
+    description: Cross-project campaign YAML overlays and CLI lifecycle
+    service: metagit.core.campaign.service.CampaignService
+    reference_doc: docs/reference/campaigns.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/campaign.py
+            contains: '@campaign.command("expand")'
+          - path: src/metagit/cli/main.py
+            contains: campaign
+      documentation:
+        markers:
+          - path: docs/reference/campaigns.md
+            contains: "modality:native_campaigns"
+          - path: docs/agents.md
+            contains: "modality:native_campaigns"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-campaign/SKILL.md
+            contains: "modality:native_campaigns"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:native_campaigns"
+
+  - id: handoff_lease_heartbeat
+    description: Handoff claim TTL, heartbeat renew, auto-release expired claims
+    service: metagit.core.context.handoff_service.HandoffService
+    reference_doc: docs/agents.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/context.py
+            contains: '@handoff_group.command("heartbeat")'
+          - path: src/metagit/core/context/handoff_service.py
+            contains: parse_ttl_seconds
+      documentation:
+        markers:
+          - path: docs/agents.md
+            contains: "modality:handoff_lease_heartbeat"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-context-pack/SKILL.md
+            contains: "modality:handoff_lease_heartbeat"
+
+  - id: coordination_events_scope
+    description: Campaign/objective filters on workspace events poll
+    service: metagit.core.context.event_service.WorkspaceEventService
+    reference_doc: docs/reference/campaigns.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/context.py
+            contains: --campaign
+          - path: src/metagit/core/context/event_service.py
+            contains: campaign
+      documentation:
+        markers:
+          - path: docs/reference/campaigns.md
+            contains: "modality:coordination_events_scope"
+          - path: docs/agents.md
+            contains: "modality:coordination_events_scope"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-context-pack/SKILL.md
+            contains: "modality:coordination_events_scope"
+
+  - id: objective_mr_approval_binding
+    description: Objective mr_url and approval_id fields for review rollups
+    service: metagit.core.context.objective_service.ObjectiveService
+    reference_doc: docs/reference/campaigns.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/core/context/models.py
+            contains: mr_url
+      documentation:
+        markers:
+          - path: docs/reference/campaigns.md
+            contains: "modality:objective_mr_approval_binding"
+          - path: docs/agents.md
+            contains: "modality:objective_mr_approval_binding"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-campaign/SKILL.md
+            contains: "modality:objective_mr_approval_binding"
+
+  - id: dispatch_profile_capabilities
+    description: Dispatch-plan profile skill hints and apply command suggestion
+    service: metagit.core.agent.dispatch.AgentDispatchService
+    reference_doc: docs/reference/metagit-agent.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/core/agent/dispatch.py
+            contains: profile_apply_command
+          - path: src/metagit/core/agent/models.py
+            contains: required_profile_skills
+      documentation:
+        markers:
+          - path: docs/reference/metagit-agent.md
+            contains: "modality:dispatch_profile_capabilities"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-control-center/SKILL.md
+            contains: "modality:dispatch_profile_capabilities"

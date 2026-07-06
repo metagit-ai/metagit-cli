@@ -15,6 +15,8 @@ Supported vendors: **Claude Code**, **Cursor**, **GitHub Copilot**, **Hermes**,
 | `metagit agent validate` | Validate bundled (+ overlay) manifests |
 | `metagit agent preview <id>` | Render vendor artifact without writing (`--json`) |
 | `metagit agent dispatch-plan <id>` | Install, launch, and handoff envelope (`--json`) |
+| `metagit agent profile show` | Merged `agent_profile` for one repo (`--json`) |
+| `metagit agent apply` | Materialize merged profiles into vendor runtimes |
 | `metagit agent overlay init <id>` | Scaffold editable overlay from bundled template |
 | `metagit agent overlay path <id>` | Print overlay directory for a template |
 | `metagit agent export <id>` | Write vendor-neutral files to `--output` |
@@ -52,6 +54,9 @@ The Metagit Web **Agents** page scaffolds **team overlays** in `.metagit-agents/
 
 ### Dispatch plan (overseer handoff)
 
+<!-- modality:agent_profile_apply -->
+<!-- modality:dispatch_profile_capabilities -->
+
 Turn a template plus project/repo scope into an install, launch, and handoff envelope:
 
 ```bash
@@ -67,9 +72,22 @@ The JSON payload includes:
 - **`launch`** — per-vendor invoke hints (for example `@repo-implementer` for Cursor)
 - **`handoff`** — tiered `context pack` CLI, repo `subagent-handoff` prompt, and layered `effective_instructions`
 - **`out_of_scope`** — boundaries derived from template archetype and scope
+- **`required_profile_skills`** / **`missing_profile_skills`** / **`profile_apply_command`** — when the repo has `agent_profile` in `.metagit.yml` (run suggested apply before launch)
 
 MCP equivalents: `metagit_agent_catalog`, `metagit_agent_dispatch_plan`.
 Web: `GET /v3/agents/templates/{id}/dispatch-plan?vendor=&project=&repo=&task=`.
+
+### Agent profile apply
+
+Declare posture in `.metagit.yml` and materialize bundled skills/MCP/rules into repo clones:
+
+```bash
+metagit agent profile show --project platform --repo api --json
+metagit agent apply --vendor claude_code --project platform --repo api
+metagit agent apply --vendor cursor --tag agent_tier=full --dry-run
+```
+
+Full reference: [Agent profile](agent-profile.md).
 
 ## Archetypes (schema v1)
 

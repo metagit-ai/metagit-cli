@@ -65,6 +65,22 @@ def main() -> int:
                 continue
             errors.extend(_check_markers(feature_id, surface, markers))
 
+        reference_doc = str(feature.get("reference_doc", "")).strip()
+        doc_surface = surfaces.get("documentation") if isinstance(surfaces, dict) else None
+        has_doc_markers = (
+            isinstance(doc_surface, dict)
+            and isinstance(doc_surface.get("markers"), list)
+            and doc_surface.get("markers")
+        )
+        if reference_doc:
+            ref_path = ROOT / reference_doc
+            if not ref_path.is_file():
+                errors.append(f"{feature_id}: missing reference_doc {reference_doc}")
+            elif has_doc_markers and f"modality:{feature_id}" not in ref_path.read_text(encoding="utf-8"):
+                errors.append(
+                    f"{feature_id}: reference_doc {reference_doc} missing anchor modality:{feature_id}",
+                )
+
     if errors:
         print("Modality parity check failed:", file=sys.stderr)
         for item in errors:

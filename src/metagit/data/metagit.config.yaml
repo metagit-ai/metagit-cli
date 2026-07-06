@@ -25,6 +25,8 @@ config:
     path: ./.metagit
     # Session state location (relative to workspace root unless absolute path)
     session_path: .metagit/sessions
+    # Committed campaign YAML (relative to manifest root unless absolute path)
+    campaigns_path: _campaigns
     # Optional session preference when -p/--project is omitted (unset = resolve from manifest)
     # default_project: remote
     ui_ignore_hidden: true

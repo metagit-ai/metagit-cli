@@ -26,6 +26,7 @@ from metagit import DEFAULT_CONFIG, __version__
 from metagit.cli.commands.agent import agent
 from metagit.cli.commands.api import api
 from metagit.cli.commands.appconfig import appconfig
+from metagit.cli.commands.campaign import campaign
 from metagit.cli.commands.completion_cmd import completion_group
 from metagit.cli.commands.config import config
 from metagit.cli.commands.context import context
@@ -129,6 +130,7 @@ cli.add_command(config)
 cli.add_command(record)
 cli.add_command(skills)
 cli.add_command(agent)
+cli.add_command(campaign)
 cli.add_command(init)
 cli.add_command(mcp)
 cli.add_command(gitnexus)

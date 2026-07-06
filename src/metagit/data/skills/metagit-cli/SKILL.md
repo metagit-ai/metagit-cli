@@ -341,7 +341,38 @@ metagit appconfig tree --json
 metagit appconfig preview --file ops.json
 metagit appconfig patch --file ops.json --save
 metagit config providers --show
+metagit appconfig get --name config.workspace.campaigns_path
 ```
+
+`workspace.campaigns_path` (default `_campaigns`) stores committed campaign YAML at the manifest root. Env: `METAGIT_WORKSPACE_CAMPAIGNS_PATH`.
+
+---
+
+## Agent profile and apply
+
+<!-- modality:agent_profile_apply -->
+
+| Task | Command |
+|------|---------|
+| Show merged profile | `metagit agent profile show -p <project> -n <repo> --json` |
+| Materialize into clone | `metagit agent apply --vendor claude_code -p <project> -n <repo>` |
+| Tag-driven fan-out | `metagit agent apply --vendor cursor --tag agent_tier=full --dry-run` |
+
+Doc: [agent-profile.md](https://metagit-ai.github.io/metagit-cli/reference/agent-profile/)
+
+---
+
+## Campaigns
+
+<!-- modality:native_campaigns -->
+
+| Task | Command |
+|------|---------|
+| List / status | `metagit campaign list` / `metagit campaign status --slug <s> --json` |
+| Create | `metagit campaign new --slug <s> --title "…" --query "…"` |
+| Validate / set / expand | `metagit campaign validate` / `set` / `expand --dry-run` |
+
+Skill: `metagit-campaign`
 
 ---
 
@@ -374,4 +405,4 @@ metagit info
 
 ## Related bundled skills
 
-Use topic skills when you need deeper playbooks (some mention MCP): `metagit-context-pack` (tiered packs, digest, objectives, approvals, repomix), `metagit-projects`, `metagit-workspace-scope`, `metagit-workspace-sync`, `metagit-config-refresh`. This skill is the **CLI-only** index and prompt reference.
+Use topic skills when you need deeper playbooks (some mention MCP): `metagit-context-pack` (tiered packs, digest, objectives, approvals, repomix), `metagit-campaign` (multi-repo rollouts), `metagit-projects`, `metagit-workspace-scope`, `metagit-workspace-sync`, `metagit-config-refresh`. Modality index: [modality-feature-registry.md](https://metagit-ai.github.io/metagit-cli/reference/modality-feature-registry/). This skill is the **CLI-only** index and prompt reference.

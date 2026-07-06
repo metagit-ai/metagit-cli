@@ -269,6 +269,29 @@ paths:
     protected: false
     # Optional instructions for subagents operating in this repo or path
     agent_instructions: Example text for documentation; replace before production use.
+    # Structured agent posture for this repo (skills, MCP, rules, vendors)
+    agent_profile:
+      # Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset
+      tier: example-value
+...
+      # Bundled skill ids to install for agents working in this scope
+      skills:
+        - example-value
+...
+      # MCP server ids to configure (references only, never inline payloads)
+      mcp:
+        - example-value
+...
+      # Rule ids to materialize into vendor rule directories
+      rules:
+        - example-value
+...
+      # Vendor runtimes this profile targets (empty = all supported vendors)
+      vendors:
+        - example-value
+...
+      # When true, merge with parent scope profile; when false, use verbatim
+      inherit: false
 # Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.
 dependencies:
   -
@@ -320,6 +343,29 @@ dependencies:
     protected: false
     # Optional instructions for subagents operating in this repo or path
     agent_instructions: Example text for documentation; replace before production use.
+    # Structured agent posture for this repo (skills, MCP, rules, vendors)
+    agent_profile:
+      # Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset
+      tier: example-value
+...
+      # Bundled skill ids to install for agents working in this scope
+      skills:
+        - example-value
+...
+      # MCP server ids to configure (references only, never inline payloads)
+      mcp:
+        - example-value
+...
+      # Rule ids to materialize into vendor rule directories
+      rules:
+        - example-value
+...
+      # Vendor runtimes this profile targets (empty = all supported vendors)
+      vendors:
+        - example-value
+...
+      # When true, merge with parent scope profile; when false, use verbatim
+      inherit: false
     # Dependency kind. Distinct from workspace repo entries; use tags on ProjectPath for managed repos.
     kind: docker_image
 # Additional project component paths that may be useful in other projects.
@@ -373,6 +419,29 @@ components:
     protected: false
     # Optional instructions for subagents operating in this repo or path
     agent_instructions: Example text for documentation; replace before production use.
+    # Structured agent posture for this repo (skills, MCP, rules, vendors)
+    agent_profile:
+      # Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset
+      tier: example-value
+...
+      # Bundled skill ids to install for agents working in this scope
+      skills:
+        - example-value
+...
+      # MCP server ids to configure (references only, never inline payloads)
+      mcp:
+        - example-value
+...
+      # Rule ids to materialize into vendor rule directories
+      rules:
+        - example-value
+...
+      # Vendor runtimes this profile targets (empty = all supported vendors)
+      vendors:
+        - example-value
+...
+      # When true, merge with parent scope profile; when false, use verbatim
+      inherit: false
 # Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. Omit for single-repo application manifests; use top-level paths and dependencies instead.
 workspace:
   # Human-readable description of this workspace
@@ -380,6 +449,29 @@ workspace:
   # Optional instructions for agents working in this workspace
   agent_instructions: Validate after manifest edits (metagit config validate). Default sync is fetch-only;\n
 ...
+  # Workspace-wide structured agent posture inherited by projects and repos
+  agent_profile:
+    # Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset
+    tier: example-value
+...
+    # Bundled skill ids to install for agents working in this scope
+    skills:
+      - example-value
+...
+    # MCP server ids to configure (references only, never inline payloads)
+    mcp:
+      - example-value
+...
+    # Rule ids to materialize into vendor rule directories
+    rules:
+      - example-value
+...
+    # Vendor runtimes this profile targets (empty = all supported vendors)
+    vendors:
+      - example-value
+...
+    # When true, merge with parent scope profile; when false, use verbatim
+    inherit: false
   # Workspace projects
   projects:
     -

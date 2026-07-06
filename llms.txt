@@ -41,10 +41,16 @@ metagit prompt workspace --kind session-start --text-only
 | MCP | `metagit mcp install --scope user` |
 | Latest release / notes | `metagit version check --json` |
 | Self-update | `metagit version upgrade --apply --json` |
+| Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
+| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
+
+## Feature registry
+
+Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality-feature-registry.md](docs/reference/modality-feature-registry.md)
 
 ## Bundled skills (after install)
 
-`metagit-cli`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects`, `metagit-sharing-state` (multi-agent remote state) — see docs/skills.md.
+`metagit-cli`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects`, `metagit-campaign`, `metagit-sharing-state` (multi-agent remote state) — see docs/skills.md.
 
 ## Optional
 

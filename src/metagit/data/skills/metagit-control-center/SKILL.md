@@ -92,9 +92,10 @@ When delegating single-repo or specialist work:
 
 1. **Route** — `metagit agent list --json` or MCP `metagit_agent_catalog`; pick `template_id` from `delegates_to`.
 2. **Plan** — `metagit agent dispatch-plan <id> --project P --repo R --vendor V --json` or MCP `metagit_agent_dispatch_plan`.
-3. **Ensure** — run `install.command` once when `install.needed` is true.
-4. **Hand off** — run `handoff.context_pack` and `handoff.prompt`; pass `handoff.effective_instructions` to the subagent.
-5. **Reconcile** — `metagit_session_update` after the subagent returns; respect `out_of_scope` boundaries.
+3. **Profile** — when JSON includes `profile_apply_command`, run it (or `metagit agent apply …`) before launch. <!-- modality:agent_profile_apply --> <!-- modality:dispatch_profile_capabilities -->
+4. **Ensure** — run `install.command` once when `install.needed` is true.
+5. **Hand off** — run `handoff.context_pack` and `handoff.prompt`; pass `handoff.effective_instructions` to the subagent.
+6. **Reconcile** — `metagit_session_update` after the subagent returns; respect `out_of_scope` boundaries.
 
 ```bash
 metagit agent dispatch-plan repo-implementer \

@@ -22,6 +22,7 @@ from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
+from metagit.core.workspace.root_resolver import resolve_definition_root
 
 
 @click.group(name="config", invoke_without_command=True)
@@ -161,6 +162,18 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None) ->
         result = config_manager.load_config()
         if isinstance(result, Exception):
             raise result
+        from metagit.core.agent.profile_service import AgentProfileService
+
+        definition_root = Path(resolve_definition_root(target_path))
+        profile_issues = AgentProfileService(
+            config=result,
+            definition_root=definition_root,
+        ).list_validation_issues()
+        if profile_issues:
+            for issue in profile_issues:
+                location = issue.repo or issue.project or issue.scope
+                logger.error(f"agent_profile ({location}): {issue.message}")
+            ctx.abort()
         logger.success(f"Configuration file {target_path} is valid")
     except Exception as e:
         logger.error(f"Failed to load metagit configuration file: {e}")

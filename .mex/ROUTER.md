@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-07-01
+last_updated: 2026-07-06
 ---
 
 # Session Bootstrap
@@ -73,6 +73,10 @@ Then read this file fully before doing anything else in this session.
 - **Metagit Web:** local `metagit web serve` + packaged SPA (**Config Studio** on `/config/*`, **Workspace Console** on `/workspace` with repo table, **Explorer** tree view with tag-aware filters and open-in-editor actions, **content grep** search tab, graph view, ops panel, **Repository Terrain** 3D map on `/terrain`) with `task web:dev` / `task web:build` workflow documented in [`docs/reference/metagit-web.md`](../docs/reference/metagit-web.md).
 - **Repository Terrain:** `RepositoryTerrainService` + `GET /v3/ops/terrain` assemble normalized `RepositoryTerrainNode` DTOs (git drift, CI, activity, dependencies, filesystem layout coordinates); SPA Three.js instanced mesh scene with layer toggles and detail panel (`web/src/pages/TerrainPage.tsx`, `web/src/components/terrain/`).
 - **Agents Web console:** `/agents` now includes `Templates`, `Objectives`, and `Sessions` sub-tabs; Objectives uses `/v3/ops/objectives*` for grouped or list-based inline editing with status controls and prominent agent notes, Sessions uses `/v3/ops/session*` for digest + begin-session actions, and both support opt-in polling with a default 90s cadence.
+- **`agent_profile` + `metagit agent apply`:** structured inheritable per-scope blocks (`skills`, `mcp`, `rules`, `vendors`, `tier`, `inherit`) on `Workspace` / `WorkspaceProject` / `ProjectPath`; `AgentProfileService` merges workspace→project→repo, validates bundled catalog ids in `metagit config validate`, and materializes skills/MCP/rules via `metagit agent apply` (tag/project/repo selectors).
+- **Native campaigns:** `metagit campaign …` CLI + `CampaignService`; YAML stored under configurable `workspace.campaigns_path` (default `_campaigns/` at manifest root, env `METAGIT_WORKSPACE_CAMPAIGNS_PATH`)
+- **Coordination hardening:** handoff leases (`--ttl`, `heartbeat`, auto-release); `context events --campaign` / `--objective`; objective `mr_url` / `approval_id`; dispatch-plan profile skill hints.
+- **Modality registry:** `scripts/modality-parity.yml` + `docs/reference/modality-feature-registry.md` (generated); docs/skills carry `<!-- modality:FEATURE_ID -->` anchors; pattern `.mex/patterns/modality-feature-registry.md`.
 
 - **CI/CD dashboard diagnostics:** `PipelineStatusService` now normalizes HTTPS, SSH, and SCP-style GitHub/GitLab remotes for live pipeline lookup and provider filtering; the `/workspace` CI/CD tab surfaces safe provider metadata such as account, scopes, token type, and expiry when the remote API exposes them.
 - **Context packs — T0 map:** pydantic envelopes in `metagit.core.context.models` plus `WorkspaceMapService` (`workspace_map_service.py`) building `WorkspaceMapResult` from `WorkspaceCatalogService.list_workspace(..., include_index=True)` / `repos_index` rows mapped to `WorkspaceMapEntry`.

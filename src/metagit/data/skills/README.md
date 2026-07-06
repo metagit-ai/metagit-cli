@@ -3,6 +3,7 @@
 Installed via `metagit skills install`. All names use the `metagit-` prefix.
 
 - `metagit-context-pack` — tiered context packs, digest, objectives, approvals, handoffs, repomix
+- `metagit-campaign` — native campaigns (`metagit campaign …`), `_campaigns` storage, expand + rollups
 - `metagit-sharing-state` — remote coordination state for multi-agent fleets (`METAGIT_STATE_URL`)
 - `metagit-mcp-resources` — MCP resource read ladder (catalog, map, events poll)
 - `metagit-projects` — workspace project lifecycle

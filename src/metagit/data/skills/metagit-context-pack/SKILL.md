@@ -221,7 +221,8 @@ metagit config validate -c .metagit.yml
 | `context objective list/set/complete/cancel` | `metagit_objective_list` / `metagit_objective_upsert` / `metagit_objective_edit` |
 | `context approval request/list/approve/deny` | `metagit_approval_request` / `metagit_approval_list` / `metagit_approval_resolve` |
 | `context handoff list/create/claim/complete` | `metagit_handoff_list` / `metagit_handoff_create` / `metagit_handoff_claim` / `metagit_handoff_complete` |
-| *(events poll)* | `metagit_events` (+ resource `metagit://events/recent?since=`) |
+| `context handoff heartbeat` / claim `--ttl` | *(CLI-only v0.13)* — renew lease; expired claims auto-release <!-- modality:handoff_lease_heartbeat --> |
+| `context events [--campaign] [--objective]` | `metagit_events` (+ resource `metagit://events/recent?since=`) <!-- modality:coordination_events_scope --> |
 
 Remote state: set `METAGIT_STATE_*` on the **MCP server process**; tools unchanged. Skill: **`metagit-sharing-state`**.
 

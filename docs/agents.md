@@ -56,8 +56,19 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Installed vs latest release | `metagit version check --json` |
 | Self-update (dry-run) | `metagit version upgrade --json` |
 | Self-update (apply) | `metagit version upgrade --apply --json` |
+| Agent profile (merged) | `metagit agent profile show -p P -n R --json` |
+| Materialize agent posture | `metagit agent apply --vendor claude_code -p P -n R` |
+| Campaign list / status | `metagit campaign list` / `metagit campaign status --slug <s>` |
+| Campaign create / expand | `metagit campaign new …` / `metagit campaign expand --slug <s>` |
+
+<!-- modality:agent_profile_apply -->
+<!-- modality:native_campaigns -->
+<!-- modality:objective_mr_approval_binding -->
+<!-- modality:coordination_events_scope -->
 
 Set `--definition path/to/.metagit.yml` when not in the manifest repo root.
+
+Agent profile and campaigns: [reference/agent-profile.md](reference/agent-profile.md), [reference/campaigns.md](reference/campaigns.md). Master index: [reference/modality-feature-registry.md](reference/modality-feature-registry.md).
 
 ## Prompt kinds (`metagit prompt list`)
 
@@ -191,6 +202,19 @@ Catalog adds support **`--ensure`** (auto-enabled in agent mode): re-run succeed
 - **Approvals** — mutating ops queue; `metagit context approval …`
 - **Handoffs** — `.metagit/sessions/handoffs.json`; CLI `metagit context handoff …`
 - **Web UI** (local): `metagit web serve` → objectives/approvals at `/v3/ops/*`
+
+### Handoffs and leases
+
+<!-- modality:handoff_lease_heartbeat -->
+
+```bash
+metagit context handoff claim --id <id> --by agent-1 --ttl 30m
+metagit context handoff heartbeat --id <id> --by agent-1 --ttl 30m
+metagit context events --campaign <slug> --json
+metagit context events --objective <id> --since "2026-07-06T00:00:00Z" --json
+```
+
+Expired claims auto-release when listing handoffs. Objectives may carry `mr_url` and `approval_id` for campaign rollups (`modality:objective_mr_approval_binding`).
 
 ### Sharing state across machines (remote backend)
 

@@ -1,8 +1,9 @@
 ---
 name: metagit-control-center
 description: Use when running metagit as an MCP control center for multi-repo awareness, guarded sync, and operational knowledge across ongoing agent tasks.
+metadata:
+  internal: true
 ---
-
 # Metagit Control Center Skill
 
 Use this skill when an agent should actively coordinate repository context and task execution across a workspace.
@@ -84,6 +85,22 @@ Maintain bounded local records of:
 - issue signatures searched
 - candidate upstream repos identified
 - unresolved dependencies and follow-ups
+
+### 5) Subagent dispatch loop
+
+When delegating single-repo or specialist work:
+
+1. **Route** — `metagit agent list --json` or MCP `metagit_agent_catalog`; pick `template_id` from `delegates_to`.
+2. **Plan** — `metagit agent dispatch-plan <id> --project P --repo R --vendor V --json` or MCP `metagit_agent_dispatch_plan`.
+3. **Profile** — when JSON includes `profile_apply_command`, run it (or `metagit agent apply …`) before launch. <!-- modality:agent_profile_apply --> <!-- modality:dispatch_profile_capabilities -->
+4. **Ensure** — run `install.command` once when `install.needed` is true.
+5. **Hand off** — run `handoff.context_pack` and `handoff.prompt`; pass `handoff.effective_instructions` to the subagent.
+6. **Reconcile** — `metagit_session_update` after the subagent returns; respect `out_of_scope` boundaries.
+
+```bash
+metagit agent dispatch-plan repo-implementer \
+  --project my-api --repo backend --vendor cursor --json
+```
 
 ## Decision Guidelines
 

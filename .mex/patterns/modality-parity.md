@@ -18,8 +18,11 @@ Adapters validate input, call the shared service, return `model_dump(mode="json"
 1. Implement core logic under `src/metagit/core/<area>/`.
 2. Wire **CLI + MCP + Web** in the same PR when the feature is operator-facing (Config Studio–only schema edits are the exception).
 3. Add a row to `scripts/modality-parity.yml` with `markers` per surface (file path + substring).
-4. Add unit tests for the service **and** at least one adapter test per modality touched.
-5. Run `task qa:prepush` (includes `modality_parity` check).
+4. Run `task generate:modality-registry` to refresh `docs/reference/modality-feature-registry.md`.
+5. Add unit tests for the service **and** at least one adapter test per modality touched.
+6. Run `task qa:prepush` (regenerates the registry, then runs `modality_parity` check).
+
+See also: [modality-feature-registry.md](modality-feature-registry.md) for the docs/skills flow-down checklist.
 
 ## Shared orchestrators
 
@@ -27,7 +30,7 @@ Side effects that must run after an approval or apply step belong in a named orc
 
 ## Registry
 
-`scripts/modality-parity.yml` lists features and required markers. `scripts/check_modality_parity.py` fails CI when a declared marker is missing. This is intentionally lightweight (substring checks); expand entries as features ship.
+`scripts/modality-parity.yml` lists features and required markers. `scripts/generate_modality_registry.py` builds the human-readable matrix at `docs/reference/modality-feature-registry.md`. `scripts/check_modality_parity.py` fails CI when a declared marker is missing. This is intentionally lightweight (substring checks); expand entries as features ship.
 
 ## Exceptions (document in YAML)
 

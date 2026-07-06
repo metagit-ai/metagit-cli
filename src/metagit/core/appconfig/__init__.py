@@ -39,6 +39,7 @@ def load_config(config_path: str) -> Union[AppConfig, Exception]:
         # Keep session path discoverable for components that initialize without direct
         # access to AppConfig but honor METAGIT_WORKSPACE_SESSION_PATH overrides.
         os.environ.setdefault("METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path)
+        os.environ.setdefault("METAGIT_WORKSPACE_CAMPAIGNS_PATH", config.workspace.campaigns_path)
         return config
     except Exception as e:
         return e

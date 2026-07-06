@@ -56,3 +56,23 @@ Under `workspace.projects[].repos`, each repository entry may include a flat str
 - `GET /v1/repos/resolve?q=…` — single-match resolution; HTTP `404` when not found, `409` when ambiguous (body includes `ManagedRepoResolveResult` JSON).
 - `GET /v2/workspace/grep?q=…` — content grep across managed repos (optional `project`, `repo`, `preset`, `intent`, `max_results`, `context_lines`, `include_paths`). CLI equivalent: `metagit workspace grep`.
 - `GET /v2/workspace/grep/info` — ripgrep availability and search backend. CLI equivalent: `metagit workspace grep info`.
+
+## Agent profile and campaigns
+
+Structured manifest fields and CLI groups for multi-agent coordination. Full reference: [modality-feature-registry.md](reference/modality-feature-registry.md).
+
+<!-- modality:agent_profile_apply -->
+- **`metagit agent apply`** — materialize merged `agent_profile` blocks into vendor runtimes (`--project`, `--repo`, `--target`, `--dry-run`). See [agent-profile.md](reference/agent-profile.md).
+- **`metagit agent profile show`** — print the effective merged profile for one repo.
+
+<!-- modality:native_campaigns -->
+- **`metagit campaign`** — `list`, `status`, `new`, `validate`, `set`, `expand` for cross-project campaign YAML under `workspace.campaigns_path` (default `_campaigns/`). See [campaigns.md](reference/campaigns.md).
+
+<!-- modality:handoff_lease_heartbeat -->
+<!-- modality:coordination_events_scope -->
+<!-- modality:objective_mr_approval_binding -->
+- **`metagit context handoff`** — queue operations including `claim --ttl`, `heartbeat`, and auto-release of expired claims.
+- **`metagit context events`** — optional `--campaign` / `--objective` filters when polling workspace events.
+
+<!-- modality:dispatch_profile_capabilities -->
+- **`metagit agent dispatch-plan`** — includes profile skill hints and suggested `profile_apply_command` when profiles are configured.

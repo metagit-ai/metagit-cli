@@ -17,6 +17,8 @@ from pydantic import (
 )
 from pydantic_core import core_schema
 
+from metagit.core.workspace.agent_profile_models import AgentProfile
+
 
 class GitUrl(str):
     """Custom type for Git repository URLs."""
@@ -91,6 +93,10 @@ class ProjectPath(BaseModel):
         None,
         validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
         description=("Optional instructions for subagents operating in this repo or path"),
+    )
+    agent_profile: Optional[AgentProfile] = Field(
+        default=None,
+        description="Structured agent posture for this repo (skills, MCP, rules, vendors)",
     )
 
     @field_validator("language_version", mode="before")

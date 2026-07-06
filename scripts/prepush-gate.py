@@ -41,6 +41,12 @@ def resolve_manifest_fixture_cmd() -> list[str]:
     return [sys.executable, "scripts/validate-manifest-fixtures.py"]
 
 
+def resolve_modality_registry_cmd() -> list[str]:
+    if shutil.which("uv"):
+        return ["uv", "run", "python", "scripts/generate_modality_registry.py"]
+    return [sys.executable, "scripts/generate_modality_registry.py"]
+
+
 def resolve_modality_parity_cmd() -> list[str]:
     if shutil.which("uv"):
         return ["uv", "run", "python", "scripts/check_modality_parity.py"]
@@ -195,6 +201,11 @@ def main() -> int:
         failed |= not run_step(
             "manifest_fixtures",
             resolve_manifest_fixture_cmd(),
+            logs_dir,
+        )
+        failed |= not run_step(
+            "modality_registry",
+            resolve_modality_registry_cmd(),
             logs_dir,
         )
         failed |= not run_step(

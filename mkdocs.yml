@@ -20,6 +20,10 @@ nav:
     - 'Configuration exemplar': 'reference/metagit-config.md'
     - 'Workspace layout API': 'reference/workspace-layout-api.md'
     - 'Sharing state (multi-agent)': 'reference/sharing-state.md'
+    - 'Agent profile': 'reference/agent-profile.md'
+    - 'Campaigns': 'reference/campaigns.md'
+    - 'Metagit agent templates': 'reference/metagit-agent.md'
+    - 'Modality feature registry': 'reference/modality-feature-registry.md'
     - 'Metagit Web UI': 'reference/metagit-web.md'
     - 'Skills': 'skills.md'
 markdown_extensions:

@@ -965,6 +965,7 @@ def handoff_create_cmd(
 @click.option("--id", "handoff_id", required=True)
 @click.option("--by", "claimed_by", required=True)
 @click.option("--note", default=None)
+@click.option("--ttl", default=None, help="Claim lease duration (e.g. 30m, 2h, 3600).")
 @click.pass_context
 def handoff_claim_cmd(
     ctx: click.Context,
@@ -972,6 +973,7 @@ def handoff_claim_cmd(
     handoff_id: str,
     claimed_by: str,
     note: str | None,
+    ttl: str | None,
 ) -> None:
     """Claim a handoff for an assignee."""
     _, _, _, session_root, _ = _context_paths(ctx, definition_path)
@@ -980,6 +982,39 @@ def handoff_claim_cmd(
             handoff_id,
             claimed_by=claimed_by,
             note=note,
+            ttl=ttl,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    emit_json(row)
+
+
+@handoff_group.command("heartbeat")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--id", "handoff_id", required=True)
+@click.option("--by", "actor", required=True)
+@click.option("--ttl", default=None, help="Renew lease duration (e.g. 30m, 2h).")
+@click.pass_context
+def handoff_heartbeat_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    handoff_id: str,
+    actor: str,
+    ttl: str | None,
+) -> None:
+    """Renew an active handoff claim lease."""
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    try:
+        row = HandoffService(workspace_root=session_root).heartbeat(
+            handoff_id,
+            actor=actor,
+            ttl=ttl,
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
@@ -1027,18 +1062,24 @@ def handoff_complete_cmd(
     show_default=True,
 )
 @click.option("--since", "since_cursor", default=None)
+@click.option("--campaign", default=None, help="Filter events to one campaign slug.")
+@click.option("--objective", "objective_id", default=None, help="Filter events to one objective id.")
 @click.option("--json", "as_json", is_flag=True, default=False)
 @click.pass_context
 def events_cmd(
     ctx: click.Context,
     definition_path: str,
     since_cursor: str | None,
+    campaign: str | None,
+    objective_id: str | None,
     as_json: bool,
 ) -> None:
     """Emit workspace events since a cursor timestamp."""
     _, _, _, session_root, _ = _context_paths(ctx, definition_path)
     result = WorkspaceEventService(workspace_root=session_root).list_events(
         since=since_cursor,
+        campaign=campaign,
+        objective_id=objective_id,
     )
     if as_json:
         emit_json(result)
