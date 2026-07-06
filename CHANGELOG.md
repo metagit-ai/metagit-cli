@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-
+### Added
+- **`agent_profile`:** structured inheritable blocks on `workspace`, project, and repo scopes (`skills`, `mcp`, `rules`, `vendors`, `tier`, `inherit`); `metagit agent profile show` and `metagit agent apply`; catalog validation in `metagit config validate`
+- **Native campaigns:** `metagit campaign list|status|new|validate|set|expand` with diffable YAML under configurable `workspace.campaigns_path` (default `_campaigns/` at manifest root)
+- **Multi-agent coordination:** handoff claim `--ttl`, `metagit context handoff heartbeat`, auto-release of expired claims; campaign/objective filters on `metagit context events`; objective `mr_url` and `approval_id` fields; capability hints on `agent dispatch-plan` from merged profiles
+- **Modality registry:** master feature matrix in `docs/reference/modality-feature-registry.md` (from `scripts/modality-parity.yml`); reference docs `agent-profile.md`, `campaigns.md`; bundled skills `metagit-campaign` + updated `metagit-cli`, `metagit-context-pack`, `metagit-control-center`
 
 ## [0.13.0] - 2026-07-01
 

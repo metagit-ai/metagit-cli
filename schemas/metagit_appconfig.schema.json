@@ -255,6 +255,12 @@
           "title": "Session Path",
           "type": "string"
         },
+        "campaigns_path": {
+          "default": "_campaigns",
+          "description": "Path for committed campaign YAML overlays. Relative paths resolve from the manifest root. Defaults to _campaigns to avoid colliding with a workspace project named campaigns.",
+          "title": "Campaigns Path",
+          "type": "string"
+        },
         "default_project": {
           "anyOf": [
             {
@@ -441,6 +447,7 @@
       "default": {
         "path": "./.metagit",
         "session_path": ".metagit/sessions",
+        "campaigns_path": "_campaigns",
         "default_project": null,
         "dedupe": {
           "canonical_dir": "_canonical",

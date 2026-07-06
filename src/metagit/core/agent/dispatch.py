@@ -18,9 +18,11 @@ from metagit.core.agent.paths import (
     AGENT_SUPPORTED_TARGETS,
     resolve_vendor_artifact_path,
 )
+from metagit.core.agent.profile_service import AgentProfileService
 from metagit.core.agent.registry import AgentTemplateRegistry
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.resource_catalog import recommended_mcp_resources
+from metagit.core.skills.installer import list_bundled_skills
 from metagit.core.workspace.agent_instructions import AgentInstructionsResolver
 from metagit.core.workspace.models import WorkspaceProject
 
@@ -85,6 +87,11 @@ class AgentDispatchService:
             project_model=project_model,
             repo_model=repo_model,
         )
+        profile_fields = self._profile_capability_fields(
+            vendor=vendor,
+            project=project,
+            repo=repo,
+        )
         return AgentDispatchPlan(
             template_id=template_id,
             vendor=vendor,
@@ -99,6 +106,7 @@ class AgentDispatchService:
             delegates_to=list(manifest.delegates_to),
             mcp_tools=list(manifest.mcp_tools),
             recommended_skills=list(manifest.recommended_skills),
+            **profile_fields,
         )
 
     def _validate_scope_inputs(
@@ -341,6 +349,42 @@ class AgentDispatchService:
             parts.append(f"-n {repo}")
         parts.extend([f"-k {kind}", "--text-only", f"-c {definition_path}"])
         return " ".join(parts)
+
+    def _profile_capability_fields(
+        self,
+        *,
+        vendor: str,
+        project: str | None,
+        repo: str | None,
+    ) -> dict[str, object]:
+        if self._config is None or not project or not repo:
+            return {
+                "required_profile_skills": [],
+                "missing_profile_skills": [],
+                "profile_apply_command": None,
+            }
+        profile_service = AgentProfileService(
+            config=self._config,
+            definition_root=self._manifest_root,
+        )
+        effective = profile_service.effective_profile(project_name=project, repo_name=repo)
+        if effective is None or not effective.skills:
+            return {
+                "required_profile_skills": [],
+                "missing_profile_skills": [],
+                "profile_apply_command": None,
+            }
+        bundled = set(list_bundled_skills())
+        required = [skill for skill in effective.skills if skill in bundled]
+        missing = list(required)
+        apply_command = (
+            f"metagit agent apply --vendor {vendor} --project {project} --repo {repo} --root ." if missing else None
+        )
+        return {
+            "required_profile_skills": required,
+            "missing_profile_skills": missing,
+            "profile_apply_command": apply_command,
+        }
 
     def _derive_out_of_scope(self, manifest: AgentTemplateManifest) -> list[str]:
         base = [

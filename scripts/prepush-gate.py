@@ -41,6 +41,12 @@ def resolve_manifest_fixture_cmd() -> list[str]:
     return [sys.executable, "scripts/validate-manifest-fixtures.py"]
 
 
+def resolve_modality_registry_cmd() -> list[str]:
+    if shutil.which("uv"):
+        return ["uv", "run", "python", "scripts/generate_modality_registry.py"]
+    return [sys.executable, "scripts/generate_modality_registry.py"]
+
+
 def resolve_modality_parity_cmd() -> list[str]:
     if shutil.which("uv"):
         return ["uv", "run", "python", "scripts/check_modality_parity.py"]
@@ -67,6 +73,18 @@ def resolve_pytest_cmd() -> list[str]:
 
 SECURITY_DEP_FILES = frozenset({"pyproject.toml", "uv.lock"})
 SECURITY_SRC_PREFIX = "src/"
+DOC_LINK_TRIGGER_FILES = frozenset(
+    {
+        "README.md",
+        "lychee.toml",
+        "mkdocs.yml",
+        "scripts/check-doc-links.zsh",
+        "scripts/generate_modality_registry.py",
+        "scripts/modality-parity.yml",
+    },
+)
+MODALITY_REGISTRY_MD = "docs/reference/modality-feature-registry.md"
+DOC_LINK_PREFIX = "docs/"
 
 
 def _posix_path(path: str) -> str:
@@ -138,6 +156,60 @@ def security_scan_plan(changed: set[str] | None) -> tuple[bool, bool, bool]:
     return (False, False, False)
 
 
+def _full_docs_link_targets() -> list[str]:
+    docs_root = Path("docs")
+    return [
+        "README.md",
+        *[path.as_posix() for path in sorted(docs_root.rglob("*.md"))],
+    ]
+
+
+def docs_link_scan_plan(changed: set[str] | None) -> list[str] | None:
+    """Return lychee target paths, or None to skip when docs links are unaffected."""
+    if changed is None or not changed:
+        return _full_docs_link_targets()
+
+    triggered = False
+    targets: set[str] = set()
+    for path in changed:
+        if path in DOC_LINK_TRIGGER_FILES or path.startswith(DOC_LINK_PREFIX):
+            triggered = True
+            if path.endswith(".md") and (path == "README.md" or path.startswith(DOC_LINK_PREFIX)):
+                targets.add(path)
+
+    if not triggered:
+        return None
+
+    if {"scripts/modality-parity.yml", "scripts/generate_modality_registry.py"} & changed:
+        targets.add(MODALITY_REGISTRY_MD)
+
+    return sorted(targets) if targets else _full_docs_link_targets()
+
+
+def _resolve_lychee() -> str | None:
+    home_bin = Path.home() / ".cargo" / "bin" / "lychee"
+    for candidate in ("lychee", str(home_bin)):
+        if shutil.which(candidate):
+            return candidate
+    return None
+
+
+def run_docs_link_scan(logs_dir: Path, *, strict: bool = False) -> bool:
+    """Run lychee when README/docs or doc generators changed; skip for src-only diffs."""
+    targets = docs_link_scan_plan(changed_paths_for_security())
+    if targets is None:
+        print("SKIP: doc_links (no changes under README.md, docs/, or doc-link generators)")
+        return True
+
+    lychee = _resolve_lychee()
+    if lychee is None:
+        print("SKIP: doc_links (lychee not installed; brew install lychee)")
+        return not strict
+
+    cmd = [lychee, "--config", "lychee.toml", *targets]
+    return run_step("doc_links", cmd, logs_dir)
+
+
 def run_security_scan(logs_dir: Path) -> bool:
     """Run pip-audit/bandit when lockfile or src/ changed; skip for docs-only diffs."""
     changed = changed_paths_for_security()
@@ -198,10 +270,16 @@ def main() -> int:
             logs_dir,
         )
         failed |= not run_step(
+            "modality_registry",
+            resolve_modality_registry_cmd(),
+            logs_dir,
+        )
+        failed |= not run_step(
             "modality_parity",
             resolve_modality_parity_cmd(),
             logs_dir,
         )
+        failed |= not run_docs_link_scan(logs_dir, strict=args.strict)
         failed |= not run_step(
             "changelog_check",
             resolve_changelog_check_cmd(),

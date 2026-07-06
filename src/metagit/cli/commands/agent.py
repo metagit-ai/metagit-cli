@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -14,10 +15,42 @@ from metagit.core.agent import AGENT_SUPPORTED_TARGETS, AgentService
 from metagit.core.agent.models import AgentOverlayInitMode, AgentOverlayScope
 from metagit.core.agent.overlay import primary_overlay_edit_path
 from metagit.core.agent.paths import autodetect_agent_targets
+from metagit.core.agent.profile_service import AgentProfileService
 from metagit.core.agent.schema_generator import write_agent_template_schema
 from metagit.core.appconfig import load_config as load_appconfig
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.utils.common import open_editor
-from metagit.core.workspace.root_resolver import resolve_definition_root
+from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_sync_root
+
+
+def _parse_tag_filters(tag_values: tuple[str, ...]) -> dict[str, str] | None:
+    if not tag_values:
+        return None
+    parsed: dict[str, str] = {}
+    for item in tag_values:
+        if "=" not in item:
+            raise click.ClickException(f"Invalid --tag (expected key=value): {item!r}")
+        key, value = item.split("=", 1)
+        parsed[key] = value
+    return parsed
+
+
+def _profile_service(root: str, *, config_path: str | None = None) -> AgentProfileService:
+    manifest_root = _require_manifest_root(root)
+    manager = MetagitConfigManager(config_path=os.path.join(root, ".metagit.yml"))
+    config = manager.load_config()
+    if isinstance(config, Exception):
+        raise click.ClickException(str(config))
+    workspace_root = manifest_root
+    if config_path:
+        appconfig = load_appconfig(config_path)
+        if not isinstance(appconfig, Exception) and appconfig.workspace and appconfig.workspace.path:
+            workspace_root = Path(resolve_sync_root(str(manifest_root), appconfig.workspace.path))
+    return AgentProfileService(
+        config=config,
+        definition_root=manifest_root,
+        workspace_root=workspace_root,
+    )
 
 
 def _emit_json(payload: object) -> None:
@@ -478,6 +511,147 @@ def agent_create(
         logger.echo(f"{verb} agent: {path}")
     for item in install_results:
         logger.echo(f"{item.details} -> {item.path}")
+
+
+@agent.command("apply")
+@click.option(
+    "--vendor",
+    type=click.Choice(AGENT_SUPPORTED_TARGETS),
+    required=True,
+    help="Vendor runtime to materialize profiles into.",
+)
+@click.option(
+    "--project",
+    "-p",
+    default=None,
+    help="Limit to one workspace project.",
+)
+@click.option(
+    "--repo",
+    "-n",
+    default=None,
+    help="Limit to one repository within --project.",
+)
+@click.option(
+    "--tag",
+    "tag_values",
+    multiple=True,
+    help="Filter targets by inherited tag, e.g. --tag agent_tier=full",
+)
+@click.option(
+    "--root",
+    type=click.Path(exists=True, file_okay=True, dir_okay=True),
+    default=".",
+    show_default=True,
+    help="Manifest root containing `.metagit.yml`.",
+)
+@click.option(
+    "--scope",
+    type=click.Choice(["project", "user"]),
+    default="project",
+    show_default=True,
+    help="Install scope for skills and MCP artifacts.",
+)
+@click.option("--dry-run", is_flag=True, help="Print the apply plan without writing files.")
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON.")
+@click.pass_context
+def agent_apply(
+    ctx: click.Context,
+    vendor: str,
+    project: Optional[str],
+    repo: Optional[str],
+    tag_values: tuple[str, ...],
+    root: str,
+    scope: str,
+    dry_run: bool,
+    as_json: bool,
+) -> None:
+    """Materialize merged agent_profile blocks into vendor runtimes."""
+    if repo and not project:
+        raise click.ClickException("--repo requires --project")
+    config_path = ctx.obj.get("config_path")
+    service = _profile_service(root, config_path=config_path)
+    try:
+        summary = service.apply(
+            vendor=vendor,
+            scope=scope,  # type: ignore[arg-type]
+            project=project,
+            repo=repo,
+            tag_filters=_parse_tag_filters(tag_values),
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    if as_json:
+        _emit_json(summary.model_dump(mode="json"))
+        return
+    logger = ctx.obj["logger"]
+    if not summary.targets:
+        logger.warning("No repositories matched the selection or had an agent profile.")
+        return
+    for target in summary.targets:
+        prefix = "Would apply" if dry_run else "Applied"
+        logger.echo(f"{prefix} {target.project_name}/{target.repo_name} @ {target.repo_path}")
+        for detail in target.details:
+            logger.echo(f"  {detail}")
+
+
+@click.group(name="profile")
+def agent_profile() -> None:
+    """Inspect and validate agent_profile blocks in the manifest."""
+
+
+@agent_profile.command("show")
+@click.option(
+    "--project",
+    "-p",
+    required=True,
+    help="Workspace project name.",
+)
+@click.option(
+    "--repo",
+    "-n",
+    required=True,
+    help="Repository name within --project.",
+)
+@click.option(
+    "--root",
+    type=click.Path(exists=True, file_okay=True, dir_okay=True),
+    default=".",
+    show_default=True,
+    help="Manifest root containing `.metagit.yml`.",
+)
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON.")
+@click.pass_context
+def agent_profile_show(
+    ctx: click.Context,
+    project: str,
+    repo: str,
+    root: str,
+    as_json: bool,
+) -> None:
+    """Print the fully merged effective agent profile for one repo."""
+    _ = ctx
+    config_path = ctx.obj.get("config_path")
+    service = _profile_service(root, config_path=config_path)
+    effective = service.effective_profile(project_name=project, repo_name=repo)
+    if effective is None:
+        raise click.ClickException(f"No profile or repo found for {project}/{repo}")
+    if as_json:
+        _emit_json(effective.model_dump(mode="json"))
+        return
+    click.echo(f"tier: {effective.tier or '(unset)'}")
+    click.echo(f"skills: {', '.join(effective.skills) if effective.skills else '(none)'}")
+    click.echo(f"mcp: {', '.join(effective.mcp) if effective.mcp else '(none)'}")
+    click.echo(f"rules: {', '.join(effective.rules) if effective.rules else '(none)'}")
+    click.echo(f"vendors: {', '.join(effective.vendors) if effective.vendors else '(all)'}")
+    if effective.layers:
+        click.echo("layers:")
+        for layer in effective.layers:
+            click.echo(f"  - {layer.scope}")
+
+
+agent.add_command(agent_profile)
 
 
 @click.group(name="overlay")

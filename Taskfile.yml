@@ -312,6 +312,12 @@ tasks:
         cp ./schemas/metagit_appconfig.schema.json docs/reference/schemas/metagit_appconfig.schema.json
         cp ./schemas/agent_template.schema.json docs/reference/schemas/agent_template.schema.json
         uv run metagit config example --output docs/reference/metagit-config.full-example.yml
+      - uv run python scripts/generate_modality_registry.py
+
+  generate:modality-registry:
+    desc: Regenerate docs/reference/modality-feature-registry.md from modality-parity.yml
+    cmds:
+      - uv run python scripts/generate_modality_registry.py
 
   repomix:
     desc: Run the repo mixin

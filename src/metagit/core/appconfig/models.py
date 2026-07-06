@@ -60,6 +60,13 @@ class WorkspaceConfig(BaseModel):
             "Path for workspace session state (metadata/objectives). Relative paths resolve from workspace root."
         ),
     )
+    campaigns_path: str = Field(
+        default="_campaigns",
+        description=(
+            "Path for committed campaign YAML overlays. Relative paths resolve from the manifest root. "
+            "Defaults to _campaigns to avoid colliding with a workspace project named campaigns."
+        ),
+    )
     default_project: Optional[str] = Field(
         default=None,
         description=(
@@ -281,6 +288,7 @@ class AppConfig(BaseModel):
             # Override with environment variables
             config = cls._override_from_environment(config)
             os.environ.setdefault("METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path)
+            os.environ.setdefault("METAGIT_WORKSPACE_CAMPAIGNS_PATH", config.workspace.campaigns_path)
 
             return config
 
@@ -340,6 +348,8 @@ class AppConfig(BaseModel):
             config.workspace.path = os.getenv("METAGIT_WORKSPACE_PATH")
         if os.getenv("METAGIT_WORKSPACE_SESSION_PATH"):
             config.workspace.session_path = os.getenv("METAGIT_WORKSPACE_SESSION_PATH")
+        if os.getenv("METAGIT_WORKSPACE_CAMPAIGNS_PATH"):
+            config.workspace.campaigns_path = os.getenv("METAGIT_WORKSPACE_CAMPAIGNS_PATH")
         if os.getenv("METAGIT_WORKSPACE_DEFAULT_PROJECT"):
             config.workspace.default_project = os.getenv("METAGIT_WORKSPACE_DEFAULT_PROJECT")
         if os.getenv("METAGIT_WORKSPACE_DEDUPE_ENABLED"):

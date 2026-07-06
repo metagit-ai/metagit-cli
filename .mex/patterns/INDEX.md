@@ -34,6 +34,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [metagit-web-api.md](metagit-web-api.md) | Adding or changing Pydantic models and routes for `metagit web serve` |
 | [repository-terrain-web.md](repository-terrain-web.md) | Repository Terrain 3D view, DTO layer, or `/v3/ops/terrain` |
 | [modality-parity.md](modality-parity.md) | Shipping a feature across CLI, MCP, and web — shared services + parity registry |
+| [modality-feature-registry.md](modality-feature-registry.md) | Registering features in modality-parity.yml and flowing docs/skills updates |
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |
 | [changelog-release.md](changelog-release.md) | Updating `CHANGELOG.md`, docs publishing, and semantic-release note promotion |
 | [context-pack-repo-cards.md](context-pack-repo-cards.md) | Tier-1 context pack repo cards (`RepoCardService`, index + `inspect_repo_state`) |

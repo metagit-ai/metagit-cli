@@ -19,4 +19,8 @@ if [[ -z "$lychee_bin" ]]; then
   exit 1
 fi
 
+if [[ $# -gt 0 ]]; then
+  exec "$lychee_bin" --config lychee.toml "$@"
+fi
+
 exec "$lychee_bin" --config lychee.toml README.md 'docs/**/*.md'

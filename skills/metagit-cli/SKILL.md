@@ -1,8 +1,9 @@
 ---
 name: metagit-cli
 description: CLI-only shortcuts for metagit agents — workspace catalog, discovery, prompts, sync, layout, and config. Use instead of MCP or HTTP API when operating from a shell or agent_mode session.
+metadata:
+  internal: true
 ---
-
 # Metagit CLI (agent shortcuts)
 
 Use this skill when an agent should drive metagit **only through the `metagit` command**. Do not call MCP tools or `metagit api` from workflows covered here unless the user explicitly asks.
@@ -340,25 +341,48 @@ metagit appconfig tree --json
 metagit appconfig preview --file ops.json
 metagit appconfig patch --file ops.json --save
 metagit config providers --show
+metagit appconfig get --name config.workspace.campaigns_path
 ```
+
+`workspace.campaigns_path` (default `_campaigns`) stores committed campaign YAML at the manifest root. Env: `METAGIT_WORKSPACE_CAMPAIGNS_PATH`.
 
 ---
 
-## Records, skills, agents, version
+## Agent profile and apply
+
+<!-- modality:agent_profile_apply -->
+
+| Task | Command |
+|------|---------|
+| Show merged profile | `metagit agent profile show -p <project> -n <repo> --json` |
+| Materialize into clone | `metagit agent apply --vendor claude_code -p <project> -n <repo>` |
+| Tag-driven fan-out | `metagit agent apply --vendor cursor --tag agent_tier=full --dry-run` |
+
+Doc: [agent-profile.md](https://metagit-ai.github.io/metagit-cli/reference/agent-profile/)
+
+---
+
+## Campaigns
+
+<!-- modality:native_campaigns -->
+
+| Task | Command |
+|------|---------|
+| List / status | `metagit campaign list` / `metagit campaign status --slug <s> --json` |
+| Create | `metagit campaign new --slug <s> --title "…" --query "…"` |
+| Validate / set / expand | `metagit campaign validate` / `set` / `expand --dry-run` |
+
+Skill: `metagit-campaign`
+
+---
+
+## Records, skills, version
 
 ```bash
 metagit record search "<query>"
 metagit skills list
 metagit skills show metagit-cli
 metagit skills install --skill metagit-cli
-metagit agent list
-metagit agent export orchestration-overseer -o ./agent-bundle --no-prompt
-metagit agent create orchestration-overseer --vendor cursor --install-skills --install-mcp
-metagit agent create orchestration-overseer --vendor github_copilot --scope project
-metagit agent create orchestration-overseer --vendor hermes --scope user
-metagit agent create orchestration-overseer --vendor opencode --scope project
-metagit agent create orchestration-overseer --vendor windsurf --scope project
-metagit agent create orchestration-overseer --vendor codex --scope project
 metagit version
 metagit version check --json
 metagit version upgrade --json
@@ -381,4 +405,4 @@ metagit info
 
 ## Related bundled skills
 
-Use topic skills when you need deeper playbooks (some mention MCP): `metagit-context-pack` (tiered packs, digest, objectives, approvals, repomix), `metagit-projects`, `metagit-workspace-scope`, `metagit-workspace-sync`, `metagit-config-refresh`. This skill is the **CLI-only** index and prompt reference.
+Use topic skills when you need deeper playbooks (some mention MCP): `metagit-context-pack` (tiered packs, digest, objectives, approvals, repomix), `metagit-campaign` (multi-repo rollouts), `metagit-projects`, `metagit-workspace-scope`, `metagit-workspace-sync`, `metagit-config-refresh`. Modality index: [modality-feature-registry.md](https://metagit-ai.github.io/metagit-cli/reference/modality-feature-registry/). This skill is the **CLI-only** index and prompt reference.

@@ -300,3 +300,6 @@ class AgentDispatchPlan(BaseModel):
     delegates_to: list[str] = Field(default_factory=list)
     mcp_tools: list[str] = Field(default_factory=list)
     recommended_skills: list[str] = Field(default_factory=list)
+    required_profile_skills: list[str] = Field(default_factory=list)
+    missing_profile_skills: list[str] = Field(default_factory=list)
+    profile_apply_command: str | None = None

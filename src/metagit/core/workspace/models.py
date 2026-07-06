@@ -13,6 +13,7 @@ from metagit.core.config.documentation_models import (
 )
 from metagit.core.project.models import ProjectPath
 from metagit.core.project.source_models import ProjectSource
+from metagit.core.workspace.agent_profile_models import AgentProfile
 
 
 class ProjectDedupeOverride(BaseModel):
@@ -41,6 +42,10 @@ class WorkspaceProject(BaseModel):
         None,
         validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
         description="Optional instructions for agents working in this workspace project",
+    )
+    agent_profile: Optional[AgentProfile] = Field(
+        default=None,
+        description="Structured agent posture (skills, MCP, rules) inherited by repos unless overridden",
     )
     dedupe: Optional[ProjectDedupeOverride] = Field(
         default=None,
@@ -114,6 +119,10 @@ class Workspace(BaseModel):
         None,
         validation_alias=AliasChoices("agent_instructions", "agent_prompt"),
         description="Optional instructions for agents working in this workspace",
+    )
+    agent_profile: Optional[AgentProfile] = Field(
+        default=None,
+        description="Workspace-wide structured agent posture inherited by projects and repos",
     )
     projects: List[WorkspaceProject] = Field(..., description="Workspace projects")
 

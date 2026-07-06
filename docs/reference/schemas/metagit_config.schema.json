@@ -1,5 +1,64 @@
 {
   "$defs": {
+    "AgentProfile": {
+      "additionalProperties": false,
+      "description": "Structured agent posture declared at workspace, project, or repo scope.",
+      "properties": {
+        "tier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset",
+          "title": "Tier"
+        },
+        "skills": {
+          "description": "Bundled skill ids to install for agents working in this scope",
+          "items": {
+            "type": "string"
+          },
+          "title": "Skills",
+          "type": "array"
+        },
+        "mcp": {
+          "description": "MCP server ids to configure (references only, never inline payloads)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Mcp",
+          "type": "array"
+        },
+        "rules": {
+          "description": "Rule ids to materialize into vendor rule directories",
+          "items": {
+            "type": "string"
+          },
+          "title": "Rules",
+          "type": "array"
+        },
+        "vendors": {
+          "description": "Vendor runtimes this profile targets (empty = all supported vendors)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Vendors",
+          "type": "array"
+        },
+        "inherit": {
+          "default": true,
+          "description": "When true, merge with parent scope profile; when false, use verbatim",
+          "title": "Inherit",
+          "type": "boolean"
+        }
+      },
+      "title": "AgentProfile",
+      "type": "object"
+    },
     "AlertingChannel": {
       "additionalProperties": false,
       "description": "Model for alerting channel.",
@@ -478,6 +537,18 @@
           "default": null,
           "description": "Optional instructions for subagents operating in this repo or path",
           "title": "Agent Instructions"
+        },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured agent posture for this repo (skills, MCP, rules, vendors)"
         },
         "kind": {
           "$ref": "#/$defs/DependencyKind",
@@ -1347,6 +1418,18 @@
           "description": "Optional instructions for subagents operating in this repo or path",
           "title": "Agent Instructions"
         },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured agent posture for this repo (skills, MCP, rules, vendors)"
+        },
         "agent_prompt": {
           "anyOf": [
             {
@@ -1704,6 +1787,18 @@
           "description": "Optional instructions for agents working in this workspace",
           "title": "Agent Instructions"
         },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Workspace-wide structured agent posture inherited by projects and repos"
+        },
         "projects": {
           "description": "Workspace projects",
           "items": {
@@ -1788,6 +1883,18 @@
           "default": null,
           "description": "Optional instructions for agents working in this workspace project",
           "title": "Agent Instructions"
+        },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured agent posture (skills, MCP, rules) inherited by repos unless overridden"
         },
         "dedupe": {
           "anyOf": [

@@ -19,21 +19,40 @@ class WorkspaceEventService:
     def __init__(self, workspace_root: str) -> None:
         self._root = str(Path(workspace_root).expanduser().resolve())
 
-    def list_events(self, *, since: Optional[str] = None) -> WorkspaceEventsResult:
+    def list_events(
+        self,
+        *,
+        since: Optional[str] = None,
+        campaign: Optional[str] = None,
+        objective_id: Optional[str] = None,
+    ) -> WorkspaceEventsResult:
         rows: list[WorkspaceEvent] = []
 
         for item in ObjectiveService(workspace_root=self._root).list().objectives:
+            if objective_id and item.id != objective_id:
+                continue
+            if campaign and not item.id.startswith(f"campaign-{campaign}-"):
+                continue
             rows.append(
                 WorkspaceEvent(
                     timestamp=item.updated_at,
                     source="objective",
                     kind=item.status,
                     id=item.id,
-                    data={"title": item.title, "repos": list(item.repos)},
+                    data={
+                        "title": item.title,
+                        "repos": list(item.repos),
+                        "mr_url": item.mr_url,
+                        "approval_id": item.approval_id,
+                    },
                 )
             )
 
         for req in ApprovalService(workspace_root=self._root).list(status=None).requests:
+            if objective_id and req.payload.get("objective_id") != objective_id:
+                continue
+            if campaign and req.payload.get("campaign") != campaign:
+                continue
             rows.append(
                 WorkspaceEvent(
                     timestamp=req.resolved_at or req.created_at,
@@ -45,6 +64,10 @@ class WorkspaceEventService:
             )
 
         for handoff in HandoffService(workspace_root=self._root).list().handoffs:
+            if objective_id and handoff.payload.get("objective_id") != objective_id:
+                continue
+            if campaign and handoff.payload.get("campaign") != campaign:
+                continue
             rows.append(
                 WorkspaceEvent(
                     timestamp=handoff.updated_at,
