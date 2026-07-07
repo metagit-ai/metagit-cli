@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixed
+- **Test suite env independence:** an autouse fixture now clears `METAGIT_AGENT_MODE` before each test so a value exported in the caller's shell (common in agent/automation shells) can't disable interactive paths and cause spurious failures in CLI picker and appconfig-display tests. Tests needing the variable set it explicitly.
+
 
 
 ## [0.15.0] - 2026-07-07

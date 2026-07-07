@@ -41,6 +41,22 @@ def cleanup_logging():
     logger.remove()
 
 
+@pytest.fixture(autouse=True)
+def clear_agent_mode_env(monkeypatch):
+    """Ensure a stray ``METAGIT_AGENT_MODE`` in the caller's shell can't leak
+    into tests.
+
+    Several CLI tests exercise interactive paths (the fuzzy-finder picker) or
+    assert the default ``agent_mode`` posture. When ``METAGIT_AGENT_MODE`` is
+    exported in the environment running pytest (common in agent/automation
+    shells), it silently disables those paths and the tests fail spuriously.
+    Clearing it per-test makes the suite env-independent. Tests that need the
+    variable set it explicitly with ``monkeypatch.setenv`` after this fixture
+    has run.
+    """
+    monkeypatch.delenv("METAGIT_AGENT_MODE", raising=False)
+
+
 @pytest.fixture
 def temp_dir():
     """Create a temporary directory for test use."""
