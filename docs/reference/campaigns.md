@@ -117,6 +117,7 @@ CLI-only in v0.13.x. Objectives/approvals/handoffs remain available via MCP and 
 ## Related skills
 
 - `metagit-campaign` — full lifecycle playbook
+- `metagit-rewrite-campaign` — source + target reference rewrite (see [Reference rewrite workspace](../metagit-rewrite-workspace.md))
 - `metagit-cli` — command index
 - `metagit-multi-repo` — implementation across repos after expand
 

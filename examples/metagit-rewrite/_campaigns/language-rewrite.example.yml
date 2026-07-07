@@ -1,0 +1,34 @@
+# Example campaign overlay. Copy to language-rewrite.yml and adjust URLs/paths,
+# or recreate with:
+#   metagit campaign new --slug language-rewrite --title "Language rewrite" \
+#     --repo rewrite/source --repo rewrite/target \
+#     --reference rewrite/source \
+#     --goal "Reach CLI and MCP parity with the Python reference implementation"
+schema_version: "1.0"
+slug: language-rewrite
+title: Metagit CLI language rewrite
+status: draft
+goal: |
+  Reach behavioral parity for CLI surface, config model, and MCP runtime between
+  the Python source repository and the new-language target repository.
+reference_impl: rewrite/source
+created: "2026-07-07T00:00:00+00:00"
+updated: "2026-07-07T00:00:00+00:00"
+selection:
+  query: null
+  tags: {}
+  resolved_at: "2026-07-07T00:00:00+00:00"
+repos:
+  - project: rewrite
+    repo: source
+    role: reference
+    status: merged
+    note: Canonical Python implementation; read-only for rewrite agents
+  - project: rewrite
+    repo: target
+    role: implementation
+    status: pending
+    note: Scaffold target repo and wire campaign expand objectives
+lessons:
+  - text: Run `metagit campaign expand --dry-run` before fanning out parallel agents
+    recorded_at: "2026-07-07T00:00:00+00:00"

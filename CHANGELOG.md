@@ -5,6 +5,9 @@
 ### Fixed
 - **`metagit tui`:** remove the Context & agents command group from the hub menu; fix repository picker `RuntimeError: asyncio.run() cannot be called from a running event loop` by running nested Textual fuzzy finder apps in a worker thread when the hub already owns an asyncio loop.
 
+### Added
+- **Reference rewrite workspace:** `metagit-rewrite` init template, `examples/metagit-rewrite/` manifest with campaign and parity-registry conventions, `docs/metagit-rewrite-workspace.md`, bundled skill **`metagit-rewrite-campaign`** (orchestrator loop + script), and repomix profiles `rewrite-source` / `rewrite-target`.
+
 ## [0.15.1] - 2026-07-07
 
 

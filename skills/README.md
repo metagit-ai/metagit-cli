@@ -41,6 +41,7 @@ Other targets: `opencode`, `claude_code`, `cursor`, `github_copilot`, `windsurf`
 |-------|----------|
 | `metagit-context-pack` | Session start; tiered packs (map, cards, digest), objectives, approvals, handoffs, repomix profiles |
 | `metagit-campaign` | Cross-project campaign YAML (`metagit campaign …`), expand objectives, MR rollups |
+| `metagit-rewrite-campaign` | Source + target reference rewrite; parity registry, orchestrator loop, subagent dispatch |
 | `metagit-mcp-resources` | MCP `resources/read` ladder: catalog, map, layered prompts, project/repo drill-down |
 | `metagit-cli` | CLI-only agent workflows: all `metagit prompt` kinds, catalog, detect, sync, layout (no MCP/API) |
 | `metagit-workspace-grep` | On-disk content search across managed repos (CLI, MCP, HTTP); not manifest `metagit search` |

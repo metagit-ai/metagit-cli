@@ -303,6 +303,12 @@ def _print_next_steps(
         logger.info("  metagit project sync --project local")
         logger.info("  metagit mcp serve --root .")
         return
+    if template_id == "metagit-rewrite":
+        logger.info("  metagit project sync --project rewrite")
+        logger.info("  metagit campaign validate")
+        logger.info("  metagit campaign expand --slug language-rewrite --dry-run")
+        logger.info("  metagit skills install --skill metagit-rewrite-campaign")
+        return
     if effective_kind == "application":
         logger.info("  metagit detect repo --force   # optional discovery")
         logger.info("  metagit project sync --project local   # when using paths block")

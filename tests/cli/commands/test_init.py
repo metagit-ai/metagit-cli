@@ -50,6 +50,7 @@ def test_init_list_templates() -> None:
   result = runner.invoke(cli, ["init", "--list-templates"])
   assert result.exit_code == 0, result.output
   assert "hermes-orchestrator" in result.output
+  assert "metagit-rewrite" in result.output
   assert "application" in result.output
 
 

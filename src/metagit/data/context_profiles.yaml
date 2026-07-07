@@ -24,3 +24,21 @@ profiles:
       - docs/reference/**
     exclude:
       - "**/__pycache__/**"
+
+  rewrite-source:
+    include:
+      - src/**
+      - tests/**
+      - schemas/**
+      - docs/reference/**
+    exclude:
+      - "**/__pycache__/**"
+
+  rewrite-target:
+    include:
+      - src/**
+      - tests/**
+      - crates/**
+    exclude:
+      - "**/__pycache__/**"
+      - "**/target/**"
