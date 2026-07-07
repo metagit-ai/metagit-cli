@@ -27,7 +27,7 @@ metagit init --target ./rewrite-coordinator --create --template metagit-rewrite 
 
 ### Option B — copy the example manifest
 
-Copy [examples/metagit-rewrite/.metagit.yml](https://github.com/metagit-ai/metagit-cli/blob/main/examples/metagit-rewrite/.metagit.yml)
+Copy [examples/metagit-rewrite/.metagit.yml](../examples/metagit-rewrite/.metagit.yml)
 into your coordinator repository and adjust repo URLs.
 
 ### Wire app config and sync
@@ -77,7 +77,7 @@ Cloned repos appear under your configured `workspace.path` (default `./.metagit`
 | Active task | objectives JSON | `rewrite-foundation-config-manager` |
 | Cross-repo semantics | `graph.relationships` | `target` **implements** `source` |
 
-See [objectives.example.json](https://github.com/metagit-ai/metagit-cli/blob/main/examples/metagit-rewrite/objectives.example.json)
+See [objectives.example.json](../examples/metagit-rewrite/objectives.example.json)
 for sample objective payloads.
 
 ## Orchestrator workflow
