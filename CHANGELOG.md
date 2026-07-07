@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.16.0] - 2026-07-07
+
+
+
 ### Fixed
 - **`metagit tui`:** remove the Context & agents command group from the hub menu; fix repository picker `RuntimeError: asyncio.run() cannot be called from a running event loop` by running nested Textual fuzzy finder apps in a worker thread when the hub already owns an asyncio loop.
 
