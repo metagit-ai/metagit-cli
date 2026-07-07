@@ -119,6 +119,10 @@ def campaign_status(ctx: click.Context, slug: str, definition_path: str, as_json
         _emit_json(result.model_dump(mode="json"))
         return
     click.echo(f"{result.campaign.title} ({result.campaign.status})")
+    if result.campaign.goal:
+        click.echo(f"goal: {result.campaign.goal}")
+    if result.campaign.reference_impl:
+        click.echo(f"reference: {result.campaign.reference_impl}")
     click.echo(
         f"rollup: {result.merged_count} merged, {result.open_mr_count} MRs open, "
         f"{result.blocked_count} blocked, {result.pending_count} pending",
@@ -132,8 +136,20 @@ def campaign_status(ctx: click.Context, slug: str, definition_path: str, as_json
 @campaign.command("new")
 @click.option("--slug", required=True, help="Campaign slug (filename stem).")
 @click.option("--title", required=True, help="Human-readable campaign title.")
-@click.option("--query", required=True, help="Repository selection query (metagit find syntax).")
+@click.option(
+    "--query",
+    default=None,
+    help="Repository selection query (metagit find syntax). Provide this or --repo.",
+)
+@click.option(
+    "--repo",
+    "repo_selectors",
+    multiple=True,
+    help="Explicit project/repo to include (repeatable). Freezes the repo set (no query drift).",
+)
 @click.option("--tag", "tag_values", multiple=True, help="Optional tag filter during selection.")
+@click.option("--goal", default=None, help="Free-text objective describing what the campaign delivers.")
+@click.option("--reference", "reference_impl", default=None, help="Exemplar repo (project/repo) to model changes on.")
 @click.option("--objective-id", default=None, help="Optional spine objective id to bind.")
 @click.option(
     "--definition",
@@ -147,13 +163,16 @@ def campaign_new(
     ctx: click.Context,
     slug: str,
     title: str,
-    query: str,
+    query: Optional[str],
+    repo_selectors: tuple[str, ...],
     tag_values: tuple[str, ...],
+    goal: Optional[str],
+    reference_impl: Optional[str],
     objective_id: Optional[str],
     definition_path: str,
     as_json: bool,
 ) -> None:
-    """Create a campaign by resolving repos from a query."""
+    """Create a campaign by resolving repos from a query or an explicit --repo list."""
     _ = ctx
     service, _ = _campaign_service(definition_path, config_path=ctx.obj.get("config_path"))
     try:
@@ -161,8 +180,11 @@ def campaign_new(
             slug=slug,
             title=title,
             query=query,
+            repos=list(repo_selectors) or None,
             tag_filters=_parse_tag_filters(tag_values),
             objective_id=objective_id,
+            goal=goal,
+            reference_impl=reference_impl,
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
