@@ -3,12 +3,38 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 CampaignStatus = Literal["draft", "active", "completed", "archived"]
 CampaignRepoStatus = Literal["pending", "routed", "mr-open", "merged", "blocked"]
+
+# Legacy status aliases accepted on load and normalized to the canonical enum.
+# Supports overlays authored before the native schema existed (e.g. SRAM's
+# ``task campaign:*`` layer which wrote ``complete`` instead of ``completed``).
+_STATUS_ALIASES = {"complete": "completed", "done": "completed", "in-progress": "active"}
+
+
+def _coerce_tags(value: Any) -> dict[str, str]:
+    """Normalize a tag filter set to a dict.
+
+    Legacy overlays wrote ``selection.tags`` as a list (often empty, or
+    ``key=value`` strings). Native uses a dict. Accept both so pre-existing
+    campaign documents load without a rewrite.
+    """
+    if value is None:
+        return {}
+    if isinstance(value, dict):
+        return {str(k): str(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        parsed: dict[str, str] = {}
+        for item in value:
+            if isinstance(item, str) and "=" in item:
+                key, val = item.split("=", 1)
+                parsed[key] = val
+        return parsed
+    return {}
 
 
 class CampaignSelection(BaseModel):
@@ -20,6 +46,11 @@ class CampaignSelection(BaseModel):
         default=None,
         description="ISO timestamp when repos[] was frozen",
     )
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def _normalize_tags(cls, value: Any) -> dict[str, str]:
+        return _coerce_tags(value)
 
 
 class CampaignRepoEntry(BaseModel):
@@ -47,13 +78,44 @@ class CampaignDocument(BaseModel):
     slug: str
     title: str
     status: CampaignStatus = Field(default="draft")
+    goal: Optional[str] = Field(
+        default=None,
+        description="Free-text objective describing what the campaign delivers",
+    )
+    reference_impl: Optional[str] = Field(
+        default=None,
+        description="Exemplar repo (project/repo) to model other repos' changes on",
+    )
     objective_id: Optional[str] = Field(
         default=None,
         description="Optional 1:1 spine objective id",
     )
+    created: Optional[str] = Field(
+        default=None,
+        description="ISO date/timestamp the campaign was created",
+    )
+    updated: Optional[str] = Field(
+        default=None,
+        description="ISO date/timestamp the campaign was last modified",
+    )
     selection: CampaignSelection = Field(default_factory=CampaignSelection)
     repos: list[CampaignRepoEntry] = Field(default_factory=list)
     lessons: list[CampaignLesson] = Field(default_factory=list)
+
+    @field_validator("schema_version", mode="before")
+    @classmethod
+    def _coerce_schema_version(cls, value: Any) -> str:
+        # Legacy overlays wrote an integer (schema_version: 1); native types it str.
+        if value is None:
+            return "1.0"
+        return str(value)
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def _normalize_status(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return _STATUS_ALIASES.get(value, value)
+        return value
 
 
 class CampaignListItem(BaseModel):

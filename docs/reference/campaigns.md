@@ -25,7 +25,11 @@ schema_version: "1.0"
 slug: tier-full-rollout
 title: Full-tier agent rollout
 status: active          # draft | active | completed | archived
+goal: Roll every platform repo onto the full agent tier   # optional free-text objective
+reference_impl: platform/api   # optional exemplar repo other repos model their change on
 objective_id: optional-spine-objective-id
+created: "2026-07-06T12:00:00+00:00"   # stamped on create
+updated: "2026-07-06T18:30:00+00:00"   # refreshed on set
 selection:
   query: platform
   tags:
@@ -43,20 +47,36 @@ lessons:
     recorded_at: "2026-07-06T18:00:00+00:00"
 ```
 
+> **Legacy compatibility.** Documents authored before the native schema are read
+> without a rewrite: an integer `schema_version`, a `status: complete` alias
+> (normalized to `completed`), and a list-form `selection.tags` (normalized to a
+> map) are all coerced on load. Point native at an existing overlay directory with
+> `workspace.campaigns_path` (app config) or `METAGIT_WORKSPACE_CAMPAIGNS_PATH`.
+
 ## CLI
 
 | Command | Purpose |
 |---------|---------|
 | `metagit campaign list` | Summary table + rollup counts |
-| `metagit campaign status --slug <s>` | Per-repo status, MRs, notes |
+| `metagit campaign status --slug <s>` | Per-repo status, MRs, notes (plus goal/reference) |
 | `metagit campaign new --slug <s> --title "…" --query "…"` | Resolve repos via `metagit find`, freeze `repos[]` |
+| `metagit campaign new --slug <s> --title "…" --repo p/r --repo p/r2` | Freeze an **explicit** repo set (no query drift) |
 | `metagit campaign validate` | Schema + every repo exists in atlas |
 | `metagit campaign set --slug <s> --repo project/repo --status merged [--mr URL] [--note "…"]` | Update one repo row |
 | `metagit campaign expand --slug <s> [--tag k=v] [--dry-run]` | One spine objective per matching repo |
 
+`campaign new` accepts **either** `--query` (dynamic resolution) **or** one or more
+`--repo project/repo` (explicit frozen set); at least one is required. Optional
+`--goal` and `--reference project/repo` annotate the campaign.
+
 ```bash
+# Query-resolved selection
 metagit campaign new --slug tier-full --title "Full tier rollout" --query "platform" \
-  --tag agent_tier=full
+  --tag agent_tier=full --goal "Roll platform repos onto full tier"
+# Explicit frozen selection with an exemplar repo
+metagit campaign new --slug vibe-app --title "Ship the vibe app" \
+  --repo ai/publish-aws --repo gdo/shared-terraform-modules \
+  --reference ai/publish-aws --goal "Containerize and deploy on ECS"
 metagit campaign status --slug tier-full --json
 metagit campaign set --slug tier-full --repo platform/api --status mr-open --mr "https://…"
 metagit campaign expand --slug tier-full --dry-run

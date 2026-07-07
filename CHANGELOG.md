@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+- **Campaign schema superset:** `CampaignDocument` gains optional `goal`, `reference_impl`, `created`, and `updated` fields; `campaign new` accepts an explicit `--repo project/repo` (repeatable, frozen set — no query drift) as an alternative to `--query`, plus `--goal` and `--reference`; `campaign status` surfaces goal/reference.
+- **Legacy overlay compatibility:** campaign documents authored before the native schema now load without a rewrite — integer `schema_version`, `status: complete` (→ `completed`), and list-form `selection.tags` (→ map) are coerced on load. Point native at an existing overlay dir via `workspace.campaigns_path` / `METAGIT_WORKSPACE_CAMPAIGNS_PATH`.
+
 
 
 ## [0.14.1] - 2026-07-07

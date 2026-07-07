@@ -84,25 +84,38 @@ class CampaignService:
         *,
         slug: str,
         title: str,
-        query: str,
+        query: Optional[str] = None,
+        repos: Optional[list[str]] = None,
         tag_filters: Optional[dict[str, str]] = None,
         objective_id: Optional[str] = None,
+        goal: Optional[str] = None,
+        reference_impl: Optional[str] = None,
     ) -> CampaignDocument:
         existing = self.load(slug)
         if existing is not None:
             raise ValueError(f"Campaign already exists: {slug!r}")
-        repos = self._resolve_selection(query=query, tag_filters=tag_filters)
+        if not query and not repos:
+            raise ValueError("Provide --query or at least one --repo to select campaign repos.")
+        if repos:
+            repo_entries = self._explicit_selection(repos)
+        else:
+            repo_entries = self._resolve_selection(query=query or "", tag_filters=tag_filters)
+        now = datetime.now(timezone.utc).isoformat()
         campaign = CampaignDocument(
             slug=slug,
             title=title,
             status="draft",
+            goal=goal,
+            reference_impl=reference_impl,
             objective_id=objective_id,
+            created=now,
+            updated=now,
             selection=CampaignSelection(
                 query=query,
                 tags=dict(tag_filters or {}),
-                resolved_at=datetime.now(timezone.utc).isoformat(),
+                resolved_at=now,
             ),
-            repos=repos,
+            repos=repo_entries,
         )
         self._save(campaign)
         return campaign
@@ -142,6 +155,7 @@ class CampaignService:
                 entry.mr = mr
             if note is not None:
                 entry.note = note
+            campaign.updated = datetime.now(timezone.utc).isoformat()
             self._save(campaign)
             return campaign
         raise ValueError(f"Repo not in campaign {slug!r}: {key}")
@@ -195,6 +209,26 @@ class CampaignService:
 
         tags = merge_project_repo_tags(project, repo)
         return all(tags.get(key) == value for key, value in filters.items())
+
+    def _explicit_selection(self, repos: list[str]) -> list[CampaignRepoEntry]:
+        """Build a frozen repo set from explicit ``project/repo`` selectors.
+
+        Unlike query resolution, this does not re-resolve against the atlas on
+        every run — the campaign's repo set is fixed at creation time (no query
+        drift). Atlas membership is enforced later by ``validate_all``.
+        """
+        entries: list[CampaignRepoEntry] = []
+        seen: set[str] = set()
+        for selector in repos:
+            if "/" not in selector:
+                raise ValueError(f"--repo must be project/repo, got {selector!r}")
+            project, repo_name = selector.split("/", 1)
+            key = f"{project}/{repo_name}"
+            if key in seen:
+                continue
+            seen.add(key)
+            entries.append(CampaignRepoEntry(project=project, repo=repo_name, status="pending"))
+        return entries
 
     def _resolve_selection(
         self,
