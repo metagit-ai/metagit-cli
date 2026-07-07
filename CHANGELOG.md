@@ -4,6 +4,16 @@
 
 
 
+## [0.14.1] - 2026-07-07
+
+
+
+### Changed
+- Merge pull request #55 from metagit-ai/cursor/fix-docs-ci-modality-registry-links (85572c2)
+
+### Fixed
+- fix: repair modality registry link for MkDocs strict CI (8252d20)
+
 ## [0.14.0] - 2026-07-06
 
 
