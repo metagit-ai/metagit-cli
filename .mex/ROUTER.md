@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-07-06
+last_updated: 2026-07-07
 ---
 
 # Session Bootstrap
