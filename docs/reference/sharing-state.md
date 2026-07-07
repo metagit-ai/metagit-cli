@@ -8,7 +8,7 @@ one canonical state through a metagit ops server.
 
 Related docs:
 
-- [Metagit for AI agents](../agents.md#human--agent-shared-state) — CLI/MCP usage from agents
+- [Metagit for AI agents](../agents.md#human-agent-shared-state) — CLI/MCP usage from agents
 - [Metagit Web UI](metagit-web.md#shared-coordination-state) — SPA + ops HTTP routes
 - [Hermes orchestrator workspace](../hermes-orchestrator-workspace.md) — multi-repo control plane
 

@@ -2,7 +2,7 @@
 
 Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web**, **documentation**, and **bundled skills**.
 
-- **Source of truth:** [`scripts/modality-parity.yml`](../../scripts/modality-parity.yml) (validated in `task qa:prepush`)
+- **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
 - **Features tracked:** 10
 

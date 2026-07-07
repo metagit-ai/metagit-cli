@@ -14,6 +14,7 @@ REGISTRY_MD = ROOT / "docs" / "reference" / "modality-feature-registry.md"
 START = "<!-- registry:table:start -->"
 END = "<!-- registry:table:end -->"
 REGISTRY_DOC_DIR = Path("docs/reference")
+MODALITY_PARITY_GITHUB = "https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml"
 
 
 def _reference_href(reference: str) -> str:
@@ -82,7 +83,7 @@ def _intro(version: int, feature_count: int) -> str:
 
 Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web**, **documentation**, and **bundled skills**.
 
-- **Source of truth:** [`scripts/modality-parity.yml`](../../scripts/modality-parity.yml) (validated in `task qa:prepush`)
+- **Source of truth:** [`scripts/modality-parity.yml`]({MODALITY_PARITY_GITHUB}) (validated in `task qa:prepush`)
 - **Registry version:** {version}
 - **Features tracked:** {feature_count}
 
