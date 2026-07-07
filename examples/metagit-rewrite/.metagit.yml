@@ -1,0 +1,115 @@
+name: metagit-rewrite-coordinator
+description: |
+  Umbrella workspace for a reference-implementation rewrite: one source repository
+  (canonical behavior) and one target repository (new language or stack). Metagit
+  tracks the campaign, objectives, graph edges, and per-repo agent posture.
+kind: umbrella
+agent_instructions: |
+  You are the rewrite orchestrator for this workspace. The source repo is the
+  specification; the target repo is the implementation. You do not invent ad-hoc
+  clone paths or skip manifest validation.
+
+  Session start (every time):
+  1. `metagit context pack --tier 2 --json -c .metagit.yml`
+  2. `metagit prompt workspace -k session-start --text-only -c .metagit.yml`
+  3. `metagit campaign status --slug language-rewrite --json`
+  4. Read `_rewrite/parity-registry.yml` for module-level parity expectations.
+
+  Orchestration rules:
+  - Stay at workspace level for sequencing, parity gates, and MR rollups.
+  - Delegate single-repo implementation to subagents with repo-scoped instructions.
+  - Update campaign repo rows (`metagit campaign set`) when MRs open or merge.
+  - Bind objectives to MRs: `mr_url` and `approval_id` on `context objective set`.
+  - Request human approval before destructive sync, schema breaks, or parity downgrades.
+  - Run GitNexus impact analysis on the source repo before large extractions.
+
+  Parity convention:
+  - Repo-level status lives in `_campaigns/*.yml`.
+  - Module-level mapping lives in `_rewrite/parity-registry.yml` (BYO convention).
+  - Objective ids use `rewrite-<phase>-<module>` (see objectives.example.json).
+
+workspace:
+  description: |
+    Rewrite workspace registry. Source and target repos share one project so
+    campaigns, graph edges, and context packs treat them as a pair.
+  agent_instructions: |
+    Validate after manifest edits (`metagit config validate`). Commit `_campaigns/`
+    and `_rewrite/` to git so rollups and parity maps stay reviewable.
+  agent_profile:
+    skills:
+      - metagit-cli
+      - metagit-context-pack
+      - metagit-campaign
+      - metagit-rewrite-campaign
+      - metagit-multi-repo
+      - metagit-gitnexus
+    mcp:
+      - metagit
+    inherit: true
+  projects:
+    - name: rewrite
+      description: Source (reference) and target (rewrite) repositories.
+      agent_instructions: |
+        Source repo agents read and analyze; target repo agents implement parity.
+        Never treat the target as authoritative for behavior until parity is marked done.
+      repos:
+        - name: source
+          description: |
+            Reference implementation (canonical CLI behavior, tests, and schemas).
+            Example: metagit-cli in Python.
+          url: https://github.com/metagit-ai/metagit-cli.git
+          sync: true
+          tags:
+            role: reference
+            language: python
+            parity: complete
+          agent_profile:
+            skills:
+              - metagit-cli
+              - metagit-gitnexus
+              - metagit-repo-impact
+            tier: read-only-analysis
+            inherit: true
+          agent_instructions: |
+            Read-only for rewrite agents unless fixing blockers in the reference tree.
+            Use `metagit context repomix --profile rewrite-source` for scoped context.
+            Export modality registry and CLI surface as the parity checklist input.
+
+        - name: target
+          description: |
+            Rewrite implementation (new language or stack). Example: metagit-cli in Rust.
+          url: https://github.com/example-org/metagit-cli-rust.git
+          sync: true
+          tags:
+            role: implementation
+            language: rust
+            parity: partial
+          agent_profile:
+            skills:
+              - metagit-cli
+              - metagit-rewrite-campaign
+              - metagit-release-audit
+            tier: full
+            inherit: true
+          agent_instructions: |
+            Implement against the source repo and `_rewrite/parity-registry.yml`.
+            Use `metagit context repomix --profile rewrite-target` for scoped context.
+            Open PRs against the target remote; record MR URLs on campaign rows and objectives.
+
+graph:
+  relationships:
+    - id: rewrite-target-implements-source
+      from:
+        project: rewrite
+        repo: target
+      to:
+        project: rewrite
+        repo: source
+      type: implements
+      label: Target reimplements source
+      description: |
+        The target repository must reach behavioral parity with the source reference.
+        Use GitNexus on the source repo and the parity registry for module mapping.
+      tags:
+        campaign: language-rewrite
+        phase: foundation

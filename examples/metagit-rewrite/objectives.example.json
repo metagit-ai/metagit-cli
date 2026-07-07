@@ -1,0 +1,24 @@
+[
+  {
+    "id": "rewrite-foundation-config-manager",
+    "title": "Parity: config manager",
+    "status": "pending",
+    "repos": ["rewrite/target"],
+    "acceptance": "Target crate loads examples/metagit-rewrite fixtures and source manifest fixtures.",
+    "agent_notes": "Start from parity-registry foundation.config-manager"
+  },
+  {
+    "id": "rewrite-cli-surface-project",
+    "title": "Parity: project CLI group",
+    "status": "pending",
+    "repos": ["rewrite/target"],
+    "acceptance": "project sync, list, select --repo behave like reference for happy paths."
+  },
+  {
+    "id": "rewrite-orchestrator-spine",
+    "title": "Campaign spine: target repo bootstrap",
+    "status": "in_progress",
+    "repos": ["rewrite/target"],
+    "acceptance": "Target repo cloned, builds, and linked in campaign status as routed."
+  }
+]

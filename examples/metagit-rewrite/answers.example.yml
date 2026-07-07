@@ -1,0 +1,10 @@
+# Example answers for non-interactive init:
+#   metagit init --template metagit-rewrite --answers-file examples/metagit-rewrite/answers.example.yml --no-prompt
+name: metagit-rewrite-coordinator
+description: Umbrella workspace for a reference-implementation language rewrite.
+url: ""
+source_repo_name: source
+source_repo_url: https://github.com/metagit-ai/metagit-cli.git
+target_repo_name: target
+target_repo_url: https://github.com/example-org/metagit-cli-rust.git
+campaign_slug: language-rewrite

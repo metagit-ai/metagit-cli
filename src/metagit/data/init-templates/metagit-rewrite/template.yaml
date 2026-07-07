@@ -1,0 +1,41 @@
+id: metagit-rewrite
+label: Reference rewrite coordinator
+description: |
+  Umbrella workspace for a source + target language rewrite with campaign overlay,
+  parity registry convention, and AGENTS.md for the orchestrator repo.
+kind: umbrella
+prompts:
+  - name: name
+    label: Workspace / manifest name
+    default: metagit-rewrite-coordinator
+  - name: description
+    label: Manifest description
+    default: Umbrella workspace for a reference-implementation language rewrite.
+  - name: url
+    label: Coordinator git URL (optional)
+    default_from: git_remote_url
+    required: false
+  - name: source_repo_name
+    label: Source (reference) repo entry name
+    default: source
+  - name: source_repo_url
+    label: Source repository git URL
+    default: https://github.com/metagit-ai/metagit-cli.git
+  - name: target_repo_name
+    label: Target (rewrite) repo entry name
+    default: target
+  - name: target_repo_url
+    label: Target repository git URL
+    default: https://github.com/example-org/metagit-cli-rust.git
+  - name: campaign_slug
+    label: Campaign slug for _campaigns overlay
+    default: language-rewrite
+files:
+  - template: .metagit.yml.tpl
+    output: .metagit.yml
+  - template: AGENTS.md.tpl
+    output: AGENTS.md
+  - template: _campaigns/language-rewrite.yml.tpl
+    output: _campaigns/language-rewrite.yml
+  - template: _rewrite/parity-registry.yml.tpl
+    output: _rewrite/parity-registry.yml

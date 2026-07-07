@@ -1,0 +1,49 @@
+# Module-level parity registry (BYO convention — not validated by metagit schema).
+# Copy to parity-registry.yml and update paths as the rewrite progresses.
+#
+# Status values: pending | in_progress | parity | blocked | waived
+schema_version: "1.0"
+campaign_slug: language-rewrite
+source:
+  project: rewrite
+  repo: source
+target:
+  project: rewrite
+  repo: target
+phases:
+  - id: foundation
+    title: Core config and workspace models
+    modules:
+      - id: config-manager
+        title: MetagitConfig load/save/validate
+        source_path: src/metagit/core/config/
+        target_path: crates/config/
+        status: pending
+        acceptance: |
+          Target loads and validates representative .metagit.yml fixtures from the source repo.
+      - id: workspace-catalog
+        title: Workspace catalog and index
+        source_path: src/metagit/core/workspace/
+        target_path: crates/workspace/
+        status: pending
+  - id: cli-surface
+    title: CLI command groups
+    modules:
+      - id: cli-project
+        title: project sync/select/list
+        source_path: src/metagit/cli/commands/project.py
+        target_path: src/commands/project.rs
+        status: pending
+      - id: cli-context
+        title: context pack and objectives
+        source_path: src/metagit/cli/commands/context.py
+        target_path: src/commands/context.rs
+        status: pending
+  - id: mcp-runtime
+    title: MCP tools and resources
+    modules:
+      - id: mcp-gating
+        title: MCP gate and tool dispatch
+        source_path: src/metagit/core/mcp/
+        target_path: crates/mcp/
+        status: pending

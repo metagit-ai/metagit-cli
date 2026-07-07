@@ -100,6 +100,11 @@ def test_config_wizard_apply_writes_app_config(tmp_path: Path) -> None:
   assert reloaded.workspace.path == str(tmp_path / "sync")
 
 
+def test_tui_catalog_excludes_context_and_agents_section() -> None:
+  section_ids = {section.id for section in build_command_catalog()}
+  assert "context" not in section_ids
+
+
 def test_tui_rejects_agent_mode(tmp_path: Path) -> None:
   app_cfg = tmp_path / "metagit.config.yaml"
   app_cfg.write_text(

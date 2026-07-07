@@ -50,36 +50,6 @@ def build_command_catalog() -> list[TuiMenuSection]:
             ],
         ),
         TuiMenuSection(
-            id="context",
-            title="Context & agents",
-            actions=[
-                TuiCommandAction(
-                    id="context-pack-0",
-                    label="Context pack tier 0",
-                    description="Workspace map only",
-                    argv=["context", "pack", "--tier", "0", "--json"],
-                    manifest_option="-c",
-                    manifest_placement="after_subcommand",
-                ),
-                TuiCommandAction(
-                    id="context-pack-2",
-                    label="Context pack tier 2",
-                    description="Map, repo cards, and session digest",
-                    argv=["context", "pack", "--tier", "2", "--json"],
-                    manifest_option="-c",
-                    manifest_placement="after_subcommand",
-                ),
-                TuiCommandAction(
-                    id="prompt-session",
-                    label="Session-start prompt",
-                    description="Emit the workspace session-start prompt",
-                    argv=["prompt", "workspace", "--kind", "session-start", "--text-only"],
-                    manifest_option="-c",
-                    manifest_placement="after_subcommand",
-                ),
-            ],
-        ),
-        TuiMenuSection(
             id="config",
             title="Configuration",
             actions=[

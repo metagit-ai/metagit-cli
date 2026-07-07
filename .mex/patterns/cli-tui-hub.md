@@ -8,7 +8,7 @@ triggers:
 edges:
   - target: patterns/add-cli-command.md
     condition: when adding new TUI-launched CLI workflows
-last_updated: 2026-06-26
+last_updated: 2026-07-07
 ---
 
 # CLI TUI Hub
@@ -27,7 +27,9 @@ The interactive CLI uses Textual (see `src/metagit/core/utils/fuzzyfinder.py`). 
 - `ctx.obj["config_path"]` on `project` / `workspace` groups is the manifest path, not `metagit.config.yaml`.
 - `--repo` bypasses fuzzy finder but still opens the editor unless `agent_mode` is active.
 - TUI subprocesses unset `METAGIT_AGENT_MODE` so nested CLI calls remain interactive.
-- Manifest flags differ by CLI group: `project`/`config` use `-c`; `workspace` uses `--config`; `context pack` / `prompt workspace` use `-c` after the subcommand; `search` uses trailing `--definition`.
+- Manifest flags differ by CLI group: `project`/`config` use `-c`; `workspace` uses `--config`; `search` uses trailing `--definition`.
+- The TUI catalog omits context/agent prompt commands; use the CLI directly for those workflows.
+- In-process repo picker (`run_repo_picker_session`) relies on `FuzzyFinder` running in a worker thread when the hub already has a Textual asyncio loop (`_run_textual_app` in `fuzzyfinder.py`).
 
 ## Verify
 - [ ] `uv run metagit tui --help` and `uv run metagit project select --help` show new options.

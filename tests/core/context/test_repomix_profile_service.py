@@ -24,6 +24,27 @@ _MINIMAL_PROFILES = {
 }
 
 
+def test_bundled_profiles_include_rewrite_profiles() -> None:
+  from metagit import DATA_PATH
+
+  profiles_path = Path(DATA_PATH) / "context_profiles.yaml"
+  svc = RepomixProfileService(profiles_path=profiles_path)
+  source_argv = svc.build_repomix_argv(
+    repo_path=Path("/tmp/source"),
+    profile_name="rewrite-source",
+    output_path=None,
+    stdout=True,
+  )
+  assert "src/**" in source_argv[source_argv.index("--include") + 1]
+  target_argv = svc.build_repomix_argv(
+    repo_path=Path("/tmp/target"),
+    profile_name="rewrite-target",
+    output_path=None,
+    stdout=True,
+  )
+  assert "crates/**" in target_argv[target_argv.index("--include") + 1]
+
+
 def test_unknown_profile_raises(tmp_path: Path) -> None:
     yaml_file = tmp_path / "context_profiles.yaml"
     yaml_file.write_text(yaml.safe_dump(_MINIMAL_PROFILES), encoding="utf-8")
@@ -157,7 +178,13 @@ def test_run_failure_raises_runtime_error(tmp_path: Path) -> None:
         )
 
 
-def test_profiles_yaml_shipped_contains_three_profiles() -> None:
+def test_profiles_yaml_shipped_contains_bundled_profiles() -> None:
     svc = RepomixProfileService()
     names = sorted(svc.profile_names())
-    assert names == ["bugfix-local", "config-edit", "cross-repo-impact"]
+    assert names == [
+        "bugfix-local",
+        "config-edit",
+        "cross-repo-impact",
+        "rewrite-source",
+        "rewrite-target",
+    ]

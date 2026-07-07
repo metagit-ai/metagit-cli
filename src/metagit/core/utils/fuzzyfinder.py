@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+import asyncio
+import threading
 from contextlib import suppress
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -597,6 +599,35 @@ class FuzzyFinderApp(App):
             return e
 
 
+def _run_textual_app(app: App) -> Any:
+    """
+    Run a Textual app even when the caller already has a running asyncio loop.
+
+    Nested Textual apps (for example the repo picker launched from ``metagit tui``)
+    must not call ``asyncio.run()`` on the hub's event loop thread.
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return app.run()
+
+    result_box: list[Any] = []
+    error_box: list[BaseException] = []
+
+    def _thread_main() -> None:
+        try:
+            result_box.append(app.run())
+        except BaseException as exc:
+            error_box.append(exc)
+
+    thread = threading.Thread(target=_thread_main, daemon=False)
+    thread.start()
+    thread.join()
+    if error_box:
+        raise error_box[0]
+    return result_box[0] if result_box else None
+
+
 class FuzzyFinder:
     """A reusable fuzzy finder using Textual and rapidfuzz with navigation support."""
 
@@ -608,7 +639,7 @@ class FuzzyFinder:
         """Run the fuzzy finder application."""
         try:
             app = FuzzyFinderApp(self.config)
-            result = app.run()
+            result = _run_textual_app(app)
 
             if self.config.multi_select:
                 # Multi-select not fully implemented yet

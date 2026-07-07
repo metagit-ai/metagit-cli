@@ -105,8 +105,9 @@ docker run --rm ghcr.io/metagit-ai/metagit-cli:latest --help
 In a target Git repository:
 
 ```bash
-metagit init --list-templates          # bundled profiles (application, umbrella, hermes-orchestrator, …)
+metagit init --list-templates          # bundled profiles (application, umbrella, hermes-orchestrator, metagit-rewrite, …)
 metagit init ./my-coordinator --template hermes-orchestrator --create
+metagit init ./rewrite-coordinator --template metagit-rewrite --create
 metagit init --target ../hermes-control-plane --template hermes-orchestrator --no-prompt \
   --answers-file examples/hermes-orchestrator/answers.example.yml
 metagit init --kind service --minimal  # any ProjectKind without a bundled template
