@@ -7,7 +7,7 @@ from pathlib import Path
 
 from git import Repo
 
-from metagit.core.merge.git_ops import ensure_branch, attempt_merge
+from metagit.core.merge.git_ops import attempt_merge, ensure_branch
 
 
 def _commit_file(repo: Repo, relative_path: str, content: str, message: str) -> str:

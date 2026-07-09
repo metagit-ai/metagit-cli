@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import re
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
 _ID_PATTERN = re.compile(r"^[\w.-]+$")
 
 MergeStatus = Literal["queued", "running", "succeeded", "failed", "conflict", "validation_failed"]
+MergeEventType = Literal["MergeEnqueued", "MergeSucceeded", "MergeFailed", "ConflictDetected"]
 
 
 def _validate_id(value: str, *, label: str) -> str:
@@ -93,6 +94,9 @@ class MergeRequest(BaseModel):
     source_branch: str
     target_branch: str
     status: MergeStatus = "queued"
+    repo_path: Optional[str] = None
+    commit_sha: Optional[str] = None
+    error_message: Optional[str] = None
     node_id: Optional[str] = None
     agent_id: Optional[str] = None
     conflict: Optional[MergeConflict] = None
@@ -115,6 +119,14 @@ class MergeRequest(BaseModel):
     @classmethod
     def validate_required_strings(cls, value: str) -> str:
         return _validate_nonempty(value, label="required field")
+
+    @field_validator("repo_path", "commit_sha", "error_message")
+    @classmethod
+    def validate_optional_strings(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
 
     @field_validator("node_id", "agent_id")
     @classmethod
@@ -159,8 +171,19 @@ class MergeQueue(BaseModel):
     merges: list[MergeQueueEntry] = Field(default_factory=list)
 
 
+class MergeEvent(BaseModel):
+    """Typed merge orchestrator lifecycle event."""
+
+    event_id: str
+    type: MergeEventType
+    at: str
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
 __all__ = [
     "MergeConflict",
+    "MergeEvent",
+    "MergeEventType",
     "MergeQueue",
     "MergeQueueEntry",
     "MergeRequest",
