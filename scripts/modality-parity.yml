@@ -400,3 +400,29 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:context_compile"
 
+  - id: semantic_ownership
+    description: Concept-level ownership declare/query/owners/conflicts
+    service: metagit.core.semantic.service.SemanticGraphService
+    reference_doc: docs/reference/semantic-ownership.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/semantic.py
+            contains: '@semantic_group.command("declare")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_semantic_declare
+      documentation:
+        markers:
+          - path: docs/reference/semantic-ownership.md
+            contains: "modality:semantic_ownership"
+          - path: docs/agents.md
+            contains: "modality:semantic_ownership"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:semantic_ownership"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:semantic_ownership"
+

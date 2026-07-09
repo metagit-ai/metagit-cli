@@ -32,7 +32,7 @@ last_updated: 2026-06-30
 
 ## Active Runtime Services
 - `WorkspaceRootResolver` + `WorkspaceGate` + `ToolRegistry` for state-aware tool visibility.
-- Workspace services: index, path-based workspace search (`metagit_workspace_search`), GitNexus semantic query fan-out (`metagit_workspace_semantic_search`), upstream hints.
+- Workspace services: index, path-based workspace search (`metagit_workspace_search`), GitNexus semantic query fan-out (`metagit_workspace_semantic_search`), semantic ownership (`metagit_semantic_*`), upstream hints.
 - `ManagedRepoSearchService` for `metagit_repo_search` (managed `.metagit.yml` repos only, with tags/status).
 - Repo ops service for inspect/sync with mutation guardrails.
 - Project context service (`metagit_project_context_switch`, `metagit_session_update`) with session store under `.metagit/sessions/`.

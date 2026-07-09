@@ -64,6 +64,7 @@ from metagit.core.mcp.tools.workspace_status import metagit_workspace_status
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
+from metagit.core.semantic.service import SemanticGraphService
 from metagit.core.state.resolver import resolve_backend
 from metagit.core.taskgraph.service import TaskGraphService
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
@@ -710,6 +711,49 @@ class MetagitMcpRuntime:
                     "claim_id": {"type": "string"},
                     "agent_id": {"type": "string"},
                     "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_semantic_declare": {
+                "type": "object",
+                "required": ["concept", "repository", "patterns"],
+                "properties": {
+                    "concept": {"type": "string"},
+                    "repository": {"type": "string"},
+                    "patterns": {"type": "array", "items": {"type": "string"}},
+                    "symbol_hints": {"type": "array", "items": {"type": "string"}},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_semantic_query": {
+                "type": "object",
+                "required": ["concept"],
+                "properties": {
+                    "concept": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_semantic_owners": {
+                "type": "object",
+                "required": ["repository", "path"],
+                "properties": {
+                    "repository": {"type": "string"},
+                    "path": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_semantic_conflicts": {
+                "type": "object",
+                "required": ["repository"],
+                "properties": {
+                    "repository": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_semantic_ingest": {
+                "type": "object",
+                "properties": {
+                    "project": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -1910,6 +1954,9 @@ class MetagitMcpRuntime:
         if name.startswith("metagit_task_"):
             return self._call_task_tool(name, arguments, status)
 
+        if name.startswith("metagit_semantic_"):
+            return self._call_semantic_tool(name, arguments, status)
+
         if (
             name.startswith("metagit_branch_")
             or name.startswith("metagit_lease_")
@@ -2632,6 +2679,66 @@ class MetagitMcpRuntime:
                 ),
             )
         raise ValueError(f"Unsupported task tool: {name}")
+
+    def _call_semantic_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+    ) -> dict[str, Any]:
+        if not status.root_path:
+            raise InvalidToolArgumentsError("semantic tools require an active workspace")
+        service = SemanticGraphService(status.root_path)
+
+        def _require(key: str) -> str:
+            value = str(arguments.get(key, "")).strip()
+            if not value:
+                raise InvalidToolArgumentsError(f"{key} is required")
+            return value
+
+        def _unwrap(result: Any) -> dict[str, Any]:
+            if isinstance(result, Exception):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if hasattr(result, "model_dump"):
+                return result.model_dump(mode="json")
+            return {"ok": True, "result": result}
+
+        if name == "metagit_semantic_declare":
+            patterns_raw = arguments.get("patterns")
+            if not isinstance(patterns_raw, list) or not patterns_raw:
+                raise InvalidToolArgumentsError("patterns is required")
+            symbol_hints_raw = arguments.get("symbol_hints")
+            return _unwrap(
+                service.declare(
+                    concept=_require("concept"),
+                    repository=_require("repository"),
+                    patterns=[str(item) for item in patterns_raw],
+                    symbol_hints=[str(item) for item in symbol_hints_raw]
+                    if isinstance(symbol_hints_raw, list)
+                    else None,
+                ),
+            )
+        if name == "metagit_semantic_query":
+            return _unwrap(service.query(concept=_require("concept")))
+        if name == "metagit_semantic_owners":
+            return _unwrap(
+                service.owners(
+                    path=_require("path"),
+                    repository=_require("repository"),
+                ),
+            )
+        if name == "metagit_semantic_conflicts":
+            return _unwrap(service.conflicts(repository=_require("repository")))
+        if name == "metagit_semantic_ingest":
+            project = arguments.get("project") if isinstance(arguments.get("project"), str) else None
+            return {
+                "ok": True,
+                "added": 0,
+                "updated": 0,
+                "project": project,
+                "message": "semantic ingest is deferred until RFC-0010 Task 8",
+            }
+        raise ValueError(f"Unsupported semantic tool: {name}")
 
     def _resolve_status_and_config(self) -> tuple[WorkspaceStatus, Any]:
         resolved_root = self._resolver.resolve(cwd=os.getcwd(), cli_root=self._root_override)

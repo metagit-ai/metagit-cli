@@ -65,6 +65,7 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 <!-- modality:native_campaigns -->
 <!-- modality:objective_mr_approval_binding -->
 <!-- modality:coordination_events_scope -->
+<!-- modality:semantic_ownership -->
 
 Set `--definition path/to/.metagit.yml` when not in the manifest repo root.
 
