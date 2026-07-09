@@ -42,7 +42,7 @@ Hosted KG, replacing GitNexus, hard locks, merge/scheduler/AOS engines, SPA, SQL
 | `tests/cli/commands/test_semantic_cli.py` | CLI tests |
 | `tests/core/mcp/test_semantic_tools.py` | MCP tool tests |
 | `docs/reference/semantic-ownership.md` | Operator reference |
-| `.mex/patterns/semantic-ownership.md` | Recurring runbook |
+| `.mex/patterns/semantic-graph-service.md` | Recurring semantic graph runbook |
 
 ## File map (modify)
 
@@ -331,7 +331,7 @@ uv run pytest tests/core/semantic/test_semantic_models.py tests/core/semantic/te
 - Create: `src/metagit/core/semantic/service.py`
 - Test: `tests/core/semantic/test_service_owners.py`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```python
 #!/usr/bin/env python
@@ -376,13 +376,13 @@ def test_owners_miss_when_path_outside_pattern(tmp_path: Path) -> None:
     assert owners.concepts == []
 ```
 
-- [ ] **Step 2: Run tests — expect fail**
+- [x] **Step 2: Run tests — expect fail**
 
 ```bash
 uv run pytest tests/core/semantic/test_service_owners.py -q
 ```
 
-- [ ] **Step 3: Implement `SemanticGraphService`**
+- [x] **Step 3: Implement `SemanticGraphService`**
 
 Core behavior:
 
@@ -393,13 +393,13 @@ Core behavior:
 
 Slug helper: lowercase, spaces→hyphens, strip non-slug chars; reject empty.
 
-- [ ] **Step 4: Run tests — expect pass**
+- [x] **Step 4: Run tests — expect pass**
 
 ```bash
 uv run pytest tests/core/semantic/test_service_owners.py -q
 ```
 
-- [ ] **Step 5: Commit** (when user requests) `feat(semantic): declare/query/owners for concept ownership`
+- [x] **Step 5: Commit** (when user requests) `feat(semantic): declare/query/owners for concept ownership`
 
 ---
 
@@ -409,7 +409,7 @@ uv run pytest tests/core/semantic/test_service_owners.py -q
 - Modify: `src/metagit/core/semantic/service.py`
 - Test: `tests/core/semantic/test_service_conflicts.py`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```python
 #!/usr/bin/env python
@@ -451,7 +451,7 @@ def test_conflicts_when_two_agents_claim_same_concept_paths(tmp_path: Path) -> N
     assert set(hint.agent_ids) >= {"agent-a", "agent-b"}
 ```
 
-- [ ] **Step 2: Implement `conflicts(repository)`**
+- [x] **Step 2: Implement `conflicts(repository)`**
 
 Logic:
 
@@ -462,13 +462,13 @@ Logic:
 5. Also emit event `ConceptConflictHint` when hints non-empty (optional per call; at least return JSON).
 6. Never raise / never mutate claims.
 
-- [ ] **Step 3: Tests pass**
+- [x] **Step 3: Tests pass**
 
 ```bash
 uv run pytest tests/core/semantic/test_service_conflicts.py -q
 ```
 
-- [ ] **Step 4: Commit** (when user requests) `feat(semantic): advisory concept conflict hints`
+- [x] **Step 4: Commit** (when user requests) `feat(semantic): advisory concept conflict hints`
 
 ---
 
@@ -479,11 +479,11 @@ uv run pytest tests/core/semantic/test_service_conflicts.py -q
 - Modify: `src/metagit/core/context/event_service.py`
 - Test: `tests/core/semantic/test_events.py`
 
-- [ ] **Step 1: Write failing test** that declare appends `ConceptDeclared` visible with `source=semantic` via `WorkspaceEventService` (mirror `tests/core/taskgraph/test_events.py` pattern).
+- [x] **Step 1: Write failing test** that declare appends `ConceptDeclared` visible with `source=semantic` via `WorkspaceEventService` (mirror `tests/core/taskgraph/test_events.py` pattern).
 
-- [ ] **Step 2: Implement `SemanticEventStore`** (copy structure from `TaskGraphEventStore`; path `events_file`).
+- [x] **Step 2: Implement `SemanticEventStore`** (copy structure from `TaskGraphEventStore`; path `events_file`).
 
-- [ ] **Step 3: Wire into `WorkspaceEventService`** after taskgraph block:
+- [x] **Step 3: Wire into `WorkspaceEventService`** after taskgraph block:
 
 ```python
 from metagit.core.semantic.events import SemanticEventStore
@@ -502,7 +502,7 @@ if not isinstance(semantic_events, Exception):
         )
 ```
 
-- [ ] **Step 4: Tests pass;** commit deferred `feat(semantic): emit ConceptDeclared events`
+- [x] **Step 4: Tests pass;** commit deferred `feat(semantic): emit ConceptDeclared events`
 
 ---
 
@@ -515,7 +515,7 @@ if not isinstance(semantic_events, Exception):
 
 **Impact note:** Run GitNexus `impact` on `ClaimService.check` / `ClaimCheckResult` before editing. Additive optional field only — keep default empty list so existing callers stay valid.
 
-- [ ] **Step 1: Extend model**
+- [x] **Step 1: Extend model**
 
 ```python
 class ClaimCheckResult(BaseModel):
@@ -526,11 +526,11 @@ class ClaimCheckResult(BaseModel):
 
 Prefer importing `ConceptConflictHint` if it avoids circular imports; otherwise `list[dict[str, Any]]` dumped from semantic models is fine for v1.
 
-- [ ] **Step 2: In `ClaimService.check`**, after computing path conflicts, optionally call `SemanticGraphService(session_root).advise_claim_patterns(repository, patterns)` which returns concept hints for overlapping ownerships. Failures from semantic load must not fail claim check (swallow → empty hints).
+- [x] **Step 2: In `ClaimService.check`**, after computing path conflicts, optionally call `SemanticGraphService(session_root).advise_claim_patterns(repository, patterns)` which returns concept hints for overlapping ownerships. Failures from semantic load must not fail claim check (swallow → empty hints).
 
-- [ ] **Step 3: Failing then passing test** — declare concept ownership, `claim check` overlapping pattern → `concept_hints` non-empty; `ok` still True when no path claim conflicts.
+- [x] **Step 3: Failing then passing test** — declare concept ownership, `claim check` overlapping pattern → `concept_hints` non-empty; `ok` still True when no path claim conflicts.
 
-- [ ] **Step 4: Commit** (when user requests) `feat(claim): attach advisory concept hints on check`
+- [x] **Step 4: Commit** (when user requests) `feat(claim): attach advisory concept hints on check`
 
 ---
 
@@ -541,7 +541,7 @@ Prefer importing `ConceptConflictHint` if it avoids circular imports; otherwise 
 - Modify: `src/metagit/cli/main.py`
 - Test: `tests/cli/commands/test_semantic_cli.py`
 
-- [ ] **Step 1: Write failing CLI tests** for `declare` / `query` / `owners` / `conflicts` with `--json` using temp session root (reuse `resolve_acl_roots` / acl_common helpers like claim CLI).
+- [x] **Step 1: Write failing CLI tests** for `declare` / `query` / `owners` / `conflicts` with `--json` using temp session root (reuse `resolve_acl_roots` / acl_common helpers like claim CLI).
 
 Example invoke pattern (match existing claim CLI tests):
 
@@ -566,7 +566,7 @@ def test_semantic_declare_owners_json(tmp_path, monkeypatch):
     assert result.exit_code == 0
 ```
 
-- [ ] **Step 2: Implement Click group**
+- [x] **Step 2: Implement Click group**
 
 Commands:
 
@@ -579,7 +579,7 @@ Commands:
 
 Register in `main.py` next to `claim_group`.
 
-- [ ] **Step 3: Tests pass;** commit deferred `feat(cli): add metagit semantic commands`
+- [x] **Step 3: Tests pass;** commit deferred `feat(cli): add metagit semantic commands`
 
 ---
 
@@ -591,7 +591,7 @@ Register in `main.py` next to `claim_group`.
 - Modify: `scripts/modality-parity.yml`
 - Test: `tests/core/mcp/test_semantic_tools.py`
 
-- [ ] **Step 1: Register ACTIVE-gated tools**
+- [x] **Step 1: Register ACTIVE-gated tools**
 
 | Tool | Mirrors |
 |------|---------|
@@ -603,7 +603,7 @@ Register in `main.py` next to `claim_group`.
 
 Schemas: required strings matching CLI; return `model_dump(mode="json")`.
 
-- [ ] **Step 2: Add modality feature**
+- [x] **Step 2: Add modality feature**
 
 ```yaml
   - id: semantic_ownership
@@ -633,7 +633,7 @@ Schemas: required strings matching CLI; return `model_dump(mode="json")`.
             contains: "modality:semantic_ownership"
 ```
 
-- [ ] **Step 3: MCP tests** (mirror `tests/core/mcp/test_task_tools.py` style); commit deferred.
+- [x] **Step 3: MCP tests** (mirror `tests/core/mcp/test_task_tools.py` style); commit deferred.
 
 ---
 
@@ -644,9 +644,9 @@ Schemas: required strings matching CLI; return `model_dump(mode="json")`.
 - Modify: `service.py` — `ingest`, `seed`
 - Test: `tests/core/semantic/test_ingest_seed.py`
 
-- [ ] **Step 1: Seed catalog** — small static list (≤8 concepts), e.g. Authentication (`**/auth/**`, `**/login/**`), Billing (`**/billing/**`, `**/payment/**`), Config (`**/.metagit.yml`, `**/metagit.config.yaml`). `seed()` inserts missing concepts/ownerships with `source="seed"`; idempotent.
+- [x] **Step 1: Seed catalog** — small static list (≤8 concepts), e.g. Authentication (`**/auth/**`, `**/login/**`), Billing (`**/billing/**`, `**/payment/**`), Config (`**/.metagit.yml`, `**/metagit.config.yaml`). `seed()` inserts missing concepts/ownerships with `source="seed"`; idempotent.
 
-- [ ] **Step 2: Ingest MVP** — deterministic only. Preferred cheap source: if workspace index / detect metadata exposes path tags or documentation paths for a repo, map known keywords → concepts. If no reliable signal exists in-repo, implement `ingest` as:
+- [x] **Step 2: Ingest MVP** — deterministic only. Preferred cheap source: if workspace index / detect metadata exposes path tags or documentation paths for a repo, map known keywords → concepts. If no reliable signal exists in-repo, implement `ingest` as:
 
   1. Scan existing ownerships (no-op refresh), and/or
   2. Read optional `.metagit/graph/ingest-hints.json` if present (operator-supplied), and/or
@@ -654,7 +654,7 @@ Schemas: required strings matching CLI; return `model_dump(mode="json")`.
 
   Do **not** call GitNexus in this task.
 
-- [ ] **Step 3: Tests** for seed idempotency + ingest no-op / hints file; commit deferred.
+- [x] **Step 3: Tests** for seed idempotency + ingest no-op / hints file; commit deferred.
 
 ---
 
@@ -665,43 +665,43 @@ Schemas: required strings matching CLI; return `model_dump(mode="json")`.
 - CLI: `semantic ingest --gitnexus`
 - Test: skip or mock if GitNexus unavailable
 
-- [ ] **Step 1:** Only if Tasks 1–8 green and time remains. Import read-only concept/path hints from GitNexus group/query if a thin adapter already exists; otherwise document as deferred and leave `--gitnexus` returning a clear “not available” JSON error without crashing.
+- [x] **Step 1:** Deferred/skipped for RFC-0010 closeout. Import read-only concept/path hints from GitNexus group/query remains optional future work; `--gitnexus` is not part of the shipped MVP.
 
-- [ ] **Step 2:** Do not block MVP acceptance on this task.
+- [x] **Step 2:** Do not block MVP acceptance on this task.
 
 ---
 
 ### Task 10: Docs, skills, GROW closeout
 
 **Files:**
-- Create: `docs/reference/semantic-ownership.md`
-- Create: `.mex/patterns/semantic-ownership.md`
+- Update: `docs/reference/semantic-ownership.md`
+- Update: `.mex/patterns/semantic-graph-service.md`
 - Modify: `docs/reference/agent-coordination.md`, `docs/agents.md`, `llms.txt`, `AGENTS.md`, skills, `CHANGELOG.md`, `mkdocs.yml`, `.mex/ROUTER.md`, series index, `.mex/patterns/INDEX.md`
 
-- [ ] **Step 1: Write reference doc** covering persistence, CLI/MCP table, advisory claim hints, non-goals (not GitNexus replacement). Include `<!-- modality:semantic_ownership -->`.
+- [x] **Step 1: Write reference doc** covering persistence, CLI/MCP table, advisory claim hints, non-goals (not GitNexus replacement). Include `<!-- modality:semantic_ownership -->`.
 
-- [ ] **Step 2: Update agent-coordination** deferred link: semantic ownership ships in RFC-0010 → link `semantic-ownership.md`.
+- [x] **Step 2: Update agent-coordination** deferred link: semantic ownership ships in RFC-0010 → link `semantic-ownership.md`.
 
-- [ ] **Step 3: Pattern + INDEX row** for semantic ownership.
+- [x] **Step 3: Pattern + INDEX row** for semantic ownership.
 
-- [ ] **Step 4: `task qa:prepush` until green**.
+- [x] **Step 4: `task qa:prepush` until green**.
 
-- [ ] **Step 5: `task gitnexus:analyze`**.
+- [x] **Step 5: `task gitnexus:analyze`**.
 
-- [ ] **Step 6: Commit** (when user requests) `docs: semantic ownership reference and RFC-0010 closeout`.
+- [x] **Step 6: Commit** (when user requests) `docs: semantic ownership reference and RFC-0010 closeout`.
 
 ---
 
 ## Acceptance checklist
 
-- [ ] Declare concept + path; `owners` returns it for matching files.
-- [ ] Overlapping active claims on same concept produce conflict hint JSON.
-- [ ] `claim check` may include `concept_hints` without failing when only concept overlap exists.
-- [ ] Does not block git; tests cover overlap logic.
-- [ ] Events merge with `source=semantic`.
-- [ ] Modality feature `semantic_ownership` registered; reference doc published.
-- [ ] Empty-by-default; `--seed` opt-in only.
-- [ ] GitNexus import optional / non-blocking.
+- [x] Declare concept + path; `owners` returns it for matching files.
+- [x] Overlapping active claims on same concept produce conflict hint JSON.
+- [x] `claim check` may include `concept_hints` without failing when only concept overlap exists.
+- [x] Does not block git; tests cover overlap logic.
+- [x] Events merge with `source=semantic`.
+- [x] Modality feature `semantic_ownership` registered; reference doc published.
+- [x] Empty-by-default; `--seed` opt-in only.
+- [x] GitNexus import optional / non-blocking.
 
 ## Out of scope (do not implement in this MR)
 

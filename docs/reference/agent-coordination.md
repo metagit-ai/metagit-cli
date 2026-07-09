@@ -20,8 +20,9 @@ ACL leases own a *branch* for an agent.
 2. Agents never share `agent/*` working branches.
 3. Branch leases expire and can be renewed.
 4. File claims and repo presence are **advisory** — Git remains the authority.
-5. Task graphs ship in RFC-0008 ([task-graph.md](task-graph.md)); merge
-   orchestration, semantic ownership, and scheduling remain RFC-0009+.
+5. Task graphs ship in RFC-0008 ([task-graph.md](task-graph.md)); semantic
+   ownership ships in RFC-0010 ([semantic-ownership.md](semantic-ownership.md)).
+   Merge orchestration and scheduling remain later RFCs.
 
 ## Persistence
 
@@ -97,6 +98,14 @@ ACL lifecycle events append to `.metagit/events/acl.jsonl` and appear in
 `metagit agent dispatch-plan` includes `handoff.acl_commands` when project and
 repo are set — suggested allocate / lease / worktree / claim CLI strings only
 (no automatic mutation).
+
+## Semantic Ownership Hints
+
+RFC-0010 semantic ownership can attach advisory `concept_hints` to claim checks
+when a requested claim pattern overlaps a concept-level ownership pattern. These
+hints never turn into hard locks or failed claims by themselves. See
+[Semantic ownership](semantic-ownership.md) for persistence, CLI/MCP commands,
+seed/ingest behavior, and the deferred GitNexus import path.
 
 <!-- modality:task_graph -->
 

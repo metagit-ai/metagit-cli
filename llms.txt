@@ -47,10 +47,12 @@ metagit prompt workspace --kind session-start --text-only
 | Task graph / intent | `metagit task create` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R --json` |
 | ACL worktree / claim | `metagit worktree create` · `metagit claim declare` |
+| Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
 | Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
 | Task graph (RFC-0008) | [docs/reference/task-graph.md](docs/reference/task-graph.md) |
 | Context compiler (RFC-0009) | [docs/reference/context-compiler.md](docs/reference/context-compiler.md) |
+| Semantic ownership (RFC-0010) | [docs/reference/semantic-ownership.md](docs/reference/semantic-ownership.md) |
 
 ## Feature registry
 
@@ -68,4 +70,5 @@ Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality
 - **Agent Coordination Layer (ACL):** isolated `agent/*` branches, branch leases, worktrees under `.worktrees/`, advisory file claims — distinct from handoff claim TTL. See [agent-coordination.md](docs/reference/agent-coordination.md).
 - **Task Graph & Intent (RFC-0008):** DAG of executable nodes under `.metagit/tasks/`, ready-set, ACL bind hints — see [task-graph.md](docs/reference/task-graph.md).
 - **Context Compiler (RFC-0009):** budgeted pack artifacts via `metagit context compile` — see [context-compiler.md](docs/reference/context-compiler.md).
+- **Semantic Ownership (RFC-0010):** concept ownership via `metagit semantic declare|query|owners|conflicts|ingest|seed`; advisory claim `concept_hints`; GitNexus import deferred — see [semantic-ownership.md](docs/reference/semantic-ownership.md).
 - Repomix profile: `metagit context repomix --profile bugfix-local --project P --repo R`

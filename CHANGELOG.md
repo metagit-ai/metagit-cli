@@ -9,6 +9,7 @@
 - **RFC-0010 context events:** `metagit context events` now includes semantic graph lifecycle events with `source=semantic`.
 - **RFC-0010 semantic CLI:** `metagit semantic declare|query|owners|conflicts|ingest|seed` exposes semantic concept ownership operations, including deterministic ingest hints and the optional seed catalog.
 - **RFC-0010 semantic MCP parity:** ACTIVE-gated `metagit_semantic_declare|query|owners|conflicts|ingest` tools mirror the semantic service and register the `semantic_ownership` modality markers.
+- **RFC-0010 semantic operator surface:** published semantic ownership reference, MkDocs nav entry, and agent quick-reference commands for CLI/MCP use; optional GitNexus import is documented as deferred.
 
 ### Changed
 - Expanded **RFC-0010 Semantic Repository Knowledge Graph** design decisions and bite-sized TDD implementation plan under `docs/superpowers/` (next ACL series MR after 0008/0009).

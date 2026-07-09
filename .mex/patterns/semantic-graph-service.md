@@ -50,6 +50,18 @@ events under `.metagit/events/`.
 - [ ] `task qa:prepush`
 - [ ] `task gitnexus:analyze`
 
+## Operator Reference Closeout
+- Keep `docs/reference/semantic-ownership.md` as the public operator entrypoint
+  with `<!-- modality:semantic_ownership -->`.
+- Document `.metagit/graph/{concepts.json,ownerships.json,ingest-hints.json}`
+  and `.metagit/events/semantic.jsonl` whenever persistence changes.
+- Agent-facing indexes (`docs/agents.md`, `llms.txt`, `AGENTS.md`) should list
+  `metagit semantic declare|query|owners|conflicts|ingest|seed` once the CLI is
+  available.
+- `semantic ingest --gitnexus` is optional/deferred unless a task explicitly
+  opens the GitNexus import path; manual declarations, seed, and
+  `ingest-hints.json` are the supported RFC-0010 inputs.
+
 ## Debug
 - Import errors usually mean `__init__.py` exports or a new module file is
   missing.
