@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 18
+- **Features tracked:** 19
 
 When you add or change a backend feature:
 
@@ -38,6 +38,7 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `task_graph` | Task DAG + intent engine create/expand/ready/complete/bind-acl | yes | yes | — | yes | yes | [task-graph.md](task-graph.md) |
 | `context_compile` | Budgeted context compiler from task/objective + project/repo | yes | yes | — | yes | yes | [context-compiler.md](context-compiler.md) |
 | `semantic_ownership` | Concept-level ownership declare/query/owners/conflicts plus seed/ingest | yes | yes | — | yes | yes | [semantic-ownership.md](semantic-ownership.md) |
+| `merge_orchestrator` | Local merge queue, validation gate, and integration orchestration | yes | yes | — | yes | yes | [merge-orchestrator.md](merge-orchestrator.md) |
 <!-- registry:table:end -->
 
 ## Surface legend

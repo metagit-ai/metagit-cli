@@ -61,6 +61,8 @@ from metagit.core.mcp.tools.bootstrap_plan_only import (
     metagit_bootstrap_config_plan_only,
 )
 from metagit.core.mcp.tools.workspace_status import metagit_workspace_status
+from metagit.core.merge.models import MergeRequest
+from metagit.core.merge.service import MergeOrchestrator
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
@@ -551,6 +553,44 @@ class MetagitMcpRuntime:
                 "type": "object",
                 "properties": {
                     "since": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_merge_enqueue": {
+                "type": "object",
+                "required": ["repository", "source_branch", "target_branch"],
+                "properties": {
+                    "repository": {"type": "string"},
+                    "source_branch": {"type": "string"},
+                    "target_branch": {"type": "string"},
+                    "node_id": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "repo_path": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_merge_status": {
+                "type": "object",
+                "properties": {
+                    "repository": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_merge_retry": {
+                "type": "object",
+                "required": ["merge_id"],
+                "properties": {
+                    "merge_id": {"type": "string"},
+                    "repo_path": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_merge_integrate": {
+                "type": "object",
+                "required": ["merge_id"],
+                "properties": {
+                    "merge_id": {"type": "string"},
+                    "repo_path": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -1949,6 +1989,9 @@ class MetagitMcpRuntime:
             since_opt = str(since_raw).strip() if isinstance(since_raw, str) and since_raw.strip() else None
             return resolve_backend(status.root_path).events().list_events(since=since_opt).model_dump(mode="json")
 
+        if name.startswith("metagit_merge_"):
+            return self._call_merge_tool(name, arguments, status)
+
         if name.startswith("metagit_task_"):
             return self._call_task_tool(name, arguments, status)
 
@@ -2580,6 +2623,72 @@ class MetagitMcpRuntime:
                 ),
             )
         raise ValueError(f"Unsupported ACL tool: {name}")
+
+    def _call_merge_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+    ) -> dict[str, Any]:
+        if not status.root_path:
+            raise InvalidToolArgumentsError("merge tools require an active workspace")
+        service = MergeOrchestrator(status.root_path)
+
+        def _require(key: str) -> str:
+            value = str(arguments.get(key, "")).strip()
+            if not value:
+                raise InvalidToolArgumentsError(f"{key} is required")
+            return value
+
+        def _unwrap(result: Any) -> dict[str, Any]:
+            if isinstance(result, Exception):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if hasattr(result, "model_dump"):
+                return result.model_dump(mode="json")
+            if isinstance(result, list):
+                return {
+                    "ok": True,
+                    "items": [item.model_dump(mode="json") if hasattr(item, "model_dump") else item for item in result],
+                }
+            return {"ok": True, "result": result}
+
+        def _apply_repo_path(merge_id: str) -> None:
+            repo_path = arguments.get("repo_path")
+            if not isinstance(repo_path, str) or not repo_path.strip():
+                return
+            request = service.store.load(merge_id)
+            if isinstance(request, Exception):
+                raise InvalidToolArgumentsError(str(request)) from request
+            if not isinstance(request, MergeRequest):
+                raise InvalidToolArgumentsError("merge request could not be loaded")
+            request.repo_path = repo_path
+            saved = service.store.save(request)
+            if isinstance(saved, Exception):
+                raise InvalidToolArgumentsError(str(saved)) from saved
+
+        if name == "metagit_merge_enqueue":
+            return _unwrap(
+                service.enqueue(
+                    _require("repository"),
+                    _require("source_branch"),
+                    _require("target_branch"),
+                    node_id=arguments.get("node_id") if isinstance(arguments.get("node_id"), str) else None,
+                    agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                    repo_path=arguments.get("repo_path") if isinstance(arguments.get("repo_path"), str) else None,
+                )
+            )
+        if name == "metagit_merge_status":
+            repository = arguments.get("repository") if isinstance(arguments.get("repository"), str) else None
+            return _unwrap(service.status(repository=repository))
+        if name == "metagit_merge_retry":
+            merge_id = _require("merge_id")
+            _apply_repo_path(merge_id)
+            return _unwrap(service.retry(merge_id))
+        if name == "metagit_merge_integrate":
+            merge_id = _require("merge_id")
+            _apply_repo_path(merge_id)
+            return _unwrap(service.integrate(merge_id))
+        raise ValueError(f"Unsupported merge tool: {name}")
 
     def _call_task_tool(
         self,
