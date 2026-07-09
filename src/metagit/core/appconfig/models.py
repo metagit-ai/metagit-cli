@@ -231,7 +231,7 @@ class MergeConfig(BaseModel):
 
     validators: list[str] = Field(
         default_factory=list,
-        description="Opt-in zsh commands that must pass before merge promotion",
+        description="Opt-in /bin/sh commands that must pass before merge promotion",
     )
 
 

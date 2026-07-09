@@ -80,7 +80,7 @@ merge:
     - uv run ruff check src/metagit/core/merge tests/core/merge
 ```
 
-Commands run in the target repository checkout with `/bin/zsh`; stdout, stderr,
+Commands run in the target repository checkout with `/bin/sh`; stdout, stderr,
 and exit codes are stored on the merge request. The first non-zero exit code
 marks the request `validation_failed` and blocks `promote`.
 

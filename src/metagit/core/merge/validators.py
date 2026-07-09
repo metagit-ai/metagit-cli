@@ -9,11 +9,12 @@ from metagit.core.merge.models import MergeValidation, MergeValidationCommand
 
 
 def run_validators(repo_path: str, commands: list[str]) -> MergeValidation:
-    """Run validator commands in ``repo_path`` using zsh and capture results."""
+    """Run validator commands in ``repo_path`` using ``/bin/sh`` and capture results."""
     results: list[MergeValidationCommand] = []
     for command in commands:
+        # Use POSIX sh so validators work on Ubuntu CI hosts without zsh installed.
         completed = subprocess.run(
-            ["/bin/zsh", "-c", command],
+            ["/bin/sh", "-c", command],
             cwd=repo_path,
             capture_output=True,
             text=True,
