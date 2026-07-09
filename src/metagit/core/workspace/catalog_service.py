@@ -20,9 +20,10 @@ from metagit.core.workspace.catalog_models import (
     RepoListEntry,
     WorkspaceSummary,
 )
+from metagit.core.workspace.layout_resolver import validate_layout_name
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 from metagit.core.workspace.protection import project_is_protected, repo_is_protected
-from metagit.core.workspace.root_resolver import resolve_definition_root
+from metagit.core.workspace.root_resolver import reserved_project_names, resolve_definition_root
 from metagit.core.workspace.workspace_dedupe import find_duplicate_identities
 
 
@@ -187,6 +188,20 @@ class WorkspaceCatalogService:
                 operation="add",
                 kind="invalid_name",
                 message="project name is required",
+            )
+
+        name_err = validate_layout_name(
+            trimmed,
+            label="project name",
+            reserved=reserved_project_names(),
+        )
+        if name_err:
+            return self._mutation_error(
+                entity="project",
+                operation="add",
+                kind="invalid_name",
+                message=name_err,
+                project_name=trimmed,
             )
         if not config.workspace:
             config.workspace = Workspace(projects=[])

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, NamedTuple, Optional
 
 import click
 
@@ -17,6 +17,15 @@ from metagit.core.workspace.root_resolver import (
     resolve_session_root,
     resolve_sync_root,
 )
+
+
+class AclRoots(NamedTuple):
+    """Resolved roots for ACL CLI operations."""
+
+    session_root: str
+    sync_root: str
+    definition_path: str
+    worktrees_path: Optional[str]
 
 
 def emit_json(payload: Any) -> None:
@@ -37,8 +46,8 @@ def raise_if_error(result: Any) -> Any:
 def resolve_acl_roots(
     ctx: click.Context,
     definition_path: str,
-) -> tuple[str, str, str]:
-    """Return (session_root, sync_root, definition_path)."""
+) -> AclRoots:
+    """Return session/sync roots plus configured worktrees path."""
     path = Path(definition_path).expanduser()
     if path.name in {".metagit.yml", "metagit.yml"} and not path.is_file():
         parent = path.parent
@@ -47,19 +56,26 @@ def resolve_acl_roots(
         definition_root = resolve_definition_root(definition_path)
     session_root = resolve_session_root(definition_root)
     sync_root = session_root
+    worktrees_path: Optional[str] = None
 
     manager = MetagitConfigManager(config_path=definition_path)
     config = manager.load_config()
-    if isinstance(config, MetagitConfig):
-        config_path: Optional[str] = None
-        if ctx.obj:
-            config_path = ctx.obj.get("config_path")
-        if config_path:
-            appconfig = load_appconfig(config_path)
-            if not isinstance(appconfig, Exception) and appconfig.workspace and appconfig.workspace.path:
+    config_path: Optional[str] = None
+    if ctx.obj:
+        config_path = ctx.obj.get("config_path")
+    if config_path:
+        appconfig = load_appconfig(config_path)
+        if not isinstance(appconfig, Exception) and appconfig.workspace:
+            worktrees_path = appconfig.workspace.worktrees_path
+            if isinstance(config, MetagitConfig) and appconfig.workspace.path:
                 sync_root = resolve_sync_root(definition_root, appconfig.workspace.path)
 
-    return session_root, sync_root, definition_path
+    return AclRoots(
+        session_root=session_root,
+        sync_root=sync_root,
+        definition_path=definition_path,
+        worktrees_path=worktrees_path,
+    )
 
 
-__all__ = ["emit_json", "raise_if_error", "resolve_acl_roots"]
+__all__ = ["AclRoots", "emit_json", "raise_if_error", "resolve_acl_roots"]

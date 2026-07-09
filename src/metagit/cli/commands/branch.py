@@ -47,7 +47,8 @@ def branch_allocate(
     as_json: bool,
 ) -> None:
     """Allocate a unique agent/* branch."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = BranchService(
         session_root,
         sync_root=sync_root,
@@ -85,7 +86,8 @@ def branch_list(
     as_json: bool,
 ) -> None:
     """List branch allocations."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = BranchService(session_root, sync_root=sync_root, definition_path=definition)
     result = raise_if_error(service.list(repository=repository, status=status))
     if as_json:
@@ -116,7 +118,8 @@ def branch_release(
     as_json: bool,
 ) -> None:
     """Mark a branch allocation as released."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = BranchService(session_root, sync_root=sync_root, definition_path=definition)
     result = raise_if_error(
         service.release(branch_id=branch_id, name=name, repository=repository),
@@ -143,7 +146,8 @@ def branch_archive(
     as_json: bool,
 ) -> None:
     """Archive a branch allocation record."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = BranchService(session_root, sync_root=sync_root, definition_path=definition)
     result = raise_if_error(
         service.archive(branch_id=branch_id, name=name, repository=repository),
@@ -166,7 +170,8 @@ def branch_cleanup(
     as_json: bool,
 ) -> None:
     """Delete released/archived branches with no active lease or worktree."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     events = None
     branch_service = BranchService(
         session_root,

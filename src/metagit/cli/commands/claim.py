@@ -40,7 +40,7 @@ def claim_declare(
     as_json: bool,
 ) -> None:
     """Declare advisory file claims before coding."""
-    session_root, _, _ = resolve_acl_roots(ctx, definition_path)
+    session_root = resolve_acl_roots(ctx, definition_path).session_root
     service = ClaimService(session_root)
     result = service.declare(
         repository=repository,
@@ -85,7 +85,7 @@ def claim_check(
     as_json: bool,
 ) -> None:
     """Check for overlapping advisory claims."""
-    session_root, _, _ = resolve_acl_roots(ctx, definition_path)
+    session_root = resolve_acl_roots(ctx, definition_path).session_root
     service = ClaimService(session_root)
     result = raise_if_error(
         service.check(repository=repository, patterns=list(patterns), agent_id=agent_id),
@@ -118,7 +118,7 @@ def claim_list(
     as_json: bool,
 ) -> None:
     """List file claims."""
-    session_root, _, _ = resolve_acl_roots(ctx, definition_path)
+    session_root = resolve_acl_roots(ctx, definition_path).session_root
     service = ClaimService(session_root)
     result = raise_if_error(
         service.list(repository=repository, agent_id=agent_id, status=status),
@@ -151,7 +151,7 @@ def claim_release(
     as_json: bool,
 ) -> None:
     """Release an advisory file claim."""
-    session_root, _, _ = resolve_acl_roots(ctx, definition_path)
+    session_root = resolve_acl_roots(ctx, definition_path).session_root
     service = ClaimService(session_root)
     result = raise_if_error(
         service.release(claim_id=claim_id, agent_id=agent_id, force=force),

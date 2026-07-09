@@ -36,8 +36,14 @@ Under the session/manifest root:
   presence/presence.json
   agents/<agent-id>.json
   events/acl.jsonl
-.worktrees/<agent-id>/<project>/<repo>/
+.worktrees/<agent-id>/<project>/<repo>/   # default; configurable
 ```
+
+Checkout directory is controlled by appconfig `workspace.worktrees_path`
+(default `.worktrees`, env `METAGIT_WORKSPACE_WORKTREES_PATH`). Relative values
+resolve from the manifest/session root. The path basename (and the same name
+without a leading `.` / `_`) is reserved and cannot be used as a workspace
+project name.
 
 ## CLI
 

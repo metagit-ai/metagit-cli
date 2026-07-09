@@ -43,8 +43,11 @@ def worktree_create(
     as_json: bool,
 ) -> None:
     """Create an isolated worktree for an agent with an active lease."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
-    service = WorktreeService(session_root, sync_root=sync_root, definition_path=definition)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
+    service = WorktreeService(
+        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+    )
     result = raise_if_error(
         service.create(
             repository=repository,
@@ -80,8 +83,11 @@ def worktree_destroy(
     as_json: bool,
 ) -> None:
     """Destroy an agent worktree."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
-    service = WorktreeService(session_root, sync_root=sync_root, definition_path=definition)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
+    service = WorktreeService(
+        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+    )
     result = raise_if_error(
         service.destroy(
             worktree_id=worktree_id,
@@ -102,8 +108,11 @@ def worktree_destroy(
 @click.pass_context
 def worktree_gc(ctx: click.Context, definition_path: str, as_json: bool) -> None:
     """Garbage-collect worktrees with expired leases or missing paths."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
-    service = WorktreeService(session_root, sync_root=sync_root, definition_path=definition)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
+    service = WorktreeService(
+        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+    )
     result = raise_if_error(service.gc())
     if as_json:
         emit_json({"ok": True, "destroyed": [row.model_dump(mode="json") for row in result]})
@@ -125,8 +134,11 @@ def worktree_status(
     as_json: bool,
 ) -> None:
     """Show git status summaries for active worktrees."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
-    service = WorktreeService(session_root, sync_root=sync_root, definition_path=definition)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
+    service = WorktreeService(
+        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+    )
     result = raise_if_error(service.status(worktree_id=worktree_id, agent_id=agent_id))
     if as_json:
         emit_json(result)
@@ -156,8 +168,11 @@ def worktree_list(
     as_json: bool,
 ) -> None:
     """List worktree records."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
-    service = WorktreeService(session_root, sync_root=sync_root, definition_path=definition)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
+    service = WorktreeService(
+        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+    )
     result = raise_if_error(
         service.list(repository=repository, agent_id=agent_id, status=status),
     )
@@ -186,7 +201,10 @@ def worktree_manifest(
 ) -> None:
     """Show the agent execution manifest written on worktree create."""
     _ = as_json
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
-    service = WorktreeService(session_root, sync_root=sync_root, definition_path=definition)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
+    service = WorktreeService(
+        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+    )
     result = raise_if_error(service.manifest(agent_id))
     emit_json(result)

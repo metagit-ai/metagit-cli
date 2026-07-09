@@ -2163,6 +2163,13 @@ class MetagitMcpRuntime:
             raise InvalidToolArgumentsError(f"{name} requires an active workspace")
         root = status.root_path
         definition = str(Path(root) / ".metagit.yml")
+        worktrees_path: str | None = None
+        try:
+            app_cfg = AppConfig.load()
+            if isinstance(app_cfg, AppConfig) and app_cfg.workspace:
+                worktrees_path = app_cfg.workspace.worktrees_path
+        except Exception:  # noqa: BLE001 — fall back to defaults
+            worktrees_path = None
 
         def _require(key: str) -> str:
             value = str(arguments.get(key, "")).strip()
@@ -2259,7 +2266,12 @@ class MetagitMcpRuntime:
                 ),
             )
         if name == "metagit_worktree_create":
-            service = WorktreeService(root, sync_root=root, definition_path=definition)
+            service = WorktreeService(
+                root,
+                sync_root=root,
+                definition_path=definition,
+                worktrees_path=worktrees_path,
+            )
             claims_raw = arguments.get("claims")
             claims = [str(item) for item in claims_raw] if isinstance(claims_raw, list) else None
             return _unwrap(
@@ -2276,7 +2288,12 @@ class MetagitMcpRuntime:
                 ),
             )
         if name == "metagit_worktree_destroy":
-            service = WorktreeService(root, sync_root=root, definition_path=definition)
+            service = WorktreeService(
+                root,
+                sync_root=root,
+                definition_path=definition,
+                worktrees_path=worktrees_path,
+            )
             return _unwrap(
                 service.destroy(
                     worktree_id=arguments.get("worktree_id") if isinstance(arguments.get("worktree_id"), str) else None,
@@ -2286,7 +2303,12 @@ class MetagitMcpRuntime:
                 ),
             )
         if name == "metagit_worktree_status":
-            service = WorktreeService(root, sync_root=root, definition_path=definition)
+            service = WorktreeService(
+                root,
+                sync_root=root,
+                definition_path=definition,
+                worktrees_path=worktrees_path,
+            )
             return _unwrap(
                 service.status(
                     worktree_id=arguments.get("worktree_id") if isinstance(arguments.get("worktree_id"), str) else None,
@@ -2294,7 +2316,12 @@ class MetagitMcpRuntime:
                 ),
             )
         if name == "metagit_worktree_list":
-            service = WorktreeService(root, sync_root=root, definition_path=definition)
+            service = WorktreeService(
+                root,
+                sync_root=root,
+                definition_path=definition,
+                worktrees_path=worktrees_path,
+            )
             return _unwrap(
                 service.list(
                     repository=arguments.get("repository") if isinstance(arguments.get("repository"), str) else None,

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from metagit.core.workspace.root_resolver import resolve_session_root
+from metagit.core.workspace.root_resolver import resolve_session_root, resolve_worktrees_root
 
 
 def coordination_root(session_root: str) -> Path:
@@ -75,10 +75,12 @@ def worktree_checkout_path(
     agent_id: str,
     project: str,
     repo: str,
+    *,
+    worktrees_path: str | None = None,
 ) -> Path:
     """Filesystem path for an agent worktree checkout."""
-    root = resolve_session_root(session_root)
-    return Path(root) / ".worktrees" / agent_id / project / repo
+    root = resolve_worktrees_root(resolve_session_root(session_root), worktrees_path)
+    return Path(root) / agent_id / project / repo
 
 
 __all__ = [

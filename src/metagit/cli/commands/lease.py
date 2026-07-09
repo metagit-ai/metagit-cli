@@ -49,7 +49,8 @@ def lease_acquire(
     as_json: bool,
 ) -> None:
     """Acquire a branch lease for an agent."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = LeaseService(session_root, sync_root=sync_root, definition_path=definition)
     result = raise_if_error(
         service.acquire(
@@ -92,7 +93,8 @@ def lease_renew(
     as_json: bool,
 ) -> None:
     """Renew an ACL branch lease."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = LeaseService(session_root, sync_root=sync_root, definition_path=definition)
     result = raise_if_error(
         service.renew(lease_id=lease_id, agent_id=agent_id, ttl=ttl, force=force),
@@ -121,7 +123,8 @@ def lease_release(
     as_json: bool,
 ) -> None:
     """Release an ACL branch lease."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = LeaseService(session_root, sync_root=sync_root, definition_path=definition)
     result = raise_if_error(
         service.release(
@@ -153,7 +156,8 @@ def lease_list(
     as_json: bool,
 ) -> None:
     """List ACL branch leases and advisory repo presence."""
-    session_root, sync_root, definition = resolve_acl_roots(ctx, definition_path)
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = LeaseService(session_root, sync_root=sync_root, definition_path=definition)
     result = raise_if_error(
         service.list(repository=repository, status=status, agent_id=agent_id),

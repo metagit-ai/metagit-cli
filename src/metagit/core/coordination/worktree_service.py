@@ -39,6 +39,7 @@ class WorktreeService:
         *,
         sync_root: str | None = None,
         definition_path: str | None = None,
+        worktrees_path: str | None = None,
         lease_service: LeaseService | None = None,
         now_fn: Callable[[], str] | None = None,
         event_store: AclEventStore | None = None,
@@ -48,6 +49,7 @@ class WorktreeService:
         self._session_root = str(Path(session_root).expanduser().resolve())
         self._sync_root = str(Path(sync_root or session_root).expanduser().resolve())
         self._definition_path = definition_path
+        self._worktrees_path = worktrees_path
         self._now = now_fn or utc_now_iso
         self._events = event_store or AclEventStore(self._session_root)
         self._repo_lock = repo_lock or RepoLockRegistry(
@@ -146,6 +148,7 @@ class WorktreeService:
             agent_id,
             project_name,
             repo_name,
+            worktrees_path=self._worktrees_path,
         )
         if checkout.exists():
             return ValueError(f"worktree path already exists: {checkout}")
