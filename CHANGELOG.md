@@ -1,3 +1,5 @@
+# Changelog
+
 ## Unreleased
 
 ### Added
@@ -18,6 +20,12 @@
 ### Fixed
 - **RFC-0011 merge validators:** run opt-in command strings via the platform shell (`shell=True`) so Unix CI uses `/bin/sh` and Windows CI uses `ComSpec`, instead of hardcoding `/bin/zsh` or `/bin/sh`.
 - **RFC-0010 SemanticGraphService:** `declare()` now returns validation errors for bad repositories or empty patterns instead of raising, preserving the service `T | Exception` contract.
+
+## [0.18.1] - 2026-07-09
+
+
+
+### Fixed
 - **Docs CI (`mkdocs build --strict`):** replace relative links from `docs/metagit-rewrite-workspace.md` to `examples/metagit-rewrite/*` with GitHub blob URLs so MkDocs no longer aborts on out-of-tree targets.
 
 ## [0.18.0] - 2026-07-09
