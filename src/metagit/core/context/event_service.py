@@ -11,6 +11,7 @@ from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.models import WorkspaceEvent, WorkspaceEventsResult
 from metagit.core.context.objective_service import ObjectiveService
+from metagit.core.coordination.event_store import AclEventStore
 
 
 class WorkspaceEventService:
@@ -90,6 +91,23 @@ class WorkspaceEventService:
                         kind="created",
                         id=path.stem,
                         data={"path": str(path), "mtime": stat.st_mtime},
+                    )
+                )
+
+        acl_events = AclEventStore(self._root).list_events(since=None)
+        if not isinstance(acl_events, Exception):
+            for event in acl_events:
+                if objective_id and event.payload.get("objective_id") != objective_id:
+                    continue
+                if campaign and event.payload.get("campaign") != campaign:
+                    continue
+                rows.append(
+                    WorkspaceEvent(
+                        timestamp=event.at,
+                        source="acl",
+                        kind=event.type,
+                        id=event.event_id,
+                        data=dict(event.payload),
                     )
                 )
 

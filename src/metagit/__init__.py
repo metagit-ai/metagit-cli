@@ -6,9 +6,21 @@ Metagit detection tool
 .. moduleauthor:: Metagit <zloeber@gmail.com>
 """
 
-import os
-from importlib.metadata import PackageNotFoundError, version
-from os import path
+# Guard: a caller-injected PYTHONPATH (e.g. an embedding app) can shadow our
+# bundled deps and crash import (ModuleNotFoundError pydantic_core._pydantic_core).
+# Force our own site-packages ahead of any env-injected path.
+import sys as _sys
+import sysconfig as _sc
+
+_own = _sc.get_paths()["purelib"]
+if _own in _sys.path:
+    _sys.path.remove(_own)
+_sys.path.insert(0, _own)
+del _sys, _sc, _own
+
+import os  # noqa: E402
+from importlib.metadata import PackageNotFoundError, version  # noqa: E402
+from os import path  # noqa: E402
 
 here = path.abspath(path.dirname(__file__))
 

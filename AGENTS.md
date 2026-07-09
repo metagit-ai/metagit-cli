@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
-last_updated: [YYYY-MM-DD]
+last_updated: 2026-07-09
 ---
 
 # Metagit
@@ -49,6 +49,10 @@ metagit prompt workspace --kind session-start --text-only
 | Self-update | `metagit version upgrade --apply --json` |
 | Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
 | Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
+| ACL isolate agent checkout | `metagit branch allocate` · `metagit lease acquire --allocate` · `metagit worktree create` |
+| ACL file claims | `metagit claim declare` · `metagit claim check` |
+| Agent coordination skill | `metagit skills show metagit-agent-coordination` |
+| Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
 | Feature registry (all modalities) | [docs/reference/modality-feature-registry.md](docs/reference/modality-feature-registry.md) |
 
 Full guide: [docs/agents.md](docs/agents.md) · Index: [llms.txt](llms.txt) · Skills: [docs/skills.md](docs/skills.md) · Docs: <https://metagit-ai.github.io/metagit-cli/agents/>

@@ -35,6 +35,7 @@ def test_workspace_model():
     assert w.path == "./.metagit"
     assert w.session_path == ".metagit/sessions"
     assert w.campaigns_path == "_campaigns"
+    assert w.worktrees_path == ".worktrees"
     assert w.default_project is None
     assert w.dedupe.enabled is False
     assert w.ui_show_preview is True

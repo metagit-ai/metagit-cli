@@ -23,6 +23,7 @@ nav:
     - 'Sharing state (multi-agent)': 'reference/sharing-state.md'
     - 'Agent profile': 'reference/agent-profile.md'
     - 'Campaigns': 'reference/campaigns.md'
+    - 'Agent coordination (ACL)': 'reference/agent-coordination.md'
     - 'Metagit agent templates': 'reference/metagit-agent.md'
     - 'Modality feature registry': 'reference/modality-feature-registry.md'
     - 'Metagit Web UI': 'reference/metagit-web.md'

@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 
 DEFAULT_CAMPAIGNS_PATH = "_campaigns"
+DEFAULT_WORKTREES_PATH = ".worktrees"
 
 
 def resolve_definition_root(definition_path: str) -> str:
@@ -55,10 +56,56 @@ def resolve_campaigns_root(
     return str((base / candidate).resolve())
 
 
+def resolve_worktrees_root(
+    definition_root: str,
+    worktrees_path: str | None = None,
+) -> str:
+    """
+    Return the directory for ACL agent git worktree checkouts.
+
+    Relative paths resolve from the manifest (session) root. Defaults to
+    ``.worktrees``. Absolute paths are allowed.
+    """
+    resolved = worktrees_path or os.getenv("METAGIT_WORKSPACE_WORKTREES_PATH") or DEFAULT_WORKTREES_PATH
+    candidate = Path(resolved).expanduser()
+    base = Path(definition_root).expanduser().resolve()
+    if candidate.is_absolute():
+        return str(candidate.resolve())
+    return str((base / candidate).resolve())
+
+
+def reserved_project_names(
+    *,
+    campaigns_path: str | None = None,
+    worktrees_path: str | None = None,
+) -> frozenset[str]:
+    """
+    Basenames that must not be used as workspace project names.
+
+    Includes configured campaigns/worktrees path segments (with and without a
+    leading underscore/dot) so sync-root mounts cannot collide with ACL or
+    campaign directories at the manifest root.
+    """
+    campaigns = campaigns_path or os.getenv("METAGIT_WORKSPACE_CAMPAIGNS_PATH") or DEFAULT_CAMPAIGNS_PATH
+    worktrees = worktrees_path or os.getenv("METAGIT_WORKSPACE_WORKTREES_PATH") or DEFAULT_WORKTREES_PATH
+    names: set[str] = set()
+    for raw in (campaigns, worktrees):
+        base = Path(raw).expanduser().name.strip()
+        if not base or base in {".", ".."}:
+            continue
+        names.add(base)
+        names.add(base.lstrip("._"))
+    names.discard("")
+    return frozenset(names)
+
+
 __all__ = [
     "DEFAULT_CAMPAIGNS_PATH",
+    "DEFAULT_WORKTREES_PATH",
+    "reserved_project_names",
     "resolve_campaigns_root",
     "resolve_definition_root",
     "resolve_session_root",
     "resolve_sync_root",
+    "resolve_worktrees_root",
 ]

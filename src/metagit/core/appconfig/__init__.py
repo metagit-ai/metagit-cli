@@ -40,6 +40,7 @@ def load_config(config_path: str) -> Union[AppConfig, Exception]:
         # access to AppConfig but honor METAGIT_WORKSPACE_SESSION_PATH overrides.
         os.environ.setdefault("METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path)
         os.environ.setdefault("METAGIT_WORKSPACE_CAMPAIGNS_PATH", config.workspace.campaigns_path)
+        os.environ.setdefault("METAGIT_WORKSPACE_WORKTREES_PATH", config.workspace.worktrees_path)
         return config
     except Exception as e:
         return e

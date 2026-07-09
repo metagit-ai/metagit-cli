@@ -31,6 +31,7 @@ from metagit.core.workspace.layout_resolver import (
     validate_layout_name,
 )
 from metagit.core.workspace.protection import project_is_protected, repo_is_protected
+from metagit.core.workspace.root_resolver import reserved_project_names
 
 
 class WorkspaceLayoutService:
@@ -54,7 +55,11 @@ class WorkspaceLayoutService:
         _ = dedupe
         source = from_name.strip()
         target = to_name.strip()
-        err = validate_layout_name(source, label="from_name") or validate_layout_name(target, label="to_name")
+        err = validate_layout_name(source, label="from_name") or validate_layout_name(
+            target,
+            label="to_name",
+            reserved=reserved_project_names(),
+        )
         if err:
             return self._error("rename", "project", source, kind="invalid_name", message=err)
         if source == target:

@@ -18,7 +18,12 @@ from metagit.core.workspace.models import WorkspaceProject
 _NAME_PATTERN = re.compile(r"^[\w][\w.-]*$")
 
 
-def validate_layout_name(name: str, *, label: str = "name") -> Optional[str]:
+def validate_layout_name(
+    name: str,
+    *,
+    label: str = "name",
+    reserved: frozenset[str] | set[str] | None = None,
+) -> Optional[str]:
     """Return an error message when name is invalid for paths and sessions."""
     trimmed = name.strip()
     if not trimmed:
@@ -27,6 +32,8 @@ def validate_layout_name(name: str, *, label: str = "name") -> Optional[str]:
         return f"invalid {label}: {name!r}"
     if not _NAME_PATTERN.match(trimmed):
         return f"invalid {label} (use letters, digits, _, ., -): {name!r}"
+    if reserved and (trimmed in reserved or trimmed.lstrip("._") in reserved):
+        return f"invalid {label}: {name!r} is reserved (conflicts with campaigns/worktrees path)"
     return None
 
 

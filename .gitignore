@@ -23,6 +23,7 @@ __pycache__/
 secret_results.json
 # Metagit workspace
 .metagit/
+.worktrees/
 src/metagit/_version.py
 site
 
@@ -30,7 +31,14 @@ site
 .crush
 
 graphify-*
-docs/superpowers
+# Local superpowers drafts; track ACL RFC-0008–0013 series for MR continuity
+docs/superpowers/*
+!docs/superpowers/specs/
+!docs/superpowers/plans/
+docs/superpowers/specs/*
+docs/superpowers/plans/*
+!docs/superpowers/specs/2026-07-09-*.md
+!docs/superpowers/plans/2026-07-09-*.md
 docs/changelog.md
 web/node_modules
 .gitnexus

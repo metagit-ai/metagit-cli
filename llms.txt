@@ -43,6 +43,10 @@ metagit prompt workspace --kind session-start --text-only
 | Self-update | `metagit version upgrade --apply --json` |
 | Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
 | Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
+| ACL branch / lease | `metagit branch allocate` · `metagit lease acquire --allocate` |
+| ACL worktree / claim | `metagit worktree create` · `metagit claim declare` |
+| Agent coordination skill | `metagit skills show metagit-agent-coordination` |
+| Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
 
 ## Feature registry
 
@@ -50,11 +54,12 @@ Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality
 
 ## Bundled skills (after install)
 
-`metagit-cli`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects`, `metagit-campaign`, `metagit-sharing-state` (multi-agent remote state) — see docs/skills.md.
+`metagit-cli`, `metagit-agent-coordination`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects`, `metagit-campaign`, `metagit-sharing-state` (multi-agent remote state) — see docs/skills.md.
 
 ## Optional
 
 - Local web UI: `metagit web serve`
 - HTTP API: `metagit api serve`
 - **Shared coordination state** (multi-agent): [docs/reference/sharing-state.md](docs/reference/sharing-state.md) — `METAGIT_STATE_URL`, ops `PUT` routes, `ETag`/`If-Match`
+- **Agent Coordination Layer (ACL):** isolated `agent/*` branches, branch leases, worktrees under `.worktrees/`, advisory file claims — distinct from handoff claim TTL. See [agent-coordination.md](docs/reference/agent-coordination.md).
 - Repomix profile: `metagit context repomix --profile bugfix-local --project P --repo R`
