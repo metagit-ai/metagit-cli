@@ -9,17 +9,33 @@ from metagit.core.merge.models import MergeValidation, MergeValidationCommand
 
 
 def run_validators(repo_path: str, commands: list[str]) -> MergeValidation:
-    """Run validator commands in ``repo_path`` using ``/bin/sh`` and capture results."""
+    """Run validator command strings in ``repo_path`` via the platform shell.
+
+    Uses ``shell=True`` so Unix CI hosts run ``/bin/sh`` and Windows hosts use
+    ``ComSpec`` (typically ``cmd.exe``). Validator strings must be valid for the
+    host shell (quote paths with spaces accordingly).
+    """
     results: list[MergeValidationCommand] = []
     for command in commands:
-        # Use POSIX sh so validators work on Ubuntu CI hosts without zsh installed.
-        completed = subprocess.run(
-            ["/bin/sh", "-c", command],
-            cwd=repo_path,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=repo_path,
+                capture_output=True,
+                text=True,
+                check=False,
+                shell=True,
+            )
+        except OSError as exc:
+            results.append(
+                MergeValidationCommand(
+                    cmd=command,
+                    exit_code=127,
+                    stdout="",
+                    stderr=str(exc),
+                )
+            )
+            return MergeValidation(ok=False, commands=results)
         results.append(
             MergeValidationCommand(
                 cmd=command,

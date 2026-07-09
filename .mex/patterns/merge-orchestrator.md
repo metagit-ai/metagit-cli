@@ -52,7 +52,7 @@ logic in `metagit.core.merge`; adapters should validate input and return
 - MCP tools are ACTIVE-gated in `ToolRegistry`; missing registry entries make
   calls fail before dispatch.
 - `metagit_merge_*` tools should use the same `MergeOrchestrator` service as CLI.
-- Validators run configured commands with `/bin/sh` from the repository path.
+- Validators run configured command strings via the platform shell (`shell=True`) from the repository path.
 - `promote` merges the integration branch (`target_branch`) into the requested
   branch only after a successful validation gate.
 

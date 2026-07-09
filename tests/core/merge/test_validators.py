@@ -64,7 +64,9 @@ def test_empty_validators_return_success(tmp_path: Path) -> None:
 
 
 def test_failing_validator_marks_request_validation_failed(tmp_path: Path) -> None:
-  command = f"{sys.executable} -c 'import sys; sys.exit(2)'"
+  # Quote the interpreter for Windows paths with spaces; use double quotes for -c
+  # so both /bin/sh and cmd.exe parse the snippet correctly.
+  command = f'"{sys.executable}" -c "import sys; sys.exit(2)"'
   _, orchestrator, request = _clean_merge_request(tmp_path, validators=[command])
 
   integrated = orchestrator.integrate(request.merge_id)
@@ -78,7 +80,7 @@ def test_failing_validator_marks_request_validation_failed(tmp_path: Path) -> No
 
 
 def test_promote_is_blocked_after_failed_validation(tmp_path: Path) -> None:
-  command = f"{sys.executable} -c 'import sys; sys.exit(2)'"
+  command = f'"{sys.executable}" -c "import sys; sys.exit(2)"'
   _, orchestrator, request = _clean_merge_request(tmp_path, validators=[command])
   integrated = orchestrator.integrate(request.merge_id)
   assert not isinstance(integrated, Exception)

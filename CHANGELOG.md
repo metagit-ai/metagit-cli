@@ -16,7 +16,7 @@
 - Expanded **RFC-0010 Semantic Repository Knowledge Graph** design decisions and bite-sized TDD implementation plan under `docs/superpowers/` (next ACL series MR after 0008/0009).
 
 ### Fixed
-- **RFC-0011 merge validators:** run opt-in commands with `/bin/sh` instead of `/bin/zsh` so Ubuntu CI hosts without zsh can execute validator tests and promote gates.
+- **RFC-0011 merge validators:** run opt-in command strings via the platform shell (`shell=True`) so Unix CI uses `/bin/sh` and Windows CI uses `ComSpec`, instead of hardcoding `/bin/zsh` or `/bin/sh`.
 - **RFC-0010 SemanticGraphService:** `declare()` now returns validation errors for bad repositories or empty patterns instead of raising, preserving the service `T | Exception` contract.
 - **Docs CI (`mkdocs build --strict`):** replace relative links from `docs/metagit-rewrite-workspace.md` to `examples/metagit-rewrite/*` with GitHub blob URLs so MkDocs no longer aborts on out-of-tree targets.
 
