@@ -98,11 +98,3 @@ ACL lifecycle events append to `.metagit/events/acl.jsonl` and appear in
 repo are set — suggested allocate / lease / worktree / claim CLI strings only
 (no automatic mutation).
 
-## Deferred (later RFCs)
-
-- RFC-0008 Task Graph & Intent Engine
-- RFC-0009 Agent Context Compiler
-- RFC-0010 Semantic Repository Knowledge Graph
-- RFC-0011 Merge Orchestrator
-- RFC-0012 Distributed Agent Scheduler
-- RFC-0013 Agent Operating System
