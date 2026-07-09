@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.18.0] - 2026-07-09
+
+
+
 ### Added
 - **RFC-0009 Agent Context Compiler:** `metagit context compile` CLI + MCP `metagit_context_compile`; `ContextCompiler` reuses context-pack tiers with char/4 budget; artifacts under `.metagit/context/compiled/` or `.metagit/tasks/<graph>/context/`; stamps task node `compiled_context_path` / `context_budget`; `ContextCompiled` events (`source=context`). Docs: `docs/reference/context-compiler.md`.
 - **RFC-0008 Task Graph & Intent Engine:** `metagit task` CLI (`create`, `expand`, `list`, `status`, `ready`, `start`, `block`, `complete`, `bind-acl`), MCP tools (`metagit_task_*`), persistence under `.metagit/tasks/`, lifecycle events in `metagit context events` (`source=taskgraph`), and ACL command hints without auto-running git. Docs: `docs/reference/task-graph.md`.
