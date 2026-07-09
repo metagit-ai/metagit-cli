@@ -15,6 +15,7 @@ from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.context.approval_service import ApprovalService
+from metagit.core.context.compiler import ContextCompiler
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.models import ApprovalStatus
@@ -64,6 +65,7 @@ from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
 from metagit.core.state.resolver import resolve_backend
+from metagit.core.taskgraph.service import TaskGraphService
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
@@ -387,6 +389,21 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_context_compile": {
+                "type": "object",
+                "required": ["project_name", "repo_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                    "tier": {"type": "integer", "enum": [0, 1, 2]},
+                    "budget": {"type": "integer", "minimum": 1},
+                    "profile": {"type": "string"},
+                    "task_id": {"type": "string"},
+                    "graph_id": {"type": "string"},
+                    "objective_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_session_begin": {
                 "type": "object",
                 "properties": {
@@ -693,6 +710,92 @@ class MetagitMcpRuntime:
                     "claim_id": {"type": "string"},
                     "agent_id": {"type": "string"},
                     "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_task_create": {
+                "type": "object",
+                "required": ["title", "goal"],
+                "properties": {
+                    "title": {"type": "string"},
+                    "goal": {"type": "string"},
+                    "acceptance": {"type": "array", "items": {"type": "string"}},
+                    "objective_id": {"type": "string"},
+                    "handoff_id": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repos": {"type": "array", "items": {"type": "string"}},
+                    "graph_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_task_expand": {
+                "type": "object",
+                "required": ["graph_id", "outline"],
+                "properties": {
+                    "graph_id": {"type": "string"},
+                    "outline": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {"type": "array", "items": {"type": "object"}},
+                        ]
+                    },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_task_list": {
+                "type": "object",
+                "properties": {
+                    "graph_id": {"type": "string"},
+                    "status": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_task_status": {
+                "type": "object",
+                "required": ["node_id"],
+                "properties": {
+                    "node_id": {"type": "string"},
+                    "graph_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_task_ready": {
+                "type": "object",
+                "properties": {
+                    "graph_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_task_block": {
+                "type": "object",
+                "required": ["node_id", "reason"],
+                "properties": {
+                    "node_id": {"type": "string"},
+                    "reason": {"type": "string"},
+                    "graph_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_task_complete": {
+                "type": "object",
+                "required": ["node_id"],
+                "properties": {
+                    "node_id": {"type": "string"},
+                    "graph_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_task_bind_acl": {
+                "type": "object",
+                "required": ["node_id", "agent_id"],
+                "properties": {
+                    "node_id": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "graph_id": {"type": "string"},
+                    "branch": {"type": "string"},
+                    "lease_id": {"type": "string"},
+                    "worktree_id": {"type": "string"},
+                    "pattern": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -1439,6 +1542,58 @@ class MetagitMcpRuntime:
             )
             return pack.model_dump(mode="json")
 
+        if name == "metagit_context_compile":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("context compile requires an active workspace")
+            project_name = str(arguments.get("project_name", "")).strip()
+            repo_name = str(arguments.get("repo_name", "")).strip()
+            if not project_name:
+                raise InvalidToolArgumentsError("project_name is required")
+            if not repo_name:
+                raise InvalidToolArgumentsError("repo_name is required")
+            tier_raw = arguments.get("tier", 1)
+            try:
+                tier_val = int(tier_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("tier must be an integer") from exc
+            if tier_val not in (0, 1, 2):
+                raise InvalidToolArgumentsError("tier must be 0, 1, or 2")
+            budget_raw = arguments.get("budget")
+            budget: int | None = None
+            if budget_raw is not None:
+                try:
+                    budget = int(budget_raw)
+                except (TypeError, ValueError) as exc:
+                    raise InvalidToolArgumentsError("budget must be an integer") from exc
+                if budget < 1:
+                    raise InvalidToolArgumentsError("budget must be >= 1")
+            config_path = str(Path(status.root_path) / ".metagit.yml")
+            definition_root = status.root_path
+            app_config = AppConfig.load()
+            sync_root = (
+                resolve_sync_root(definition_root, app_config.workspace.path)
+                if not isinstance(app_config, Exception)
+                else definition_root
+            )
+            compiled = ContextCompiler(pack_service=self._context_pack).compile(
+                config=config,
+                config_path=config_path,
+                workspace_root=sync_root,
+                session_root=definition_root,
+                definition_root=definition_root,
+                project=project_name,
+                repo=repo_name,
+                tier=cast(Literal[0, 1, 2], tier_val),
+                budget=budget,
+                profile=arguments.get("profile") if isinstance(arguments.get("profile"), str) else None,
+                task_id=arguments.get("task_id") if isinstance(arguments.get("task_id"), str) else None,
+                graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
+                objective_id=arguments.get("objective_id") if isinstance(arguments.get("objective_id"), str) else None,
+            )
+            if isinstance(compiled, Exception):
+                raise InvalidToolArgumentsError(str(compiled)) from compiled
+            return compiled.model_dump(mode="json")
+
         if name == "metagit_session_begin":
             if not config or not status.root_path:
                 raise InvalidToolArgumentsError("session begin requires an active workspace")
@@ -1751,6 +1906,9 @@ class MetagitMcpRuntime:
             since_raw = arguments.get("since")
             since_opt = str(since_raw).strip() if isinstance(since_raw, str) and since_raw.strip() else None
             return resolve_backend(status.root_path).events().list_events(since=since_opt).model_dump(mode="json")
+
+        if name.startswith("metagit_task_"):
+            return self._call_task_tool(name, arguments, status)
 
         if (
             name.startswith("metagit_branch_")
@@ -2377,6 +2535,103 @@ class MetagitMcpRuntime:
                 ),
             )
         raise ValueError(f"Unsupported ACL tool: {name}")
+
+    def _call_task_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+    ) -> dict[str, Any]:
+        if not status.root_path:
+            raise InvalidToolArgumentsError("task tools require an active workspace")
+        root = status.root_path
+        service = TaskGraphService(root)
+
+        def _require(key: str) -> str:
+            value = str(arguments.get(key, "")).strip()
+            if not value:
+                raise InvalidToolArgumentsError(f"{key} is required")
+            return value
+
+        def _unwrap(result: Any) -> dict[str, Any]:
+            if isinstance(result, Exception):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if hasattr(result, "model_dump"):
+                return result.model_dump(mode="json")
+            if isinstance(result, list):
+                return {
+                    "ok": True,
+                    "items": [item.model_dump(mode="json") if hasattr(item, "model_dump") else item for item in result],
+                }
+            return {"ok": True, "result": result}
+
+        if name == "metagit_task_create":
+            acceptance_raw = arguments.get("acceptance")
+            repos_raw = arguments.get("repos")
+            return _unwrap(
+                service.create(
+                    title=_require("title"),
+                    goal=_require("goal"),
+                    acceptance=[str(item) for item in acceptance_raw] if isinstance(acceptance_raw, list) else None,
+                    objective_id=arguments.get("objective_id")
+                    if isinstance(arguments.get("objective_id"), str)
+                    else None,
+                    handoff_id=arguments.get("handoff_id") if isinstance(arguments.get("handoff_id"), str) else None,
+                    project=arguments.get("project") if isinstance(arguments.get("project"), str) else None,
+                    repos=[str(item) for item in repos_raw] if isinstance(repos_raw, list) else None,
+                    graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
+                ),
+            )
+        if name == "metagit_task_expand":
+            outline = arguments.get("outline")
+            if outline is None:
+                raise InvalidToolArgumentsError("outline is required")
+            return _unwrap(service.expand(_require("graph_id"), outline))
+        if name == "metagit_task_list":
+            graph_id = arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None
+            status_filter = arguments.get("status") if isinstance(arguments.get("status"), str) else None
+            if graph_id or status_filter:
+                return _unwrap(service.list_nodes(graph_id=graph_id, status=status_filter))  # type: ignore[arg-type]
+            return _unwrap(service.list_graphs())
+        if name == "metagit_task_status":
+            return _unwrap(
+                service.status(
+                    _require("node_id"),
+                    graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
+                ),
+            )
+        if name == "metagit_task_ready":
+            return _unwrap(
+                service.ready(arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None),
+            )
+        if name == "metagit_task_block":
+            return _unwrap(
+                service.block(
+                    _require("node_id"),
+                    _require("reason"),
+                    graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
+                ),
+            )
+        if name == "metagit_task_complete":
+            return _unwrap(
+                service.complete(
+                    _require("node_id"),
+                    graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
+                ),
+            )
+        if name == "metagit_task_bind_acl":
+            return _unwrap(
+                service.bind_acl(
+                    _require("node_id"),
+                    agent_id=_require("agent_id"),
+                    graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
+                    branch=arguments.get("branch") if isinstance(arguments.get("branch"), str) else None,
+                    lease_id=arguments.get("lease_id") if isinstance(arguments.get("lease_id"), str) else None,
+                    worktree_id=arguments.get("worktree_id") if isinstance(arguments.get("worktree_id"), str) else None,
+                    pattern=arguments.get("pattern") if isinstance(arguments.get("pattern"), str) else None,
+                ),
+            )
+        raise ValueError(f"Unsupported task tool: {name}")
 
     def _resolve_status_and_config(self) -> tuple[WorkspaceStatus, Any]:
         resolved_root = self._resolver.resolve(cwd=os.getcwd(), cli_root=self._root_override)

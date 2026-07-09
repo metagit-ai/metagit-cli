@@ -43,6 +43,7 @@ from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
 from metagit.cli.commands.search import search
 from metagit.cli.commands.skills import skills
+from metagit.cli.commands.task import task_group
 from metagit.cli.commands.tui import tui_cmd
 from metagit.cli.commands.version_cmd import version_group
 from metagit.cli.commands.web import web
@@ -139,6 +140,7 @@ cli.add_command(branch_group)
 cli.add_command(lease_group)
 cli.add_command(worktree_group)
 cli.add_command(claim_group)
+cli.add_command(task_group)
 cli.add_command(init)
 cli.add_command(mcp)
 cli.add_command(gitnexus)

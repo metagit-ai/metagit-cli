@@ -52,11 +52,11 @@
 
 **Files:** create `models.py`, `paths.py`, `store.py`, `__init__.py`; tests under `tests/core/taskgraph/test_models.py`, `test_store.py`
 
-- [ ] **Step 1: Write failing tests** for `TaskGraph` / `TaskNode` validation (slug ids, status enum) and store round-trip in a temp dir.
-- [ ] **Step 2: Run tests — expect fail** (`uv run pytest tests/core/taskgraph/test_models.py tests/core/taskgraph/test_store.py -q`).
-- [ ] **Step 3: Implement models, paths, store** (`T | Exception` returns; file lock).
-- [ ] **Step 4: Run tests — expect pass**.
-- [ ] **Step 5: Commit** `feat(taskgraph): add models and JSON store for RFC-0008`.
+- [x] **Step 1: Write failing tests** for `TaskGraph` / `TaskNode` validation (slug ids, status enum) and store round-trip in a temp dir.
+- [x] **Step 2: Run tests — expect fail** (`uv run pytest tests/core/taskgraph/test_taskgraph_models.py tests/core/taskgraph/test_store.py -q`).
+- [x] **Step 3: Implement models, paths, store** (`T | Exception` returns; file lock).
+- [x] **Step 4: Run tests — expect pass**.
+- [ ] **Step 5: Commit** `feat(taskgraph): add models and JSON store for RFC-0008` (deferred — commit when user requests).
 
 ---
 
@@ -64,11 +64,11 @@
 
 **Files:** create `service.py`; test `test_service_dag.py`
 
-- [ ] **Step 1: Write failing tests** — diamond DAG ready roots; complete unlocks children; cycle rejected on expand/add.
-- [ ] **Step 2: Run tests — expect fail**.
-- [ ] **Step 3: Implement `TaskGraphService`** create graph, add nodes, expand from outline/JSON, `ready()`, `complete()`, `block()`, `start()`.
-- [ ] **Step 4: Run tests — expect pass**.
-- [ ] **Step 5: Commit** `feat(taskgraph): DAG ready-set and expand with cycle checks`.
+- [x] **Step 1: Write failing tests** — diamond DAG ready roots; complete unlocks children; cycle rejected on expand/add.
+- [x] **Step 2: Run tests — expect fail**.
+- [x] **Step 3: Implement `TaskGraphService`** create graph, add nodes, expand from outline/JSON, `ready()`, `complete()`, `block()`, `start()`.
+- [x] **Step 4: Run tests — expect pass**.
+- [ ] **Step 5: Commit** `feat(taskgraph): DAG ready-set and expand with cycle checks` (deferred).
 
 ---
 
@@ -76,9 +76,9 @@
 
 **Files:** create `events.py`; modify event_service; test event merge
 
-- [ ] **Step 1: Write failing test** that completing a node appends `TaskCompleted` visible to event poll with `source=taskgraph`.
-- [ ] **Step 2: Implement event append + wire into `WorkspaceEventService`**.
-- [ ] **Step 3: Tests pass; commit** `feat(taskgraph): emit taskgraph lifecycle events`.
+- [x] **Step 1: Write failing test** that completing a node appends `TaskCompleted` visible to event poll with `source=taskgraph`.
+- [x] **Step 2: Implement event append + wire into `WorkspaceEventService`**.
+- [x] **Step 3: Tests pass;** commit deferred.
 
 ---
 
@@ -86,8 +86,8 @@
 
 **Files:** extend service + models; test `test_bind_acl.py`
 
-- [ ] **Step 1: Failing test** — `bind_acl` fills `acl_commands` strings for allocate/lease/worktree/claim using node project/repo/agent/task ids; no git calls.
-- [ ] **Step 2: Implement; tests pass; commit** `feat(taskgraph): store ACL command hints on nodes`.
+- [x] **Step 1: Failing test** — `bind_acl` fills `acl_commands` strings for allocate/lease/worktree/claim using node project/repo/agent/task ids; no git calls.
+- [x] **Step 2: Implement; tests pass;** commit deferred.
 
 ---
 
@@ -95,9 +95,9 @@
 
 **Files:** `cli/commands/task.py`, `main.py`, `tests/cli/commands/test_task_cli.py`
 
-- [ ] **Step 1: Failing CLI tests** for create/expand/ready/complete/list `--json` using temp session root.
-- [ ] **Step 2: Implement Click group; register in main**.
-- [ ] **Step 3: Tests pass; commit** `feat(cli): add metagit task group for RFC-0008`.
+- [x] **Step 1: Failing CLI tests** for create/expand/ready/complete/list `--json` using temp session root.
+- [x] **Step 2: Implement Click group; register in main**.
+- [x] **Step 3: Tests pass;** commit deferred.
 
 ---
 
@@ -105,9 +105,9 @@
 
 **Files:** tool registry, runtime dispatch, `scripts/modality-parity.yml`, MCP tests
 
-- [ ] **Step 1: Register tools** mirroring CLI; gate ACTIVE.
-- [ ] **Step 2: Parity YAML features** + markers in docs/skills as needed.
-- [ ] **Step 3: Tests; commit** `feat(mcp): expose task graph tools`.
+- [x] **Step 1: Register tools** mirroring CLI; gate ACTIVE.
+- [x] **Step 2: Parity YAML features** + markers in docs/skills as needed.
+- [x] **Step 3: Tests;** commit deferred.
 
 ---
 
@@ -115,10 +115,10 @@
 
 **Files:** `docs/reference/task-graph.md`, pattern, ROUTER, CHANGELOG, series index, agent-coordination deferred links
 
-- [ ] **Step 1: Write reference doc + pattern; update indexes**.
-- [ ] **Step 2: `task qa:prepush` until green**.
-- [ ] **Step 3: `task gitnexus:analyze`**.
-- [ ] **Step 4: Commit** `docs: task graph reference and RFC-0008 closeout`.
+- [x] **Step 1: Write reference doc + pattern; update indexes**.
+- [x] **Step 2: `task qa:prepush` until green**.
+- [x] **Step 3: `task gitnexus:analyze`**.
+- [ ] **Step 4: Commit** `docs: task graph reference and RFC-0008 closeout` (deferred — ask user).
 
 ---
 

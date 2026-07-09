@@ -24,6 +24,7 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
 from metagit.core.context.approval_service import ApprovalService
+from metagit.core.context.compiler import ContextCompiler
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.event_service import WorkspaceEventService
 from metagit.core.context.handoff_service import HandoffService
@@ -208,6 +209,87 @@ def pack_cmd(
         emit_json(result)
         return
     _summarize_pack(result)
+
+
+@context.command("compile")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+    help="Path to the workspace .metagit.yml definition file",
+)
+@click.option("--project", required=True, shell_complete=complete_projects)
+@click.option("--repo", required=True, shell_complete=complete_repos)
+@click.option("--task-id", default=None, help="Task node id (RFC-0008)")
+@click.option("--graph-id", default=None, help="Disambiguate task node graph")
+@click.option("--objective-id", default=None, help="Optional objective linkage")
+@click.option(
+    "--tier",
+    type=click.IntRange(0, 2),
+    default=1,
+    show_default=True,
+    help="Context pack tier to compile",
+)
+@click.option(
+    "--budget",
+    type=click.IntRange(min=1),
+    default=None,
+    help="Token budget (char/4 heuristic); falls back to task context_budget",
+)
+@click.option(
+    "--profile",
+    default=None,
+    shell_complete=complete_repomix_profiles,
+    help="Optional repomix profile name for suggested command",
+)
+@click.option("--json", "as_json", is_flag=True, help="Print CompiledContext as JSON")
+@click.pass_context
+def compile_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    project: str,
+    repo: str,
+    task_id: str | None,
+    graph_id: str | None,
+    objective_id: str | None,
+    tier: int,
+    budget: int | None,
+    profile: str | None,
+    as_json: bool,
+) -> None:
+    """Compile a budgeted context artifact for a project/repo (RFC-0009)."""
+    config, config_path, sync_root, session_root, _ = _context_paths(ctx, definition_path)
+    definition_root = resolve_definition_root(definition_path)
+    result = ContextCompiler().compile(
+        config=config,
+        config_path=config_path,
+        workspace_root=sync_root,
+        session_root=session_root,
+        definition_root=definition_root,
+        project=project,
+        repo=repo,
+        tier=tier,  # type: ignore[arg-type]
+        budget=budget,
+        profile=profile,
+        task_id=task_id,
+        graph_id=graph_id,
+        objective_id=objective_id,
+    )
+    if isinstance(result, Exception):
+        raise click.ClickException(str(result))
+    if as_json:
+        emit_json(result)
+        return
+    click.echo(f"compile_id: {result.compile_id}")
+    click.echo(f"artifact: {result.artifact_path}")
+    click.echo(f"estimated_tokens: {result.estimated_tokens}")
+    click.echo(f"sections: {', '.join(result.sections) or '(none)'}")
+    if result.dropped_sections:
+        click.echo(f"dropped: {', '.join(result.dropped_sections)}")
+    if result.suggested_repomix_command:
+        click.echo(f"repomix: {result.suggested_repomix_command}")
 
 
 @context.group("session")

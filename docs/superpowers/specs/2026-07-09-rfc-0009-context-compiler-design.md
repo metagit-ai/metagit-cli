@@ -1,6 +1,6 @@
 # RFC-0009: Agent Context Compiler — Design
 
-**Status:** Draft  
+**Status:** Implemented (pending merge)  
 **Date:** 2026-07-09  
 **Series:** [ACL RFC series index](2026-07-09-acl-rfc-series-index.md)  
 **Vision:** [agent-coordination.md](../../reference/agent-coordination.md) (RFC-0007 vision; original spec.md retired) § Context Isolation  

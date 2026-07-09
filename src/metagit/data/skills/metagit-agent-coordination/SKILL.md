@@ -21,6 +21,11 @@ Full reference: [docs/reference/agent-coordination.md](../../../../docs/referenc
 <!-- modality:acl_worktree -->
 <!-- modality:acl_claim -->
 <!-- modality:acl_manifest -->
+<!-- modality:task_graph -->
+
+Task graphs (`metagit task …`) can store ACL command hints on nodes via
+`metagit task bind-acl` without running git — see
+[docs/reference/task-graph.md](../../../../docs/reference/task-graph.md).
 
 ## When to use
 

@@ -44,9 +44,13 @@ metagit prompt workspace --kind session-start --text-only
 | Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
 | Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
 | ACL branch / lease | `metagit branch allocate` · `metagit lease acquire --allocate` |
+| Task graph / intent | `metagit task create` · `metagit task ready` · `metagit task complete` |
+| Context compile | `metagit context compile --project P --repo R --json` |
 | ACL worktree / claim | `metagit worktree create` · `metagit claim declare` |
 | Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
+| Task graph (RFC-0008) | [docs/reference/task-graph.md](docs/reference/task-graph.md) |
+| Context compiler (RFC-0009) | [docs/reference/context-compiler.md](docs/reference/context-compiler.md) |
 
 ## Feature registry
 
@@ -62,4 +66,6 @@ Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality
 - HTTP API: `metagit api serve`
 - **Shared coordination state** (multi-agent): [docs/reference/sharing-state.md](docs/reference/sharing-state.md) — `METAGIT_STATE_URL`, ops `PUT` routes, `ETag`/`If-Match`
 - **Agent Coordination Layer (ACL):** isolated `agent/*` branches, branch leases, worktrees under `.worktrees/`, advisory file claims — distinct from handoff claim TTL. See [agent-coordination.md](docs/reference/agent-coordination.md).
+- **Task Graph & Intent (RFC-0008):** DAG of executable nodes under `.metagit/tasks/`, ready-set, ACL bind hints — see [task-graph.md](docs/reference/task-graph.md).
+- **Context Compiler (RFC-0009):** budgeted pack artifacts via `metagit context compile` — see [context-compiler.md](docs/reference/context-compiler.md).
 - Repomix profile: `metagit context repomix --profile bugfix-local --project P --repo R`

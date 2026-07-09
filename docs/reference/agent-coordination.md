@@ -20,8 +20,8 @@ ACL leases own a *branch* for an agent.
 2. Agents never share `agent/*` working branches.
 3. Branch leases expire and can be renewed.
 4. File claims and repo presence are **advisory** — Git remains the authority.
-5. Task graphs, merge orchestration, semantic ownership, and scheduling are
-   deferred to RFC-0008+.
+5. Task graphs ship in RFC-0008 ([task-graph.md](task-graph.md)); merge
+   orchestration, semantic ownership, and scheduling remain RFC-0009+.
 
 ## Persistence
 
@@ -97,4 +97,9 @@ ACL lifecycle events append to `.metagit/events/acl.jsonl` and appear in
 `metagit agent dispatch-plan` includes `handoff.acl_commands` when project and
 repo are set — suggested allocate / lease / worktree / claim CLI strings only
 (no automatic mutation).
+
+<!-- modality:task_graph -->
+
+Task nodes may also store the same style of hints via
+`metagit task bind-acl` — see [task-graph.md](task-graph.md).
 
