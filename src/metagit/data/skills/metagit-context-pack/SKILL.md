@@ -217,6 +217,7 @@ metagit config validate -c .metagit.yml
 | CLI | MCP tool |
 |-----|----------|
 | `context pack --tier N` | `metagit_context_pack` (required `tier`) |
+| `context compile` | `metagit_context_compile` <!-- modality:context_compile --> |
 | `context repo-card` | `metagit_repo_card` |
 | `context objective list/set/complete/cancel` | `metagit_objective_list` / `metagit_objective_upsert` / `metagit_objective_edit` |
 | `context approval request/list/approve/deny` | `metagit_approval_request` / `metagit_approval_list` / `metagit_approval_resolve` |

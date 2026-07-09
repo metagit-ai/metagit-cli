@@ -351,6 +351,40 @@ def test_context_objective_export_import_roundtrip(tmp_path: Path, monkeypatch) 
     assert summary["imported"] >= 1
 
 
+def test_context_compile_json(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "context",
+            "compile",
+            "--project",
+            "demo",
+            "--repo",
+            "svc",
+            "--tier",
+            "1",
+            "--budget",
+            "20000",
+            "--profile",
+            "bugfix-local",
+            "--json",
+        ],
+        env=_env_workspace_root(tmp_path),
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["ok"] is True
+    assert payload["inputs"]["project"] == "demo"
+    assert payload["inputs"]["repo"] == "svc"
+    assert Path(payload["artifact_path"]).is_file()
+    assert "bugfix-local" in (payload.get("suggested_repomix_command") or "")
+
+
 def _write_workspace(root: Path, *, with_git_repo: bool) -> None:
     (root / ".metagit.yml").write_text(
         "\n".join(

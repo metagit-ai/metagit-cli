@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 15
+- **Features tracked:** 17
 
 When you add or change a backend feature:
 
@@ -35,6 +35,8 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `acl_worktree` | ACL isolated git worktree create/destroy/gc/status | yes | yes | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
 | `acl_claim` | ACL advisory file-path claims declare/check/release | yes | yes | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
 | `acl_manifest` | Agent execution manifest written on worktree create | yes | — | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
+| `task_graph` | Task DAG + intent engine create/expand/ready/complete/bind-acl | yes | yes | — | yes | yes | [task-graph.md](task-graph.md) |
+| `context_compile` | Budgeted context compiler from task/objective + project/repo | yes | yes | — | yes | yes | [context-compiler.md](context-compiler.md) |
 <!-- registry:table:end -->
 
 ## Surface legend

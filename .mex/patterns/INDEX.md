@@ -25,6 +25,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 |---------|----------|
 | [acl-rfc-series.md](acl-rfc-series.md) | Navigating or extending RFC-0008–0013 build specs (designs/plans under docs/superpowers) |
 | [agent-coordination-acl.md](agent-coordination-acl.md) | Implementing or extending RFC-0007 ACL branch/lease/worktree/claim primitives |
+| [task-graph-intent.md](task-graph-intent.md) | Implementing or extending RFC-0008 task DAG + intent (CLI/MCP/events) |
 | [pythonpath-import-guard.md](pythonpath-import-guard.md) | Fixing or preserving the metagit `__init__` sys.path guard against hostile PYTHONPATH |
 | [cli-tui-hub.md](cli-tui-hub.md) | Adding `metagit tui`, configuration wizard flows, or `--repo` direct-open on select |
 | [add-cli-command.md](add-cli-command.md) | Adding or extending a Click CLI command while keeping core logic in `src/metagit/core/*` |

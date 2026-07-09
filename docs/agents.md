@@ -237,6 +237,34 @@ metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'sr
 metagit context events --json   # includes source=acl lifecycle events
 ```
 
+### Task Graph & Intent (RFC-0008)
+
+<!-- modality:task_graph -->
+
+Expand objectives into a DAG of executable nodes, compute ready sets, and store
+optional ACL command hints. See [Task graph](reference/task-graph.md).
+
+```bash
+metagit task create --title "Ship auth" --goal "…" --json
+metagit task expand --graph-id … --from-outline outline.txt
+metagit task ready --json
+metagit task complete --node-id …
+metagit task bind-acl --node-id … --agent-id agent-1 --json
+metagit context events --json   # includes source=taskgraph
+```
+
+### Context Compiler (RFC-0009)
+
+<!-- modality:context_compile -->
+
+Compile a budgeted context artifact for a project/repo (optionally bound to a
+task node). See [Context compiler](reference/context-compiler.md).
+
+```bash
+metagit context compile --project P --repo R --tier 1 --budget 8000 --json
+metagit context compile --project P --repo R --task-id NODE --graph-id G --json
+```
+
 ### Sharing state across machines (remote backend)
 
 When multiple agents or humans must see the **same** objectives, handoffs, and

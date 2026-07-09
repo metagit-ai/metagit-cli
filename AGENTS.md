@@ -51,8 +51,12 @@ metagit prompt workspace --kind session-start --text-only
 | Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
 | ACL isolate agent checkout | `metagit branch allocate` · `metagit lease acquire --allocate` · `metagit worktree create` |
 | ACL file claims | `metagit claim declare` · `metagit claim check` |
+| Task graph / intent | `metagit task create` · `metagit task expand` · `metagit task ready` · `metagit task complete` |
+| Context compile | `metagit context compile --project P --repo R [--task-id N] --json` |
 | Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
+| Task graph (RFC-0008) | [docs/reference/task-graph.md](docs/reference/task-graph.md) |
+| Context compiler (RFC-0009) | [docs/reference/context-compiler.md](docs/reference/context-compiler.md) |
 | Feature registry (all modalities) | [docs/reference/modality-feature-registry.md](docs/reference/modality-feature-registry.md) |
 
 Full guide: [docs/agents.md](docs/agents.md) · Index: [llms.txt](llms.txt) · Skills: [docs/skills.md](docs/skills.md) · Docs: <https://metagit-ai.github.io/metagit-cli/agents/>

@@ -385,6 +385,34 @@ Distinct from `metagit context handoff claim --ttl`. Doc: `docs/reference/agent-
 
 ---
 
+## Task Graph & Intent (RFC-0008)
+
+<!-- modality:task_graph -->
+
+| Task | Command |
+|------|---------|
+| Create graph | `metagit task create --title "…" --goal "…" --json` |
+| Expand outline | `metagit task expand --graph-id … --from-outline PATH` |
+| Ready set | `metagit task ready [--graph-id …] --json` |
+| Complete / block | `metagit task complete --node-id …` / `block --reason "…"` |
+| ACL hints | `metagit task bind-acl --node-id … --agent-id … --json` |
+
+Doc: `docs/reference/task-graph.md`. Events: `metagit context events` (`source=taskgraph`).
+
+---
+
+## Context Compiler (RFC-0009)
+
+<!-- modality:context_compile -->
+
+| Task | Command |
+|------|---------|
+| Compile pack artifact | `metagit context compile --project P --repo R [--task-id N] [--budget N] --json` |
+
+Doc: `docs/reference/context-compiler.md`. MCP: `metagit_context_compile`.
+
+---
+
 ## Campaigns
 
 <!-- modality:native_campaigns -->

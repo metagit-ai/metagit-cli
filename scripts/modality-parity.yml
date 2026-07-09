@@ -339,3 +339,64 @@ features:
             contains: "modality:acl_manifest"
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:acl_manifest"
+
+  - id: task_graph
+    description: Task DAG + intent engine create/expand/ready/complete/bind-acl
+    service: metagit.core.taskgraph.service.TaskGraphService
+    reference_doc: docs/reference/task-graph.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/task.py
+            contains: '@task_group.command("create")'
+          - path: src/metagit/cli/main.py
+            contains: task_group
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_task_create
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_task_create
+      documentation:
+        markers:
+          - path: docs/reference/task-graph.md
+            contains: "modality:task_graph"
+          - path: docs/agents.md
+            contains: "modality:task_graph"
+          - path: docs/reference/agent-coordination.md
+            contains: "modality:task_graph"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:task_graph"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:task_graph"
+
+  - id: context_compile
+    description: Budgeted context compiler from task/objective + project/repo
+    service: metagit.core.context.compiler.ContextCompiler
+    reference_doc: docs/reference/context-compiler.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/context.py
+            contains: '@context.command("compile")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_context_compile
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_context_compile
+      documentation:
+        markers:
+          - path: docs/reference/context-compiler.md
+            contains: "modality:context_compile"
+          - path: docs/agents.md
+            contains: "modality:context_compile"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-context-pack/SKILL.md
+            contains: "modality:context_compile"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:context_compile"
+

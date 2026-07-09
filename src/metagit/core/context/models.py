@@ -194,6 +194,34 @@ class ContextPackResult(BaseModel):
     token_estimate: Optional[int] = None
 
 
+class CompiledContextInputs(BaseModel):
+    """Inputs that produced a compiled context artifact (RFC-0009)."""
+
+    project: str
+    repo: str
+    tier: Literal[0, 1, 2] = 1
+    budget: Optional[int] = None
+    profile: Optional[str] = None
+    task_id: Optional[str] = None
+    graph_id: Optional[str] = None
+    objective_id: Optional[str] = None
+
+
+class CompiledContext(BaseModel):
+    """Budgeted context artifact for an agent run (RFC-0009)."""
+
+    ok: bool = True
+    compile_id: str
+    inputs: CompiledContextInputs
+    pack: ContextPackResult
+    estimated_tokens: int
+    artifact_path: str
+    sections: list[str] = Field(default_factory=list)
+    dropped_sections: list[str] = Field(default_factory=list)
+    suggested_repomix_command: Optional[str] = None
+    created_at: str
+
+
 class SessionBeginResult(BaseModel):
     """Deterministic session-start envelope for agents and orchestration."""
 
