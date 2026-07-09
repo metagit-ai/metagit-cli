@@ -414,6 +414,21 @@ Doc: `docs/reference/semantic-ownership.md`. MCP: `metagit_semantic_declare`, `m
 
 ---
 
+## Merge Orchestrator (RFC-0011)
+
+<!-- modality:merge_orchestrator -->
+
+| Task | Command |
+|------|---------|
+| Enqueue merge | `metagit merge enqueue --repository project/repo --branch agent/x --into integration/x --json` |
+| Integrate | `metagit merge integrate --merge-id … --json` |
+| Status | `metagit merge status [--repository project/repo] --json` |
+| Retry / promote | `metagit merge retry --merge-id …` / `metagit merge promote --merge-id … --into main` |
+
+Doc: `docs/reference/merge-orchestrator.md`. MCP: `metagit_merge_enqueue`, `metagit_merge_status`, `metagit_merge_retry`, `metagit_merge_integrate`.
+
+---
+
 ## Context Compiler (RFC-0009)
 
 <!-- modality:context_compile -->

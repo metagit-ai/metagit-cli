@@ -21,8 +21,9 @@ ACL leases own a *branch* for an agent.
 3. Branch leases expire and can be renewed.
 4. File claims and repo presence are **advisory** — Git remains the authority.
 5. Task graphs ship in RFC-0008 ([task-graph.md](task-graph.md)); semantic
-   ownership ships in RFC-0010 ([semantic-ownership.md](semantic-ownership.md)).
-   Merge orchestration and scheduling remain later RFCs.
+   ownership ships in RFC-0010 ([semantic-ownership.md](semantic-ownership.md));
+   merge orchestration ships in RFC-0011 ([merge-orchestrator.md](merge-orchestrator.md)).
+   Scheduling remains a later RFC.
 
 ## Persistence
 
@@ -111,4 +112,14 @@ seed/ingest behavior, and the deferred GitNexus import path.
 
 Task nodes may also store the same style of hints via
 `metagit task bind-acl` — see [task-graph.md](task-graph.md).
+
+<!-- modality:merge_orchestrator -->
+
+## Merge Orchestration
+
+RFC-0011 can enqueue agent-branch merges, attempt local integration branches,
+record clean conflicts, run opt-in validators, and emit `source=merge` events.
+Conflict records include ACL command hints only; no branch allocation, lease,
+worktree, or claim is created automatically. See
+[merge-orchestrator.md](merge-orchestrator.md).
 

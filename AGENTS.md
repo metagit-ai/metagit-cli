@@ -54,11 +54,13 @@ metagit prompt workspace --kind session-start --text-only
 | Task graph / intent | `metagit task create` · `metagit task expand` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R [--task-id N] --json` |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
+| Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
 | Task graph (RFC-0008) | [docs/reference/task-graph.md](docs/reference/task-graph.md) |
 | Context compiler (RFC-0009) | [docs/reference/context-compiler.md](docs/reference/context-compiler.md) |
 | Semantic ownership (RFC-0010) | [docs/reference/semantic-ownership.md](docs/reference/semantic-ownership.md) |
+| Merge orchestrator (RFC-0011) | [docs/reference/merge-orchestrator.md](docs/reference/merge-orchestrator.md) |
 | Feature registry (all modalities) | [docs/reference/modality-feature-registry.md](docs/reference/modality-feature-registry.md) |
 
 Full guide: [docs/agents.md](docs/agents.md) · Index: [llms.txt](llms.txt) · Skills: [docs/skills.md](docs/skills.md) · Docs: <https://metagit-ai.github.io/metagit-cli/agents/>

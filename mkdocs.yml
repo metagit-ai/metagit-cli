@@ -27,6 +27,7 @@ nav:
     - 'Task graph & intent': 'reference/task-graph.md'
     - 'Context compiler': 'reference/context-compiler.md'
     - 'Semantic ownership': 'reference/semantic-ownership.md'
+    - 'Merge orchestrator': 'reference/merge-orchestrator.md'
     - 'Metagit agent templates': 'reference/metagit-agent.md'
     - 'Modality feature registry': 'reference/modality-feature-registry.md'
     - 'Metagit Web UI': 'reference/metagit-web.md'

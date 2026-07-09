@@ -120,6 +120,22 @@
       "title": "LLM",
       "type": "object"
     },
+    "MergeConfig": {
+      "additionalProperties": false,
+      "description": "Merge orchestrator settings.",
+      "properties": {
+        "validators": {
+          "description": "Opt-in zsh commands that must pass before merge promotion",
+          "items": {
+            "type": "string"
+          },
+          "title": "Validators",
+          "type": "array"
+        }
+      },
+      "title": "MergeConfig",
+      "type": "object"
+    },
     "Profile": {
       "additionalProperties": false,
       "description": "Model for profile configuration.",
@@ -538,6 +554,10 @@
     "state": {
       "$ref": "#/$defs/StateConfig",
       "description": "Workspace coordination state backend (objectives, handoffs, approvals)"
+    },
+    "merge": {
+      "$ref": "#/$defs/MergeConfig",
+      "description": "Merge orchestrator settings"
     }
   },
   "title": "AppConfig",

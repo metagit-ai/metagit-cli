@@ -10,6 +10,9 @@
 - **RFC-0010 semantic CLI:** `metagit semantic declare|query|owners|conflicts|ingest|seed` exposes semantic concept ownership operations, including deterministic ingest hints and the optional seed catalog.
 - **RFC-0010 semantic MCP parity:** ACTIVE-gated `metagit_semantic_declare|query|owners|conflicts|ingest` tools mirror the semantic service and register the `semantic_ownership` modality markers.
 - **RFC-0010 semantic operator surface:** published semantic ownership reference, MkDocs nav entry, and agent quick-reference commands for CLI/MCP use; optional GitNexus import is documented as deferred.
+- **RFC-0011 Merge Orchestrator:** local merge requests, JSON queue/store, clean GitPython conflict aborts, conflict records with ACL command hints only, opt-in validator commands, gated promote, and `source=merge` events.
+- **RFC-0011 merge CLI/MCP parity:** `metagit merge enqueue|status|integrate|retry|promote` plus ACTIVE-gated `metagit_merge_enqueue|status|integrate|retry` MCP tools share `MergeOrchestrator` and register the `merge_orchestrator` modality markers.
+- **RFC-0011 merge operator surface:** published merge orchestrator reference, MkDocs nav entry, agent quick-reference commands, bundled skill markers, and ACL series status updates.
 
 ### Changed
 - Expanded **RFC-0010 Semantic Repository Knowledge Graph** design decisions and bite-sized TDD implementation plan under `docs/superpowers/` (next ACL series MR after 0008/0009).

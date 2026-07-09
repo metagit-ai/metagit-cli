@@ -37,8 +37,8 @@ from metagit.cli.commands.fmt import fmt_cmd
 from metagit.cli.commands.gitnexus import gitnexus
 from metagit.cli.commands.init import init
 from metagit.cli.commands.lease import lease_group
-from metagit.cli.commands.merge_cmd import merge_group
 from metagit.cli.commands.mcp import mcp
+from metagit.cli.commands.merge_cmd import merge_group
 from metagit.cli.commands.project import project
 from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record

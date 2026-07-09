@@ -48,11 +48,13 @@ metagit prompt workspace --kind session-start --text-only
 | Context compile | `metagit context compile --project P --repo R --json` |
 | ACL worktree / claim | `metagit worktree create` · `metagit claim declare` |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
+| Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
 | Task graph (RFC-0008) | [docs/reference/task-graph.md](docs/reference/task-graph.md) |
 | Context compiler (RFC-0009) | [docs/reference/context-compiler.md](docs/reference/context-compiler.md) |
 | Semantic ownership (RFC-0010) | [docs/reference/semantic-ownership.md](docs/reference/semantic-ownership.md) |
+| Merge orchestrator (RFC-0011) | [docs/reference/merge-orchestrator.md](docs/reference/merge-orchestrator.md) |
 
 ## Feature registry
 
@@ -71,4 +73,5 @@ Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality
 - **Task Graph & Intent (RFC-0008):** DAG of executable nodes under `.metagit/tasks/`, ready-set, ACL bind hints — see [task-graph.md](docs/reference/task-graph.md).
 - **Context Compiler (RFC-0009):** budgeted pack artifacts via `metagit context compile` — see [context-compiler.md](docs/reference/context-compiler.md).
 - **Semantic Ownership (RFC-0010):** concept ownership via `metagit semantic declare|query|owners|conflicts|ingest|seed`; advisory claim `concept_hints`; GitNexus import deferred — see [semantic-ownership.md](docs/reference/semantic-ownership.md).
+- **Merge Orchestrator (RFC-0011):** local queue, conflict records, opt-in validators, CLI/MCP `metagit merge` / `metagit_merge_*` tools — see [merge-orchestrator.md](docs/reference/merge-orchestrator.md).
 - Repomix profile: `metagit context repomix --profile bugfix-local --project P --repo R`
