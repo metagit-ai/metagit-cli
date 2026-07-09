@@ -167,10 +167,7 @@ class MergeOrchestrator:
             f"metagit worktree create --branch {request.target_branch}",
         ]
         if request.conflict is not None:
-            commands.extend(
-                f"metagit claim declare --path {path} --agent {agent}"
-                for path in request.conflict.files
-            )
+            commands.extend(f"metagit claim declare --path {path} --agent {agent}" for path in request.conflict.files)
         return commands
 
     def _event_payload(self, request: MergeRequest) -> dict:
