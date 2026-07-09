@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Fixed
+- **Docs CI (`mkdocs build --strict`):** replace relative links from `docs/metagit-rewrite-workspace.md` to `examples/metagit-rewrite/*` with GitHub blob URLs so MkDocs no longer aborts on out-of-tree targets.
 
 ## [0.18.0] - 2026-07-09
 
