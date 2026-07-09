@@ -13,6 +13,7 @@ from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.models import WorkspaceEvent, WorkspaceEventsResult
 from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.coordination.event_store import AclEventStore
+from metagit.core.semantic.events import SemanticGraphEventStore
 from metagit.core.taskgraph.events import TaskGraphEventStore
 
 
@@ -124,6 +125,23 @@ class WorkspaceEventService:
                     WorkspaceEvent(
                         timestamp=event.at,
                         source="taskgraph",
+                        kind=event.type,
+                        id=event.event_id,
+                        data=dict(event.payload),
+                    )
+                )
+
+        semantic_events = SemanticGraphEventStore(self._root).list_events(since=None)
+        if not isinstance(semantic_events, Exception):
+            for event in semantic_events:
+                if objective_id and event.payload.get("objective_id") != objective_id:
+                    continue
+                if campaign and event.payload.get("campaign") != campaign:
+                    continue
+                rows.append(
+                    WorkspaceEvent(
+                        timestamp=event.at,
+                        source="semantic",
                         kind=event.type,
                         id=event.event_id,
                         data=dict(event.payload),
