@@ -1,5 +1,3 @@
-# Changelog
-
 ## Unreleased
 
 ### Added
@@ -19,6 +17,7 @@
 
 ### Fixed
 - **RFC-0010 SemanticGraphService:** `declare()` now returns validation errors for bad repositories or empty patterns instead of raising, preserving the service `T | Exception` contract.
+- **Docs CI (`mkdocs build --strict`):** replace relative links from `docs/metagit-rewrite-workspace.md` to `examples/metagit-rewrite/*` with GitHub blob URLs so MkDocs no longer aborts on out-of-tree targets.
 
 ## [0.18.0] - 2026-07-09
 
