@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.19.0] - 2026-07-09
+
+
+
 ### Added
 - **RFC-0010 Semantic Repository Knowledge Graph:** `SemanticGraphService` can declare concept ownership, query concepts by id/name/alias, resolve path owners with ACL pattern overlap semantics, and emit `ConceptDeclared` events.
 - **RFC-0010 SemanticGraphService:** advisory `conflicts(repository)` hints detect when multiple active ACL claim agents overlap the same semantic concept paths and emit `ConceptConflictHint` events.
