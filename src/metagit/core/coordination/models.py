@@ -161,6 +161,7 @@ class ClaimCheckResult(BaseModel):
 
     ok: bool = True
     conflicts: list[ClaimConflict] = Field(default_factory=list)
+    concept_hints: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class WorktreeStatusResult(BaseModel):

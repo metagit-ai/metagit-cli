@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 import uuid
-from typing import Callable
+from typing import Any, Callable
 
 from pydantic import ValidationError
 
@@ -213,6 +213,47 @@ class SemanticGraphService:
                 at=self._now(),
             )
         return result
+
+    def advise_claim_patterns(
+        self,
+        repository: str,
+        patterns: list[str],
+    ) -> list[dict[str, Any]] | Exception:
+        """Return advisory concept hints for claim patterns in a repository."""
+        concepts = self._store.load_concepts()
+        if isinstance(concepts, Exception):
+            return concepts
+        ownerships = self._store.load_ownerships()
+        if isinstance(ownerships, Exception):
+            return ownerships
+
+        concept_names = {row.concept_id: row.name for row in concepts}
+        normalized_repo = repository.strip()
+        hints: list[dict[str, Any]] = []
+        for ownership in ownerships:
+            if ownership.repository != normalized_repo:
+                continue
+            overlapping_patterns = sorted(
+                {
+                    claim_pattern
+                    for claim_pattern in patterns
+                    if any(
+                        patterns_overlap(claim_pattern, ownership_pattern) for ownership_pattern in ownership.patterns
+                    )
+                },
+            )
+            if not overlapping_patterns:
+                continue
+            hints.append(
+                {
+                    "concept_id": ownership.concept_id,
+                    "concept_name": concept_names.get(ownership.concept_id, ownership.concept_id),
+                    "repository": normalized_repo,
+                    "ownership_id": ownership.ownership_id,
+                    "overlapping_patterns": overlapping_patterns,
+                },
+            )
+        return hints
 
     @staticmethod
     def _matches_concept(row: Concept, needle: str) -> bool:
