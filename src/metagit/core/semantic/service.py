@@ -9,10 +9,12 @@ from typing import Callable
 
 from pydantic import ValidationError
 
-from metagit.core.coordination.claim_service import patterns_overlap
+from metagit.core.coordination.claim_service import ClaimService, patterns_overlap
 from metagit.core.semantic.events import SemanticGraphEventStore
 from metagit.core.semantic.models import (
     Concept,
+    ConceptConflictHint,
+    ConceptConflictsResult,
     ConceptDeclareResult,
     ConceptOwnership,
     ConceptOwnershipSource,
@@ -147,6 +149,70 @@ class SemanticGraphService:
             concepts=matched_concepts,
             ownerships=matched_ownerships,
         )
+
+    def conflicts(self, repository: str) -> ConceptConflictsResult | Exception:
+        concepts = self._store.load_concepts()
+        if isinstance(concepts, Exception):
+            return concepts
+        ownerships = self._store.load_ownerships()
+        if isinstance(ownerships, Exception):
+            return ownerships
+        claims = ClaimService(self._session_root).list(
+            repository=repository,
+            status="active",
+        )
+        if isinstance(claims, Exception):
+            return claims
+
+        concept_names = {row.concept_id: row.name for row in concepts}
+        hints: list[ConceptConflictHint] = []
+        normalized_repo = repository.strip()
+        for concept_id in {row.concept_id for row in ownerships if row.repository == normalized_repo}:
+            concept_ownerships = [
+                row for row in ownerships if row.repository == normalized_repo and row.concept_id == concept_id
+            ]
+            overlapping_patterns: set[str] = set()
+            claim_ids: set[str] = set()
+            agent_ids: set[str] = set()
+            for claim in claims.claims:
+                matched_claim_patterns = [
+                    claim_pattern
+                    for claim_pattern in claim.patterns
+                    if any(
+                        patterns_overlap(claim_pattern, ownership_pattern)
+                        for ownership in concept_ownerships
+                        for ownership_pattern in ownership.patterns
+                    )
+                ]
+                if not matched_claim_patterns:
+                    continue
+                overlapping_patterns.update(matched_claim_patterns)
+                claim_ids.add(claim.claim_id)
+                agent_ids.add(claim.agent_id)
+            if len(agent_ids) < 2:
+                continue
+            hints.append(
+                ConceptConflictHint(
+                    concept_id=concept_id,
+                    concept_name=concept_names.get(concept_id, concept_id),
+                    repository=normalized_repo,
+                    overlapping_patterns=sorted(overlapping_patterns),
+                    claim_ids=sorted(claim_ids),
+                    agent_ids=sorted(agent_ids),
+                ),
+            )
+
+        result = ConceptConflictsResult(repository=normalized_repo, hints=hints)
+        if hints:
+            self._events.append(
+                "ConceptConflictHint",
+                {
+                    "repository": normalized_repo,
+                    "hints": [hint.model_dump(mode="json") for hint in hints],
+                },
+                at=self._now(),
+            )
+        return result
 
     @staticmethod
     def _matches_concept(row: Concept, needle: str) -> bool:
