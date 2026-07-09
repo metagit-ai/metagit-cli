@@ -19,6 +19,16 @@ def test_concept_rejects_invalid_concept_id() -> None:
     )
 
 
+def test_concept_rejects_empty_name() -> None:
+  with pytest.raises(ValidationError):
+    Concept(
+      concept_id="auth",
+      name="  ",
+      created_at="2026-07-09T00:00:00+00:00",
+      updated_at="2026-07-09T00:00:00+00:00",
+    )
+
+
 def test_ownership_requires_at_least_one_pattern() -> None:
   with pytest.raises(ValidationError):
     ConceptOwnership(
@@ -26,6 +36,31 @@ def test_ownership_requires_at_least_one_pattern() -> None:
       concept_id="auth",
       repository="core/api",
       patterns=[],
+      created_at="2026-07-09T00:00:00+00:00",
+      updated_at="2026-07-09T00:00:00+00:00",
+    )
+
+
+def test_ownership_rejects_invalid_repository() -> None:
+  for repository in ["api", "a/b/c"]:
+    with pytest.raises(ValidationError):
+      ConceptOwnership(
+        ownership_id="auth-owner",
+        concept_id="auth",
+        repository=repository,
+        patterns=["**/auth/**"],
+        created_at="2026-07-09T00:00:00+00:00",
+        updated_at="2026-07-09T00:00:00+00:00",
+      )
+
+
+def test_ownership_rejects_whitespace_only_patterns() -> None:
+  with pytest.raises(ValidationError):
+    ConceptOwnership(
+      ownership_id="auth-owner",
+      concept_id="auth",
+      repository="core/api",
+      patterns=["  ", "\t"],
       created_at="2026-07-09T00:00:00+00:00",
       updated_at="2026-07-09T00:00:00+00:00",
     )

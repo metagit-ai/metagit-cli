@@ -113,6 +113,14 @@ class ConceptQueryResult(BaseModel):
     ownerships: list[ConceptOwnership] = Field(default_factory=list)
 
 
+class ConceptDeclareResult(BaseModel):
+    """Result envelope for a concept ownership declaration."""
+
+    ok: bool = True
+    concept: Concept
+    ownership: ConceptOwnership
+
+
 class ConceptOwnersResult(BaseModel):
     """Result envelope for path-to-concept owner lookup."""
 
@@ -144,6 +152,7 @@ __all__ = [
     "Concept",
     "ConceptConflictHint",
     "ConceptConflictsResult",
+    "ConceptDeclareResult",
     "ConceptOwnersResult",
     "ConceptOwnership",
     "ConceptOwnershipSource",
