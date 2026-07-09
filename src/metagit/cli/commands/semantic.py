@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import click
 
 from metagit.cli.commands.acl_common import emit_json, raise_if_error, resolve_acl_roots
@@ -14,6 +12,8 @@ from metagit.core.semantic import (
     ConceptOwnersResult,
     ConceptQueryResult,
     SemanticGraphService,
+    SemanticIngestResult,
+    SemanticSeedResult,
 )
 
 
@@ -138,51 +138,47 @@ def semantic_conflicts(
 
 @semantic_group.command("ingest")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
-@click.option("--project", default=None)
 @click.option("--json", "as_json", is_flag=True)
 @click.pass_context
 def semantic_ingest(
     ctx: click.Context,
     definition_path: str,
-    project: Optional[str],
     as_json: bool,
 ) -> None:
-    """Stub semantic ingest until RFC-0010 Task 8."""
-    _ = resolve_acl_roots(ctx, definition_path)
-    payload = {
-        "ok": True,
-        "added": 0,
-        "updated": 0,
-        "project": project,
-        "message": "semantic ingest is deferred until RFC-0010 Task 8",
-    }
+    """Ingest deterministic semantic ownership hints."""
+    service = _service(ctx, definition_path)
+    result = raise_if_error(service.ingest())
+    assert isinstance(result, SemanticIngestResult)
     if as_json:
-        emit_json(payload)
+        emit_json(result)
         return
-    click.echo(payload["message"])
+    if result.added:
+        click.echo(f"Ingested {result.added} semantic ownerships.")
+        return
+    click.echo(result.reason or "No semantic ownerships ingested.")
 
 
 @semantic_group.command("seed")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--repository", required=True)
 @click.option("--json", "as_json", is_flag=True)
 @click.pass_context
 def semantic_seed(
     ctx: click.Context,
     definition_path: str,
+    repository: str,
     as_json: bool,
 ) -> None:
-    """Stub semantic seed until RFC-0010 Task 8."""
-    _ = resolve_acl_roots(ctx, definition_path)
-    payload = {
-        "ok": True,
-        "added": 0,
-        "updated": 0,
-        "message": "semantic seed is deferred until RFC-0010 Task 8",
-    }
+    """Seed the static semantic concept catalog for a repository."""
+    service = _service(ctx, definition_path)
+    result = raise_if_error(service.seed(repository=repository))
+    assert isinstance(result, SemanticSeedResult)
     if as_json:
-        emit_json(payload)
+        emit_json(result)
         return
-    click.echo(payload["message"])
+    click.echo(
+        f"Seeded {result.concepts_added} concepts and {result.ownerships_added} ownerships.",
+    )
 
 
 def _service(ctx: click.Context, definition_path: str) -> SemanticGraphService:

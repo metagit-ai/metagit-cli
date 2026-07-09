@@ -37,7 +37,7 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `acl_manifest` | Agent execution manifest written on worktree create | yes | — | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
 | `task_graph` | Task DAG + intent engine create/expand/ready/complete/bind-acl | yes | yes | — | yes | yes | [task-graph.md](task-graph.md) |
 | `context_compile` | Budgeted context compiler from task/objective + project/repo | yes | yes | — | yes | yes | [context-compiler.md](context-compiler.md) |
-| `semantic_ownership` | Concept-level ownership declare/query/owners/conflicts | yes | yes | — | yes | yes | [semantic-ownership.md](semantic-ownership.md) |
+| `semantic_ownership` | Concept-level ownership declare/query/owners/conflicts plus seed/ingest | yes | yes | — | yes | yes | [semantic-ownership.md](semantic-ownership.md) |
 <!-- registry:table:end -->
 
 ## Surface legend

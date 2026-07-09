@@ -139,6 +139,51 @@ class ConceptConflictsResult(BaseModel):
     hints: list[ConceptConflictHint] = Field(default_factory=list)
 
 
+class SemanticSeedResult(BaseModel):
+    """Result envelope for static semantic catalog seeding."""
+
+    ok: bool = True
+    concepts_added: int = 0
+    ownerships_added: int = 0
+
+
+class SemanticIngestOwnershipHint(BaseModel):
+    """Deterministic ownership hint loaded from ingest-hints.json."""
+
+    concept: str
+    repository: str
+    patterns: list[str] = Field(min_length=1)
+
+    @field_validator("concept", "repository")
+    @classmethod
+    def validate_required_strings(cls, value: str) -> str:
+        return _validate_nonempty(value, label="hint field")
+
+    @field_validator("patterns")
+    @classmethod
+    def validate_hint_patterns(cls, value: list[str]) -> list[str]:
+        cleaned = [item.strip() for item in value if item.strip()]
+        if not cleaned:
+            raise ValueError("at least one ownership pattern is required")
+        return cleaned
+
+
+class SemanticIngestHints(BaseModel):
+    """Root ingest hints document."""
+
+    ownerships: list[SemanticIngestOwnershipHint] = Field(default_factory=list)
+
+
+class SemanticIngestResult(BaseModel):
+    """Result envelope for deterministic semantic ingest."""
+
+    ok: bool = True
+    added: int = 0
+    skipped: int = 0
+    concepts_added: int = 0
+    reason: Optional[str] = None
+
+
 class SemanticEvent(BaseModel):
     """Typed semantic graph lifecycle event."""
 
@@ -157,6 +202,10 @@ __all__ = [
     "ConceptOwnership",
     "ConceptOwnershipSource",
     "ConceptQueryResult",
+    "SemanticIngestHints",
+    "SemanticIngestOwnershipHint",
+    "SemanticIngestResult",
     "SemanticEvent",
     "SemanticEventType",
+    "SemanticSeedResult",
 ]

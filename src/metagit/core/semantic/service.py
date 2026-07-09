@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from typing import Any, Callable
@@ -20,7 +21,12 @@ from metagit.core.semantic.models import (
     ConceptOwnershipSource,
     ConceptOwnersResult,
     ConceptQueryResult,
+    SemanticIngestHints,
+    SemanticIngestResult,
+    SemanticSeedResult,
 )
+from metagit.core.semantic.paths import ingest_hints_file
+from metagit.core.semantic.seed import SEED_CATALOG
 from metagit.core.semantic.store import SemanticGraphStore
 from metagit.core.workspace.context_models import utc_now_iso
 
@@ -107,6 +113,192 @@ class SemanticGraphService:
             at=now,
         )
         return ConceptDeclareResult(concept=concept_row, ownership=ownership)
+
+    def seed(self, *, repository: str | None = None) -> SemanticSeedResult | Exception:
+        """Seed the static concept catalog and optional repository ownerships."""
+        now = self._now()
+        try:
+            concept_rows = [
+                Concept(
+                    concept_id=_slugify_concept(item.concept),
+                    name=item.concept,
+                    aliases=[],
+                    created_at=now,
+                    updated_at=now,
+                )
+                for item in SEED_CATALOG
+            ]
+            ownership_rows = (
+                [
+                    ConceptOwnership(
+                        ownership_id=uuid.uuid4().hex,
+                        concept_id=_slugify_concept(item.concept),
+                        repository=repository,
+                        patterns=list(item.patterns),
+                        source="seed",
+                        created_at=now,
+                        updated_at=now,
+                    )
+                    for item in SEED_CATALOG
+                ]
+                if repository is not None
+                else []
+            )
+        except (ValueError, ValidationError) as exc:
+            return exc
+
+        concepts_added = 0
+
+        def _add_missing_concepts(rows: list[Concept]) -> list[Concept]:
+            nonlocal concepts_added
+            existing_ids = {row.concept_id for row in rows}
+            for concept in concept_rows:
+                if concept.concept_id in existing_ids:
+                    continue
+                rows.append(concept)
+                existing_ids.add(concept.concept_id)
+                concepts_added += 1
+            return rows
+
+        saved_concepts = self._store.update_concepts(_add_missing_concepts)
+        if isinstance(saved_concepts, Exception):
+            return saved_concepts
+
+        ownerships_added = 0
+
+        def _add_missing_ownerships(rows: list[ConceptOwnership]) -> list[ConceptOwnership]:
+            nonlocal ownerships_added
+            existing_keys = {self._ownership_key(row) for row in rows if row.source == "seed"}
+            for ownership in ownership_rows:
+                key = self._ownership_key(ownership)
+                if key in existing_keys:
+                    continue
+                rows.append(ownership)
+                existing_keys.add(key)
+                ownerships_added += 1
+            return rows
+
+        if ownership_rows:
+            saved_ownerships = self._store.update_ownerships(_add_missing_ownerships)
+            if isinstance(saved_ownerships, Exception):
+                return saved_ownerships
+
+        return SemanticSeedResult(
+            concepts_added=concepts_added,
+            ownerships_added=ownerships_added,
+        )
+
+    def ingest(self) -> SemanticIngestResult | Exception:
+        """Ingest deterministic semantic ownership hints if present."""
+        path = ingest_hints_file(self._session_root)
+        if not path.is_file():
+            return SemanticIngestResult(reason="no_ingest_signals")
+
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            hints = SemanticIngestHints.model_validate(raw)
+        except (OSError, json.JSONDecodeError, ValidationError) as exc:
+            return exc
+
+        if not hints.ownerships:
+            return SemanticIngestResult(reason="no_ingest_signals")
+
+        now = self._now()
+        try:
+            concept_rows = [
+                Concept(
+                    concept_id=_slugify_concept(hint.concept),
+                    name=hint.concept.strip(),
+                    aliases=[],
+                    created_at=now,
+                    updated_at=now,
+                )
+                for hint in hints.ownerships
+            ]
+            ownership_rows = [
+                ConceptOwnership(
+                    ownership_id=uuid.uuid4().hex,
+                    concept_id=_slugify_concept(hint.concept),
+                    repository=hint.repository,
+                    patterns=list(hint.patterns),
+                    source="ingest",
+                    created_at=now,
+                    updated_at=now,
+                )
+                for hint in hints.ownerships
+            ]
+        except (ValueError, ValidationError) as exc:
+            return exc
+
+        concepts_added = 0
+
+        def _add_missing_concepts(rows: list[Concept]) -> list[Concept]:
+            nonlocal concepts_added
+            existing_ids = {row.concept_id for row in rows}
+            for concept in concept_rows:
+                if concept.concept_id in existing_ids:
+                    continue
+                rows.append(concept)
+                existing_ids.add(concept.concept_id)
+                concepts_added += 1
+            return rows
+
+        saved_concepts = self._store.update_concepts(_add_missing_concepts)
+        if isinstance(saved_concepts, Exception):
+            return saved_concepts
+
+        ownerships_added = 0
+        skipped = 0
+        ingested_ids: list[str] = []
+
+        def _upsert_ingest_ownerships(rows: list[ConceptOwnership]) -> list[ConceptOwnership]:
+            nonlocal ownerships_added, skipped
+            existing_by_key = {
+                self._ownership_key(row): index for index, row in enumerate(rows) if row.source == "ingest"
+            }
+            for ownership in ownership_rows:
+                key = self._ownership_key(ownership)
+                existing_index = existing_by_key.get(key)
+                if existing_index is None:
+                    rows.append(ownership)
+                    existing_by_key[key] = len(rows) - 1
+                    ingested_ids.append(ownership.ownership_id)
+                    ownerships_added += 1
+                    continue
+                existing = rows[existing_index]
+                merged_patterns = sorted({*existing.patterns, *ownership.patterns})
+                if merged_patterns == sorted(existing.patterns):
+                    skipped += 1
+                    continue
+                rows[existing_index] = existing.model_copy(
+                    update={
+                        "patterns": merged_patterns,
+                        "updated_at": now,
+                    },
+                )
+            return rows
+
+        saved_ownerships = self._store.update_ownerships(_upsert_ingest_ownerships)
+        if isinstance(saved_ownerships, Exception):
+            return saved_ownerships
+
+        if ownerships_added:
+            self._events.append(
+                "ConceptIngested",
+                {
+                    "added": ownerships_added,
+                    "concepts_added": concepts_added,
+                    "ownership_ids": ingested_ids,
+                },
+                at=now,
+            )
+
+        return SemanticIngestResult(
+            added=ownerships_added,
+            skipped=skipped,
+            concepts_added=concepts_added,
+            reason=None if ownerships_added else "no_ingest_signals",
+        )
 
     def query(self, concept: str) -> ConceptQueryResult | Exception:
         concepts = self._store.load_concepts()
@@ -274,6 +466,10 @@ class SemanticGraphService:
                 return rows
         rows.append(concept)
         return rows
+
+    @staticmethod
+    def _ownership_key(row: ConceptOwnership) -> tuple[str, str, ConceptOwnershipSource]:
+        return (row.concept_id, row.repository, row.source)
 
 
 __all__ = ["SemanticGraphService"]

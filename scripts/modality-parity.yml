@@ -401,7 +401,7 @@ features:
             contains: "modality:context_compile"
 
   - id: semantic_ownership
-    description: Concept-level ownership declare/query/owners/conflicts
+    description: Concept-level ownership declare/query/owners/conflicts plus seed/ingest
     service: metagit.core.semantic.service.SemanticGraphService
     reference_doc: docs/reference/semantic-ownership.md
     surfaces:

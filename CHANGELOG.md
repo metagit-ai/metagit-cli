@@ -7,8 +7,8 @@
 - **RFC-0010 SemanticGraphService:** advisory `conflicts(repository)` hints detect when multiple active ACL claim agents overlap the same semantic concept paths and emit `ConceptConflictHint` events.
 - **RFC-0010 ACL claim advice:** `metagit claim check` / MCP claim checks now include advisory semantic `concept_hints` for overlapping concept ownership patterns without turning hints into claim conflicts.
 - **RFC-0010 context events:** `metagit context events` now includes semantic graph lifecycle events with `source=semantic`.
-- **RFC-0010 semantic CLI:** `metagit semantic declare|query|owners|conflicts` exposes semantic concept ownership operations, with deferred Task 8 stubs for `ingest` and `seed`.
-- **RFC-0010 semantic MCP parity:** ACTIVE-gated `metagit_semantic_declare|query|owners|conflicts|ingest` tools mirror the semantic CLI and register the `semantic_ownership` modality markers.
+- **RFC-0010 semantic CLI:** `metagit semantic declare|query|owners|conflicts|ingest|seed` exposes semantic concept ownership operations, including deterministic ingest hints and the optional seed catalog.
+- **RFC-0010 semantic MCP parity:** ACTIVE-gated `metagit_semantic_declare|query|owners|conflicts|ingest` tools mirror the semantic service and register the `semantic_ownership` modality markers.
 
 ### Changed
 - Expanded **RFC-0010 Semantic Repository Knowledge Graph** design decisions and bite-sized TDD implementation plan under `docs/superpowers/` (next ACL series MR after 0008/0009).

@@ -752,9 +752,7 @@ class MetagitMcpRuntime:
             },
             "metagit_semantic_ingest": {
                 "type": "object",
-                "properties": {
-                    "project": {"type": "string"},
-                },
+                "properties": {},
                 "additionalProperties": False,
             },
             "metagit_task_create": {
@@ -2730,14 +2728,7 @@ class MetagitMcpRuntime:
         if name == "metagit_semantic_conflicts":
             return _unwrap(service.conflicts(repository=_require("repository")))
         if name == "metagit_semantic_ingest":
-            project = arguments.get("project") if isinstance(arguments.get("project"), str) else None
-            return {
-                "ok": True,
-                "added": 0,
-                "updated": 0,
-                "project": project,
-                "message": "semantic ingest is deferred until RFC-0010 Task 8",
-            }
+            return _unwrap(service.ingest())
         raise ValueError(f"Unsupported semantic tool: {name}")
 
     def _resolve_status_and_config(self) -> tuple[WorkspaceStatus, Any]:
