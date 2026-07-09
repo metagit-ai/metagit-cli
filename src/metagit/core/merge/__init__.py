@@ -15,6 +15,7 @@ from metagit.core.merge.models import (
 )
 from metagit.core.merge.service import MergeOrchestrator
 from metagit.core.merge.store import MergeStore
+from metagit.core.merge.validators import merge_validators_from_config, run_validators
 
 __all__ = [
     "MergeConflict",
@@ -31,4 +32,6 @@ __all__ = [
     "MergeValidationCommand",
     "attempt_merge",
     "ensure_branch",
+    "merge_validators_from_config",
+    "run_validators",
 ]

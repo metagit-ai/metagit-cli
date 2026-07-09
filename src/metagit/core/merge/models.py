@@ -11,7 +11,14 @@ from pydantic import BaseModel, Field, field_validator
 _ID_PATTERN = re.compile(r"^[\w.-]+$")
 
 MergeStatus = Literal["queued", "running", "succeeded", "failed", "conflict", "validation_failed"]
-MergeEventType = Literal["MergeEnqueued", "MergeSucceeded", "MergeFailed", "ConflictDetected"]
+MergeEventType = Literal[
+    "MergeEnqueued",
+    "MergeSucceeded",
+    "MergeFailed",
+    "ConflictDetected",
+    "MergeValidationFailed",
+    "MergePromoted",
+]
 
 
 def _validate_id(value: str, *, label: str) -> str:

@@ -9,16 +9,18 @@ import uuid
 
 from metagit.core.merge.events import MergeEventStore
 from metagit.core.merge.git_ops import attempt_merge
-from metagit.core.merge.models import MergeConflict, MergeRequest
+from metagit.core.merge.models import MergeConflict, MergeRequest, MergeValidation
 from metagit.core.merge.store import MergeStore
+from metagit.core.merge.validators import run_validators
 from metagit.core.workspace.context_models import utc_now_iso
 
 
 class MergeOrchestrator:
     """Coordinate local merge queue records and GitPython merge attempts."""
 
-    def __init__(self, session_root: str) -> None:
+    def __init__(self, session_root: str, validators: list[str] | None = None) -> None:
         self._session_root = session_root
+        self._validators = list(validators or [])
         self.store = MergeStore(session_root)
         self._events = MergeEventStore(session_root)
 
@@ -82,15 +84,22 @@ class MergeOrchestrator:
             return event if isinstance(event, Exception) else request
 
         if result.ok:
+            validation = self.run_validators(request.repo_path)
             request.status = "succeeded"
             request.commit_sha = result.commit_sha
             request.conflict = None
+            request.validation = validation
             request.acl_commands = []
+            request.error_message = None
+            if not validation.ok:
+                request.status = "validation_failed"
+                request.error_message = "merge validators failed"
             request.updated_at = utc_now_iso()
             saved = self.store.save(request)
             if isinstance(saved, Exception):
                 return saved
-            event = self._events.append("MergeSucceeded", self._event_payload(request))
+            event_type = "MergeSucceeded" if validation.ok else "MergeValidationFailed"
+            event = self._events.append(event_type, self._event_payload(request))
             return event if isinstance(event, Exception) else request
 
         conflict = result.conflict
@@ -129,6 +138,58 @@ class MergeOrchestrator:
         if isinstance(saved, Exception):
             return saved
         return self.integrate(merge_id)
+
+    def run_validators(self, repo_path: str) -> MergeValidation:
+        """Run configured merge validators for a repository path."""
+        return run_validators(repo_path, self._validators)
+
+    def promote(self, merge_id: str, into_branch: str) -> MergeRequest | Exception:
+        """Promote a successful integration branch into another branch."""
+        request = self.store.load(merge_id)
+        if isinstance(request, Exception):
+            return request
+        if not request.repo_path:
+            return ValueError(f"repo_path is required for merge request: {merge_id}")
+        if request.status == "validation_failed":
+            return ValueError("validation failed; promote blocked")
+        if request.status != "succeeded":
+            return ValueError(f"merge request is not promotable: {request.status}")
+        if request.validation is None:
+            request.validation = self.run_validators(request.repo_path)
+            request.updated_at = utc_now_iso()
+            saved = self.store.save(request)
+            if isinstance(saved, Exception):
+                return saved
+        if not request.validation.ok:
+            request.status = "validation_failed"
+            request.error_message = "merge validators failed"
+            request.updated_at = utc_now_iso()
+            saved = self.store.save(request)
+            if isinstance(saved, Exception):
+                return saved
+            event = self._events.append("MergeValidationFailed", self._event_payload(request))
+            if isinstance(event, Exception):
+                return event
+            return ValueError("validation failed; promote blocked")
+
+        result = attempt_merge(request.repo_path, request.target_branch, into_branch)
+        if isinstance(result, Exception):
+            return result
+        if not result.ok:
+            message = "promote merge failed"
+            if result.conflict is not None:
+                message = result.conflict.message
+            return ValueError(message)
+        request.commit_sha = result.commit_sha
+        request.updated_at = utc_now_iso()
+        saved = self.store.save(request)
+        if isinstance(saved, Exception):
+            return saved
+        event = self._events.append(
+            "MergePromoted",
+            self._event_payload(request) | {"promoted_into": into_branch},
+        )
+        return event if isinstance(event, Exception) else request
 
     def status(self, repository: str | None = None) -> list[MergeRequest] | Exception:
         rows = self.store.list_merges()
