@@ -7,6 +7,8 @@ import re
 import uuid
 from typing import Callable
 
+from pydantic import ValidationError
+
 from metagit.core.coordination.claim_service import patterns_overlap
 from metagit.core.semantic.events import SemanticGraphEventStore
 from metagit.core.semantic.models import (
@@ -58,29 +60,28 @@ class SemanticGraphService:
         symbol_hints: list[str] | None = None,
         source: ConceptOwnershipSource = "manual",
     ) -> ConceptDeclareResult | Exception:
+        now = self._now()
         try:
             concept_id = _slugify_concept(concept)
-        except ValueError as exc:
+            concept_row = Concept(
+                concept_id=concept_id,
+                name=concept.strip(),
+                aliases=[],
+                created_at=now,
+                updated_at=now,
+            )
+            ownership = ConceptOwnership(
+                ownership_id=uuid.uuid4().hex,
+                concept_id=concept_id,
+                repository=repository,
+                patterns=list(patterns),
+                symbol_hints=list(symbol_hints or []),
+                source=source,
+                created_at=now,
+                updated_at=now,
+            )
+        except (ValueError, ValidationError) as exc:
             return exc
-
-        now = self._now()
-        concept_row = Concept(
-            concept_id=concept_id,
-            name=concept.strip(),
-            aliases=[],
-            created_at=now,
-            updated_at=now,
-        )
-        ownership = ConceptOwnership(
-            ownership_id=uuid.uuid4().hex,
-            concept_id=concept_id,
-            repository=repository,
-            patterns=list(patterns),
-            symbol_hints=list(symbol_hints or []),
-            source=source,
-            created_at=now,
-            updated_at=now,
-        )
 
         saved_concepts = self._store.update_concepts(
             lambda rows: self._upsert_concept(rows, concept_row, now=now),

@@ -8,6 +8,9 @@
 ### Changed
 - Expanded **RFC-0010 Semantic Repository Knowledge Graph** design decisions and bite-sized TDD implementation plan under `docs/superpowers/` (next ACL series MR after 0008/0009).
 
+### Fixed
+- **RFC-0010 SemanticGraphService:** `declare()` now returns validation errors for bad repositories or empty patterns instead of raising, preserving the service `T | Exception` contract.
+
 ## [0.18.0] - 2026-07-09
 
 

@@ -38,6 +38,9 @@ events under `.metagit/events/`.
 - Ownership repositories use `project/repo`; bare repo names and deeper paths
   should be rejected by the model layer.
 - Whitespace-only patterns must fail validation after cleaning.
+- Service methods must return validation failures as `Exception` values. Wrap
+  pydantic model construction in service methods when invalid caller input is
+  part of the public `T | Exception` contract.
 - GitNexus may report local index version mismatch in worktrees. Record the
   blocker and rerun `task gitnexus:analyze` before handoff.
 
