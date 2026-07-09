@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Changed
+- Expanded **RFC-0010 Semantic Repository Knowledge Graph** design decisions and bite-sized TDD implementation plan under `docs/superpowers/` (next ACL series MR after 0008/0009).
 
 ## [0.18.0] - 2026-07-09
 

@@ -1,6 +1,6 @@
 # RFC-0010: Semantic Repository Knowledge Graph — Design
 
-**Status:** Draft  
+**Status:** Ready for implementation (plan expanded)  
 **Date:** 2026-07-09  
 **Series:** [ACL RFC series index](2026-07-09-acl-rfc-series-index.md)  
 **Vision:** [agent-coordination.md](../../reference/agent-coordination.md) (RFC-0007 vision; original spec.md retired) § Semantic Ownership  
@@ -54,7 +54,7 @@ metagit semantic conflicts --repository P/R [--json]
 
 ### MCP
 
-`metagit_semantic_ingest`, `metagit_semantic_query`, `metagit_semantic_owners`, `metagit_semantic_conflicts`
+`metagit_semantic_declare`, `metagit_semantic_query`, `metagit_semantic_owners`, `metagit_semantic_conflicts`, `metagit_semantic_ingest`
 
 ## Persistence
 
@@ -62,12 +62,14 @@ metagit semantic conflicts --repository P/R [--json]
 .metagit/graph/
   concepts.json
   ownerships.json
-  events/semantic.jsonl   # optional
+.metagit/events/semantic.jsonl
 ```
+
+Events live under `.metagit/events/` (same layout as `acl.jsonl` / `taskgraph.jsonl`), not under `graph/`.
 
 ## Events
 
-`ConceptDeclared`, `ConceptConflictHint` with `source=semantic`.
+`ConceptDeclared`, `ConceptConflictHint`, `ConceptIngested` with `source=semantic`.
 
 ## Acceptance
 
@@ -81,9 +83,10 @@ metagit semantic conflicts --repository P/R [--json]
 |------------|-------------|
 | ACL claims, detect/index; 0008 optional | 0009 path hints, 0011 conflict context, 0013 |
 
-## Open questions
+## Decisions (locked)
 
-1. Bootstrap concept catalog from a bundled ontology vs empty-by-default?
-2. How deep should GitNexus import go in v1?
-
-**Recommendation:** empty-by-default + small bundled seed optional flag; GitNexus import as optional phase, not MVP.
+1. **Catalog bootstrap:** empty-by-default. Optional `metagit semantic seed` / `--seed` installs a small bundled catalog (≤8 concepts). No required ontology.
+2. **GitNexus import:** optional late phase behind `--gitnexus`; not MVP. If unavailable, return clear JSON error — do not block declare/query/owners/conflicts acceptance.
+3. **Claim integration:** `ClaimCheckResult.concept_hints` is additive and advisory; path-claim `ok` semantics unchanged; semantic load failures never fail claim check.
+4. **Path matching:** reuse `patterns_overlap` from `ClaimService` — do not fork overlap logic.
+5. **Events path:** `.metagit/events/semantic.jsonl` (not under `graph/`).

@@ -37,17 +37,17 @@ RFC-0013 Agent Operating System (composition only)
 | 0007 | Agent Coordination Layer (foundation) | [agent-coordination.md](../../reference/agent-coordination.md) | Historical Cursor plan `rfc-0007_acl_foundation_*.plan.md` (local) | executed | **Shipped** |
 | 0008 | Task Graph & Intent Engine | [design](2026-07-09-rfc-0008-task-graph-intent-design.md) | [plan](../plans/2026-07-09-rfc-0008-task-graph-intent.md) | fuller | **Implemented** (branch `feat/rfc-0008-task-graph`) |
 | 0009 | Agent Context Compiler | [design](2026-07-09-rfc-0009-context-compiler-design.md) | [plan](../plans/2026-07-09-rfc-0009-context-compiler.md) | phased | **Implemented** (same branch) |
-| 0010 | Semantic Repository Knowledge Graph | [design](2026-07-09-rfc-0010-semantic-kg-design.md) | [plan](../plans/2026-07-09-rfc-0010-semantic-kg.md) | phased | Draft |
+| 0010 | Semantic Repository Knowledge Graph | [design](2026-07-09-rfc-0010-semantic-kg-design.md) | [plan](../plans/2026-07-09-rfc-0010-semantic-kg.md) | fuller (TDD) | **Next MR** (plan expanded) |
 | 0011 | Merge Orchestrator & Conflict Resolution | [design](2026-07-09-rfc-0011-merge-orchestrator-design.md) | [plan](../plans/2026-07-09-rfc-0011-merge-orchestrator.md) | phased | Draft |
 | 0012 | Distributed Agent Scheduler | [design](2026-07-09-rfc-0012-agent-scheduler-design.md) | [plan](../plans/2026-07-09-rfc-0012-agent-scheduler.md) | phased | Draft |
 | 0013 | Agent Operating System (composition) | [design](2026-07-09-rfc-0013-aos-composition-design.md) | [plan](../plans/2026-07-09-rfc-0013-aos-composition.md) | phased | Draft |
 
 ## Next MR
 
-**RFC-0008** and **RFC-0009** are implemented on branch `feat/rfc-0008-task-graph`. After merge, expand **RFC-0010** (or 0011) plan to bite-sized TDD steps for the next MR.
+**RFC-0010 + RFC-0011** on branch `feat/rfc-0010-0011` (worktree `.worktrees/rfc-0010-0011`). Implement 0010 first (TDD plan expanded), then expand and implement 0011 on the same branch.
 
 ## Document conventions
 
-Each **design** includes: Summary, Goals, Non-Goals, Architecture, Interfaces, Persistence, Events, Acceptance, Dependencies, Open questions.
+Each **design** includes: Summary, Goals, Non-Goals, Architecture, Interfaces, Persistence, Events, Acceptance, Dependencies, Open questions (or locked Decisions).
 
-Each **plan** includes: Goal, Architecture, Tech stack, Out of scope, file map, ordered phases with checkboxes. RFC-0008 adds bite-sized steps for early phases.
+Each **plan** includes: Goal, Architecture, Tech stack, Out of scope, file map, ordered phases/tasks with checkboxes. RFC-0008 and RFC-0010 include bite-sized TDD steps.
