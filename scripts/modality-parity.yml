@@ -197,3 +197,135 @@ features:
         markers:
           - path: src/metagit/data/skills/metagit-control-center/SKILL.md
             contains: "modality:dispatch_profile_capabilities"
+
+  - id: acl_branch
+    description: ACL agent branch allocate/release/cleanup/archive
+    service: metagit.core.coordination.branch_service.BranchService
+    reference_doc: docs/reference/agent-coordination.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/branch.py
+            contains: '@branch_group.command("allocate")'
+          - path: src/metagit/cli/main.py
+            contains: branch_group
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_branch_allocate
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_branch_allocate
+      documentation:
+        markers:
+          - path: docs/reference/agent-coordination.md
+            contains: "modality:acl_branch"
+          - path: docs/agents.md
+            contains: "modality:acl_branch"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-control-center/SKILL.md
+            contains: "modality:acl_branch"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:acl_branch"
+
+  - id: acl_lease
+    description: ACL branch lease acquire/renew/release (distinct from handoff TTL)
+    service: metagit.core.coordination.lease_service.LeaseService
+    reference_doc: docs/reference/agent-coordination.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/lease.py
+            contains: '@lease_group.command("acquire")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_lease_acquire
+      documentation:
+        markers:
+          - path: docs/reference/agent-coordination.md
+            contains: "modality:acl_lease"
+          - path: docs/agents.md
+            contains: "modality:acl_lease"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-control-center/SKILL.md
+            contains: "modality:acl_lease"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:acl_lease"
+
+  - id: acl_worktree
+    description: ACL isolated git worktree create/destroy/gc/status
+    service: metagit.core.coordination.worktree_service.WorktreeService
+    reference_doc: docs/reference/agent-coordination.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/worktree.py
+            contains: '@worktree_group.command("create")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_worktree_create
+      documentation:
+        markers:
+          - path: docs/reference/agent-coordination.md
+            contains: "modality:acl_worktree"
+          - path: docs/agents.md
+            contains: "modality:acl_worktree"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-control-center/SKILL.md
+            contains: "modality:acl_worktree"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:acl_worktree"
+
+  - id: acl_claim
+    description: ACL advisory file-path claims declare/check/release
+    service: metagit.core.coordination.claim_service.ClaimService
+    reference_doc: docs/reference/agent-coordination.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/claim.py
+            contains: '@claim_group.command("declare")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_claim_declare
+      documentation:
+        markers:
+          - path: docs/reference/agent-coordination.md
+            contains: "modality:acl_claim"
+          - path: docs/agents.md
+            contains: "modality:acl_claim"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-control-center/SKILL.md
+            contains: "modality:acl_claim"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:acl_claim"
+
+  - id: acl_manifest
+    description: Agent execution manifest written on worktree create
+    service: metagit.core.coordination.manifest_service.AgentManifestService
+    reference_doc: docs/reference/agent-coordination.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/worktree.py
+            contains: '@worktree_group.command("manifest")'
+          - path: src/metagit/core/agent/dispatch.py
+            contains: acl_commands
+      documentation:
+        markers:
+          - path: docs/reference/agent-coordination.md
+            contains: "modality:acl_manifest"
+          - path: docs/agents.md
+            contains: "modality:acl_manifest"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-control-center/SKILL.md
+            contains: "modality:acl_manifest"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:acl_manifest"

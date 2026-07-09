@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 10
+- **Features tracked:** 15
 
 When you add or change a backend feature:
 
@@ -30,6 +30,11 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `coordination_events_scope` | Campaign/objective filters on workspace events poll | yes | — | — | yes | yes | [campaigns.md](campaigns.md) |
 | `objective_mr_approval_binding` | Objective mr_url and approval_id fields for review rollups | yes | — | — | yes | yes | [campaigns.md](campaigns.md) |
 | `dispatch_profile_capabilities` | Dispatch-plan profile skill hints and apply command suggestion | yes | — | — | yes | yes | [metagit-agent.md](metagit-agent.md) |
+| `acl_branch` | ACL agent branch allocate/release/cleanup/archive | yes | yes | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
+| `acl_lease` | ACL branch lease acquire/renew/release (distinct from handoff TTL) | yes | yes | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
+| `acl_worktree` | ACL isolated git worktree create/destroy/gc/status | yes | yes | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
+| `acl_claim` | ACL advisory file-path claims declare/check/release | yes | yes | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
+| `acl_manifest` | Agent execution manifest written on worktree create | yes | — | — | yes | yes | [agent-coordination.md](agent-coordination.md) |
 <!-- registry:table:end -->
 
 ## Surface legend

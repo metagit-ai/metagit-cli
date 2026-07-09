@@ -216,6 +216,26 @@ metagit context events --objective <id> --since "2026-07-06T00:00:00Z" --json
 
 Expired claims auto-release when listing handoffs. Objectives may carry `mr_url` and `approval_id` for campaign rollups (`modality:objective_mr_approval_binding`).
 
+### Agent Coordination Layer (ACL)
+
+<!-- modality:acl_branch -->
+<!-- modality:acl_lease -->
+<!-- modality:acl_worktree -->
+<!-- modality:acl_claim -->
+<!-- modality:acl_manifest -->
+
+For isolated agent checkouts, branch leases, and advisory file claims, see
+[Agent coordination (ACL)](reference/agent-coordination.md). ACL branch leases are
+**distinct** from handoff claim TTL leases above.
+
+```bash
+metagit branch allocate --repository project/repo --agent-id agent-1 --task-id 412
+metagit lease acquire --repository project/repo --agent-id agent-1 --task-id 412 --allocate
+metagit worktree create --repository project/repo --agent-id agent-1 --task-id 412 --branch agent/412
+metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'src/*'
+metagit context events --json   # includes source=acl lifecycle events
+```
+
 ### Sharing state across machines (remote backend)
 
 When multiple agents or humans must see the **same** objectives, handoffs, and

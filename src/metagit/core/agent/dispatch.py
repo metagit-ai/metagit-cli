@@ -289,7 +289,45 @@ class AgentDispatchService:
                 prompt_kind=prompt_kind,
                 prompt_scope=prompt_scope,
             ),
+            acl_commands=self._acl_command_hints(
+                definition_path=definition_path,
+                project=project,
+                repo=repo,
+            ),
         )
+
+    def _acl_command_hints(
+        self,
+        *,
+        definition_path: str,
+        project: str | None,
+        repo: str | None,
+    ) -> list[str]:
+        """Suggested ACL commands for isolated agent execution (strings only)."""
+        if not project or not repo:
+            return []
+        repository = f"{project}/{repo}"
+        return [
+            (
+                f"metagit branch allocate --definition {definition_path} "
+                f"--repository {repository} --agent-id <agent-id> --task-id <task-id>"
+            ),
+            (
+                f"metagit lease acquire --definition {definition_path} "
+                f"--repository {repository} --agent-id <agent-id> --task-id <task-id> "
+                f"--branch agent/<task-id> --allocate"
+            ),
+            (
+                f"metagit worktree create --definition {definition_path} "
+                f"--repository {repository} --agent-id <agent-id> --task-id <task-id> "
+                f"--branch agent/<task-id>"
+            ),
+            (
+                f"metagit claim declare --definition {definition_path} "
+                f"--repository {repository} --agent-id <agent-id> "
+                f"--pattern '<glob>'"
+            ),
+        ]
 
     def _context_pack_command(
         self,

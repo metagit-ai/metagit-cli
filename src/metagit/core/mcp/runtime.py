@@ -22,6 +22,11 @@ from metagit.core.context.objective_service import ObjectiveService
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.session_begin_service import SessionBeginService
 from metagit.core.context.session_digest_service import SessionDigestService
+from metagit.core.coordination.branch_service import BranchService
+from metagit.core.coordination.claim_service import ClaimService
+from metagit.core.coordination.lease_service import LeaseService
+from metagit.core.coordination.models import ClaimCheckResult
+from metagit.core.coordination.worktree_service import WorktreeService
 from metagit.core.gitnexus.group_sync import GitNexusGroupSyncService
 from metagit.core.mcp.gate import WorkspaceGate
 from metagit.core.mcp.models import McpActivationState, WorkspaceStatus
@@ -528,6 +533,166 @@ class MetagitMcpRuntime:
                 "type": "object",
                 "properties": {
                     "since": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_branch_allocate": {
+                "type": "object",
+                "required": ["repository", "agent_id", "task_id"],
+                "properties": {
+                    "repository": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "task_id": {"type": "string"},
+                    "description": {"type": "string"},
+                    "branch_name": {"type": "string"},
+                    "base": {"type": "string"},
+                    "integration_branch": {"type": "string"},
+                    "create_git_branch": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_branch_list": {
+                "type": "object",
+                "properties": {
+                    "repository": {"type": "string"},
+                    "status": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_branch_release": {
+                "type": "object",
+                "properties": {
+                    "branch_id": {"type": "string"},
+                    "name": {"type": "string"},
+                    "repository": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_lease_acquire": {
+                "type": "object",
+                "required": ["repository", "agent_id", "task_id"],
+                "properties": {
+                    "repository": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "task_id": {"type": "string"},
+                    "branch": {"type": "string"},
+                    "branch_id": {"type": "string"},
+                    "ttl": {"type": "string"},
+                    "allocate": {"type": "boolean"},
+                    "description": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_lease_renew": {
+                "type": "object",
+                "required": ["lease_id", "agent_id"],
+                "properties": {
+                    "lease_id": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "ttl": {"type": "string"},
+                    "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_lease_release": {
+                "type": "object",
+                "required": ["lease_id", "agent_id"],
+                "properties": {
+                    "lease_id": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "force": {"type": "boolean"},
+                    "release_branch": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_lease_list": {
+                "type": "object",
+                "properties": {
+                    "repository": {"type": "string"},
+                    "status": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_worktree_create": {
+                "type": "object",
+                "required": ["repository", "agent_id", "task_id", "branch"],
+                "properties": {
+                    "repository": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "task_id": {"type": "string"},
+                    "branch": {"type": "string"},
+                    "lease_id": {"type": "string"},
+                    "integration_branch": {"type": "string"},
+                    "claims": {"type": "array", "items": {"type": "string"}},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_worktree_destroy": {
+                "type": "object",
+                "properties": {
+                    "worktree_id": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "repository": {"type": "string"},
+                    "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_worktree_status": {
+                "type": "object",
+                "properties": {
+                    "worktree_id": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_worktree_list": {
+                "type": "object",
+                "properties": {
+                    "repository": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "status": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_claim_declare": {
+                "type": "object",
+                "required": ["repository", "agent_id", "patterns"],
+                "properties": {
+                    "repository": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "patterns": {"type": "array", "items": {"type": "string"}},
+                    "task_id": {"type": "string"},
+                    "strict": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_claim_check": {
+                "type": "object",
+                "required": ["repository", "patterns"],
+                "properties": {
+                    "repository": {"type": "string"},
+                    "patterns": {"type": "array", "items": {"type": "string"}},
+                    "agent_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_claim_list": {
+                "type": "object",
+                "properties": {
+                    "repository": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "status": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_claim_release": {
+                "type": "object",
+                "required": ["claim_id", "agent_id"],
+                "properties": {
+                    "claim_id": {"type": "string"},
+                    "agent_id": {"type": "string"},
+                    "force": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -1587,6 +1752,16 @@ class MetagitMcpRuntime:
             since_opt = str(since_raw).strip() if isinstance(since_raw, str) and since_raw.strip() else None
             return resolve_backend(status.root_path).events().list_events(since=since_opt).model_dump(mode="json")
 
+        if (
+            name.startswith("metagit_branch_")
+            or name.startswith("metagit_lease_")
+            or name.startswith(
+                "metagit_worktree_",
+            )
+            or name.startswith("metagit_claim_")
+        ):
+            return self._call_acl_tool(name, arguments, status)
+
         if name == "metagit_repo_card":
             if not config or not status.root_path:
                 raise InvalidToolArgumentsError("repo card requires an active workspace")
@@ -1976,6 +2151,205 @@ class MetagitMcpRuntime:
             )
 
         raise ValueError(f"Unsupported tool: {name}")
+
+    def _call_acl_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+    ) -> dict[str, Any]:
+        """Dispatch RFC-0007 ACL MCP tools against the session root."""
+        if not status.root_path:
+            raise InvalidToolArgumentsError(f"{name} requires an active workspace")
+        root = status.root_path
+        definition = str(Path(root) / ".metagit.yml")
+
+        def _require(key: str) -> str:
+            value = str(arguments.get(key, "")).strip()
+            if not value:
+                raise InvalidToolArgumentsError(f"{key} is required")
+            return value
+
+        def _unwrap(result: Any) -> dict[str, Any]:
+            if isinstance(result, Exception):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if hasattr(result, "model_dump"):
+                return result.model_dump(mode="json")
+            if isinstance(result, list):
+                return {
+                    "ok": True,
+                    "items": [item.model_dump(mode="json") if hasattr(item, "model_dump") else item for item in result],
+                }
+            return {"ok": True, "result": result}
+
+        if name == "metagit_branch_allocate":
+            service = BranchService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.allocate(
+                    repository=_require("repository"),
+                    agent_id=_require("agent_id"),
+                    task_id=_require("task_id"),
+                    description=arguments.get("description") if isinstance(arguments.get("description"), str) else None,
+                    branch_name=arguments.get("branch_name") if isinstance(arguments.get("branch_name"), str) else None,
+                    base=arguments.get("base") if isinstance(arguments.get("base"), str) else None,
+                    integration_branch=arguments.get("integration_branch")
+                    if isinstance(arguments.get("integration_branch"), str)
+                    else None,
+                    create_git_branch=bool(arguments.get("create_git_branch", True)),
+                ),
+            )
+        if name == "metagit_branch_list":
+            service = BranchService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.list(
+                    repository=arguments.get("repository") if isinstance(arguments.get("repository"), str) else None,
+                    status=arguments.get("status") if isinstance(arguments.get("status"), str) else None,
+                ),
+            )
+        if name == "metagit_branch_release":
+            service = BranchService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.release(
+                    branch_id=arguments.get("branch_id") if isinstance(arguments.get("branch_id"), str) else None,
+                    name=arguments.get("name") if isinstance(arguments.get("name"), str) else None,
+                    repository=arguments.get("repository") if isinstance(arguments.get("repository"), str) else None,
+                ),
+            )
+        if name == "metagit_lease_acquire":
+            service = LeaseService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.acquire(
+                    repository=_require("repository"),
+                    agent_id=_require("agent_id"),
+                    task_id=_require("task_id"),
+                    branch=arguments.get("branch") if isinstance(arguments.get("branch"), str) else None,
+                    branch_id=arguments.get("branch_id") if isinstance(arguments.get("branch_id"), str) else None,
+                    ttl=str(arguments.get("ttl") or "30m"),
+                    allocate_if_missing=bool(arguments.get("allocate", False)),
+                    description=arguments.get("description") if isinstance(arguments.get("description"), str) else None,
+                ),
+            )
+        if name == "metagit_lease_renew":
+            service = LeaseService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.renew(
+                    lease_id=_require("lease_id"),
+                    agent_id=_require("agent_id"),
+                    ttl=str(arguments.get("ttl") or "30m"),
+                    force=bool(arguments.get("force", False)),
+                ),
+            )
+        if name == "metagit_lease_release":
+            service = LeaseService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.release(
+                    lease_id=_require("lease_id"),
+                    agent_id=_require("agent_id"),
+                    force=bool(arguments.get("force", False)),
+                    release_branch=bool(arguments.get("release_branch", False)),
+                ),
+            )
+        if name == "metagit_lease_list":
+            service = LeaseService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.list(
+                    repository=arguments.get("repository") if isinstance(arguments.get("repository"), str) else None,
+                    status=arguments.get("status") if isinstance(arguments.get("status"), str) else None,
+                    agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                ),
+            )
+        if name == "metagit_worktree_create":
+            service = WorktreeService(root, sync_root=root, definition_path=definition)
+            claims_raw = arguments.get("claims")
+            claims = [str(item) for item in claims_raw] if isinstance(claims_raw, list) else None
+            return _unwrap(
+                service.create(
+                    repository=_require("repository"),
+                    agent_id=_require("agent_id"),
+                    task_id=_require("task_id"),
+                    branch=_require("branch"),
+                    lease_id=arguments.get("lease_id") if isinstance(arguments.get("lease_id"), str) else None,
+                    integration_branch=arguments.get("integration_branch")
+                    if isinstance(arguments.get("integration_branch"), str)
+                    else None,
+                    claims=claims,
+                ),
+            )
+        if name == "metagit_worktree_destroy":
+            service = WorktreeService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.destroy(
+                    worktree_id=arguments.get("worktree_id") if isinstance(arguments.get("worktree_id"), str) else None,
+                    agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                    repository=arguments.get("repository") if isinstance(arguments.get("repository"), str) else None,
+                    force=bool(arguments.get("force", False)),
+                ),
+            )
+        if name == "metagit_worktree_status":
+            service = WorktreeService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.status(
+                    worktree_id=arguments.get("worktree_id") if isinstance(arguments.get("worktree_id"), str) else None,
+                    agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                ),
+            )
+        if name == "metagit_worktree_list":
+            service = WorktreeService(root, sync_root=root, definition_path=definition)
+            return _unwrap(
+                service.list(
+                    repository=arguments.get("repository") if isinstance(arguments.get("repository"), str) else None,
+                    agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                    status=arguments.get("status") if isinstance(arguments.get("status"), str) else None,
+                ),
+            )
+        if name == "metagit_claim_declare":
+            service = ClaimService(root)
+            patterns_raw = arguments.get("patterns")
+            if not isinstance(patterns_raw, list) or not patterns_raw:
+                raise InvalidToolArgumentsError("patterns is required")
+            result = service.declare(
+                repository=_require("repository"),
+                agent_id=_require("agent_id"),
+                patterns=[str(item) for item in patterns_raw],
+                task_id=arguments.get("task_id") if isinstance(arguments.get("task_id"), str) else None,
+                allow_conflicts=not bool(arguments.get("strict", False)),
+            )
+            if isinstance(result, ClaimCheckResult):
+                payload = result.model_dump(mode="json")
+                payload["ok"] = False
+                return payload
+            return _unwrap(result)
+        if name == "metagit_claim_check":
+            service = ClaimService(root)
+            patterns_raw = arguments.get("patterns")
+            if not isinstance(patterns_raw, list) or not patterns_raw:
+                raise InvalidToolArgumentsError("patterns is required")
+            return _unwrap(
+                service.check(
+                    repository=_require("repository"),
+                    patterns=[str(item) for item in patterns_raw],
+                    agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                ),
+            )
+        if name == "metagit_claim_list":
+            service = ClaimService(root)
+            return _unwrap(
+                service.list(
+                    repository=arguments.get("repository") if isinstance(arguments.get("repository"), str) else None,
+                    agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                    status=arguments.get("status") if isinstance(arguments.get("status"), str) else None,
+                ),
+            )
+        if name == "metagit_claim_release":
+            service = ClaimService(root)
+            return _unwrap(
+                service.release(
+                    claim_id=_require("claim_id"),
+                    agent_id=_require("agent_id"),
+                    force=bool(arguments.get("force", False)),
+                ),
+            )
+        raise ValueError(f"Unsupported ACL tool: {name}")
 
     def _resolve_status_and_config(self) -> tuple[WorkspaceStatus, Any]:
         resolved_root = self._resolver.resolve(cwd=os.getcwd(), cli_root=self._root_override)

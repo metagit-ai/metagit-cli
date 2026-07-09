@@ -362,6 +362,28 @@ Doc: [agent-profile.md](https://metagit-ai.github.io/metagit-cli/reference/agent
 
 ---
 
+## Agent Coordination Layer (ACL)
+
+<!-- modality:acl_branch -->
+<!-- modality:acl_lease -->
+<!-- modality:acl_worktree -->
+<!-- modality:acl_claim -->
+<!-- modality:acl_manifest -->
+
+Isolated agent branches, leases, worktrees, and advisory file claims:
+
+```bash
+metagit branch allocate --repository project/repo --agent-id agent-1 --task-id 412 --json
+metagit lease acquire --repository project/repo --agent-id agent-1 --task-id 412 --allocate --json
+metagit worktree create --repository project/repo --agent-id agent-1 --task-id 412 --branch agent/412 --json
+metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'src/*' --json
+metagit worktree manifest agent-1
+```
+
+Distinct from `metagit context handoff claim --ttl` (task-queue leases). Full guide: `docs/reference/agent-coordination.md`.
+
+---
+
 ## Campaigns
 
 <!-- modality:native_campaigns -->

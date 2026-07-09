@@ -280,6 +280,10 @@ class AgentDispatchHandoff(BaseModel):
     prompt_scope: Literal["workspace", "project", "repo"]
     effective_instructions: str = ""
     mcp_resources: list[str] = Field(default_factory=list)
+    acl_commands: list[str] = Field(
+        default_factory=list,
+        description="Suggested RFC-0007 ACL CLI commands (allocate/lease/worktree)",
+    )
 
 
 class AgentDispatchPlan(BaseModel):

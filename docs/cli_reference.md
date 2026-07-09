@@ -25,7 +25,8 @@ This page contains the auto-generated documentation for the `metagit` command-li
 - **`metagit_workspace_semantic_search`** runs `npx gitnexus query -r <registry>` per selected repo (`query` required; optional `repos`, `task_context`, `goal`, `limit_per_repo`, `timeout_seconds`) for GitNexus-ranked processes.
 - **`metagit_workspace_discover`** lists files by `intent` or `pattern` with optional `categorize` grouping (requires `intent` or `pattern`).
 - **`metagit_project_template_apply`** previews or applies bundled templates from `src/metagit/data/templates/` (`dry_run` default; `confirm_apply` required for writes).
-- **Coordination (active gate):** `metagit_objective_list`, `metagit_objective_upsert`, `metagit_objective_edit`; `metagit_approval_request`, `metagit_approval_list`, `metagit_approval_resolve`; `metagit_handoff_list`, `metagit_handoff_create`, `metagit_handoff_claim`, `metagit_handoff_complete`; `metagit_events` (optional `since` ISO cursor). All respect `METAGIT_STATE_URL` when set on the MCP host.
+- **Coordination (active gate):** `metagit_objective_list`, `metagit_objective_upsert`, `metagit_objective_edit`; `metagit_approval_request`, `metagit_approval_list`, `metagit_approval_resolve`; `metagit_handoff_list`, `metagit_handoff_create`, `metagit_handoff_claim`, `metagit_handoff_complete`; `metagit_events` (optional `since` ISO cursor; includes `source=acl` lifecycle rows). All respect `METAGIT_STATE_URL` when set on the MCP host.
+- **ACL / Agent Coordination Layer (active gate):** `metagit_branch_allocate`, `metagit_branch_list`, `metagit_branch_release`; `metagit_lease_acquire`, `metagit_lease_renew`, `metagit_lease_release`, `metagit_lease_list`; `metagit_worktree_create`, `metagit_worktree_destroy`, `metagit_worktree_status`, `metagit_worktree_list`; `metagit_claim_declare`, `metagit_claim_check`, `metagit_claim_list`, `metagit_claim_release`. CLI: `metagit branch|lease|worktree|claim`. ACL branch leases are distinct from handoff claim TTL. See [agent-coordination.md](reference/agent-coordination.md).
 - **Resources:** Start with `metagit://catalog`. Phase 1–4 URIs include `gate/status` (includes `state_backend` diagnostics), `workspace/map`, `session/meta`, `session/digest`, `objectives`, `approvals/pending`, `handoffs/open`, `events/recent`, `prompt/catalog`, dynamic `prompt/{scope}/{kind}`, `project/{project}/summary`, `repo/{project}/{repo}/card`, `workspace/config` (summary default), `workspace/repos/status?summary=1`, `workspace/health`, `workspace/context` (alias). Spec: [mcp-layered-resources-spec.md](reference/mcp-layered-resources-spec.md). Skills: `metagit-mcp-resources`, `metagit-sharing-state`.
 - **Prompts capability:** `prompts/list` and `prompts/get` (names like `workspace/session-start`) mirror prompt resources.
 - **Project context (active gate):**
@@ -72,7 +73,18 @@ Structured manifest fields and CLI groups for multi-agent coordination. Full ref
 <!-- modality:coordination_events_scope -->
 <!-- modality:objective_mr_approval_binding -->
 - **`metagit context handoff`** — queue operations including `claim --ttl`, `heartbeat`, and auto-release of expired claims.
-- **`metagit context events`** — optional `--campaign` / `--objective` filters when polling workspace events.
+- **`metagit context events`** — optional `--campaign` / `--objective` filters when polling workspace events (includes ACL `source=acl` rows).
+
+<!-- modality:acl_branch -->
+<!-- modality:acl_lease -->
+<!-- modality:acl_worktree -->
+<!-- modality:acl_claim -->
+<!-- modality:acl_manifest -->
+- **`metagit branch`** — allocate / release / cleanup / archive / list `agent/*` branches.
+- **`metagit lease`** — acquire / renew / release / list ACL branch leases (not handoff claim TTL).
+- **`metagit worktree`** — create / destroy / gc / status / list / manifest for isolated agent checkouts under `.worktrees/`.
+- **`metagit claim`** — declare / check / list / release advisory file-path claims.
+- Full ACL reference: [agent-coordination.md](reference/agent-coordination.md).
 
 <!-- modality:dispatch_profile_capabilities -->
-- **`metagit agent dispatch-plan`** — includes profile skill hints and suggested `profile_apply_command` when profiles are configured.
+- **`metagit agent dispatch-plan`** — includes profile skill hints, suggested `profile_apply_command`, and `handoff.acl_commands` when project/repo are set.
