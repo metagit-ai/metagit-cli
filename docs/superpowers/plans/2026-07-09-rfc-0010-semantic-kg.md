@@ -69,7 +69,7 @@ Hosted KG, replacing GitNexus, hard locks, merge/scheduler/AOS engines, SPA, SQL
 - Test: `tests/core/semantic/test_semantic_models.py`
 - Test: `tests/core/semantic/test_store.py`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 ```python
 #!/usr/bin/env python
@@ -158,7 +158,7 @@ def test_store_round_trip(tmp_path: Path) -> None:
     assert loaded_o[0].patterns == ["**/auth/**"]
 ```
 
-- [ ] **Step 2: Run tests — expect fail**
+- [x] **Step 2: Run tests — expect fail**
 
 ```bash
 uv run pytest tests/core/semantic/test_semantic_models.py tests/core/semantic/test_store.py -q
@@ -166,7 +166,7 @@ uv run pytest tests/core/semantic/test_semantic_models.py tests/core/semantic/te
 
 Expected: FAIL (module not found / import error).
 
-- [ ] **Step 3: Implement models, paths, store**
+- [x] **Step 3: Implement models, paths, store**
 
 `models.py` essentials:
 
@@ -315,13 +315,13 @@ def events_file(session_root: str) -> Path:
 
 `store.py`: reuse the lock pattern from `TaskGraphStore` / `JsonListStore` — two documents keyed `concepts` and `ownerships`. Methods: `load_concepts`, `save_concepts`, `load_ownerships`, `save_ownerships`, `update_concepts(mutator)`, `update_ownerships(mutator)`. Returns `T | Exception`.
 
-- [ ] **Step 4: Run tests — expect pass**
+- [x] **Step 4: Run tests — expect pass**
 
 ```bash
 uv run pytest tests/core/semantic/test_semantic_models.py tests/core/semantic/test_store.py -q
 ```
 
-- [ ] **Step 5: Commit** (when user requests) `feat(semantic): add models and JSON store for RFC-0010`
+- [x] **Step 5: Commit** (when user requests) `feat(semantic): add models and JSON store for RFC-0010`
 
 ---
 
