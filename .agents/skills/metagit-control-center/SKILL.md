@@ -95,9 +95,9 @@ When delegating single-repo or specialist work:
 3. **Profile** — when JSON includes `profile_apply_command`, run it (or `metagit agent apply …`) before launch. <!-- modality:agent_profile_apply --> <!-- modality:dispatch_profile_capabilities -->
 4. **Ensure** — run `install.command` once when `install.needed` is true.
 5. **Hand off** — run `handoff.context_pack` and `handoff.prompt`; pass `handoff.effective_instructions` to the subagent.
-6. **ACL isolation (optional)** — when `handoff.acl_commands` is present, allocate a branch, acquire a lease, and create a worktree before coding so agents never share checkouts. <!-- modality:acl_branch --> <!-- modality:acl_lease --> <!-- modality:acl_worktree --> <!-- modality:acl_claim --> <!-- modality:acl_manifest -->
-   See `docs/reference/agent-coordination.md`. ACL branch leases ≠ handoff claim TTL.
-6. **Reconcile** — `metagit_session_update` after the subagent returns; respect `out_of_scope` boundaries.
+6. **ACL isolation (optional)** — when `handoff.acl_commands` is present, follow skill **`metagit-agent-coordination`** (allocate → lease → worktree → claim) so agents never share checkouts. <!-- modality:acl_branch --> <!-- modality:acl_lease --> <!-- modality:acl_worktree --> <!-- modality:acl_claim --> <!-- modality:acl_manifest -->
+   ACL branch leases ≠ handoff claim TTL. Doc: `docs/reference/agent-coordination.md`.
+7. **Reconcile** — `metagit_session_update` after the subagent returns; respect `out_of_scope` boundaries.
 
 ```bash
 metagit agent dispatch-plan repo-implementer \

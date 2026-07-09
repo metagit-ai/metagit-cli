@@ -14,7 +14,8 @@ Use this skill for cross-repository feature or fix delivery.
 2. Verify workspace scope and dependency hints.
 3. Sequence work by dependency order.
 4. Sync only required repositories.
-5. Track progress and blockers per repository.
+5. When running **parallel agents** on the same repo, isolate with skill **`metagit-agent-coordination`** (branch → lease → worktree) before edits.
+6. Track progress and blockers per repository.
 
 ## Command Wrapper
 

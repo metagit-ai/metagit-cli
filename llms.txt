@@ -45,6 +45,7 @@ metagit prompt workspace --kind session-start --text-only
 | Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
 | ACL branch / lease | `metagit branch allocate` · `metagit lease acquire --allocate` |
 | ACL worktree / claim | `metagit worktree create` · `metagit claim declare` |
+| Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
 
 ## Feature registry
@@ -53,7 +54,7 @@ Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality
 
 ## Bundled skills (after install)
 
-`metagit-cli`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects`, `metagit-campaign`, `metagit-sharing-state` (multi-agent remote state) — see docs/skills.md.
+`metagit-cli`, `metagit-agent-coordination`, `metagit-workspace-grep`, `metagit-workspace-scope`, `metagit-control-center`, `metagit-workspace-sync`, `metagit-upstream-scan`, `metagit-projects`, `metagit-campaign`, `metagit-sharing-state` (multi-agent remote state) — see docs/skills.md.
 
 ## Optional
 

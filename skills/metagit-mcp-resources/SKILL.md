@@ -4,8 +4,6 @@ description: >-
   Token-efficient MCP resource ladder for metagit workspaces — catalog, map,
   layered prompts, project/repo drill-down. Use when the IDE host exposes metagit
   resources/read instead of shell CLI.
-metadata:
-  internal: true
 ---
 # Metagit MCP layered resources
 

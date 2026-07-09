@@ -51,6 +51,7 @@ metagit prompt workspace --kind session-start --text-only
 | Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
 | ACL isolate agent checkout | `metagit branch allocate` · `metagit lease acquire --allocate` · `metagit worktree create` |
 | ACL file claims | `metagit claim declare` · `metagit claim check` |
+| Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
 | Feature registry (all modalities) | [docs/reference/modality-feature-registry.md](docs/reference/modality-feature-registry.md) |
 

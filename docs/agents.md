@@ -225,7 +225,8 @@ Expired claims auto-release when listing handoffs. Objectives may carry `mr_url`
 <!-- modality:acl_manifest -->
 
 For isolated agent checkouts, branch leases, and advisory file claims, see
-[Agent coordination (ACL)](reference/agent-coordination.md). ACL branch leases are
+[Agent coordination (ACL)](reference/agent-coordination.md) and skill
+**`metagit-agent-coordination`**. ACL branch leases are
 **distinct** from handoff claim TTL leases above.
 
 ```bash

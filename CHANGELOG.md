@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- **RFC-0007 Agent Coordination Layer (foundation):** `metagit branch|lease|worktree|claim` CLI groups, MCP tools (`metagit_branch_*`, `metagit_lease_*`, `metagit_worktree_*`, `metagit_claim_*`), local persistence under `.metagit/{branches,leases,worktrees,claims,agents,events}/`, isolated checkouts under configurable `workspace.worktrees_path` (default `.worktrees/`, env `METAGIT_WORKSPACE_WORKTREES_PATH`), advisory file claims and repo presence, agent execution manifests on worktree create, ACL events in `metagit context events` (`source=acl`), and dispatch-plan `acl_commands` hints. Docs: `docs/reference/agent-coordination.md`. Agent onboarding indexes (`llms.txt`, `AGENTS.md`, `docs/cli_reference.md`) list ACL commands and MCP tools. Worktrees/campaigns path basenames are reserved project names.
+- **RFC-0007 Agent Coordination Layer (foundation):** `metagit branch|lease|worktree|claim` CLI groups, MCP tools (`metagit_branch_*`, `metagit_lease_*`, `metagit_worktree_*`, `metagit_claim_*`), local persistence under `.metagit/{branches,leases,worktrees,claims,agents,events}/`, isolated checkouts under configurable `workspace.worktrees_path` (default `.worktrees/`, env `METAGIT_WORKSPACE_WORKTREES_PATH`), advisory file claims and repo presence, agent execution manifests on worktree create, ACL events in `metagit context events` (`source=acl`), and dispatch-plan `acl_commands` hints. Docs: `docs/reference/agent-coordination.md`. Bundled skill **`metagit-agent-coordination`**. Agent onboarding indexes (`llms.txt`, `AGENTS.md`, `docs/cli_reference.md`) list ACL commands and MCP tools. Worktrees/campaigns path basenames are reserved project names.
 
 ## [0.16.0] - 2026-07-07
 

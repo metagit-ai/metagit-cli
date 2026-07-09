@@ -23,6 +23,7 @@ Adding or changing worktree/branch/lease/claim behavior for multi-agent Git isol
 4. Emit typed events via `AclEventStore` so `WorkspaceEventService` surfaces `source=acl`.
 5. Register modality features in `scripts/modality-parity.yml`.
 6. Prefer GitPython for worktree/branch ops; advisory claims never block git.
+7. Keep agent runbook in skill **`metagit-agent-coordination`** (public `skills/` + packaged `src/metagit/data/skills/`); cross-link from control-center / multi-repo / sharing-state.
 
 ## Don't
 

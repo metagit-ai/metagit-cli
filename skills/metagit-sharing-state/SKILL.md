@@ -5,8 +5,6 @@ description: >-
   across multiple agents and machines via METAGIT_STATE_URL and the ops HTTP
   backend. Use when Hermes subagents, CI runners, or humans must see the same
   objective queue without Syncthing JSON files.
-metadata:
-  internal: true
 ---
 # Metagit shared coordination state
 
@@ -106,3 +104,4 @@ metagit context approval list --json
 - `metagit-context-pack` — session bootstrap + objective/approval CLI/MCP table
 - `metagit-mcp-resources` — resource read ladder including events poll
 - `metagit-control-center` — ongoing multi-repo coordination
+- `metagit-agent-coordination` — git isolation (branches/leases/worktrees); orthogonal to shared state JSON

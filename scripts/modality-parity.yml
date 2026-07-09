@@ -223,6 +223,8 @@ features:
             contains: "modality:acl_branch"
       skills:
         markers:
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:acl_branch"
           - path: src/metagit/data/skills/metagit-control-center/SKILL.md
             contains: "modality:acl_branch"
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
@@ -249,6 +251,8 @@ features:
             contains: "modality:acl_lease"
       skills:
         markers:
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:acl_lease"
           - path: src/metagit/data/skills/metagit-control-center/SKILL.md
             contains: "modality:acl_lease"
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
@@ -275,6 +279,8 @@ features:
             contains: "modality:acl_worktree"
       skills:
         markers:
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:acl_worktree"
           - path: src/metagit/data/skills/metagit-control-center/SKILL.md
             contains: "modality:acl_worktree"
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
@@ -301,6 +307,8 @@ features:
             contains: "modality:acl_claim"
       skills:
         markers:
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:acl_claim"
           - path: src/metagit/data/skills/metagit-control-center/SKILL.md
             contains: "modality:acl_claim"
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
@@ -325,6 +333,8 @@ features:
             contains: "modality:acl_manifest"
       skills:
         markers:
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:acl_manifest"
           - path: src/metagit/data/skills/metagit-control-center/SKILL.md
             contains: "modality:acl_manifest"
           - path: src/metagit/data/skills/metagit-cli/SKILL.md

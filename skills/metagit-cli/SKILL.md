@@ -1,8 +1,6 @@
 ---
 name: metagit-cli
 description: CLI-only shortcuts for metagit agents — workspace catalog, discovery, prompts, sync, layout, and config. Use instead of MCP or HTTP API when operating from a shell or agent_mode session.
-metadata:
-  internal: true
 ---
 # Metagit CLI (agent shortcuts)
 
@@ -370,7 +368,8 @@ Doc: [agent-profile.md](https://metagit-ai.github.io/metagit-cli/reference/agent
 <!-- modality:acl_claim -->
 <!-- modality:acl_manifest -->
 
-Isolated agent branches, leases, worktrees, and advisory file claims:
+Isolated agent branches, leases, worktrees, and advisory file claims. Prefer skill
+**`metagit-agent-coordination`** for the full workflow (conflicts, cleanup, MCP table).
 
 ```bash
 metagit branch allocate --repository project/repo --agent-id agent-1 --task-id 412 --json
@@ -380,7 +379,7 @@ metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'sr
 metagit worktree manifest agent-1
 ```
 
-Distinct from `metagit context handoff claim --ttl` (task-queue leases). Full guide: `docs/reference/agent-coordination.md`.
+Distinct from `metagit context handoff claim --ttl`. Doc: `docs/reference/agent-coordination.md`.
 
 ---
 

@@ -106,3 +106,4 @@ metagit context approval list --json
 - `metagit-context-pack` — session bootstrap + objective/approval CLI/MCP table
 - `metagit-mcp-resources` — resource read ladder including events poll
 - `metagit-control-center` — ongoing multi-repo coordination
+- `metagit-agent-coordination` — git isolation (branches/leases/worktrees); orthogonal to shared state JSON
