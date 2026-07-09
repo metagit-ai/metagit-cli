@@ -2,7 +2,24 @@
 
 ## Unreleased
 
+### Added
+- **RFC-0010 Semantic Repository Knowledge Graph:** `SemanticGraphService` can declare concept ownership, query concepts by id/name/alias, resolve path owners with ACL pattern overlap semantics, and emit `ConceptDeclared` events.
+- **RFC-0010 SemanticGraphService:** advisory `conflicts(repository)` hints detect when multiple active ACL claim agents overlap the same semantic concept paths and emit `ConceptConflictHint` events.
+- **RFC-0010 ACL claim advice:** `metagit claim check` / MCP claim checks now include advisory semantic `concept_hints` for overlapping concept ownership patterns without turning hints into claim conflicts.
+- **RFC-0010 context events:** `metagit context events` now includes semantic graph lifecycle events with `source=semantic`.
+- **RFC-0010 semantic CLI:** `metagit semantic declare|query|owners|conflicts|ingest|seed` exposes semantic concept ownership operations, including deterministic ingest hints and the optional seed catalog.
+- **RFC-0010 semantic MCP parity:** ACTIVE-gated `metagit_semantic_declare|query|owners|conflicts|ingest` tools mirror the semantic service and register the `semantic_ownership` modality markers.
+- **RFC-0010 semantic operator surface:** published semantic ownership reference, MkDocs nav entry, and agent quick-reference commands for CLI/MCP use; optional GitNexus import is documented as deferred.
+- **RFC-0011 Merge Orchestrator:** local merge requests, JSON queue/store, clean GitPython conflict aborts, conflict records with ACL command hints only, opt-in validator commands, gated promote, and `source=merge` events.
+- **RFC-0011 merge CLI/MCP parity:** `metagit merge enqueue|status|integrate|retry|promote` plus ACTIVE-gated `metagit_merge_enqueue|status|integrate|retry` MCP tools share `MergeOrchestrator` and register the `merge_orchestrator` modality markers.
+- **RFC-0011 merge operator surface:** published merge orchestrator reference, MkDocs nav entry, agent quick-reference commands, bundled skill markers, and ACL series status updates.
 
+### Changed
+- Expanded **RFC-0010 Semantic Repository Knowledge Graph** design decisions and bite-sized TDD implementation plan under `docs/superpowers/` (next ACL series MR after 0008/0009).
+
+### Fixed
+- **RFC-0011 merge validators:** run opt-in command strings via the platform shell (`shell=True`) so Unix CI uses `/bin/sh` and Windows CI uses `ComSpec`, instead of hardcoding `/bin/zsh` or `/bin/sh`.
+- **RFC-0010 SemanticGraphService:** `declare()` now returns validation errors for bad repositories or empty patterns instead of raising, preserving the service `T | Exception` contract.
 
 ## [0.18.1] - 2026-07-09
 

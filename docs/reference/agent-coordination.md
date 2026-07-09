@@ -20,8 +20,10 @@ ACL leases own a *branch* for an agent.
 2. Agents never share `agent/*` working branches.
 3. Branch leases expire and can be renewed.
 4. File claims and repo presence are **advisory** — Git remains the authority.
-5. Task graphs ship in RFC-0008 ([task-graph.md](task-graph.md)); merge
-   orchestration, semantic ownership, and scheduling remain RFC-0009+.
+5. Task graphs ship in RFC-0008 ([task-graph.md](task-graph.md)); semantic
+   ownership ships in RFC-0010 ([semantic-ownership.md](semantic-ownership.md));
+   merge orchestration ships in RFC-0011 ([merge-orchestrator.md](merge-orchestrator.md)).
+   Scheduling remains a later RFC.
 
 ## Persistence
 
@@ -98,8 +100,26 @@ ACL lifecycle events append to `.metagit/events/acl.jsonl` and appear in
 repo are set — suggested allocate / lease / worktree / claim CLI strings only
 (no automatic mutation).
 
+## Semantic Ownership Hints
+
+RFC-0010 semantic ownership can attach advisory `concept_hints` to claim checks
+when a requested claim pattern overlaps a concept-level ownership pattern. These
+hints never turn into hard locks or failed claims by themselves. See
+[Semantic ownership](semantic-ownership.md) for persistence, CLI/MCP commands,
+seed/ingest behavior, and the deferred GitNexus import path.
+
 <!-- modality:task_graph -->
 
 Task nodes may also store the same style of hints via
 `metagit task bind-acl` — see [task-graph.md](task-graph.md).
+
+<!-- modality:merge_orchestrator -->
+
+## Merge Orchestration
+
+RFC-0011 can enqueue agent-branch merges, attempt local integration branches,
+record clean conflicts, run opt-in validators, and emit `source=merge` events.
+Conflict records include ACL command hints only; no branch allocation, lease,
+worktree, or claim is created automatically. See
+[merge-orchestrator.md](merge-orchestrator.md).
 

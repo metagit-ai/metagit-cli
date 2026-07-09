@@ -120,6 +120,22 @@
       "title": "LLM",
       "type": "object"
     },
+    "MergeConfig": {
+      "additionalProperties": false,
+      "description": "Merge orchestrator settings.",
+      "properties": {
+        "validators": {
+          "description": "Opt-in zsh commands that must pass before merge promotion",
+          "items": {
+            "type": "string"
+          },
+          "title": "Validators",
+          "type": "array"
+        }
+      },
+      "title": "MergeConfig",
+      "type": "object"
+    },
     "Profile": {
       "additionalProperties": false,
       "description": "Model for profile configuration.",
@@ -259,6 +275,12 @@
           "default": "_campaigns",
           "description": "Path for committed campaign YAML overlays. Relative paths resolve from the manifest root. Defaults to _campaigns to avoid colliding with a workspace project named campaigns.",
           "title": "Campaigns Path",
+          "type": "string"
+        },
+        "worktrees_path": {
+          "default": ".worktrees",
+          "description": "Directory for ACL agent git worktree checkouts. Relative paths resolve from the manifest/session root. Defaults to .worktrees; the path basename is reserved and cannot be used as a workspace project name.",
+          "title": "Worktrees Path",
           "type": "string"
         },
         "default_project": {
@@ -413,19 +435,19 @@
       "type": "string"
     },
     "cicd_file_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/cicd-files.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/.worktrees/rfc-0010-0011/src/metagit/data/cicd-files.json",
       "description": "The path to the cicd file data",
       "title": "Cicd File Data",
       "type": "string"
     },
     "file_type_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/file-types.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/.worktrees/rfc-0010-0011/src/metagit/data/file-types.json",
       "description": "The path to the file type data",
       "title": "File Type Data",
       "type": "string"
     },
     "package_manager_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/package-managers.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/.worktrees/rfc-0010-0011/src/metagit/data/package-managers.json",
       "description": "The path to the package manager data",
       "title": "Package Manager Data",
       "type": "string"
@@ -448,6 +470,7 @@
         "path": "./.metagit",
         "session_path": ".metagit/sessions",
         "campaigns_path": "_campaigns",
+        "worktrees_path": ".worktrees",
         "default_project": null,
         "dedupe": {
           "canonical_dir": "_canonical",
@@ -531,6 +554,10 @@
     "state": {
       "$ref": "#/$defs/StateConfig",
       "description": "Workspace coordination state backend (objectives, handoffs, approvals)"
+    },
+    "merge": {
+      "$ref": "#/$defs/MergeConfig",
+      "description": "Merge orchestrator settings"
     }
   },
   "title": "AppConfig",

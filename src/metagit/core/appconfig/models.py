@@ -224,6 +224,17 @@ class StateConfig(BaseModel):
     )
 
 
+class MergeConfig(BaseModel):
+    """Merge orchestrator settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    validators: list[str] = Field(
+        default_factory=list,
+        description="Opt-in shell command strings that must pass before merge promotion",
+    )
+
+
 class AppConfig(BaseModel):
     """Application-level settings (not the Metagit package release version — use `metagit version`)."""
 
@@ -268,6 +279,7 @@ class AppConfig(BaseModel):
         default_factory=StateConfig,
         description="Workspace coordination state backend (objectives, handoffs, approvals)",
     )
+    merge: MergeConfig = Field(default_factory=MergeConfig, description="Merge orchestrator settings")
 
     @classmethod
     def load(cls, config_path: str = None) -> Union["AppConfig", Exception]:

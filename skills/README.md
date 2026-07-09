@@ -49,7 +49,7 @@ Other targets: `opencode`, `claude_code`, `cursor`, `github_copilot`, `windsurf`
 | `metagit-projects` | Starting work; check for existing projects/repos before new folders |
 | `metagit-workspace-scope` | Session start; workspace boundaries; Hermes bootstrap wiring |
 | `metagit-control-center` | Ongoing multi-repo coordination |
-| `metagit-agent-coordination` | Isolate concurrent agents: ACL branches, leases, worktrees, file claims |
+| `metagit-agent-coordination` | Isolate concurrent agents: ACL branches, leases, worktrees, file claims, merge conflict hints |
 | `metagit-workspace-sync` | Guarded fetch/pull/clone |
 | `metagit-config-refresh` | `.metagit.yml` missing or stale |
 | `metagit-bootstrap` | Generate or refine config with discovery/MCP or CLI-only fallbacks |

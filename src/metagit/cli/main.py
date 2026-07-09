@@ -38,10 +38,12 @@ from metagit.cli.commands.gitnexus import gitnexus
 from metagit.cli.commands.init import init
 from metagit.cli.commands.lease import lease_group
 from metagit.cli.commands.mcp import mcp
+from metagit.cli.commands.merge_cmd import merge_group
 from metagit.cli.commands.project import project
 from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
 from metagit.cli.commands.search import search
+from metagit.cli.commands.semantic import semantic_group
 from metagit.cli.commands.skills import skills
 from metagit.cli.commands.task import task_group
 from metagit.cli.commands.tui import tui_cmd
@@ -140,6 +142,8 @@ cli.add_command(branch_group)
 cli.add_command(lease_group)
 cli.add_command(worktree_group)
 cli.add_command(claim_group)
+cli.add_command(merge_group)
+cli.add_command(semantic_group)
 cli.add_command(task_group)
 cli.add_command(init)
 cli.add_command(mcp)

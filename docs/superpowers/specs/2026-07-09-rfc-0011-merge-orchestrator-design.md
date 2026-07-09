@@ -1,11 +1,12 @@
 # RFC-0011: Merge Orchestrator & Conflict Resolution — Design
 
-**Status:** Draft  
+**Status:** Ready for implementation (plan expanded)  
 **Date:** 2026-07-09  
 **Series:** [ACL RFC series index](2026-07-09-acl-rfc-series-index.md)  
 **Vision:** [agent-coordination.md](../../reference/agent-coordination.md) (RFC-0007 vision; original spec.md retired) § Integration Branches, Merge Orchestrator  
 **Depends on:** RFC-0007 ACL; RFC-0008 completed nodes (preferred)  
-**Plan:** [2026-07-09-rfc-0011-merge-orchestrator.md](../plans/2026-07-09-rfc-0011-merge-orchestrator.md)
+**Plan:** [2026-07-09-rfc-0011-merge-orchestrator.md](../plans/2026-07-09-rfc-0011-merge-orchestrator.md)  
+**Branch:** `feat/rfc-0010-0011`
 
 ## Summary
 
@@ -84,9 +85,9 @@ metagit merge promote --integration integration/… --into feature/…   # optio
 |------------|-------------|
 | ACL branches/worktrees; 0008 completion signals | 0012 (backpressure), 0013 |
 
-## Open questions
+## Decisions (locked)
 
-1. Default validator set: none vs `task test` discovery?
-2. Should conflict resolution auto-allocate ACL for merge agent?
-
-**Recommendation:** validators opt-in via config; conflict path emits dispatch hints including optional `acl_commands`, no auto-allocate in v1.
+1. **Validators:** opt-in via appconfig; default empty list (no `task test` discovery in v1).
+2. **Conflict ACL:** emit dispatch hints including optional `acl_commands` strings; **no auto-allocate** in v1.
+3. **Promote:** explicit gated step (integration → feature) after success + validation ok.
+4. **Git safety:** on conflict, abort merge and record structured files; never leave integration mid-merge.

@@ -6,7 +6,7 @@ from __future__ import annotations
 import fnmatch
 import uuid
 from pathlib import Path, PurePosixPath
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from metagit.core.coordination.event_store import AclEventStore
 from metagit.core.coordination.models import (
@@ -112,7 +112,26 @@ class ClaimService:
                         claim_id=row.claim_id,
                     ),
                 )
-        return ClaimCheckResult(ok=not conflicts, conflicts=conflicts)
+        concept_hints = self._concept_hints(repository=repository, patterns=patterns)
+        return ClaimCheckResult(
+            ok=not conflicts,
+            conflicts=conflicts,
+            concept_hints=concept_hints,
+        )
+
+    def _concept_hints(self, *, repository: str, patterns: list[str]) -> list[dict[str, Any]]:
+        try:
+            from metagit.core.semantic.service import SemanticGraphService
+
+            result = SemanticGraphService(self._session_root).advise_claim_patterns(
+                repository=repository,
+                patterns=patterns,
+            )
+        except Exception as _:
+            return []
+        if isinstance(result, Exception):
+            return []
+        return result
 
     def declare(
         self,

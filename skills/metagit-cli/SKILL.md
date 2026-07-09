@@ -399,6 +399,36 @@ Doc: `docs/reference/task-graph.md`. Events: `metagit context events` (`source=t
 
 ---
 
+## Semantic Ownership (RFC-0010)
+
+<!-- modality:semantic_ownership -->
+
+| Task | Command |
+|------|---------|
+| Declare concept owner | `metagit semantic declare --concept C --repository project/repo --pattern 'src/**' --json` |
+| Query concept | `metagit semantic query --concept C --json` |
+| Resolve path owners | `metagit semantic owners --repository project/repo --path src/file.py --json` |
+| Conflict hints | `metagit semantic conflicts --repository project/repo --json` |
+
+Doc: `docs/reference/semantic-ownership.md`. MCP: `metagit_semantic_declare`, `metagit_semantic_query`, `metagit_semantic_owners`, `metagit_semantic_conflicts`.
+
+---
+
+## Merge Orchestrator (RFC-0011)
+
+<!-- modality:merge_orchestrator -->
+
+| Task | Command |
+|------|---------|
+| Enqueue merge | `metagit merge enqueue --repository project/repo --branch agent/x --into integration/x --json` |
+| Integrate | `metagit merge integrate --merge-id … --json` |
+| Status | `metagit merge status [--repository project/repo] --json` |
+| Retry / promote | `metagit merge retry --merge-id …` / `metagit merge promote --merge-id … --into main` |
+
+Doc: `docs/reference/merge-orchestrator.md`. MCP: `metagit_merge_enqueue`, `metagit_merge_status`, `metagit_merge_retry`, `metagit_merge_integrate`.
+
+---
+
 ## Context Compiler (RFC-0009)
 
 <!-- modality:context_compile -->
