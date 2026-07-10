@@ -8,11 +8,13 @@ from metagit.core.aos.models import (
     AosStatusResult,
     AosSubsystemSection,
 )
+from metagit.core.aos.service import AosService
 
 __all__ = [
     "AosDoctorResult",
     "AosFinding",
     "AosNextResult",
+    "AosService",
     "AosStatusResult",
     "AosSubsystemSection",
 ]
