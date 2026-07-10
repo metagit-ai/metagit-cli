@@ -88,7 +88,22 @@ class SchedulerService:
             return saved
         return policy
 
+    def preview_next(
+        self, graph_id: str | None = None, *, limit: int = 1
+    ) -> list[ScheduleDecision] | Exception:
+        """Same ranking as ``next()``, but do not append decisions or emit events."""
+        return self._select_next(graph_id, limit=limit, persist=False)
+
     def next(self, graph_id: str | None = None, *, limit: int = 1) -> list[ScheduleDecision] | Exception:
+        return self._select_next(graph_id, limit=limit, persist=True)
+
+    def _select_next(
+        self,
+        graph_id: str | None,
+        *,
+        limit: int,
+        persist: bool,
+    ) -> list[ScheduleDecision] | Exception:
         if limit < 1:
             return ValueError("limit must be >= 1")
         policy = self.store.load_policy()
@@ -129,15 +144,17 @@ class SchedulerService:
                 break
             if candidate.merge_pressure and policy.skip_on_merge_pressure:
                 decision = self._build_decision(candidate, now=now, skipped=True)
-                err = self._persist_decision(decision, event_type="ScheduleSkipped")
-                if isinstance(err, Exception):
-                    return err
+                if persist:
+                    err = self._persist_decision(decision, event_type="ScheduleSkipped")
+                    if isinstance(err, Exception):
+                        return err
                 decisions.append(decision)
                 continue
             decision = self._build_decision(candidate, now=now, skipped=False)
-            err = self._persist_decision(decision, event_type="ScheduleDecision")
-            if isinstance(err, Exception):
-                return err
+            if persist:
+                err = self._persist_decision(decision, event_type="ScheduleDecision")
+                if isinstance(err, Exception):
+                    return err
             decisions.append(decision)
         return decisions
 
