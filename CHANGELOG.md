@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.20.0] - 2026-07-10
+
+
+
 ### Added
 - **RFC-0012 Distributed Agent Scheduler:** `SchedulerService` scores ready task-graph nodes using priority, worktree affinity, token-cost heuristics, optional fairness, and soft merge-queue backpressure; persists `.metagit/schedule/{policy.json,decisions.jsonl}` and emits `source=scheduler` events.
 - **RFC-0012 schedule CLI/MCP parity:** `metagit schedule policy show|set`, `metagit schedule next`, `metagit schedule status` plus ACTIVE-gated `metagit_schedule_next|status|policy` tools register the `agent_scheduler` modality markers.
