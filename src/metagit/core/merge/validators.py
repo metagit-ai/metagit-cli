@@ -18,7 +18,7 @@ def run_validators(repo_path: str, commands: list[str]) -> MergeValidation:
     results: list[MergeValidationCommand] = []
     for command in commands:
         try:
-            completed = subprocess.run(
+            completed = subprocess.run(  # nosec B602 — intentional platform shell for opt-in validator strings
                 command,
                 cwd=repo_path,
                 capture_output=True,

@@ -22,8 +22,8 @@ ACL leases own a *branch* for an agent.
 4. File claims and repo presence are **advisory** — Git remains the authority.
 5. Task graphs ship in RFC-0008 ([task-graph.md](task-graph.md)); semantic
    ownership ships in RFC-0010 ([semantic-ownership.md](semantic-ownership.md));
-   merge orchestration ships in RFC-0011 ([merge-orchestrator.md](merge-orchestrator.md)).
-   Scheduling remains a later RFC.
+   merge orchestration ships in RFC-0011 ([merge-orchestrator.md](merge-orchestrator.md));
+   scheduling ships in RFC-0012 ([agent-scheduler.md](agent-scheduler.md)).
 
 ## Persistence
 
@@ -122,4 +122,13 @@ record clean conflicts, run opt-in validators, and emit `source=merge` events.
 Conflict records include ACL command hints only; no branch allocation, lease,
 worktree, or claim is created automatically. See
 [merge-orchestrator.md](merge-orchestrator.md).
+
+<!-- modality:agent_scheduler -->
+
+## Agent Scheduler
+
+RFC-0012 scores ready task nodes and returns the next schedule decision with
+dispatch hints. It does not launch models or mutate git. Soft merge-queue
+backpressure is optional when RFC-0011 records exist. See
+[agent-scheduler.md](agent-scheduler.md).
 
