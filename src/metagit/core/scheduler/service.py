@@ -88,9 +88,7 @@ class SchedulerService:
             return saved
         return policy
 
-    def preview_next(
-        self, graph_id: str | None = None, *, limit: int = 1
-    ) -> list[ScheduleDecision] | Exception:
+    def preview_next(self, graph_id: str | None = None, *, limit: int = 1) -> list[ScheduleDecision] | Exception:
         """Same ranking as ``next()``, but do not append decisions or emit events."""
         return self._select_next(graph_id, limit=limit, persist=False)
 

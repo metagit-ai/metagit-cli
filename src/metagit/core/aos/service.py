@@ -19,9 +19,7 @@ from metagit.core.workspace.context_models import utc_now_iso
 
 
 class _SchedulerLike(Protocol):
-    def preview_next(
-        self, graph_id: str | None = None, *, limit: int = 1
-    ) -> list[Any] | Exception: ...
+    def preview_next(self, graph_id: str | None = None, *, limit: int = 1) -> list[Any] | Exception: ...
 
     def next(self, graph_id: str | None = None, *, limit: int = 1) -> list[Any] | Exception: ...
 
@@ -66,10 +64,7 @@ class AosService:
         findings, suggestions = self._analyze(snap.subsystems)
         fixed: list[str] = []
         if fix and confirm:
-            if self._fix_fn is not None:
-                result = self._fix_fn(self)
-            else:
-                result = self._default_fix()
+            result = self._fix_fn(self) if self._fix_fn is not None else self._default_fix()
             if isinstance(result, Exception):
                 return result
             fixed = list(result)
@@ -168,9 +163,7 @@ class AosService:
             reasons=reasons,
         )
 
-    def _analyze(
-        self, subsystems: dict[str, AosSubsystemSection]
-    ) -> tuple[list[AosFinding], list[str]]:
+    def _analyze(self, subsystems: dict[str, AosSubsystemSection]) -> tuple[list[AosFinding], list[str]]:
         findings: list[AosFinding] = []
         suggestions: list[str] = []
         acl = subsystems.get("acl")
@@ -294,8 +287,7 @@ class AosService:
         if node.project and node.repository:
             repo_name = node.repository.split("/")[-1]
             compile_command = (
-                f"metagit context compile --project {node.project} "
-                f"--repo {repo_name} --task-id {node.node_id}"
+                f"metagit context compile --project {node.project} --repo {repo_name} --task-id {node.node_id}"
             )
         acl_commands: list[str] = []
         if node.acl is not None:

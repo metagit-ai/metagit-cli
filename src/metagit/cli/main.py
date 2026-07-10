@@ -24,8 +24,8 @@ import click
 
 from metagit import DEFAULT_CONFIG, __version__
 from metagit.cli.commands.agent import agent
-from metagit.cli.commands.api import api
 from metagit.cli.commands.aos import aos_group
+from metagit.cli.commands.api import api
 from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.branch import branch_group
 from metagit.cli.commands.campaign import campaign
