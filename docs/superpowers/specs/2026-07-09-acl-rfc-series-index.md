@@ -39,12 +39,14 @@ RFC-0013 Agent Operating System (composition only)
 | 0009 | Agent Context Compiler | [design](2026-07-09-rfc-0009-context-compiler-design.md) | [plan](../plans/2026-07-09-rfc-0009-context-compiler.md) | phased | **Implemented** (same branch) |
 | 0010 | Semantic Repository Knowledge Graph | [design](2026-07-09-rfc-0010-semantic-kg-design.md) | [plan](../plans/2026-07-09-rfc-0010-semantic-kg.md) | fuller (TDD) | **Implemented** (in progress on `feat/rfc-0010-0011`; Task 9 GitNexus import deferred) |
 | 0011 | Merge Orchestrator & Conflict Resolution | [design](2026-07-09-rfc-0011-merge-orchestrator-design.md) | [plan](../plans/2026-07-09-rfc-0011-merge-orchestrator.md) | fuller (TDD) | **Implemented** (branch `feat/rfc-0010-0011`) |
-| 0012 | Distributed Agent Scheduler | [design](2026-07-09-rfc-0012-agent-scheduler-design.md) | [plan](../plans/2026-07-09-rfc-0012-agent-scheduler.md) | phased | Draft |
+| 0012 | Distributed Agent Scheduler | [design](2026-07-09-rfc-0012-agent-scheduler-design.md) | [plan](../plans/2026-07-09-rfc-0012-agent-scheduler.md) | fuller (TDD) | **In progress** (branch `feat/rfc-0012-agent-scheduler`) |
 | 0013 | Agent Operating System (composition) | [design](2026-07-09-rfc-0013-aos-composition-design.md) | [plan](../plans/2026-07-09-rfc-0013-aos-composition.md) | phased | Draft |
 
 ## Next MR
 
-**RFC-0010 + RFC-0011** on branch `feat/rfc-0010-0011` (worktree `.worktrees/rfc-0010-0011`). RFC-0010 is implemented except the optional Task 9 GitNexus import, which is deferred. RFC-0011 is implemented on the branch with local merge queue, validators, CLI/MCP parity, events, and operator docs.
+**RFC-0012 Distributed Agent Scheduler** on branch `feat/rfc-0012-agent-scheduler` (worktree `.worktrees/rfc-0012`). Depends on shipped RFC-0008 ready set; optional soft merge backpressure from RFC-0011.
+
+RFC-0010 + RFC-0011 shipped on `main` via PR #62 (GitNexus import for RFC-0010 Task 9 remains deferred/optional).
 
 ## Document conventions
 
