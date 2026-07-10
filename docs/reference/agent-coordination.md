@@ -132,3 +132,11 @@ dispatch hints. It does not launch models or mutate git. Soft merge-queue
 backpressure is optional when RFC-0011 records exist. See
 [agent-scheduler.md](agent-scheduler.md).
 
+<!-- modality:aos_status -->
+
+## Agent Operating System
+
+RFC-0013 provides a composition façade (`metagit aos|coord status|doctor|next`)
+over ACL, task graph, and optional 0009–0012 subsystems. See
+[aos.md](aos.md).
+

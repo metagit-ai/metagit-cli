@@ -486,3 +486,35 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:agent_scheduler"
 
+  - id: aos_status
+    description: Composition façade aggregating ACL, task graph, and optional 0009-0012 subsystems
+    service: metagit.core.aos.service.AosService
+    reference_doc: docs/reference/aos.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/aos.py
+            contains: '@aos_group.command("status")'
+          - path: src/metagit/cli/main.py
+            contains: aos_group
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_aos_status
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_aos_status
+      documentation:
+        markers:
+          - path: docs/reference/aos.md
+            contains: "modality:aos_status"
+          - path: docs/agents.md
+            contains: "modality:aos_status"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-aos/SKILL.md
+            contains: "modality:aos_status"
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:aos_status"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:aos_status"
+

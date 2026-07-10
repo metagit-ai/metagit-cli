@@ -25,6 +25,7 @@ import click
 from metagit import DEFAULT_CONFIG, __version__
 from metagit.cli.commands.agent import agent
 from metagit.cli.commands.api import api
+from metagit.cli.commands.aos import aos_group
 from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.branch import branch_group
 from metagit.cli.commands.campaign import campaign
@@ -145,6 +146,8 @@ cli.add_command(worktree_group)
 cli.add_command(claim_group)
 cli.add_command(merge_group)
 cli.add_command(schedule_group)
+cli.add_command(aos_group)
+cli.add_command(aos_group, name="coord")
 cli.add_command(semantic_group)
 cli.add_command(task_group)
 cli.add_command(init)

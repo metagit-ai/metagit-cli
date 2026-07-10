@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Added
+- **RFC-0013 Agent Operating System (composition):** thin `AosService` aggregates ACL, task graph, and optional 0009–0012 subsystems; CLI `metagit aos|coord status|doctor|next`; ACTIVE-gated `metagit_aos_*` / `metagit_coord_*` MCP tools; `SchedulerService.preview_next` for non-persisting peeks; modality `aos_status`.
 
 ## [0.20.0] - 2026-07-10
 
