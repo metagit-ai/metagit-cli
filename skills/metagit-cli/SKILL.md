@@ -444,6 +444,20 @@ Doc: `docs/reference/agent-scheduler.md`. MCP: `metagit_schedule_next`, `metagit
 
 ---
 
+## Agent Operating System (RFC-0013)
+
+<!-- modality:aos_status -->
+
+| Task | Command |
+|------|---------|
+| Status snapshot | `metagit aos status --json` (alias: `metagit coord status`) |
+| Doctor | `metagit aos doctor [--fix --yes] --json` |
+| Next envelope | `metagit aos next [--commit] [--apply-hints --agent-id ID] --json` |
+
+Doc: `docs/reference/aos.md`. MCP: `metagit_aos_status|doctor|next` (+ `metagit_coord_*` aliases).
+
+---
+
 ## Context Compiler (RFC-0009)
 
 <!-- modality:context_compile -->
