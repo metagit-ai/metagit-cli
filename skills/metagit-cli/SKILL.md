@@ -429,6 +429,21 @@ Doc: `docs/reference/merge-orchestrator.md`. MCP: `metagit_merge_enqueue`, `meta
 
 ---
 
+## Agent Scheduler (RFC-0012)
+
+<!-- modality:agent_scheduler -->
+
+| Task | Command |
+|------|---------|
+| Show policy | `metagit schedule policy show --json` |
+| Set policy | `metagit schedule policy set --priority 2 --json` |
+| Next decision | `metagit schedule next [--graph-id …] [--limit 1] --json` |
+| Status | `metagit schedule status --json` |
+
+Doc: `docs/reference/agent-scheduler.md`. MCP: `metagit_schedule_next`, `metagit_schedule_status`, `metagit_schedule_policy`.
+
+---
+
 ## Context Compiler (RFC-0009)
 
 <!-- modality:context_compile -->

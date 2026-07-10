@@ -456,3 +456,33 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:merge_orchestrator"
 
+  - id: agent_scheduler
+    description: Score ready task nodes and emit schedule decisions with dispatch hints
+    service: metagit.core.scheduler.service.SchedulerService
+    reference_doc: docs/reference/agent-scheduler.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/schedule.py
+            contains: '@schedule_group.command("next")'
+          - path: src/metagit/cli/main.py
+            contains: schedule_group
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_schedule_next
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_schedule_next
+      documentation:
+        markers:
+          - path: docs/reference/agent-scheduler.md
+            contains: "modality:agent_scheduler"
+          - path: docs/agents.md
+            contains: "modality:agent_scheduler"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-agent-coordination/SKILL.md
+            contains: "modality:agent_scheduler"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:agent_scheduler"
+

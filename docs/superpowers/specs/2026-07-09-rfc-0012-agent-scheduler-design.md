@@ -1,6 +1,6 @@
 # RFC-0012: Distributed Agent Scheduler — Design
 
-**Status:** Draft  
+**Status:** Implemented  
 **Date:** 2026-07-09  
 **Series:** [ACL RFC series index](2026-07-09-acl-rfc-series-index.md)  
 **Vision:** [agent-coordination.md](../../reference/agent-coordination.md) (RFC-0007 vision; original spec.md retired) § Scheduling  
@@ -83,9 +83,10 @@ metagit schedule status [--json]
 |------------|-------------|
 | RFC-0008; optional 0009/0011 | RFC-0013 |
 
-## Open questions
+## Decisions (locked)
 
-1. Global vs per-graph policy?
-2. Fairness across repositories in v1?
-
-**Recommendation:** per-workspace policy with optional graph overrides; simple round-robin fairness as optional weight, not MVP-critical.
+1. **Policy scope:** per-workspace `policy.json` with optional `graph_overrides[graph_id]`.
+2. **Fairness:** optional `weights.fairness` (default `0.0`); when enabled, bias toward repos under-represented in recent `decisions.jsonl`.
+3. **Node fields:** additive optional `TaskNode.priority: int = 0` and `TaskNode.estimated_tokens: int | None` (fallback `context_budget`, then `1000`).
+4. **Tie-break:** higher score → lower effective tokens → lexicographic `node_id`.
+5. **Merge backpressure:** soft penalty by default; optional `skip_on_merge_pressure` emits skipped decision instead of hard failure.

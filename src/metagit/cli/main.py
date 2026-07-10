@@ -42,6 +42,7 @@ from metagit.cli.commands.merge_cmd import merge_group
 from metagit.cli.commands.project import project
 from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
+from metagit.cli.commands.schedule import schedule_group
 from metagit.cli.commands.search import search
 from metagit.cli.commands.semantic import semantic_group
 from metagit.cli.commands.skills import skills
@@ -143,6 +144,7 @@ cli.add_command(lease_group)
 cli.add_command(worktree_group)
 cli.add_command(claim_group)
 cli.add_command(merge_group)
+cli.add_command(schedule_group)
 cli.add_command(semantic_group)
 cli.add_command(task_group)
 cli.add_command(init)

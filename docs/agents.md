@@ -62,6 +62,7 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Campaign create / expand | `metagit campaign new …` / `metagit campaign expand --slug <s>` |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
+| Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
 
 <!-- modality:agent_profile_apply -->
 <!-- modality:native_campaigns -->
@@ -69,6 +70,7 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 <!-- modality:coordination_events_scope -->
 <!-- modality:semantic_ownership -->
 <!-- modality:merge_orchestrator -->
+<!-- modality:agent_scheduler -->
 
 Set `--definition path/to/.metagit.yml` when not in the manifest repo root.
 

@@ -2,7 +2,14 @@
 
 ## Unreleased
 
+### Added
+- **RFC-0012 Distributed Agent Scheduler:** `SchedulerService` scores ready task-graph nodes using priority, worktree affinity, token-cost heuristics, optional fairness, and soft merge-queue backpressure; persists `.metagit/schedule/{policy.json,decisions.jsonl}` and emits `source=scheduler` events.
+- **RFC-0012 schedule CLI/MCP parity:** `metagit schedule policy show|set`, `metagit schedule next`, `metagit schedule status` plus ACTIVE-gated `metagit_schedule_next|status|policy` tools register the `agent_scheduler` modality markers.
+- **RFC-0012 operator surface:** published agent scheduler reference, MkDocs nav entry, and agent quick-reference commands; additive optional `TaskNode.priority` / `estimated_tokens` fields.
 
+### Fixed
+- **Security:** bump transitive `soupsieve` to 2.8.4 (CVE-2026-49476 / CVE-2026-49477).
+- **Bandit:** annotate intentional `shell=True` in merge validators (`nosec B602`) for opt-in platform-shell commands.
 
 ## [0.19.0] - 2026-07-09
 

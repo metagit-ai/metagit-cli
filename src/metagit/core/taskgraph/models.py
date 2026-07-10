@@ -85,6 +85,8 @@ class TaskNode(BaseModel):
     acl: Optional[TaskAclBinding] = None
     context_budget: Optional[int] = None
     compiled_context_path: Optional[str] = None
+    priority: int = 0
+    estimated_tokens: Optional[int] = None
     created_at: str
     updated_at: str
 
