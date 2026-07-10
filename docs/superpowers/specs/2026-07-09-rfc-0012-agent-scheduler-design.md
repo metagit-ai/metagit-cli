@@ -1,6 +1,6 @@
 # RFC-0012: Distributed Agent Scheduler — Design
 
-**Status:** Draft  
+**Status:** Implemented  
 **Date:** 2026-07-09  
 **Series:** [ACL RFC series index](2026-07-09-acl-rfc-series-index.md)  
 **Vision:** [agent-coordination.md](../../reference/agent-coordination.md) (RFC-0007 vision; original spec.md retired) § Scheduling  

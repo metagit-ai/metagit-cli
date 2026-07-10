@@ -66,6 +66,7 @@ from metagit.core.merge.service import MergeOrchestrator
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
+from metagit.core.scheduler.service import SchedulerService
 from metagit.core.semantic.service import SemanticGraphService
 from metagit.core.state.resolver import resolve_backend
 from metagit.core.taskgraph.service import TaskGraphService
@@ -591,6 +592,36 @@ class MetagitMcpRuntime:
                 "properties": {
                     "merge_id": {"type": "string"},
                     "repo_path": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_schedule_next": {
+                "type": "object",
+                "properties": {
+                    "graph_id": {"type": "string"},
+                    "limit": {"type": "integer"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_schedule_status": {
+                "type": "object",
+                "properties": {
+                    "recent": {"type": "integer"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_schedule_policy": {
+                "type": "object",
+                "properties": {
+                    "action": {"type": "string"},
+                    "priority": {"type": "number"},
+                    "affinity": {"type": "number"},
+                    "cost": {"type": "number"},
+                    "fairness": {"type": "number"},
+                    "merge_queue_threshold": {"type": "integer"},
+                    "merge_pressure_penalty": {"type": "number"},
+                    "skip_on_merge_pressure": {"type": "boolean"},
+                    "graph_id": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -1992,6 +2023,9 @@ class MetagitMcpRuntime:
         if name.startswith("metagit_merge_"):
             return self._call_merge_tool(name, arguments, status)
 
+        if name.startswith("metagit_schedule_"):
+            return self._call_schedule_tool(name, arguments, status)
+
         if name.startswith("metagit_task_"):
             return self._call_task_tool(name, arguments, status)
 
@@ -2689,6 +2723,76 @@ class MetagitMcpRuntime:
             _apply_repo_path(merge_id)
             return _unwrap(service.integrate(merge_id))
         raise ValueError(f"Unsupported merge tool: {name}")
+
+    def _call_schedule_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+    ) -> dict[str, Any] | list[Any]:
+        if not status.root_path:
+            raise InvalidToolArgumentsError("schedule tools require an active workspace")
+        service = SchedulerService(status.root_path)
+
+        def _unwrap(result: Any) -> Any:
+            if isinstance(result, Exception):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if hasattr(result, "model_dump"):
+                return result.model_dump(mode="json")
+            if isinstance(result, list):
+                return [item.model_dump(mode="json") if hasattr(item, "model_dump") else item for item in result]
+            return result
+
+        if name == "metagit_schedule_next":
+            graph_id = arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None
+            limit_raw = arguments.get("limit", 1)
+            try:
+                limit = int(limit_raw) if limit_raw is not None else 1
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("limit must be an integer") from exc
+            return _unwrap(service.next(graph_id, limit=limit))
+        if name == "metagit_schedule_status":
+            recent_raw = arguments.get("recent", 10)
+            try:
+                recent = int(recent_raw) if recent_raw is not None else 10
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("recent must be an integer") from exc
+            return _unwrap(service.status(recent=recent))
+        if name == "metagit_schedule_policy":
+            action = str(arguments.get("action") or "show").strip().lower()
+            if action == "show":
+                return _unwrap(service.policy_show())
+            if action != "set":
+                raise InvalidToolArgumentsError("action must be show or set")
+            weights = {
+                key: float(arguments[key])
+                for key in ("priority", "affinity", "cost", "fairness")
+                if arguments.get(key) is not None
+            }
+            graph_id = arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None
+            return _unwrap(
+                service.policy_set(
+                    weights=None if graph_id else (weights or None),
+                    merge_queue_threshold=(
+                        int(arguments["merge_queue_threshold"])
+                        if arguments.get("merge_queue_threshold") is not None
+                        else None
+                    ),
+                    merge_pressure_penalty=(
+                        float(arguments["merge_pressure_penalty"])
+                        if arguments.get("merge_pressure_penalty") is not None
+                        else None
+                    ),
+                    skip_on_merge_pressure=(
+                        bool(arguments["skip_on_merge_pressure"])
+                        if arguments.get("skip_on_merge_pressure") is not None
+                        else None
+                    ),
+                    graph_id=graph_id,
+                    graph_weights=weights if graph_id else None,
+                )
+            )
+        raise ValueError(f"Unsupported schedule tool: {name}")
 
     def _call_task_tool(
         self,

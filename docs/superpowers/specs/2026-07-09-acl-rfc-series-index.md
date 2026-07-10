@@ -39,7 +39,7 @@ RFC-0013 Agent Operating System (composition only)
 | 0009 | Agent Context Compiler | [design](2026-07-09-rfc-0009-context-compiler-design.md) | [plan](../plans/2026-07-09-rfc-0009-context-compiler.md) | phased | **Implemented** (same branch) |
 | 0010 | Semantic Repository Knowledge Graph | [design](2026-07-09-rfc-0010-semantic-kg-design.md) | [plan](../plans/2026-07-09-rfc-0010-semantic-kg.md) | fuller (TDD) | **Implemented** (in progress on `feat/rfc-0010-0011`; Task 9 GitNexus import deferred) |
 | 0011 | Merge Orchestrator & Conflict Resolution | [design](2026-07-09-rfc-0011-merge-orchestrator-design.md) | [plan](../plans/2026-07-09-rfc-0011-merge-orchestrator.md) | fuller (TDD) | **Implemented** (branch `feat/rfc-0010-0011`) |
-| 0012 | Distributed Agent Scheduler | [design](2026-07-09-rfc-0012-agent-scheduler-design.md) | [plan](../plans/2026-07-09-rfc-0012-agent-scheduler.md) | fuller (TDD) | **In progress** (branch `feat/rfc-0012-agent-scheduler`) |
+| 0012 | Distributed Agent Scheduler | [design](2026-07-09-rfc-0012-agent-scheduler-design.md) | [plan](../plans/2026-07-09-rfc-0012-agent-scheduler.md) | fuller (TDD) | **Implemented** (branch `feat/rfc-0012-agent-scheduler`) |
 | 0013 | Agent Operating System (composition) | [design](2026-07-09-rfc-0013-aos-composition-design.md) | [plan](../plans/2026-07-09-rfc-0013-aos-composition.md) | phased | Draft |
 
 ## Next MR

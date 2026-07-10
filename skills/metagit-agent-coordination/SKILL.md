@@ -22,6 +22,7 @@ Full reference: [docs/reference/agent-coordination.md](../../../../docs/referenc
 <!-- modality:task_graph -->
 <!-- modality:semantic_ownership -->
 <!-- modality:merge_orchestrator -->
+<!-- modality:agent_scheduler -->
 
 Task graphs (`metagit task …`) can store ACL command hints on nodes via
 `metagit task bind-acl` without running git — see
@@ -29,6 +30,10 @@ Task graphs (`metagit task …`) can store ACL command hints on nodes via
 
 Merge orchestration (`metagit merge …`) records conflicts with ACL command
 hints only; it does not allocate branches or worktrees automatically.
+
+The agent scheduler (`metagit schedule next`) scores ready task nodes and
+returns dispatch hints without launching models or mutating git — see
+[docs/reference/agent-scheduler.md](../../../../docs/reference/agent-scheduler.md).
 
 ## When to use
 
