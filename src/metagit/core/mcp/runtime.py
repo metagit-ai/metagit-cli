@@ -625,6 +625,54 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_aos_status": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
+            "metagit_aos_doctor": {
+                "type": "object",
+                "properties": {
+                    "fix": {"type": "boolean"},
+                    "confirm": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_aos_next": {
+                "type": "object",
+                "properties": {
+                    "commit": {"type": "boolean"},
+                    "apply_hints": {"type": "boolean"},
+                    "agent_id": {"type": "string"},
+                    "graph_id": {"type": "string"},
+                    "limit": {"type": "integer"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_coord_status": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
+            "metagit_coord_doctor": {
+                "type": "object",
+                "properties": {
+                    "fix": {"type": "boolean"},
+                    "confirm": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_coord_next": {
+                "type": "object",
+                "properties": {
+                    "commit": {"type": "boolean"},
+                    "apply_hints": {"type": "boolean"},
+                    "agent_id": {"type": "string"},
+                    "graph_id": {"type": "string"},
+                    "limit": {"type": "integer"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_branch_allocate": {
                 "type": "object",
                 "required": ["repository", "agent_id", "task_id"],
@@ -2025,6 +2073,8 @@ class MetagitMcpRuntime:
 
         if name.startswith("metagit_schedule_"):
             return self._call_schedule_tool(name, arguments, status)
+        if name.startswith("metagit_aos_") or name.startswith("metagit_coord_"):
+            return self._call_aos_tool(name, arguments, status)
 
         if name.startswith("metagit_task_"):
             return self._call_task_tool(name, arguments, status)
@@ -2793,6 +2843,54 @@ class MetagitMcpRuntime:
                 )
             )
         raise ValueError(f"Unsupported schedule tool: {name}")
+
+    def _call_aos_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+    ) -> dict[str, Any]:
+        if not status.root_path:
+            raise InvalidToolArgumentsError("aos tools require an active workspace")
+        from metagit.core.aos.service import AosService
+
+        service = AosService(status.root_path)
+        canonical = name.replace("metagit_coord_", "metagit_aos_", 1)
+
+        def _unwrap(result: Any) -> Any:
+            if isinstance(result, Exception):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if hasattr(result, "model_dump"):
+                return result.model_dump(mode="json")
+            return result
+
+        if canonical == "metagit_aos_status":
+            return _unwrap(service.status())
+        if canonical == "metagit_aos_doctor":
+            return _unwrap(
+                service.doctor(
+                    fix=bool(arguments.get("fix")),
+                    confirm=bool(arguments.get("confirm")),
+                )
+            )
+        if canonical == "metagit_aos_next":
+            graph_id = arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None
+            agent_id = arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None
+            limit_raw = arguments.get("limit", 1)
+            try:
+                limit = int(limit_raw) if limit_raw is not None else 1
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("limit must be an integer") from exc
+            return _unwrap(
+                service.next(
+                    commit=bool(arguments.get("commit")),
+                    apply_hints=bool(arguments.get("apply_hints")),
+                    agent_id=agent_id,
+                    graph_id=graph_id,
+                    limit=limit,
+                )
+            )
+        raise ValueError(f"Unsupported aos tool: {name}")
 
     def _call_task_tool(
         self,

@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 20
+- **Features tracked:** 21
 
 When you add or change a backend feature:
 
@@ -40,6 +40,7 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `semantic_ownership` | Concept-level ownership declare/query/owners/conflicts plus seed/ingest | yes | yes | — | yes | yes | [semantic-ownership.md](semantic-ownership.md) |
 | `merge_orchestrator` | Local merge queue, validation gate, and integration orchestration | yes | yes | — | yes | yes | [merge-orchestrator.md](merge-orchestrator.md) |
 | `agent_scheduler` | Score ready task nodes and emit schedule decisions with dispatch hints | yes | yes | — | yes | yes | [agent-scheduler.md](agent-scheduler.md) |
+| `aos_status` | Composition façade aggregating ACL, task graph, and optional 0009-0012 subsystems | yes | yes | — | yes | yes | [aos.md](aos.md) |
 <!-- registry:table:end -->
 
 ## Surface legend

@@ -25,6 +25,7 @@ Full reference: [docs/reference/agent-coordination.md](../../../../docs/referenc
 <!-- modality:semantic_ownership -->
 <!-- modality:merge_orchestrator -->
 <!-- modality:agent_scheduler -->
+<!-- modality:aos_status -->
 
 Task graphs (`metagit task …`) can store ACL command hints on nodes via
 `metagit task bind-acl` without running git — see
@@ -36,6 +37,11 @@ hints only; it does not allocate branches or worktrees automatically.
 The agent scheduler (`metagit schedule next`) scores ready task nodes and
 returns dispatch hints without launching models or mutating git — see
 [docs/reference/agent-scheduler.md](../../../../docs/reference/agent-scheduler.md).
+
+For a composed operator snapshot and next-work envelope across ACL + task
+graph + optional 0009–0012, use skill **`metagit-aos`**
+(`metagit aos|coord status|doctor|next`) — see
+[docs/reference/aos.md](../../../../docs/reference/aos.md).
 
 ## When to use
 
