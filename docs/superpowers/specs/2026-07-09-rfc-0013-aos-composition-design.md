@@ -1,6 +1,12 @@
 # RFC-0013: Agent Operating System (AOS) — Composition Design
 
+<<<<<<< HEAD
+**Status:** Ready for implementation (plan expanded)  
+||||||| f879f93
+**Status:** Draft  
+=======
 **Status:** Implemented  
+>>>>>>> origin/main
 **Date:** 2026-07-09  
 **Series:** [ACL RFC series index](2026-07-09-acl-rfc-series-index.md)  
 **Vision:** [agent-coordination.md](../../reference/agent-coordination.md) (RFC-0007 vision; original spec.md retired) § Long-Term Vision  
