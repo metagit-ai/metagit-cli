@@ -4,6 +4,20 @@
 
 
 
+## [0.21.1] - 2026-07-13
+
+
+
+### Changed
+- Merge pull request #66 from metagit-ai/cursor/rfc-0013-aos-plan-expansion (f4a14ed)
+- Merge pull request #65 from metagit-ai/feat/rfc-0013-aos (482dfb3)
+- docs(mex): refresh AOS, scheduler, and ACL series patterns (129de27)
+- docs: expand RFC-0013 AOS composition design and TDD plan (28a3cd6)
+
+### Fixed
+- fix: merge updates (8d140fe)
+- fix: update from last week (968f281)
+
 ## [0.21.0] - 2026-07-10
 
 
