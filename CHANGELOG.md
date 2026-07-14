@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.23.0] - 2026-07-14
+
+
+
 ### Added
 - **Derived projects:** `metagit project derived create|refresh|include|exclude` creates surgical `workspace.projects[]` subsets in the same umbrella manifest with frozen membership, `derived_from` provenance, and refreshable identity; default per-project dedupe shares sync mounts with source repos. MCP `metagit_project_derived_*`; docs `docs/reference/derived-projects.md`; example `examples/derived-workspace/`.
 - **Skills surface:** `metagit skills surface` and MCP `metagit_skills_surface` inventory on-disk vendor skills plus declared `agent_profile.skills` across workspace/project/repo scopes; docs `docs/reference/skills-surface.md`.
