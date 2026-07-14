@@ -8,6 +8,8 @@
 
 ### Fixed
 - **TUI quit/suspend noise:** quit bindings use priority `action_quit`; `KeyboardInterrupt` during teardown is swallowed; legacy interactive suspend failures notify in-app instead of dumping a traceback.
+- **TUI repository picker:** Workspace “Select project → repository” now uses the in-app project/repo screens (no nested fuzzy suspend that appeared to do nothing).
+- **`metagit project list`:** defaults to a workspace-style project catalog (definition/root/counts); use `-p`/`--detail` for single-project YAML.
 
 ## [0.21.1] - 2026-07-13
 

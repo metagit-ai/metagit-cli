@@ -31,8 +31,8 @@ def build_command_catalog() -> list[TuiMenuSection]:
                 ),
                 TuiCommandAction(
                     id="workspace-select",
-                    label="Select repository (picker)",
-                    description="Open the fuzzy finder to choose a repo and editor",
+                    label="Select project → repository",
+                    description="Choose a workspace project, then a repo, and open the editor",
                     argv=["project", "select"],
                     manifest_option="-c",
                     manifest_placement="after_group",

@@ -12,7 +12,7 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Label, ListItem, ListView, Static
 
-from metagit.core.tui.catalog import build_command_catalog, flatten_actions
+from metagit.core.tui.catalog import build_command_catalog
 from metagit.core.tui.interactive import run_interactive_catalog_action
 from metagit.core.tui.models import TuiCommandAction, TuiMenuSection, WizardAnswers
 from metagit.core.tui.navigation import (
@@ -211,13 +211,19 @@ class RepoSelectScreen(BackScreen):
             yield ListView(*items, id="repo_list")
         yield Footer()
 
+    def on_mount(self) -> None:
+        if self._repos:
+            self.query_one("#repo_list", ListView).focus()
+
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id != "repo_list":
             return
         index = event.list_view.index
         if index is None or index >= len(self._repos):
             return
-        repo_name = self._repos[index]
+        self._open_repo(self._repos[index])
+
+    def _open_repo(self, repo_name: str) -> None:
         result = open_selected_repo(
             app_config_path=self._app_config_path,
             manifest_path=self._manifest_path,
@@ -282,16 +288,18 @@ class ProjectSelectScreen(BackScreen):
         if self._load_error is not None or not self._manifest_path:
             return
         sole = maybe_single_project(self._projects)
-        if sole is None:
+        if sole is not None:
+            # Single-project umbrellas skip straight to repo selection.
+            self.app.push_screen(
+                RepoSelectScreen(
+                    app_config_path=self._app_config_path,
+                    manifest_path=self._manifest_path,
+                    project_name=sole,
+                ),
+            )
             return
-        # Single-project umbrellas skip straight to repo selection.
-        self.app.push_screen(
-            RepoSelectScreen(
-                app_config_path=self._app_config_path,
-                manifest_path=self._manifest_path,
-                project_name=sole,
-            ),
-        )
+        if self._projects:
+            self.query_one("#project_list", ListView).focus()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id != "project_list" or not self._manifest_path:
@@ -352,6 +360,14 @@ class CommandBrowserScreen(BackScreen):
             extra.append(values["query"])
         if action.id.endswith("grep"):
             extra.append("--json")
+        if action.id == "workspace-select":
+            self.app.push_screen(
+                ProjectSelectScreen(
+                    app_config_path=self._runner.app_config_path,
+                    manifest_path=self._runner.manifest_path,
+                ),
+            )
+            return
         if action.interactive:
             run_interactive_catalog_action(
                 self.app,
@@ -420,7 +436,6 @@ class MetagitTuiApp(App):
         items = [
             ListItem(Label("Select project → repository")),
             ListItem(Label("Configuration wizard — set editor, workspace path, defaults")),
-            ListItem(Label("Fuzzy repo picker (legacy)")),
         ]
         for section in self._sections:
             items.append(ListItem(Label(f"{section.title} commands")))
@@ -431,10 +446,20 @@ class MetagitTuiApp(App):
     def on_mount(self) -> None:
         if self._start_wizard:
             self.push_screen(WizardScreen(self._wizard))
+        else:
+            self.query_one("#home_list", ListView).focus()
 
     def action_quit(self) -> None:
         """Exit the hub without raising after terminal restore."""
         self.exit(None)
+
+    def _open_project_repo_picker(self) -> None:
+        self.push_screen(
+            ProjectSelectScreen(
+                app_config_path=self._app_config_path,
+                manifest_path=self._manifest_path,
+            ),
+        )
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id != "home_list":
@@ -443,32 +468,17 @@ class MetagitTuiApp(App):
         if index is None:
             return
         if index == 0:
-            self.push_screen(
-                ProjectSelectScreen(
-                    app_config_path=self._app_config_path,
-                    manifest_path=self._manifest_path,
-                ),
-            )
+            self._open_project_repo_picker()
             return
         if index == 1:
             self.push_screen(WizardScreen(self._wizard))
             return
-        if index == 2:
-            action = next(item for item in flatten_actions(self._sections) if item.id == "workspace-select")
-            run_interactive_catalog_action(
-                self,
-                action=action,
-                runner=self._runner,
-                app_config_path=self._app_config_path,
-                manifest_path=self._manifest_path,
-            )
-            return
         section_count = len(self._sections)
-        if 3 <= index < 3 + section_count:
-            section = self._sections[index - 3]
+        if 2 <= index < 2 + section_count:
+            section = self._sections[index - 2]
             self.push_screen(CommandBrowserScreen(section, self._runner))
             return
-        if index == 3 + section_count:
+        if index == 2 + section_count:
             self.action_quit()
 
 
