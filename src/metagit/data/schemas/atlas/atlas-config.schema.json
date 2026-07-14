@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metagit.dev/schemas/atlas/atlas-config.schema.json",
+  "title": "AtlasConfig",
+  "description": "Top-level `.atlas/atlas.yaml` configuration (RFC-0014).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["repository", "formatVersion"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "atlas.metagit.dev/v1alpha1",
+      "default": "atlas.metagit.dev/v1alpha1"
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "formatVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commitGenerated": {
+      "type": "boolean",
+      "default": true
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["fresh", "stale", "unknown", "missing"]
+      }
+    }
+  }
+}

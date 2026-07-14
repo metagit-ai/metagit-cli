@@ -58,6 +58,12 @@ metagit atlas refresh src/toy/refunds.py --path /path/to/repo
 
 Use `--json` with each command for machine-readable output.
 
+## Schemas
+
+JSON Schemas for Atlas config and entity envelopes ship in the package at
+`metagit/data/schemas/atlas/` (used by `metagit atlas validate`). Matching
+copies under repo-root `schemas/atlas/` are for docs and IDE tooling.
+
 ## Boundaries
 
 - **RFC-0010 semantic knowledge graph:** workspace-level concept-to-path
