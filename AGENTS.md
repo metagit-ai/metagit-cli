@@ -49,6 +49,8 @@ metagit prompt workspace --kind session-start --text-only
 | Self-update | `metagit version upgrade --apply --json` |
 | Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
 | Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
+| Derived surgical project | `metagit project derived create -n N --from P/R` · `refresh` · `include` · `exclude` |
+| Skills surface | `metagit skills surface --json` |
 | ACL isolate agent checkout | `metagit branch allocate` · `metagit lease acquire --allocate` · `metagit worktree create` |
 | ACL file claims | `metagit claim declare` · `metagit claim check` |
 | Task graph / intent | `metagit task create` · `metagit task expand` · `metagit task ready` · `metagit task complete` |

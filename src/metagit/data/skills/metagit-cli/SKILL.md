@@ -275,6 +275,11 @@ metagit project select
 metagit project sync
 metagit project sync --hydrate   # symlink mounts → full directory copies (per-file progress)
 
+metagit project derived create -n <name> --from <project>/<repo> --json
+metagit project -p <name> derived refresh --json
+metagit project -p <name> derived include --from <project>/<repo> --json
+metagit project -p <name> derived exclude --repo <repo> --json
+
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>
 metagit project repo promote --name <repo> --dry-run   # path entry → git clone under sync root
@@ -460,6 +465,23 @@ Doc: `docs/reference/aos.md`. MCP: `metagit_aos_status|doctor|next` (+ `metagit_
 
 ---
 
+## Derived projects + skills surface
+
+<!-- modality:derived_projects -->
+<!-- modality:skills_surface -->
+
+| Task | Command |
+|------|---------|
+| Create derived project | `metagit project derived create -n NAME --from P/R [--from …] --json` |
+| Refresh identity | `metagit project -p NAME derived refresh --json` |
+| Include / exclude | `metagit project -p NAME derived include --from P/R` / `exclude --repo R` |
+| Sync derived mounts | `metagit project -p NAME sync` |
+| Skills inventory | `metagit skills surface [--project P] [--repo R] --json` |
+
+Docs: `docs/reference/derived-projects.md`, `docs/reference/skills-surface.md`. MCP: `metagit_project_derived_*`, `metagit_skills_surface`.
+
+---
+
 ## Context Compiler (RFC-0009)
 
 <!-- modality:context_compile -->
@@ -492,6 +514,7 @@ Skill: `metagit-campaign`
 metagit record search "<query>"
 metagit skills list
 metagit skills show metagit-cli
+metagit skills surface --json
 metagit skills install --skill metagit-cli
 metagit version
 metagit version check --json

@@ -11,3 +11,5 @@ fixtures:
     label: reference rewrite workspace example
   - path: examples/source-import/.metagit.yml
     label: declarative source import example
+  - path: examples/derived-workspace/.metagit.yml
+    label: derived surgical project example

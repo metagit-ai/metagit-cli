@@ -1,0 +1,35 @@
+name: derived-workspace-example
+description: Example umbrella with a derived surgical project subset
+kind: umbrella
+workspace:
+  description: Parent SoT plus an agent-derived working set
+  projects:
+    - name: portfolio
+      description: Source-of-truth project catalog
+      repos:
+        - name: api
+          url: https://github.com/example/api.git
+          tags:
+            tier: "1"
+        - name: web
+          url: https://github.com/example/web.git
+          tags:
+            tier: "2"
+    - name: surgical
+      description: Agent working set derived from portfolio
+      dedupe:
+        enabled: true
+      derived:
+        enabled: true
+        sources:
+          - project: portfolio
+            repos:
+              - api
+      repos:
+        - name: api
+          url: https://github.com/example/api.git
+          tags:
+            tier: "1"
+          derived_from:
+            project: portfolio
+            repo: api

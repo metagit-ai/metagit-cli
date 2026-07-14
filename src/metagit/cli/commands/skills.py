@@ -3,10 +3,14 @@
 Skills command group for bundled skill management.
 """
 
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 import click
 
+from metagit.cli.json_output import emit_json
+from metagit.core.appconfig import AppConfig
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.skills import (
     SUPPORTED_TARGETS,
     install_skills_for_targets,
@@ -15,6 +19,7 @@ from metagit.core.skills import (
     resolve_targets,
     skill_markdown,
 )
+from metagit.core.skills.surface_service import SkillSurfaceService
 
 
 @click.group(name="skills", invoke_without_command=True)
@@ -61,6 +66,53 @@ def skills_show(ctx: click.Context, skill_name: str | None) -> None:
         logger.error(f"Skill '{skill_name}' not found.")
         ctx.abort()
     logger.echo(content)
+
+
+@skills.command("surface")
+@click.option("--config", "-c", default=".metagit.yml", help="Path to the metagit definition file")
+@click.option("--project", "-p", default=None, help="Limit inventory to one workspace project")
+@click.option("--repo", "-r", "repo_name", default=None, help="Limit inventory to one repo")
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.pass_context
+def skills_surface(
+    ctx: click.Context,
+    config: str,
+    project: Optional[str],
+    repo_name: Optional[str],
+    as_json: bool,
+) -> None:
+    """Inventory on-disk and declared skills across workspace/project/repo scopes."""
+    logger = ctx.obj["logger"]
+    app_config: AppConfig = ctx.obj["config"]
+    manager = MetagitConfigManager(config)
+    local_config = manager.load_config()
+    if isinstance(local_config, Exception):
+        logger.error(f"Failed to load metagit definition file: {local_config}")
+        ctx.abort()
+    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    result = SkillSurfaceService().inventory(
+        local_config,
+        config,
+        workspace_root,
+        project_name=project,
+        repo_name=repo_name,
+    )
+    if as_json:
+        emit_json(result)
+        return
+    logger.info(
+        f"Skill surface: total={result.counts.get('total', 0)} "
+        f"on_disk={result.counts.get('on_disk', 0)} "
+        f"declared={result.counts.get('declared', 0)}"
+    )
+    for entry in result.entries:
+        scope_bit = entry.scope
+        if entry.project:
+            scope_bit = f"{entry.scope}:{entry.project}"
+            if entry.repo:
+                scope_bit = f"{scope_bit}/{entry.repo}"
+        path_bit = f" path={entry.path}" if entry.path else ""
+        logger.echo(f"- [{scope_bit}] {entry.skill_id} ({entry.source}){path_bit}")
 
 
 @skills.command("install")

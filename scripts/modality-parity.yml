@@ -536,3 +536,61 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:aos_status"
 
+  - id: derived_projects
+    description: Derived surgical workspace projects with frozen membership and refreshable identity
+    service: metagit.core.workspace.derived_project_service.DerivedProjectService
+    reference_doc: docs/reference/derived-projects.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/project_derived.py
+            contains: '@derived.command("create")'
+          - path: src/metagit/cli/commands/project.py
+            contains: project.add_command(derived)
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_project_derived_create
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_project_derived_create
+      documentation:
+        markers:
+          - path: docs/reference/derived-projects.md
+            contains: "modality:derived_projects"
+          - path: docs/agents.md
+            contains: "modality:derived_projects"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-projects/SKILL.md
+            contains: "modality:derived_projects"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:derived_projects"
+
+  - id: skills_surface
+    description: Layered on-disk and declared skill inventory across workspace/project/repo
+    service: metagit.core.skills.surface_service.SkillSurfaceService
+    reference_doc: docs/reference/skills-surface.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/skills.py
+            contains: '@skills.command("surface")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_skills_surface
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_skills_surface
+      documentation:
+        markers:
+          - path: docs/reference/skills-surface.md
+            contains: "modality:skills_surface"
+          - path: docs/agents.md
+            contains: "modality:skills_surface"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:skills_surface"
+          - path: src/metagit/data/skills/metagit-context-pack/SKILL.md
+            contains: "modality:skills_surface"
+

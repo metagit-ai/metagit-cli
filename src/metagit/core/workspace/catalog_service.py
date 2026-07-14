@@ -118,6 +118,7 @@ class WorkspaceCatalogService:
                 metadata=dict(project.metadata),
                 documentation_count=len(project.documentation or []),
                 dedupe_enabled=(project.dedupe.enabled if project.dedupe is not None else None),
+                derived=bool(project.derived is not None and project.derived.enabled),
                 repo_count=len(project.repos),
             ).model_dump(mode="json")
             for project in config.workspace.projects

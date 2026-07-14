@@ -22,6 +22,8 @@ nav:
     - 'Workspace layout API': 'reference/workspace-layout-api.md'
     - 'Sharing state (multi-agent)': 'reference/sharing-state.md'
     - 'Agent profile': 'reference/agent-profile.md'
+    - 'Derived projects': 'reference/derived-projects.md'
+    - 'Skills surface': 'reference/skills-surface.md'
     - 'Campaigns': 'reference/campaigns.md'
     - 'Agent coordination (ACL)': 'reference/agent-coordination.md'
     - 'Task graph & intent': 'reference/task-graph.md'

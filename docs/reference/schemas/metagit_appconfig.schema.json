@@ -125,7 +125,7 @@
       "description": "Merge orchestrator settings.",
       "properties": {
         "validators": {
-          "description": "Opt-in zsh commands that must pass before merge promotion",
+          "description": "Opt-in shell command strings that must pass before merge promotion",
           "items": {
             "type": "string"
           },
@@ -435,19 +435,19 @@
       "type": "string"
     },
     "cicd_file_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/.worktrees/rfc-0010-0011/src/metagit/data/cicd-files.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/cicd-files.json",
       "description": "The path to the cicd file data",
       "title": "Cicd File Data",
       "type": "string"
     },
     "file_type_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/.worktrees/rfc-0010-0011/src/metagit/data/file-types.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/file-types.json",
       "description": "The path to the file type data",
       "title": "File Type Data",
       "type": "string"
     },
     "package_manager_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/.worktrees/rfc-0010-0011/src/metagit/data/package-managers.json",
+      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/package-managers.json",
       "description": "The path to the package manager data",
       "title": "Package Manager Data",
       "type": "string"

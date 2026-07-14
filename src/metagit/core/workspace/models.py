@@ -16,6 +16,42 @@ from metagit.core.project.source_models import ProjectSource
 from metagit.core.workspace.agent_profile_models import AgentProfile
 
 
+class DerivedSourceScope(BaseModel):
+    """Intent record for which source project(s) a derived project may pull from."""
+
+    project: str = Field(..., description="Source workspace project name")
+    repos: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Optional allow-list of source repo names recorded at create time; "
+            "empty means membership is whatever repos[] currently holds"
+        ),
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
+class DerivedProjectConfig(BaseModel):
+    """Marks a workspace project as a derived surgical working set."""
+
+    enabled: bool = Field(
+        default=True,
+        description="When true, this project is treated as a derived working set",
+    )
+    sources: List[DerivedSourceScope] = Field(
+        default_factory=list,
+        description="Provenance roots allowed for refresh/include operations",
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
 class ProjectDedupeOverride(BaseModel):
     """Per-project override of app-config ``workspace.dedupe``."""
 
@@ -73,6 +109,13 @@ class WorkspaceProject(BaseModel):
         default_factory=list,
         description="Declarative provider import scopes for this project",
     )
+    derived: Optional[DerivedProjectConfig] = Field(
+        default=None,
+        description=(
+            "When set, this project is a derived surgical subset of other "
+            "workspace projects in the same umbrella manifest"
+        ),
+    )
     repos: List[ProjectPath] = Field(..., description="Repository list")
 
     @model_validator(mode="after")
@@ -82,6 +125,16 @@ class WorkspaceProject(BaseModel):
             if source.id in seen:
                 raise ValueError(f"duplicate sources[].id '{source.id}' in project '{self.name}'")
             seen.add(source.id)
+        return self
+
+    @model_validator(mode="after")
+    def validate_derived_provenance(self) -> "WorkspaceProject":
+        """Ensure derived repos carry provenance when the project is marked derived."""
+        if self.derived is None or not self.derived.enabled:
+            return self
+        for repo in self.repos:
+            if repo.derived_from is None:
+                raise ValueError(f"derived project '{self.name}' repo '{repo.name}' requires derived_from provenance")
         return self
 
     @field_validator("documentation", mode="before")
