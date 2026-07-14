@@ -48,6 +48,12 @@ RFC-0013 Agent Operating System (composition only)
 
 RFC-0012 shipped on `main` via PR #63. RFC-0010 + RFC-0011 shipped on `main` via PR #62 (GitNexus import for RFC-0010 Task 9 remains deferred/optional).
 
+## Related RFCs outside this series
+
+| RFC | Title | Design | Plan | Status |
+|-----|-------|--------|------|--------|
+| 0014 | Metagit Atlas (repo-local semantic layer) | [design](2026-07-14-rfc-0014-atlas-design.md) | [plan Phase 0–1](../plans/2026-07-14-rfc-0014-atlas.md) | **Proposed** — not an ACL engine; complements 0009/0010/GitNexus |
+
 ## Document conventions
 
 Each **design** includes: Summary, Goals, Non-Goals, Architecture, Interfaces, Persistence, Events, Acceptance, Dependencies, Open questions (or locked Decisions).

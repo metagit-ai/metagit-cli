@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-07-09
+last_updated: 2026-07-14
 ---
 
 # Session Bootstrap
@@ -102,6 +102,7 @@ Then read this file fully before doing anything else in this session.
 - **Web Config Studio unsaved edits:** `SchemaTreeService._navigate_parent(..., mutate=True)` materializes null list/object parents before REMOVE/APPEND; React `SchemaTree` sends cumulative `pendingOps` on each PATCH so preview removes work before disk save.
 
 **Not yet built:**
+- **RFC-0014 Metagit Atlas (proposed):** repo-local `.atlas/` semantic layer — curated intent + generated evidence; design [docs/superpowers/specs/2026-07-14-rfc-0014-atlas-design.md](../docs/superpowers/specs/2026-07-14-rfc-0014-atlas-design.md); Phase 0–1 plan [docs/superpowers/plans/2026-07-14-rfc-0014-atlas.md](../docs/superpowers/plans/2026-07-14-rfc-0014-atlas.md). Complements context packs / RFC-0009 / RFC-0010; MCP + federation + adapters deferred past Phase 1.
 - **`task repomix:profile` automation:** bundled profiles + CLI `metagit context repomix` ship in code; repo Taskfile wrappers may remain future scope (see design note in `docs/superpowers/specs/2026-05-21-context-packs-phase2-design.md`).
 - **Metagit Web hardened/exposed deployments:** intentional v1 localhost-only framing; authentication and safe non-local binds are future scope.
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
