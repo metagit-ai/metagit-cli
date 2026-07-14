@@ -118,10 +118,12 @@ class AtlasStore:
       if not readme.is_file():
         readme.write_text(_README_TEXT, encoding="utf-8")
 
-      atlas_yaml_path(self._repo_root).write_text(
-        dump_yaml(cfg.model_dump(mode="json", exclude_none=True)),
-        encoding="utf-8",
-      )
+      atlas_path = atlas_yaml_path(self._repo_root)
+      if not atlas_path.is_file():
+        atlas_path.write_text(
+          dump_yaml(cfg.model_dump(mode="json", exclude_none=True)),
+          encoding="utf-8",
+        )
       return None
     except Exception as exc:  # noqa: BLE001
       return exc
@@ -145,11 +147,18 @@ class AtlasStore:
 
       try:
         for relative, payload in files.items():
+          if Path(relative).is_absolute():
+            raise ValueError(f"absolute path not allowed: {relative}")
+          parts = Path(relative).parts
+          if ".." in parts:
+            raise ValueError(f"path traversal not allowed: {relative}")
           text = dump_yaml(payload)
           roundtrip = load_yaml(text)
           if roundtrip is None and payload is not None:
             raise ValueError(f"YAML round-trip failed for {relative}")
-          dest = temp_dir / relative
+          dest = (temp_dir / relative).resolve()
+          if not dest.is_relative_to(temp_dir.resolve()):
+            raise ValueError(f"path escapes generated temp dir: {relative}")
           dest.parent.mkdir(parents=True, exist_ok=True)
           dest.write_text(text, encoding="utf-8")
 
