@@ -12,9 +12,15 @@ from textual.containers import Horizontal, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Label, ListItem, ListView, Static
 
-from metagit.core.tui.catalog import build_command_catalog, flatten_actions
+from metagit.core.tui.catalog import build_command_catalog
 from metagit.core.tui.interactive import run_interactive_catalog_action
 from metagit.core.tui.models import TuiCommandAction, TuiMenuSection, WizardAnswers
+from metagit.core.tui.navigation import (
+    list_manifest_projects,
+    list_manifest_repos,
+    maybe_single_project,
+    open_selected_repo,
+)
 from metagit.core.tui.runner import CommandRunResult, MetagitCommandRunner
 from metagit.core.tui.wizard import ConfigWizardService
 
@@ -51,6 +57,27 @@ class OutputScreen(BackScreen):
         yield Static(" ".join(self._result.argv), id="output_cmd")
         with VerticalScroll():
             yield Static(body, id="output_body")
+        yield Footer()
+
+
+class MessageScreen(BackScreen):
+    """Simple status / error message screen."""
+
+    BINDINGS = [
+        *BackScreen.BINDINGS,
+        Binding("q", "pop_screen", "Back"),
+        Binding("enter", "pop_screen", "Back"),
+    ]
+
+    def __init__(self, title: str, body: str) -> None:
+        super().__init__()
+        self._title = title
+        self._body = body
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=False)
+        yield Static(f"[bold]{self._title}[/bold]")
+        yield Static(self._body)
         yield Footer()
 
 
@@ -148,6 +175,147 @@ class WizardScreen(BackScreen):
         status.update(f"[green]Saved[/green] editor={result.editor} workspace.path={result.workspace.path}")
 
 
+class RepoSelectScreen(BackScreen):
+    """Choose a repository within a workspace project and open the editor."""
+
+    BINDINGS = [
+        *BackScreen.BINDINGS,
+        Binding("q", "pop_screen", "Back"),
+    ]
+
+    def __init__(
+        self,
+        *,
+        app_config_path: str,
+        manifest_path: str,
+        project_name: str,
+    ) -> None:
+        super().__init__()
+        self._app_config_path = app_config_path
+        self._manifest_path = manifest_path
+        self._project_name = project_name
+        repos = list_manifest_repos(manifest_path, project_name)
+        self._repos: list[str] = [] if isinstance(repos, Exception) else list(repos)
+        self._load_error = repos if isinstance(repos, Exception) else None
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=False)
+        yield Static(f"[bold]Select repository[/bold] — project [cyan]{self._project_name}[/cyan]")
+        yield Static("Enter to open in editor · Esc to go back")
+        if self._load_error is not None:
+            yield Static(f"[red]{self._load_error}[/red]")
+        elif not self._repos:
+            yield Static("[yellow]No repositories in this project.[/yellow]")
+        else:
+            items = [ListItem(Label(name)) for name in self._repos]
+            yield ListView(*items, id="repo_list")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        if self._repos:
+            self.query_one("#repo_list", ListView).focus()
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        if event.list_view.id != "repo_list":
+            return
+        index = event.list_view.index
+        if index is None or index >= len(self._repos):
+            return
+        self._open_repo(self._repos[index])
+
+    def _open_repo(self, repo_name: str) -> None:
+        result = open_selected_repo(
+            app_config_path=self._app_config_path,
+            manifest_path=self._manifest_path,
+            project_name=self._project_name,
+            repo_name=repo_name,
+        )
+        if isinstance(result, Exception):
+            self.app.push_screen(MessageScreen("Open failed", str(result)))
+            return
+        self.app.push_screen(
+            MessageScreen(
+                "Opened repository",
+                f"{result.project}/{result.repo}\n{result.path}",
+            ),
+        )
+
+
+class ProjectSelectScreen(BackScreen):
+    """Choose a workspace project, then continue to repository selection."""
+
+    BINDINGS = [
+        *BackScreen.BINDINGS,
+        Binding("q", "pop_screen", "Back"),
+    ]
+
+    def __init__(
+        self,
+        *,
+        app_config_path: str,
+        manifest_path: Optional[str],
+    ) -> None:
+        super().__init__()
+        self._app_config_path = app_config_path
+        self._manifest_path = manifest_path
+        self._projects: list[str] = []
+        self._load_error: Exception | None = None
+        if not manifest_path:
+            self._load_error = ValueError(
+                "No .metagit.yml found. Run from a workspace root or pass --manifest.",
+            )
+        else:
+            loaded = list_manifest_projects(manifest_path)
+            if isinstance(loaded, Exception):
+                self._load_error = loaded
+            else:
+                self._projects = list(loaded)
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=False)
+        yield Static("[bold]Select project[/bold]")
+        yield Static("Enter a project, then pick a repository · Esc to go back")
+        if self._load_error is not None:
+            yield Static(f"[red]{self._load_error}[/red]")
+        elif not self._projects:
+            yield Static("[yellow]No workspace projects in .metagit.yml.[/yellow]")
+        else:
+            items = [ListItem(Label(name)) for name in self._projects]
+            yield ListView(*items, id="project_list")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        if self._load_error is not None or not self._manifest_path:
+            return
+        sole = maybe_single_project(self._projects)
+        if sole is not None:
+            # Single-project umbrellas skip straight to repo selection.
+            self.app.push_screen(
+                RepoSelectScreen(
+                    app_config_path=self._app_config_path,
+                    manifest_path=self._manifest_path,
+                    project_name=sole,
+                ),
+            )
+            return
+        if self._projects:
+            self.query_one("#project_list", ListView).focus()
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        if event.list_view.id != "project_list" or not self._manifest_path:
+            return
+        index = event.list_view.index
+        if index is None or index >= len(self._projects):
+            return
+        self.app.push_screen(
+            RepoSelectScreen(
+                app_config_path=self._app_config_path,
+                manifest_path=self._manifest_path,
+                project_name=self._projects[index],
+            ),
+        )
+
+
 class CommandBrowserScreen(BackScreen):
     """Browse and run commands from one catalog section."""
 
@@ -192,6 +360,14 @@ class CommandBrowserScreen(BackScreen):
             extra.append(values["query"])
         if action.id.endswith("grep"):
             extra.append("--json")
+        if action.id == "workspace-select":
+            self.app.push_screen(
+                ProjectSelectScreen(
+                    app_config_path=self._runner.app_config_path,
+                    manifest_path=self._runner.manifest_path,
+                ),
+            )
+            return
         if action.interactive:
             run_interactive_catalog_action(
                 self.app,
@@ -221,8 +397,8 @@ class MetagitTuiApp(App):
   """
 
     BINDINGS = [
-        Binding("ctrl+c", "quit", "Quit"),
-        Binding("q", "quit", "Quit"),
+        Binding("ctrl+c", "quit", "Quit", priority=True),
+        Binding("q", "quit", "Quit", priority=True),
     ]
 
     def __init__(
@@ -256,10 +432,10 @@ class MetagitTuiApp(App):
             f"[bold]Metagit[/bold] interactive hub\nApp config: {self._app_config_path}\nManifest: {manifest_line}",
             id="home_hint",
         )
-        yield Static("Enter to choose · Esc does not quit from home")
+        yield Static("Enter to choose · q / Ctrl+C to quit")
         items = [
+            ListItem(Label("Select project → repository")),
             ListItem(Label("Configuration wizard — set editor, workspace path, defaults")),
-            ListItem(Label("Quick: select repository (picker)")),
         ]
         for section in self._sections:
             items.append(ListItem(Label(f"{section.title} commands")))
@@ -270,6 +446,20 @@ class MetagitTuiApp(App):
     def on_mount(self) -> None:
         if self._start_wizard:
             self.push_screen(WizardScreen(self._wizard))
+        else:
+            self.query_one("#home_list", ListView).focus()
+
+    def action_quit(self) -> None:
+        """Exit the hub without raising after terminal restore."""
+        self.exit(None)
+
+    def _open_project_repo_picker(self) -> None:
+        self.push_screen(
+            ProjectSelectScreen(
+                app_config_path=self._app_config_path,
+                manifest_path=self._manifest_path,
+            ),
+        )
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id != "home_list":
@@ -278,17 +468,10 @@ class MetagitTuiApp(App):
         if index is None:
             return
         if index == 0:
-            self.push_screen(WizardScreen(self._wizard))
+            self._open_project_repo_picker()
             return
         if index == 1:
-            action = next(item for item in flatten_actions(self._sections) if item.id == "workspace-select")
-            run_interactive_catalog_action(
-                self,
-                action=action,
-                runner=self._runner,
-                app_config_path=self._app_config_path,
-                manifest_path=self._manifest_path,
-            )
+            self.push_screen(WizardScreen(self._wizard))
             return
         section_count = len(self._sections)
         if 2 <= index < 2 + section_count:
@@ -296,7 +479,7 @@ class MetagitTuiApp(App):
             self.push_screen(CommandBrowserScreen(section, self._runner))
             return
         if index == 2 + section_count:
-            self.exit(None)
+            self.action_quit()
 
 
 def run_tui(
@@ -313,4 +496,8 @@ def run_tui(
         cwd=cwd,
         start_wizard=start_wizard,
     )
-    app.run()
+    try:
+        app.run()
+    except KeyboardInterrupt:
+        # Ctrl+C during driver teardown should not surface as a CLI traceback.
+        return

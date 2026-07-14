@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
-last_updated: 2026-07-09
+last_updated: 2026-07-14
 ---
 
 # Metagit
@@ -57,6 +57,7 @@ metagit prompt workspace --kind session-start --text-only
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
 | Agent OS (composition) | `metagit aos status` · `metagit aos doctor` · `metagit aos next` (`coord` alias) |
+| Local Atlas | `metagit atlas init` · `metagit atlas generate` · `metagit atlas validate` · `metagit atlas query` |
 | Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent OS skill | `metagit skills show metagit-aos` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
@@ -66,6 +67,7 @@ metagit prompt workspace --kind session-start --text-only
 | Merge orchestrator (RFC-0011) | [docs/reference/merge-orchestrator.md](docs/reference/merge-orchestrator.md) |
 | Agent scheduler (RFC-0012) | [docs/reference/agent-scheduler.md](docs/reference/agent-scheduler.md) |
 | Agent OS (RFC-0013) | [docs/reference/aos.md](docs/reference/aos.md) |
+| Metagit Atlas (RFC-0014) | [docs/reference/atlas.md](docs/reference/atlas.md) |
 | Feature registry (all modalities) | [docs/reference/modality-feature-registry.md](docs/reference/modality-feature-registry.md) |
 
 Full guide: [docs/agents.md](docs/agents.md) · Index: [llms.txt](llms.txt) · Skills: [docs/skills.md](docs/skills.md) · Docs: <https://metagit-ai.github.io/metagit-cli/agents/>

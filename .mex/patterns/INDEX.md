@@ -27,6 +27,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [agent-coordination-acl.md](agent-coordination-acl.md) | Implementing or extending RFC-0007 ACL branch/lease/worktree/claim primitives |
 | [agent-scheduler.md](agent-scheduler.md) | Implementing or extending RFC-0012 schedule scoring, policy, CLI/MCP, and events |
 | [aos-composition.md](aos-composition.md) | Implementing or operating RFC-0013 AOS status/doctor/next composition façade |
+| [atlas-local.md](atlas-local.md) | Operating or extending the repository-local Atlas semantic layer |
 | [task-graph-intent.md](task-graph-intent.md) | Implementing or extending RFC-0008 task DAG + intent (CLI/MCP/events) |
 | [pythonpath-import-guard.md](pythonpath-import-guard.md) | Fixing or preserving the metagit `__init__` sys.path guard against hostile PYTHONPATH |
 | [cli-tui-hub.md](cli-tui-hub.md) | Adding `metagit tui`, configuration wizard flows, or `--repo` direct-open on select |

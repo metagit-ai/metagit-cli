@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://metagit.dev/schemas/atlas/entity.schema.json",
+  "title": "EntityEnvelope",
+  "description": "Kubernetes-style envelope for a curated or generated Atlas entity (RFC-0014).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "metadata"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "const": "atlas.metagit.dev/v1alpha1"
+    },
+    "kind": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "$ref": "#/$defs/EntityMetadata"
+    },
+    "spec": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {}
+    }
+  },
+  "$defs": {
+    "Lifecycle": {
+      "type": "string",
+      "enum": ["proposed", "active", "deprecated", "retired"]
+    },
+    "Classification": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "restricted"]
+    },
+    "ProvenanceSource": {
+      "type": "string",
+      "enum": ["curated", "generated", "imported"]
+    },
+    "Provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/ProvenanceSource"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "EntityMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "lifecycle", "classification", "provenance"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9_.\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lifecycle": {
+          "$ref": "#/$defs/Lifecycle"
+        },
+        "classification": {
+          "$ref": "#/$defs/Classification"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "owners": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        }
+      }
+    }
+  }
+}

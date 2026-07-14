@@ -64,6 +64,7 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
 | Agent OS (composition) | `metagit aos status` · `metagit aos doctor` · `metagit aos next` (`coord` alias) |
+| Local Atlas | `metagit atlas init` · `metagit atlas generate` · `metagit atlas validate` · `metagit atlas query` |
 
 <!-- modality:agent_profile_apply -->
 <!-- modality:native_campaigns -->
@@ -73,10 +74,11 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 <!-- modality:merge_orchestrator -->
 <!-- modality:agent_scheduler -->
 <!-- modality:aos_status -->
+<!-- modality:atlas_local -->
 
 Set `--definition path/to/.metagit.yml` when not in the manifest repo root.
 
-Agent profile and campaigns: [reference/agent-profile.md](reference/agent-profile.md), [reference/campaigns.md](reference/campaigns.md). Master index: [reference/modality-feature-registry.md](reference/modality-feature-registry.md).
+Agent profile and campaigns: [reference/agent-profile.md](reference/agent-profile.md), [reference/campaigns.md](reference/campaigns.md). Local repository Atlas: [reference/atlas.md](reference/atlas.md). Master index: [reference/modality-feature-registry.md](reference/modality-feature-registry.md).
 
 ## Prompt kinds (`metagit prompt list`)
 

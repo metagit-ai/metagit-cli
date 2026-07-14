@@ -2,7 +2,14 @@
 
 ## Unreleased
 
+### Added
+- **RFC-0014 Metagit Atlas (Phase 0–1 local MVP):** repository-local `.atlas/` schema and generated evidence with `metagit atlas init|generate|validate|status|query|refresh`; deterministic inventory, Python symbol, and test discovery; curated entity validation and local query index. MCP, federation, and optional adapters remain deferred.
+- **TUI project → repository path:** home screen leads with in-app project then repo selection (auto-skips project pick for single-project manifests) without nested fuzzy finder suspend.
 
+### Fixed
+- **TUI quit/suspend noise:** quit bindings use priority `action_quit`; `KeyboardInterrupt` during teardown is swallowed; legacy interactive suspend failures notify in-app instead of dumping a traceback.
+- **TUI repository picker:** Workspace “Select project → repository” now uses the in-app project/repo screens (no nested fuzzy suspend that appeared to do nothing).
+- **`metagit project list`:** defaults to a workspace-style project catalog (definition/root/counts); use `-p`/`--detail` for single-project YAML.
 
 ## [0.21.1] - 2026-07-13
 

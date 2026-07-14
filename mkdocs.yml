@@ -30,6 +30,7 @@ nav:
     - 'Merge orchestrator': 'reference/merge-orchestrator.md'
     - 'Agent scheduler': 'reference/agent-scheduler.md'
     - 'Agent Operating System': 'reference/aos.md'
+    - 'Metagit Atlas': 'reference/atlas.md'
     - 'Metagit agent templates': 'reference/metagit-agent.md'
     - 'Modality feature registry': 'reference/modality-feature-registry.md'
     - 'Metagit Web UI': 'reference/metagit-web.md'

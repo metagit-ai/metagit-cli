@@ -56,6 +56,9 @@ typecheck = ["mypy"]
 [project.scripts]
 metagit = "metagit.cli.main:main"
 
+[tool.pytest.ini_options]
+norecursedirs = ["tests/fixtures"]
+
 [tool.ruff.lint]
 select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
 ignore = ['W291', 'W292', 'W293', 'E501', 'SIM115']

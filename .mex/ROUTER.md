@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-07-09
+last_updated: 2026-07-14
 ---
 
 # Session Bootstrap
@@ -28,6 +28,7 @@ Then read this file fully before doing anything else in this session.
 ## Current Project State
 **Working:**
 - **RFC-0013 Agent Operating System (implemented on `feat/rfc-0013-aos`):** thin `metagit.core.aos` composition façade; `metagit aos|coord status|doctor|next`; MCP `metagit_aos_*` / `metagit_coord_*`; `SchedulerService.preview_next`; modality `aos_status`; docs `docs/reference/aos.md`; skill `metagit-aos`; worktree `.worktrees/rfc-0013`.
+- **RFC-0014 Metagit Atlas (Phase 0–1 local MVP on `feat/rfc-0014-atlas`):** repository-local `.atlas/` semantic layer with curated intent, deterministic inventory/Python-symbol/test evidence, validation, derived query index, and `metagit atlas init|generate|validate|status|query|refresh`; modality `atlas_local`; docs `docs/reference/atlas.md`. MCP, federation, and optional adapters remain deferred.
 - **RFC-0012 Distributed Agent Scheduler (shipped on main via PR #63):** `metagit.core.scheduler` scores ready task nodes; `metagit schedule policy|next|status`; MCP `metagit_schedule_*`; modality `agent_scheduler`; docs `docs/reference/agent-scheduler.md`.
 - **RFC-0008 Task Graph & Intent + RFC-0009 Context Compiler (shipped on main):** `metagit task` + MCP `metagit_task_*`; `metagit context compile` + MCP `metagit_context_compile`; packages `metagit.core.taskgraph` / `metagit.core.context.compiler`; docs `task-graph.md` / `context-compiler.md`; modality `task_graph` / `context_compile`.
 - **RFC-0010 + RFC-0011 (shipped on main via PR #62):** Semantic KG + Merge Orchestrator with CLI/MCP/docs/modality parity. RFC-0010 Task 9 GitNexus import remains deferred/optional.
