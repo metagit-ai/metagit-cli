@@ -27,6 +27,7 @@ from metagit.cli.commands.agent import agent
 from metagit.cli.commands.aos import aos_group
 from metagit.cli.commands.api import api
 from metagit.cli.commands.appconfig import appconfig
+from metagit.cli.commands.atlas import atlas_group
 from metagit.cli.commands.branch import branch_group
 from metagit.cli.commands.campaign import campaign
 from metagit.cli.commands.claim import claim_group
@@ -139,6 +140,7 @@ cli.add_command(config)
 cli.add_command(record)
 cli.add_command(skills)
 cli.add_command(agent)
+cli.add_command(atlas_group)
 cli.add_command(campaign)
 cli.add_command(branch_group)
 cli.add_command(lease_group)
