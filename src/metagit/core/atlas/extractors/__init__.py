@@ -4,5 +4,5 @@
 from metagit.core.atlas.extractors.secrets import is_excluded_path
 
 __all__ = [
-  "is_excluded_path",
+    "is_excluded_path",
 ]

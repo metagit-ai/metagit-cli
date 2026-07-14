@@ -51,6 +51,7 @@ metagit prompt workspace --kind session-start --text-only
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
 | Agent OS (composition) | `metagit aos status` · `metagit aos doctor` · `metagit aos next` (`coord` alias) |
+| Local Atlas | `metagit atlas init` · `metagit atlas generate` · `metagit atlas validate` · `metagit atlas query` |
 | Agent coordination skill | `metagit skills show metagit-agent-coordination` |
 | Agent OS skill | `metagit skills show metagit-aos` |
 | Agent coordination (ACL) | [docs/reference/agent-coordination.md](docs/reference/agent-coordination.md) |
@@ -80,4 +81,5 @@ Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality
 - **Semantic Ownership (RFC-0010):** concept ownership via `metagit semantic declare|query|owners|conflicts|ingest|seed`; advisory claim `concept_hints`; GitNexus import deferred — see [semantic-ownership.md](docs/reference/semantic-ownership.md).
 - **Merge Orchestrator (RFC-0011):** local queue, conflict records, opt-in validators, CLI/MCP `metagit merge` / `metagit_merge_*` tools — see [merge-orchestrator.md](docs/reference/merge-orchestrator.md).
 - **Agent Scheduler (RFC-0012):** score ready task nodes and emit dispatch hints via `metagit schedule` / `metagit_schedule_*` — see [agent-scheduler.md](docs/reference/agent-scheduler.md).
+- **Metagit Atlas (RFC-0014):** repository-local curated intent plus generated evidence via `metagit atlas`; MCP, federation, and adapters are deferred — see [atlas.md](docs/reference/atlas.md).
 - Repomix profile: `metagit context repomix --profile bugfix-local --project P --repo R`

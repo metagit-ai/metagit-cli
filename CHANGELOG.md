@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- **RFC-0014 Metagit Atlas (Phase 0 start):** Pydantic models and entity/evidence ID helpers for `.atlas/` capability and knowledge envelopes.
+- **RFC-0014 Metagit Atlas (Phase 0–1 local MVP):** repository-local `.atlas/` schema and generated evidence with `metagit atlas init|generate|validate|status|query|refresh`; deterministic inventory, Python symbol, and test discovery; curated entity validation and local query index. MCP, federation, and optional adapters remain deferred.
 
 ## [0.21.1] - 2026-07-13
 

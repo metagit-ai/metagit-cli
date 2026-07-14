@@ -9,19 +9,19 @@ import yaml
 
 
 def dump_yaml(data: Any) -> str:
-  return yaml.safe_dump(
-    data,
-    sort_keys=True,
-    default_flow_style=False,
-    allow_unicode=True,
-  )
+    return yaml.safe_dump(
+        data,
+        sort_keys=True,
+        default_flow_style=False,
+        allow_unicode=True,
+    )
 
 
 def load_yaml(text: str) -> Any:
-  return yaml.safe_load(text)
+    return yaml.safe_load(text)
 
 
 __all__ = [
-  "dump_yaml",
-  "load_yaml",
+    "dump_yaml",
+    "load_yaml",
 ]

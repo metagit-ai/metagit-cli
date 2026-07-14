@@ -5,6 +5,24 @@
 version: 1
 
 features:
+  - id: atlas_local
+    description: Repository-local Atlas semantic layer (init/generate/validate/query)
+    service: metagit.core.atlas.service.AtlasService
+    reference_doc: docs/reference/atlas.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/atlas.py
+            contains: '@atlas_group.command("generate")'
+          - path: src/metagit/cli/main.py
+            contains: atlas_group
+      documentation:
+        markers:
+          - path: docs/reference/atlas.md
+            contains: "modality:atlas_local"
+          - path: docs/agents.md
+            contains: "modality:atlas_local"
+
   - id: provider_source_sync_imperative
     description: Imperative provider discovery and manifest apply
     service: metagit.core.project.source_sync_runner.run_source_sync

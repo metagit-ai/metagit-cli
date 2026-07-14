@@ -23,6 +23,7 @@ __pycache__/
 secret_results.json
 # Metagit workspace
 .metagit/
+.atlas/index/
 .worktrees/
 src/metagit/_version.py
 site

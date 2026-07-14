@@ -42,8 +42,7 @@ def _echo_status(result: AtlasStatusResult) -> None:
     freshness = ",".join(f"{key}={value}" for key, value in sorted(result.freshness.items()))
     click.echo(
         f"ok\t{result.repository or '-'}\t"
-        f"initialized={result.initialized}\tgenerated={result.generated}"
-        + (f"\t{freshness}" if freshness else ""),
+        f"initialized={result.initialized}\tgenerated={result.generated}" + (f"\t{freshness}" if freshness else ""),
     )
 
 

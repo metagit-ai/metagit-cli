@@ -28,6 +28,7 @@ Then read this file fully before doing anything else in this session.
 ## Current Project State
 **Working:**
 - **RFC-0013 Agent Operating System (implemented on `feat/rfc-0013-aos`):** thin `metagit.core.aos` composition façade; `metagit aos|coord status|doctor|next`; MCP `metagit_aos_*` / `metagit_coord_*`; `SchedulerService.preview_next`; modality `aos_status`; docs `docs/reference/aos.md`; skill `metagit-aos`; worktree `.worktrees/rfc-0013`.
+- **RFC-0014 Metagit Atlas (Phase 0–1 local MVP on `feat/rfc-0014-atlas`):** repository-local `.atlas/` semantic layer with curated intent, deterministic inventory/Python-symbol/test evidence, validation, derived query index, and `metagit atlas init|generate|validate|status|query|refresh`; modality `atlas_local`; docs `docs/reference/atlas.md`. MCP, federation, and optional adapters remain deferred.
 - **RFC-0012 Distributed Agent Scheduler (shipped on main via PR #63):** `metagit.core.scheduler` scores ready task nodes; `metagit schedule policy|next|status`; MCP `metagit_schedule_*`; modality `agent_scheduler`; docs `docs/reference/agent-scheduler.md`.
 - **RFC-0008 Task Graph & Intent + RFC-0009 Context Compiler (shipped on main):** `metagit task` + MCP `metagit_task_*`; `metagit context compile` + MCP `metagit_context_compile`; packages `metagit.core.taskgraph` / `metagit.core.context.compiler`; docs `task-graph.md` / `context-compiler.md`; modality `task_graph` / `context_compile`.
 - **RFC-0010 + RFC-0011 (shipped on main via PR #62):** Semantic KG + Merge Orchestrator with CLI/MCP/docs/modality parity. RFC-0010 Task 9 GitNexus import remains deferred/optional.
@@ -102,7 +103,6 @@ Then read this file fully before doing anything else in this session.
 - **Web Config Studio unsaved edits:** `SchemaTreeService._navigate_parent(..., mutate=True)` materializes null list/object parents before REMOVE/APPEND; React `SchemaTree` sends cumulative `pendingOps` on each PATCH so preview removes work before disk save.
 
 **Not yet built:**
-- **RFC-0014 Metagit Atlas (proposed):** repo-local `.atlas/` semantic layer — curated intent + generated evidence; design [docs/superpowers/specs/2026-07-14-rfc-0014-atlas-design.md](../docs/superpowers/specs/2026-07-14-rfc-0014-atlas-design.md); Phase 0–1 plan [docs/superpowers/plans/2026-07-14-rfc-0014-atlas.md](../docs/superpowers/plans/2026-07-14-rfc-0014-atlas.md). Complements context packs / RFC-0009 / RFC-0010; MCP + federation + adapters deferred past Phase 1.
 - **`task repomix:profile` automation:** bundled profiles + CLI `metagit context repomix` ship in code; repo Taskfile wrappers may remain future scope (see design note in `docs/superpowers/specs/2026-05-21-context-packs-phase2-design.md`).
 - **Metagit Web hardened/exposed deployments:** intentional v1 localhost-only framing; authentication and safe non-local binds are future scope.
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
