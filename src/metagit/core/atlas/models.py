@@ -7,7 +7,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from metagit.core.atlas.ids import validate_entity_id
+from metagit.core.atlas.ids import validate_entity_id, validate_evidence_id
 
 Lifecycle = Literal["proposed", "active", "deprecated", "retired"]
 Classification = Literal["public", "internal", "confidential", "restricted"]
@@ -36,10 +36,7 @@ class EvidenceItem(BaseModel):
   @field_validator("id")
   @classmethod
   def validate_id(cls, value: str) -> str:
-    stripped = value.strip()
-    if not stripped:
-      raise ValueError("evidence id is required")
-    return stripped
+    return validate_evidence_id(value)
 
 
 class EntityMetadata(BaseModel):

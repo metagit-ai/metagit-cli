@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Added
+- **RFC-0014 Metagit Atlas (Phase 0 start):** Pydantic models and entity/evidence ID helpers for `.atlas/` capability and knowledge envelopes.
 
 ## [0.21.1] - 2026-07-13
 
