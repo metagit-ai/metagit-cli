@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Fixed
+- **`metagit atlas validate`:** ship Atlas JSON Schemas under `metagit/data/schemas/atlas/` so installed wheels resolve schemas without the repo-root `schemas/atlas/` tree (fixes `FileNotFoundError` on PyPI 0.22.0).
 
 ## [0.23.0] - 2026-07-14
 

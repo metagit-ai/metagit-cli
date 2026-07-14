@@ -20,6 +20,9 @@ last_updated: 2026-07-14
    target repository with `--path` when it is not the current directory.
 3. When changing the user-facing CLI, keep `atlas_local` markers and
    `docs/reference/atlas.md` synchronized.
+4. Runtime JSON Schemas for `atlas validate` live under
+   `src/metagit/data/schemas/atlas/` (packaged via `package-data`). Keep the
+   docs/IDE copies in `schemas/atlas/` byte-identical; tests enforce parity.
 
 ## Verify
 

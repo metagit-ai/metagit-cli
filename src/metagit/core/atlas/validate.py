@@ -17,6 +17,15 @@ _REF_LIST_KEYS = ("invariants", "contracts", "dependsOn")
 
 
 def _schemas_dir() -> Path:
+    """Return Atlas JSON Schema directory (packaged wheel or repo checkout).
+
+    Installed wheels ship schemas under ``metagit/data/schemas/atlas/`` via
+    ``package-data``. Repo checkouts also keep a docs/IDE copy at
+    ``schemas/atlas/`` beside the package tree.
+    """
+    packaged = Path(__file__).resolve().parents[2] / "data" / "schemas" / "atlas"
+    if packaged.is_dir():
+        return packaged
     current = Path(__file__).resolve().parent
     for parent in (current, *current.parents):
         candidate = parent / "schemas" / "atlas"
