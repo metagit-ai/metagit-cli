@@ -97,3 +97,6 @@ class AtlasQueryResult(BaseModel):
     """Result envelope for Atlas query operations."""
 
     ok: bool = True
+    nodes: list[dict[str, Any]] = Field(default_factory=list)
+    entities: list[dict[str, Any]] = Field(default_factory=list)
+    entity: dict[str, Any] | None = None
