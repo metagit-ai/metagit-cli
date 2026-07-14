@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from textual.app import App
+from textual.app import App, SuspendNotSupported
 
 from metagit.core.tui.models import TuiCommandAction
 from metagit.core.tui.repo_picker import run_repo_picker_session
@@ -27,11 +27,21 @@ def run_interactive_catalog_action(
     The hub must suspend while nested Textual apps (repo picker) or inherited-
     stdio subprocesses run, otherwise they hang waiting for a TTY.
     """
-    with app.suspend():
-        if action.id == "workspace-select":
-            run_repo_picker_session(
-                app_config_path=app_config_path,
-                manifest_path=manifest_path,
-            )
-            return
-        runner.run_interactive(action, extra_args=extra_args)
+    try:
+        with app.suspend():
+            if action.id == "workspace-select":
+                run_repo_picker_session(
+                    app_config_path=app_config_path,
+                    manifest_path=manifest_path,
+                )
+                return
+            runner.run_interactive(action, extra_args=extra_args)
+    except SuspendNotSupported:
+        # Headless / unsupported drivers should not dump a traceback on the hub.
+        app.notify(
+            "Interactive terminal suspend is unavailable in this environment.",
+            severity="warning",
+            timeout=4,
+        )
+    except Exception as exc:
+        app.notify(f"Interactive action failed: {exc}", severity="error", timeout=6)
