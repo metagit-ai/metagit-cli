@@ -75,7 +75,7 @@ metagit detect repo --force   # optional: enrich .metagit.yml
 
 ### New project group (new `workspace.projects[]` entry)
 
-There is no separate `project create` CLI today. Add a project block to `.metagit.yml`:
+There is no separate `project create` CLI for empty groups. Add a project block to `.metagit.yml`, or use catalog add:
 
 ```yaml
 workspace:
@@ -94,6 +94,22 @@ metagit project sync --project my-new-project
 ```
 
 Choose a **distinct project name**; avoid duplicating an existing `workspace.projects[].name`.
+
+### Derived surgical working set (subset of existing projects)
+
+<!-- modality:derived_projects -->
+
+When the umbrella already has the repos you need, create a **derived** project instead of copying URLs by hand:
+
+```bash
+metagit project derived create -n surgical \
+  --from portfolio/api --from local/notes \
+  --description "Agent working set" --json
+metagit project -p surgical sync
+metagit skills surface -p surgical --json
+```
+
+Membership is frozen; refresh identity with `metagit project -p surgical derived refresh`. See `docs/reference/derived-projects.md`.
 
 ### New umbrella workspace
 

@@ -20,6 +20,22 @@ from pydantic_core import core_schema
 from metagit.core.workspace.agent_profile_models import AgentProfile
 
 
+class DerivedFromRef(BaseModel):
+    """Provenance pointer from a derived repo entry back to its source project/repo."""
+
+    project: str = Field(..., description="Source workspace project name")
+    repo: str = Field(..., description="Source repository name within that project")
+    refreshed_at: Optional[str] = Field(
+        None,
+        description="ISO-8601 timestamp of the last identity refresh from the source",
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
 class GitUrl(str):
     """Custom type for Git repository URLs."""
 
@@ -97,6 +113,13 @@ class ProjectPath(BaseModel):
     agent_profile: Optional[AgentProfile] = Field(
         default=None,
         description="Structured agent posture for this repo (skills, MCP, rules, vendors)",
+    )
+    derived_from: Optional[DerivedFromRef] = Field(
+        default=None,
+        description=(
+            "When set, this entry was copied into a derived project; "
+            "identity fields can be refreshed from the named source"
+        ),
     )
 
     @field_validator("language_version", mode="before")

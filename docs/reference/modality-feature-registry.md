@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 22
+- **Features tracked:** 24
 
 When you add or change a backend feature:
 
@@ -42,6 +42,8 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `merge_orchestrator` | Local merge queue, validation gate, and integration orchestration | yes | yes | — | yes | yes | [merge-orchestrator.md](merge-orchestrator.md) |
 | `agent_scheduler` | Score ready task nodes and emit schedule decisions with dispatch hints | yes | yes | — | yes | yes | [agent-scheduler.md](agent-scheduler.md) |
 | `aos_status` | Composition façade aggregating ACL, task graph, and optional 0009-0012 subsystems | yes | yes | — | yes | yes | [aos.md](aos.md) |
+| `derived_projects` | Derived surgical workspace projects with frozen membership and refreshable identity | yes | yes | — | yes | yes | [derived-projects.md](derived-projects.md) |
+| `skills_surface` | Layered on-disk and declared skill inventory across workspace/project/repo | yes | yes | — | yes | yes | [skills-surface.md](skills-surface.md) |
 <!-- registry:table:end -->
 
 ## Surface legend

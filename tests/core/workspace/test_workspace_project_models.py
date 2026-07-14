@@ -81,3 +81,37 @@ def test_manifest_dependencies_reject_kind_on_project_path_only() -> None:
   )
   assert config.dependencies is not None
   assert config.dependencies[0].kind == "docker_image"
+
+
+def test_derived_project_requires_provenance_on_repos() -> None:
+  try:
+    WorkspaceProject(
+      name="surgical",
+      derived={"enabled": True, "sources": [{"project": "portfolio"}]},
+      repos=[ProjectPath(name="api", url="https://github.com/example/api.git")],
+    )
+    raised = False
+  except Exception:
+    raised = True
+  assert raised is True
+
+
+def test_derived_project_accepts_provenance() -> None:
+  project = WorkspaceProject(
+    name="surgical",
+    derived={
+      "enabled": True,
+      "sources": [{"project": "portfolio", "repos": ["api"]}],
+    },
+    repos=[
+      ProjectPath(
+        name="api",
+        url="https://github.com/example/api.git",
+        derived_from={"project": "portfolio", "repo": "api"},
+      )
+    ],
+  )
+  assert project.derived is not None
+  assert project.derived.enabled is True
+  assert project.repos[0].derived_from is not None
+  assert project.repos[0].derived_from.project == "portfolio"

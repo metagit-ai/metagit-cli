@@ -292,6 +292,16 @@ paths:
 ...
       # When true, merge with parent scope profile; when false, use verbatim
       inherit: false
+    # When set, this entry was copied into a derived project; identity fields can be refreshed from the named source
+    derived_from:
+      # Source workspace project name
+      project: example-value
+...
+      # Source repository name within that project
+      repo: example-value
+...
+      # ISO-8601 timestamp of the last identity refresh from the source
+      refreshed_at: '2026-01-01T00:00:00+00:00'
 # Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.
 dependencies:
   -
@@ -366,6 +376,16 @@ dependencies:
 ...
       # When true, merge with parent scope profile; when false, use verbatim
       inherit: false
+    # When set, this entry was copied into a derived project; identity fields can be refreshed from the named source
+    derived_from:
+      # Source workspace project name
+      project: example-value
+...
+      # Source repository name within that project
+      repo: example-value
+...
+      # ISO-8601 timestamp of the last identity refresh from the source
+      refreshed_at: '2026-01-01T00:00:00+00:00'
     # Dependency kind. Distinct from workspace repo entries; use tags on ProjectPath for managed repos.
     kind: docker_image
 # Additional project component paths that may be useful in other projects.
@@ -442,6 +462,16 @@ components:
 ...
       # When true, merge with parent scope profile; when false, use verbatim
       inherit: false
+    # When set, this entry was copied into a derived project; identity fields can be refreshed from the named source
+    derived_from:
+      # Source workspace project name
+      project: example-value
+...
+      # Source repository name within that project
+      repo: example-value
+...
+      # ISO-8601 timestamp of the last identity refresh from the source
+      refreshed_at: '2026-01-01T00:00:00+00:00'
 # Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. Omit for single-repo application manifests; use top-level paths and dependencies instead.
 workspace:
   # Human-readable description of this workspace

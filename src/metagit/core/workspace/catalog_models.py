@@ -53,6 +53,10 @@ class ProjectListEntry(BaseModel):
         default=None,
         description=("When set in the manifest, overrides app-config workspace.dedupe.enabled for this project"),
     )
+    derived: bool = Field(
+        default=False,
+        description="True when this project is a derived surgical working set",
+    )
     repo_count: int = 0
 
 

@@ -550,6 +550,18 @@
           "default": null,
           "description": "Structured agent posture for this repo (skills, MCP, rules, vendors)"
         },
+        "derived_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DerivedFromRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When set, this entry was copied into a derived project; identity fields can be refreshed from the named source"
+        },
         "kind": {
           "$ref": "#/$defs/DependencyKind",
           "default": "unknown",
@@ -631,6 +643,87 @@
       ],
       "title": "DeploymentStrategy",
       "type": "string"
+    },
+    "DerivedFromRef": {
+      "additionalProperties": false,
+      "description": "Provenance pointer from a derived repo entry back to its source project/repo.",
+      "properties": {
+        "project": {
+          "description": "Source workspace project name",
+          "title": "Project",
+          "type": "string"
+        },
+        "repo": {
+          "description": "Source repository name within that project",
+          "title": "Repo",
+          "type": "string"
+        },
+        "refreshed_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ISO-8601 timestamp of the last identity refresh from the source",
+          "title": "Refreshed At"
+        }
+      },
+      "required": [
+        "project",
+        "repo"
+      ],
+      "title": "DerivedFromRef",
+      "type": "object"
+    },
+    "DerivedProjectConfig": {
+      "additionalProperties": false,
+      "description": "Marks a workspace project as a derived surgical working set.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "When true, this project is treated as a derived working set",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "sources": {
+          "description": "Provenance roots allowed for refresh/include operations",
+          "items": {
+            "$ref": "#/$defs/DerivedSourceScope"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "title": "DerivedProjectConfig",
+      "type": "object"
+    },
+    "DerivedSourceScope": {
+      "additionalProperties": false,
+      "description": "Intent record for which source project(s) a derived project may pull from.",
+      "properties": {
+        "project": {
+          "description": "Source workspace project name",
+          "title": "Project",
+          "type": "string"
+        },
+        "repos": {
+          "description": "Optional allow-list of source repo names recorded at create time; empty means membership is whatever repos[] currently holds",
+          "items": {
+            "type": "string"
+          },
+          "title": "Repos",
+          "type": "array"
+        }
+      },
+      "required": [
+        "project"
+      ],
+      "title": "DerivedSourceScope",
+      "type": "object"
     },
     "DocumentationSource": {
       "additionalProperties": false,
@@ -1430,6 +1523,18 @@
           "default": null,
           "description": "Structured agent posture for this repo (skills, MCP, rules, vendors)"
         },
+        "derived_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DerivedFromRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When set, this entry was copied into a derived project; identity fields can be refreshed from the named source"
+        },
         "agent_prompt": {
           "anyOf": [
             {
@@ -1958,6 +2063,18 @@
           },
           "title": "Sources",
           "type": "array"
+        },
+        "derived": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DerivedProjectConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When set, this project is a derived surgical subset of other workspace projects in the same umbrella manifest"
         },
         "repos": {
           "description": "Repository list",

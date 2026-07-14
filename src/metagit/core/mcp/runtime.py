@@ -68,11 +68,13 @@ from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
 from metagit.core.scheduler.service import SchedulerService
 from metagit.core.semantic.service import SemanticGraphService
+from metagit.core.skills.surface_service import SkillSurfaceService
 from metagit.core.state.resolver import resolve_backend
 from metagit.core.taskgraph.service import TaskGraphService
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
+from metagit.core.workspace.derived_project_service import DerivedProjectService
 from metagit.core.workspace.layout_context import resolve_sync_context
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace.root_resolver import resolve_sync_root
@@ -103,6 +105,8 @@ class MetagitMcpRuntime:
         self._session_begin = SessionBeginService()
         self._repo_card = RepoCardService()
         self._workspace_catalog = WorkspaceCatalogService()
+        self._derived_projects = DerivedProjectService()
+        self._skill_surface = SkillSurfaceService()
         self._workspace_layout = WorkspaceLayoutService()
         self._workspace_template = WorkspaceTemplateService()
         self._managed_repo_search = ManagedRepoSearchService()
@@ -1073,6 +1077,60 @@ class MetagitMcpRuntime:
                     "project_name": {"type": "string"},
                     "name": {"type": "string"},
                     "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_project_derived_create": {
+                "type": "object",
+                "required": ["name", "selections"],
+                "properties": {
+                    "name": {"type": "string"},
+                    "selections": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 1,
+                    },
+                    "description": {"type": "string"},
+                    "agent_instructions": {"type": "string"},
+                    "enable_dedupe": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_project_derived_refresh": {
+                "type": "object",
+                "required": ["project_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repos": {"type": "array", "items": {"type": "string"}},
+                    "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_project_derived_include": {
+                "type": "object",
+                "required": ["project_name", "selection"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "selection": {"type": "string"},
+                    "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_project_derived_exclude": {
+                "type": "object",
+                "required": ["project_name", "repo_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                    "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_skills_surface": {
+                "type": "object",
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -2315,6 +2373,66 @@ class MetagitMcpRuntime:
                 project_name=str(arguments.get("project_name", "")).strip(),
                 repo_name=str(arguments.get("name", "")).strip(),
                 force=bool(arguments.get("force", False)),
+            ).model_dump(mode="json")
+
+        if name == "metagit_project_derived_create":
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            selections = arguments.get("selections")
+            if not isinstance(selections, list):
+                raise InvalidToolArgumentsError("selections must be an array of project/repo strings")
+            return self._derived_projects.create(
+                config=config,
+                config_path=config_path,
+                name=str(arguments.get("name", "")).strip(),
+                selections=[str(item) for item in selections],
+                description=arguments.get("description"),
+                agent_instructions=arguments.get("agent_instructions"),
+                enable_dedupe=bool(arguments.get("enable_dedupe", True)),
+            ).model_dump(mode="json")
+
+        if name == "metagit_project_derived_refresh":
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            repos = arguments.get("repos")
+            return self._derived_projects.refresh(
+                config=config,
+                config_path=config_path,
+                project_name=str(arguments.get("project_name", "")).strip(),
+                repo_names=[str(item) for item in repos] if isinstance(repos, list) else None,
+                force=bool(arguments.get("force", False)),
+            ).model_dump(mode="json")
+
+        if name == "metagit_project_derived_include":
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            return self._derived_projects.include(
+                config=config,
+                config_path=config_path,
+                project_name=str(arguments.get("project_name", "")).strip(),
+                selection=str(arguments.get("selection", "")).strip(),
+                force=bool(arguments.get("force", False)),
+            ).model_dump(mode="json")
+
+        if name == "metagit_project_derived_exclude":
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            return self._derived_projects.exclude(
+                config=config,
+                config_path=config_path,
+                project_name=str(arguments.get("project_name", "")).strip(),
+                repo_name=str(arguments.get("repo_name", "")).strip(),
+                force=bool(arguments.get("force", False)),
+            ).model_dump(mode="json")
+
+        if name == "metagit_skills_surface":
+            config_path, workspace_root = self._catalog_paths(status=status, config=config)
+            project_filter = arguments.get("project_name")
+            repo_filter = arguments.get("repo_name")
+            return self._skill_surface.inventory(
+                config=config,
+                config_path=config_path,
+                workspace_root=workspace_root,
+                project_name=str(project_filter).strip()
+                if isinstance(project_filter, str) and project_filter.strip()
+                else None,
+                repo_name=str(repo_filter).strip() if isinstance(repo_filter, str) and repo_filter.strip() else None,
             ).model_dump(mode="json")
 
         if name == "metagit_project_source_sync":
