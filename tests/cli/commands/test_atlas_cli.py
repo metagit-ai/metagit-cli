@@ -131,3 +131,51 @@ def test_atlas_cli_mvp_json_flow() -> None:
     refresh_payload = json.loads(refresh.output)
     assert refresh_payload["ok"] is True
     assert "src/toy/refunds.py" in (refresh_payload.get("invalidation_reason") or "")
+
+
+def test_atlas_validate_dangling_ref_exits_nonzero() -> None:
+  runner = CliRunner()
+  with runner.isolated_filesystem() as tmp:
+    root = Path(tmp)
+    _copy_toy_into(root)
+
+    init = runner.invoke(
+      cli,
+      ["atlas", "init", "--path", ".", "--json"],
+      catch_exceptions=False,
+    )
+    assert init.exit_code == 0, init.output
+
+    generate = runner.invoke(
+      cli,
+      ["atlas", "generate", "--path", ".", "--json"],
+      catch_exceptions=False,
+    )
+    assert generate.exit_code == 0, generate.output
+
+    dangling_capability = {
+      **_REFUND_CAPABILITY,
+      "spec": {"invariants": ["invariant:missing"]},
+    }
+    capabilities_file(root).write_text(
+      dump_yaml({"entities": [dangling_capability]}),
+      encoding="utf-8",
+    )
+
+    validate_json = runner.invoke(
+      cli,
+      ["atlas", "validate", "--path", ".", "--json"],
+      catch_exceptions=False,
+    )
+    assert validate_json.exit_code == 1, validate_json.output
+    validate_payload = json.loads(validate_json.output)
+    assert validate_payload["ok"] is False
+    assert any(issue.get("code") == "dangling_ref" for issue in validate_payload["issues"])
+
+    validate_human = runner.invoke(
+      cli,
+      ["atlas", "validate", "--path", "."],
+      catch_exceptions=False,
+    )
+    assert validate_human.exit_code == 1, validate_human.output
+    assert "validation failed" in validate_human.output

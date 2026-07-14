@@ -90,11 +90,12 @@ def atlas_validate(repo_path: str, as_json: bool) -> None:
     assert isinstance(result, AtlasValidateResult)
     if as_json:
         emit_json(result)
-        return
-    if result.ok:
+    elif result.ok:
         click.echo("ok")
-        return
-    click.echo(f"validation failed\tissues={len(result.issues)}")
+    else:
+        click.echo(f"validation failed\tissues={len(result.issues)}")
+    if not result.ok:
+        raise SystemExit(1)
 
 
 @atlas_group.command("status")
