@@ -160,9 +160,14 @@ class UnifiedLogger(LoggerProtocol):
             )
             serialize = False
 
-        # Console sink
+        # Console sink.
+        # NOTE: this MUST target stderr, never stdout. When metagit runs as an
+        # MCP server over stdio (`metagit mcp serve`), stdout is reserved
+        # exclusively for JSON-RPC frames; any human-readable log line written
+        # to stdout corrupts the transport and breaks the client handshake
+        # (loguru's own default sink is stderr for exactly this reason).
         self._stdout_handler_id = logger.add(
-            sys.stdout,
+            sys.stderr,
             level=config.log_level,
             format=log_format,
             backtrace=config.backtrace,
@@ -199,11 +204,12 @@ class UnifiedLogger(LoggerProtocol):
             self.config.log_level = level
             self.debug_mode = level == "DEBUG" or level == "TRACE"
 
-            # Update stdout handler
+            # Update stdout handler (stderr sink — see __init__ note: stdout is
+            # reserved for MCP stdio JSON-RPC and must stay clean).
             if self._stdout_handler_id is not None:
                 logger.remove(self._stdout_handler_id)
                 self._stdout_handler_id = logger.add(
-                    sys.stdout,
+                    sys.stderr,
                     level=level,
                     format=(
                         "{message}"
