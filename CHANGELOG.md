@@ -4,6 +4,14 @@
 
 
 
+## [0.23.2] - 2026-07-16
+
+
+
+### Changed
+- Merge pull request #70 from metagit-ai/fix/mcp-stdio-stdout-pollution (6a5d818)
+- fix(logging): route console sink to stderr so MCP stdio stays clean (ba58c1c)
+
 ## [0.23.1] - 2026-07-14
 
 
