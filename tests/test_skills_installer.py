@@ -4,7 +4,6 @@ Unit tests for skills installer helpers.
 """
 
 import json
-import os
 from pathlib import Path
 
 import pytest
@@ -132,12 +131,11 @@ def test_hermes_mcp_writes_config_yaml_with_metagit_binary(
     existing = hermes_home / "config.yaml"
     existing.write_text("model: demo\nmcp_servers: {}\n", encoding="utf-8")
     monkeypatch.setenv("HERMES_HOME", str(hermes_home))
-    monkeypatch.setenv("PATH", f"{tmp_path / 'bin'}:{os.environ.get('PATH', '')}")
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    fake_metagit = bin_dir / "metagit"
-    fake_metagit.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    fake_metagit.chmod(0o755)
+    fake_metagit = str((tmp_path / "bin" / "metagit").resolve())
+    monkeypatch.setattr(
+        "metagit.core.skills.installer.shutil.which",
+        lambda name: fake_metagit if name == "metagit" else None,
+    )
 
     results = install_mcp_for_targets(targets=["hermes"], scope="user")
     assert results[0].applied is True
@@ -146,8 +144,10 @@ def test_hermes_mcp_writes_config_yaml_with_metagit_binary(
     assert "mcp_servers:" in content
     assert "metagit:" in content
     assert "uvx" not in content
-    assert "metagit-cli" not in content
-    assert str(fake_metagit) in content
+    assert fake_metagit in content
+    assert "args:" in content
+    assert "- mcp" in content
+    assert "- serve" in content
     assert "METAGIT_AGENT_MODE" in content
     assert "model: demo" in content
 
@@ -156,16 +156,16 @@ def test_json_mcp_uses_metagit_binary_not_uvx(monkeypatch, tmp_path: Path) -> No
     project = tmp_path / "proj"
     project.mkdir()
     monkeypatch.chdir(project)
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    fake_metagit = bin_dir / "metagit"
-    fake_metagit.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    fake_metagit.chmod(0o755)
-    monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
+    fake_metagit = str((tmp_path / "bin" / "metagit").resolve())
+    monkeypatch.setattr(
+        "metagit.core.skills.installer.shutil.which",
+        lambda name: fake_metagit if name == "metagit" else None,
+    )
 
     results = install_mcp_for_targets(targets=["opencode"], scope="project")
+    assert results[0].applied is True
     config = json.loads((project / ".opencode" / "mcp.json").read_text(encoding="utf-8"))
     entry = config["mcpServers"]["metagit"]
-    assert entry["command"] == str(fake_metagit)
+    assert entry["command"] == fake_metagit
     assert entry["args"] == ["mcp", "serve"]
     assert "uvx" not in entry["command"]
