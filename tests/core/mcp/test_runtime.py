@@ -1186,3 +1186,59 @@ def test_prompts_get_session_start(tmp_path: Path) -> None:
     assert response is not None
     assert response["result"]["messages"][0]["content"]["text"]
 
+
+def test_stdio_read_write_use_ndjson_framing(tmp_path: Path, monkeypatch) -> None:
+    """Standard MCP clients speak newline-delimited JSON, not Content-Length."""
+    import io
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    request = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {},
+            "clientInfo": {"name": "test", "version": "0"},
+        },
+    }
+    stdin = io.BytesIO((json.dumps(request) + "\n").encode("utf-8"))
+    stdout = io.BytesIO()
+
+    class _Stdout:
+        buffer = stdout
+
+    monkeypatch.setattr("sys.stdin", type("S", (), {"buffer": stdin})())
+    monkeypatch.setattr("sys.stdout", _Stdout())
+
+    message = runtime._read_message()
+    assert message is not None
+    assert message["method"] == "initialize"
+    response = runtime._handle_request(message)
+    assert response is not None
+    runtime._write_message(response)
+
+    raw = stdout.getvalue().decode("utf-8")
+    assert raw.startswith("{")
+    assert raw.endswith("\n")
+    assert "Content-Length" not in raw
+    parsed = json.loads(raw.strip())
+    assert parsed["id"] == 1
+    assert parsed["result"]["serverInfo"]["name"] == "metagit-mcp"
+
+
+def test_stdio_read_accepts_legacy_content_length_framing(
+    tmp_path: Path, monkeypatch
+) -> None:
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    request = {"jsonrpc": "2.0", "id": 9, "method": "ping", "params": {}}
+    body = json.dumps(request).encode("utf-8")
+    framed = f"Content-Length: {len(body)}\r\n\r\n".encode("utf-8") + body
+    stdin = __import__("io").BytesIO(framed)
+    monkeypatch.setattr("sys.stdin", type("S", (), {"buffer": stdin})())
+
+    message = runtime._read_message()
+    assert message is not None
+    assert message["method"] == "ping"
+    assert message["id"] == 9
+

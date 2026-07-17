@@ -24,7 +24,7 @@ Primary files: `src/metagit/core/mcp/runtime.py`, `tool_registry.py`, gate/root 
 ## Steps
 1. Reproduce with smallest path first (`metagit mcp serve --status-once` for gate snapshot).
 2. Check gate state and allowed tool set before debugging individual tool behavior.
-3. Validate request envelope fields (`jsonrpc`, `id`, `method`, `params`) and framed transport boundaries.
+3. Validate request envelope fields (`jsonrpc`, `id`, `method`, `params`) and stdio framing (NDJSON primary; legacy Content-Length accepted on read).
 4. Run focused runtime tests, then full MCP suite.
 5. If method-specific failure persists, add/adjust regression tests before patching.
 

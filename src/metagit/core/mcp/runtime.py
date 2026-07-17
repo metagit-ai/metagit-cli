@@ -3219,39 +3219,59 @@ class MetagitMcpRuntime:
         }
 
     def _read_message(self) -> Optional[dict[str, Any]]:
-        """Read one MCP-framed JSON-RPC message from stdin."""
-        content_length: Optional[int] = None
+        """
+        Read one MCP JSON-RPC message from stdin.
 
+        Primary framing is newline-delimited JSON (MCP stdio spec). Also accept
+        legacy LSP-style ``Content-Length`` frames for compatibility.
+        """
         while True:
-            header_line = sys.stdin.buffer.readline()
-            if not header_line:
+            line = sys.stdin.buffer.readline()
+            if not line:
                 return None
-            if header_line in {b"\n", b"\r\n"}:
-                break
-
-            header_text = header_line.decode("utf-8").strip()
-            if not header_text:
+            stripped = line.strip()
+            if not stripped:
                 continue
-            if ":" not in header_text:
+
+            # MCP stdio: one JSON object per line (NDJSON).
+            if stripped[:1] in (b"{", b"["):
+                return json.loads(stripped.decode("utf-8"))
+
+            # Legacy Content-Length framing (LSP-style).
+            content_length: Optional[int] = None
+            header_text = stripped.decode("utf-8")
+            if ":" in header_text:
+                key, value = header_text.split(":", 1)
+                if key.lower().strip() == "content-length":
+                    content_length = int(value.strip())
+
+            while True:
+                header_line = sys.stdin.buffer.readline()
+                if not header_line:
+                    return None
+                if header_line in {b"\n", b"\r\n"}:
+                    break
+                header_text = header_line.decode("utf-8").strip()
+                if not header_text or ":" not in header_text:
+                    continue
+                key, value = header_text.split(":", 1)
+                if key.lower().strip() == "content-length":
+                    content_length = int(value.strip())
+
+            if content_length is None:
                 continue
-            key, value = header_text.split(":", 1)
-            if key.lower().strip() == "content-length":
-                content_length = int(value.strip())
 
-        if content_length is None:
-            return None
-
-        body = sys.stdin.buffer.read(content_length)
-        if not body:
-            return None
-        return json.loads(body.decode("utf-8"))
+            body = sys.stdin.buffer.read(content_length)
+            if not body:
+                return None
+            return json.loads(body.decode("utf-8"))
 
     def _write_message(self, payload: dict[str, Any]) -> None:
-        """Write one MCP-framed JSON-RPC message to stdout."""
-        body = json.dumps(payload).encode("utf-8")
-        header = f"Content-Length: {len(body)}\r\n\r\n".encode("utf-8")
-        sys.stdout.buffer.write(header)
-        sys.stdout.buffer.write(body)
+        """Write one MCP JSON-RPC message to stdout as newline-delimited JSON."""
+        # Compact encoding keeps the payload on a single line (MCP stdio requirement).
+        body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        sys.stdout.buffer.write(body.encode("utf-8"))
+        sys.stdout.buffer.write(b"\n")
         sys.stdout.buffer.flush()
 
     def _request_client_sampling(self, context: dict[str, str]) -> dict[str, Any]:
