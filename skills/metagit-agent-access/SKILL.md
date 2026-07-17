@@ -41,7 +41,7 @@ SKILL_ROOT="$(python3 -c "import metagit, pathlib; print(pathlib.Path(metagit.__
 After `metagit skills install --skill metagit-agent-access`:
 
 ```bash
-"$HOME/.config/hermes/skills/metagit-agent-access/scripts/optimize-agent-access.sh" . --apply --json
+"${HERMES_HOME:-$HOME/.hermes}/skills/metagit-agent-access/scripts/optimize-agent-access.sh" . --apply --json
 ```
 
 ### Inline fallback (no scripts)

@@ -197,7 +197,7 @@ Writes `orchestration-overseer.md`, optional `AGENTS.md.fragment`, and `manifest
 | `cursor` | `.cursor/agents/*.md` | `~/.cursor/agents/` | agent |
 | `github_copilot` | `.github/agents/*.agent.md` | `~/.github/agents/` | agent |
 | `opencode` | `.opencode/agents/*.md` | `~/.config/opencode/agents/` | agent (subagent) |
-| `hermes` | `.hermes/skills/<name>/SKILL.md` | `~/.config/hermes/skills/<name>/` | skill |
+| `hermes` | `.hermes/skills/<name>/SKILL.md` | `$HERMES_HOME/skills/<name>/` (default `~/.hermes/skills/`) | skill |
 | `openclaw` | `.openclaw/skills/<name>/SKILL.md` | `~/.openclaw/skills/<name>/` | skill |
 | `windsurf` | `.windsurf/skills/<name>/SKILL.md` | `~/.codeium/windsurf/skills/<name>/` | skill |
 | `codex` | `.agents/skills/<name>/SKILL.md` | `~/.agents/skills/<name>/` | skill |
@@ -210,7 +210,7 @@ Writes `orchestration-overseer.md`, optional `AGENTS.md.fragment`, and `manifest
 | `cursor` | `.cursor/skills/` | `~/.cursor/skills/` | `.cursor/mcp.json` | `~/.cursor/mcp.json` |
 | `github_copilot` | `.github/skills/` | `~/.copilot/skills/` | `.vscode/mcp.json` (`servers`) | `~/.copilot/mcp-config.json` |
 | `opencode` | `.opencode/skills/` | `~/.config/opencode/skills/` | `.opencode/mcp.json` | `~/.config/opencode/mcp.json` |
-| `hermes` | `.hermes/skills/` | `~/.config/hermes/skills/` | `.hermes/mcp.json` | `~/.config/hermes/mcp.json` |
+| `hermes` | `.hermes/skills/` | `$HERMES_HOME/skills/` (default `~/.hermes/skills/`) | `.hermes/config.yaml` (`mcp_servers`) | `$HERMES_HOME/config.yaml` (`mcp_servers`) |
 | `openclaw` | `.openclaw/skills/` | `~/.openclaw/skills/` | `.openclaw/mcp.json` | `~/.openclaw/mcp.json` |
 | `windsurf` | `.windsurf/skills/` | `~/.codeium/windsurf/skills/` | `.windsurf/mcp_config.json` | `~/.codeium/windsurf/mcp_config.json` |
 | `codex` | `.agents/skills/` | `~/.agents/skills/` | `.codex/mcp.json` | `~/.codex/mcp.json` |

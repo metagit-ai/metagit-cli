@@ -3,13 +3,18 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from metagit.core.skills.installer import SUPPORTED_TARGETS, TARGET_PATHS
+from metagit.core.skills.installer import (
+    SUPPORTED_TARGETS,
+    resolve_hermes_home,
+    target_paths_for,
+)
 
 AGENT_SUPPORTED_TARGETS = list(SUPPORTED_TARGETS)
 
@@ -34,7 +39,7 @@ AGENT_TARGET_PATHS: dict[str, AgentTargetPaths] = {
     ),
     "hermes": AgentTargetPaths(
         project_agents_path=".hermes/agents",
-        user_agents_path="~/.config/hermes/agents",
+        user_agents_path="~/.hermes/agents",
     ),
     "openclaw": AgentTargetPaths(
         project_agents_path=".openclaw/agents",
@@ -83,7 +88,7 @@ def autodetect_agent_targets(
         candidates = [
             resolve_agents_directory(vendor, scope, project_root=project_root),
         ]
-        if vendor in TARGET_PATHS:
+        with contextlib.suppress(ValueError):
             candidates.append(resolve_skills_directory(vendor, scope, project_root=project_root))
         if any(candidate.exists() or candidate.parent.exists() for candidate in candidates):
             resolved.append(vendor)
@@ -97,10 +102,11 @@ def resolve_skills_directory(
     project_root: Path | None = None,
 ) -> Path:
     """Return the skills directory for a vendor and install scope."""
-    if vendor not in TARGET_PATHS:
+    try:
+        paths = target_paths_for(vendor)
+    except KeyError as exc:
         supported = ", ".join(AGENT_SUPPORTED_TARGETS)
-        raise ValueError(f"Unknown vendor {vendor!r}. Supported: {supported}")
-    paths = TARGET_PATHS[vendor]
+        raise ValueError(f"Unknown vendor {vendor!r}. Supported: {supported}") from exc
     raw = paths.project_skills_path if scope == "project" else paths.user_skills_path
     return expand_agent_path(raw, project_root=project_root)
 
@@ -116,7 +122,10 @@ def resolve_agents_directory(
         supported = ", ".join(AGENT_SUPPORTED_TARGETS)
         raise ValueError(f"Unknown vendor {vendor!r}. Supported: {supported}")
     paths = AGENT_TARGET_PATHS[vendor]
-    raw = paths.project_agents_path if scope == "project" else paths.user_agents_path
+    if vendor == "hermes" and scope == "user":
+        raw = str(resolve_hermes_home() / "agents")
+    else:
+        raw = paths.project_agents_path if scope == "project" else paths.user_agents_path
     return expand_agent_path(raw, project_root=project_root)
 
 

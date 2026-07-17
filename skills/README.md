@@ -27,6 +27,10 @@ metagit skills install --skill metagit-projects --target openclaw --dry-run
 
 Use `--skill` (repeatable) to install one or more bundled skills instead of the full set. Omit `--skill` to install every bundled skill. Add `--dry-run` to preview targets and paths without writing files.
 
+`--scope user` (default) writes under the agent’s user-global skills directory (for example `~/.cursor/skills`). `--scope project` writes under the **git repository root** (for example `.cursor/skills`), even when the command is run from a subdirectory.
+
+For Hermes, user-scope installs follow `HERMES_HOME` (default `~/.hermes`): skills go to `$HERMES_HOME/skills/`, and `metagit mcp install --target hermes` merges into `$HERMES_HOME/config.yaml` under `mcp_servers` using the installed `metagit` binary (not `uvx metagit-cli`).
+
 Optional MCP registration:
 
 ```bash

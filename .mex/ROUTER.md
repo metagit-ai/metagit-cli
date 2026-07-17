@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-07-14
+last_updated: 2026-07-17
 ---
 
 # Session Bootstrap
@@ -27,6 +27,8 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **Hermes install targeting (2026-07-17):** `HERMES_HOME` (default `~/.hermes`) for skills; MCP merges into `$HERMES_HOME/config.yaml` `mcp_servers` via installed `metagit` binary + `METAGIT_AGENT_MODE`; MCP stdio speaks NDJSON (fixes initialize handshake hang with standard clients); design `docs/superpowers/specs/2026-07-17-hermes-install-target-fix-design.md`.
+- **Skills/MCP `--scope project` root (2026-07-17):** CLI project-scope installs resolve against the nearest git repository root via `resolve_project_install_root()` so nested cwds do not create `src/.../.cursor/skills`; library callers still pass explicit `project_root` or rely on cwd after `chdir`.
 - **Derived projects + skills surface (2026-07-14):** in-manifest surgical `workspace.projects[]` via `metagit project derived create|refresh|include|exclude` and MCP `metagit_project_derived_*`; layered `metagit skills surface` / `metagit_skills_surface`; docs `derived-projects.md` / `skills-surface.md`; example `examples/derived-workspace/`; design `docs/superpowers/specs/2026-07-14-derived-projects-skills-inventory-design.md`.
 - **RFC-0013 Agent Operating System (implemented on `feat/rfc-0013-aos`):** thin `metagit.core.aos` composition façade; `metagit aos|coord status|doctor|next`; MCP `metagit_aos_*` / `metagit_coord_*`; `SchedulerService.preview_next`; modality `aos_status`; docs `docs/reference/aos.md`; skill `metagit-aos`; worktree `.worktrees/rfc-0013`.
 - **RFC-0014 Metagit Atlas (Phase 0–1 local MVP on `feat/rfc-0014-atlas`):** repository-local `.atlas/` semantic layer with curated intent, deterministic inventory/Python-symbol/test evidence, validation, derived query index, and `metagit atlas init|generate|validate|status|query|refresh`; modality `atlas_local`; docs `docs/reference/atlas.md`. MCP, federation, and optional adapters remain deferred. **Packaging fix:** `atlas validate` schemas live under `src/metagit/data/schemas/atlas/` so PyPI wheels resolve them (repo-root `schemas/atlas/` alone was missing from 0.22.0 wheels).

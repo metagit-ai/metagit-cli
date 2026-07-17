@@ -26,7 +26,7 @@ SKILL_ROOT="$(python3 -c "import metagit, pathlib; print(pathlib.Path(metagit.__
 Or from a full skill install:
 
 ```bash
-"$HOME/.config/hermes/skills/metagit-control-center/scripts/control-cycle.sh" .
+"${HERMES_HOME:-$HOME/.hermes}/skills/metagit-control-center/scripts/control-cycle.sh" .
 ```
 
 Wrapper behavior:

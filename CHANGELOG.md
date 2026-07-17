@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-
+### Fixed
+- **`metagit skills install --scope project` / `metagit mcp install --scope project`:** resolve project-local destinations against the nearest git repository root (not a nested cwd), so installs from subdirectories land in `.cursor/skills`, `.claude/skills`, etc. at the repo root.
+- **Hermes targeting:** honor `HERMES_HOME` (default `~/.hermes`) for `--target hermes` skills; write MCP into `$HERMES_HOME/config.yaml` under `mcp_servers` (not ignored `~/.config/hermes/mcp.json`); launch via the installed `metagit` binary (not `uvx metagit-cli`) and set `METAGIT_AGENT_MODE=true` on the Hermes MCP env block.
+- **MCP stdio handshake:** speak newline-delimited JSON per the MCP stdio transport spec (accept legacy `Content-Length` frames on read). Fixes hangs where standard NDJSON clients never received an `initialize` response.
 
 ## [0.23.2] - 2026-07-16
 

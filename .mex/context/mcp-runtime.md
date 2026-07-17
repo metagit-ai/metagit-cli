@@ -19,7 +19,7 @@ edges:
     condition: when adding a new MCP tool or changing tool schemas
   - target: patterns/debug-mcp-runtime.md
     condition: when MCP message loop, framing, or tool dispatch fails
-last_updated: 2026-06-30
+last_updated: 2026-07-17
 ---
 
 # MCP Runtime
@@ -27,7 +27,7 @@ last_updated: 2026-06-30
 ## Overview
 - Entry command is `metagit mcp serve` from `src/metagit/cli/commands/mcp.py`.
 - Runtime implementation lives in `src/metagit/core/mcp/runtime.py`.
-- Runtime uses stdio JSON-RPC with MCP framing (`Content-Length` header + body).
+- Runtime uses stdio JSON-RPC with **newline-delimited JSON** (MCP stdio spec). Readers also accept legacy LSP-style `Content-Length` frames; writers always emit NDJSON.
 - Gate state is resolved from workspace root + `.metagit.yml` validation before exposing tools.
 
 ## Active Runtime Services
