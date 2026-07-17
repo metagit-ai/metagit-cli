@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.23.3] - 2026-07-17
+
+
+
 ### Fixed
 - **`metagit skills install --scope project` / `metagit mcp install --scope project`:** resolve project-local destinations against the nearest git repository root (not a nested cwd), so installs from subdirectories land in `.cursor/skills`, `.claude/skills`, etc. at the repo root.
 - **Hermes targeting:** honor `HERMES_HOME` (default `~/.hermes`) for `--target hermes` skills; write MCP into `$HERMES_HOME/config.yaml` under `mcp_servers` (not ignored `~/.config/hermes/mcp.json`); launch via the installed `metagit` binary (not `uvx metagit-cli`) and set `METAGIT_AGENT_MODE=true` on the Hermes MCP env block.
