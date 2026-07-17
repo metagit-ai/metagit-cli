@@ -9,15 +9,19 @@ import json
 import os
 import re
 import shutil
+import sys
+from io import StringIO
 from pathlib import Path
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, Field
+from ruamel.yaml import YAML
 
 from metagit import DATA_PATH
 
 InstallScope = Literal["project", "user"]
 InstallMode = Literal["skills", "mcp"]
+McpConfigFormat = Literal["json", "yaml"]
 
 SUPPORTED_TARGETS = [
     "opencode",
@@ -40,11 +44,15 @@ class TargetPaths(BaseModel):
     user_mcp_path: str = Field(..., description="User-global MCP config path")
     project_mcp_root_key: str = Field(
         default="mcpServers",
-        description="JSON root key for project-scope MCP config",
+        description="JSON/YAML root key for project-scope MCP config",
     )
     user_mcp_root_key: str = Field(
         default="mcpServers",
-        description="JSON root key for user-scope MCP config",
+        description="JSON/YAML root key for user-scope MCP config",
+    )
+    mcp_config_format: McpConfigFormat = Field(
+        default="json",
+        description="On-disk format for MCP server registration",
     )
 
 
@@ -69,9 +77,12 @@ TARGET_PATHS: Dict[str, TargetPaths] = {
     ),
     "hermes": TargetPaths(
         project_skills_path=".hermes/skills",
-        user_skills_path="~/.config/hermes/skills",
-        project_mcp_path=".hermes/mcp.json",
-        user_mcp_path="~/.config/hermes/mcp.json",
+        user_skills_path="~/.hermes/skills",
+        project_mcp_path=".hermes/config.yaml",
+        user_mcp_path="~/.hermes/config.yaml",
+        project_mcp_root_key="mcp_servers",
+        user_mcp_root_key="mcp_servers",
+        mcp_config_format="yaml",
     ),
     "openclaw": TargetPaths(
         project_skills_path=".openclaw/skills",
@@ -114,6 +125,60 @@ TARGET_PATHS: Dict[str, TargetPaths] = {
 }
 
 
+def resolve_hermes_home() -> Path:
+    """Return the active Hermes home (`HERMES_HOME` or ``~/.hermes``)."""
+    raw = os.environ.get("HERMES_HOME", "").strip()
+    if raw:
+        return Path(raw).expanduser().resolve()
+    return (Path.home() / ".hermes").resolve()
+
+
+def target_paths_for(target: str) -> TargetPaths:
+    """
+    Return install paths for a target, applying Hermes home overrides.
+
+    Hermes user-scope paths follow ``HERMES_HOME`` (default ``~/.hermes``) so the
+    gateway and ``metagit skills|mcp install --target hermes`` share one root.
+    """
+    paths = TARGET_PATHS[target]
+    if target != "hermes":
+        return paths
+    home = resolve_hermes_home()
+    return paths.model_copy(
+        update={
+            "user_skills_path": str(home / "skills"),
+            "user_mcp_path": str(home / "config.yaml"),
+        }
+    )
+
+
+def resolve_metagit_launch() -> Tuple[str, List[str]]:
+    """
+    Resolve the preferred command + args for ``metagit mcp serve``.
+
+    Prefer an installed ``metagit`` binary on ``PATH``. Fall back to
+    ``python -m metagit`` so ephemeral ``uvx`` environments are not required.
+    """
+    found = shutil.which("metagit")
+    if found:
+        return found, ["mcp", "serve"]
+    return sys.executable, ["-m", "metagit", "mcp", "serve"]
+
+
+def build_mcp_server_entry(target: str) -> Dict[str, object]:
+    """Build a vendor-appropriate MCP server registration payload."""
+    command, args = resolve_metagit_launch()
+    entry: Dict[str, object] = {
+        "command": command,
+        "args": args,
+    }
+    if target == "hermes":
+        entry["enabled"] = True
+        entry["connect_timeout"] = 30
+        entry["env"] = {"METAGIT_AGENT_MODE": "true"}
+    return entry
+
+
 def bundled_skills_root() -> Path:
     """Resolve bundled skill source path."""
     return Path(DATA_PATH) / "skills"
@@ -152,27 +217,36 @@ def resolve_targets(
     scope: InstallScope,
     enable_targets: List[str],
     disable_targets: List[str],
+    *,
+    project_root: Optional[Path] = None,
 ) -> List[str]:
     """Resolve install targets by explicit include/exclude or auto-detection."""
     disabled = set(disable_targets)
     if enable_targets:
         return [target for target in enable_targets if target not in disabled]
-    detected = autodetect_targets(mode=mode, scope=scope)
+    detected = autodetect_targets(mode=mode, scope=scope, project_root=project_root)
     return [target for target in detected if target not in disabled]
 
 
-def autodetect_targets(mode: InstallMode, scope: InstallScope) -> List[str]:
+def autodetect_targets(
+    mode: InstallMode,
+    scope: InstallScope,
+    *,
+    project_root: Optional[Path] = None,
+) -> List[str]:
     """Detect target applications by existing config/directories."""
     resolved: List[str] = []
     for target in SUPPORTED_TARGETS:
-        target_paths = TARGET_PATHS[target]
+        target_paths = target_paths_for(target)
         if mode == "skills":
             candidate = _expand_target_path(
-                target_paths.project_skills_path if scope == "project" else target_paths.user_skills_path
+                target_paths.project_skills_path if scope == "project" else target_paths.user_skills_path,
+                project_root=project_root,
             )
         else:
             candidate = _expand_target_path(
-                target_paths.project_mcp_path if scope == "project" else target_paths.user_mcp_path
+                target_paths.project_mcp_path if scope == "project" else target_paths.user_mcp_path,
+                project_root=project_root,
             )
         if candidate.exists() or candidate.parent.exists():
             resolved.append(target)
@@ -198,6 +272,7 @@ def install_skills_for_targets(
     skill_names: Optional[List[str]] = None,
     *,
     dry_run: bool = False,
+    project_root: Optional[Path] = None,
 ) -> List[InstallResult]:
     """Install bundled skills for selected targets."""
     source_root = bundled_skills_root()
@@ -226,9 +301,10 @@ def install_skills_for_targets(
             )
         ]
     for target in targets:
-        target_paths = TARGET_PATHS[target]
+        target_paths = target_paths_for(target)
         destination = _expand_target_path(
-            target_paths.project_skills_path if scope == "project" else target_paths.user_skills_path
+            target_paths.project_skills_path if scope == "project" else target_paths.user_skills_path,
+            project_root=project_root,
         )
         if not dry_run:
             destination.mkdir(parents=True, exist_ok=True)
@@ -263,31 +339,24 @@ def install_mcp_for_targets(
     targets: List[str],
     scope: InstallScope,
     server_name: str = "metagit",
+    *,
+    project_root: Optional[Path] = None,
 ) -> List[InstallResult]:
     """Install/update MCP server configuration for selected targets."""
     results: List[InstallResult] = []
     for target in targets:
-        target_paths = TARGET_PATHS[target]
+        target_paths = target_paths_for(target)
         config_path = _expand_target_path(
-            target_paths.project_mcp_path if scope == "project" else target_paths.user_mcp_path
+            target_paths.project_mcp_path if scope == "project" else target_paths.user_mcp_path,
+            project_root=project_root,
         )
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-        config_data = _read_json_with_comments(config_path)
-        if not isinstance(config_data, dict):
-            config_data = {}
         root_key = target_paths.project_mcp_root_key if scope == "project" else target_paths.user_mcp_root_key
-        mcp_servers = config_data.get(root_key)
-        if not isinstance(mcp_servers, dict):
-            mcp_servers = {}
-        mcp_servers[server_name] = {
-            "command": "uvx",
-            "args": ["metagit-cli", "mcp", "serve"],
-        }
-        config_data[root_key] = mcp_servers
-        config_path.write_text(
-            json.dumps(config_data, indent=2, sort_keys=False) + "\n",
-            encoding="utf-8",
-        )
+        entry = build_mcp_server_entry(target)
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        if target_paths.mcp_config_format == "yaml":
+            _upsert_yaml_mcp_server(config_path, root_key, server_name, entry)
+        else:
+            _upsert_json_mcp_server(config_path, root_key, server_name, entry)
         results.append(
             InstallResult(
                 target=target,
@@ -299,6 +368,57 @@ def install_mcp_for_targets(
             )
         )
     return results
+
+
+def _upsert_json_mcp_server(
+    config_path: Path,
+    root_key: str,
+    server_name: str,
+    entry: Dict[str, object],
+) -> None:
+    """Merge an MCP server entry into a JSON/JSONC config file."""
+    config_data = _read_json_with_comments(config_path)
+    if not isinstance(config_data, dict):
+        config_data = {}
+    mcp_servers = config_data.get(root_key)
+    if not isinstance(mcp_servers, dict):
+        mcp_servers = {}
+    mcp_servers[server_name] = entry
+    config_data[root_key] = mcp_servers
+    config_path.write_text(
+        json.dumps(config_data, indent=2, sort_keys=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _upsert_yaml_mcp_server(
+    config_path: Path,
+    root_key: str,
+    server_name: str,
+    entry: Dict[str, object],
+) -> None:
+    """Merge an MCP server entry into a YAML config file (Hermes ``config.yaml``)."""
+    yaml = YAML(typ="rt")
+    yaml.default_flow_style = False
+    yaml.preserve_quotes = True
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    document: object = {}
+    if config_path.exists():
+        raw = config_path.read_text(encoding="utf-8")
+        if raw.strip():
+            loaded = yaml.load(StringIO(raw))
+            if loaded is not None:
+                document = loaded
+    if not isinstance(document, dict):
+        document = {}
+    mcp_servers = document.get(root_key)
+    if not isinstance(mcp_servers, dict):
+        mcp_servers = {}
+    mcp_servers[server_name] = entry
+    document[root_key] = mcp_servers
+    buffer = StringIO()
+    yaml.dump(document, buffer)
+    config_path.write_text(buffer.getvalue(), encoding="utf-8")
 
 
 def _read_json_with_comments(path: Path) -> Dict[str, object]:
@@ -313,6 +433,40 @@ def _read_json_with_comments(path: Path) -> Dict[str, object]:
     return json.loads(no_block_comments)
 
 
-def _expand_target_path(path_value: str) -> Path:
+def _find_git_root(start: Optional[Path] = None) -> Optional[Path]:
+    """Walk parents from ``start`` (default cwd) looking for a ``.git`` entry."""
+    current = (start or Path.cwd()).resolve()
+    for candidate in [current, *current.parents]:
+        if (candidate / ".git").exists():
+            return candidate
+    return None
+
+
+def resolve_project_install_root(start: Optional[Path] = None) -> Path:
+    """
+    Resolve the base directory for ``--scope project`` installs.
+
+    Prefers the nearest git repository root; falls back to ``cwd`` when not
+    inside a git work tree (callers that ``chdir`` into a target repo keep
+    cwd-relative behavior when they omit ``project_root``).
+    """
+    git_root = _find_git_root(start)
+    return git_root if git_root is not None else (start or Path.cwd()).resolve()
+
+
+def _expand_target_path(
+    path_value: str,
+    *,
+    project_root: Optional[Path] = None,
+) -> Path:
+    """
+    Expand a target path for install/autodetect.
+
+    Absolute and ``~``-prefixed paths stay as-is. Relative (project-scope) paths
+    resolve against ``project_root`` when provided, otherwise ``cwd``.
+    """
     expanded = Path(os.path.expanduser(path_value))
-    return expanded if expanded.is_absolute() else Path.cwd() / expanded
+    if expanded.is_absolute():
+        return expanded
+    base = project_root.expanduser().resolve() if project_root is not None else Path.cwd()
+    return base / expanded

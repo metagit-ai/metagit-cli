@@ -15,6 +15,7 @@ from metagit.core.skills import (
     SUPPORTED_TARGETS,
     install_skills_for_targets,
     list_bundled_skills,
+    resolve_project_install_root,
     resolve_skill_names,
     resolve_targets,
     skill_markdown,
@@ -121,7 +122,7 @@ def skills_surface(
     type=click.Choice(["project", "user"]),
     default="user",
     show_default=True,
-    help="Install to local project config or user-global location.",
+    help="Install to the git repository root (project) or user-global location.",
 )
 @click.option(
     "--target",
@@ -160,11 +161,13 @@ def skills_install(
 ) -> None:
     """Install bundled skills into supported agent targets."""
     logger = ctx.obj["logger"]
+    project_root = resolve_project_install_root() if scope == "project" else None
     selected_targets = resolve_targets(
         mode="skills",
         scope=scope,
         enable_targets=list(targets),
         disable_targets=list(disable_targets),
+        project_root=project_root,
     )
     if not selected_targets:
         logger.warning("No targets selected. Use --target to choose targets explicitly.")
@@ -181,6 +184,7 @@ def skills_install(
         scope=scope,
         skill_names=selected_skills if skills else None,
         dry_run=dry_run,
+        project_root=project_root,
     )
     for result in results:
         line = f"[{result.target}] {result.details} -> {result.path}"

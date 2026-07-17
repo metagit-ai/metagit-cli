@@ -55,6 +55,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [project-cli-resolution.md](project-cli-resolution.md) | Fixing or extending `metagit project list/select` when app-config default ≠ manifest projects |
 | [repo-promote-local-to-git.md](repo-promote-local-to-git.md) | Migrating a path-based workspace repo entry to a git-managed clone (`project repo promote`) |
 | [rewrite-campaign-workspace.md](rewrite-campaign-workspace.md) | Reference-implementation rewrite coordinator (source + target repos, campaign, parity registry) |
+| [skills-install-project-scope.md](skills-install-project-scope.md) | Fixing `skills`/`mcp` `--scope project` so installs use the git repo root from nested cwds |
 | [semantic-graph-service.md](semantic-graph-service.md) | Implementing or extending RFC-0010 semantic graph models, JSON store, service queries, and events |
 | [github-gh-auth.md](github-gh-auth.md) | Creating PRs or running `gh` when `GH_TOKEN`/`GITHUB_TOKEN` cause 401 errors |
 | [run-graphify-analysis.md](run-graphify-analysis.md) | Running `graphify` on the repo or a focused subtree and turning the result into usable graph/report outputs |

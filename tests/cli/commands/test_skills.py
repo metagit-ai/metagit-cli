@@ -77,6 +77,33 @@ def test_skills_install_dry_run_does_not_write_files() -> None:
         assert not Path(".opencode/skills").exists()
 
 
+def test_skills_install_project_scope_from_subdirectory(tmp_path, monkeypatch) -> None:
+    """Project scope must land at the git root, not a nested cwd."""
+    runner = CliRunner()
+    repo = tmp_path / "repo"
+    nested = repo / "pkg"
+    nested.mkdir(parents=True)
+    (repo / ".git").mkdir()
+    monkeypatch.chdir(nested)
+    result = runner.invoke(
+        cli,
+        [
+            "skills",
+            "install",
+            "--scope",
+            "project",
+            "--target",
+            "opencode",
+            "--skill",
+            "metagit-projects",
+            "--dry-run",
+        ],
+    )
+    assert result.exit_code == 0
+    assert str(repo / ".opencode" / "skills") in result.output.replace("\n", "")
+    assert str(nested / ".opencode") not in result.output.replace("\n", "")
+
+
 def test_skills_install_unknown_skill_fails() -> None:
     runner = CliRunner()
     result = runner.invoke(

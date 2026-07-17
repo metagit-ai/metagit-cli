@@ -11,6 +11,7 @@ from metagit.core.mcp.runtime import MetagitMcpRuntime
 from metagit.core.skills import (
     SUPPORTED_TARGETS,
     install_mcp_for_targets,
+    resolve_project_install_root,
     resolve_targets,
 )
 
@@ -49,7 +50,7 @@ def serve(ctx: click.Context, root: Optional[str], status_once: bool) -> None:
     type=click.Choice(["project", "user"]),
     default="user",
     show_default=True,
-    help="Install to local project config or user-global location.",
+    help="Install to the git repository root (project) or user-global location.",
 )
 @click.option(
     "--target",
@@ -81,11 +82,13 @@ def install(
 ) -> None:
     """Install metagit MCP server entry into supported agent configs."""
     logger = ctx.obj["logger"] if ctx.obj else None
+    project_root = resolve_project_install_root() if scope == "project" else None
     selected_targets = resolve_targets(
         mode="mcp",
         scope=scope,
         enable_targets=list(targets),
         disable_targets=list(disable_targets),
+        project_root=project_root,
     )
     if not selected_targets:
         if logger:
@@ -93,7 +96,12 @@ def install(
         else:
             click.echo("No targets selected. Use --target to choose targets explicitly.")
         return
-    results = install_mcp_for_targets(targets=selected_targets, scope=scope, server_name=server_name)
+    results = install_mcp_for_targets(
+        targets=selected_targets,
+        scope=scope,
+        server_name=server_name,
+        project_root=project_root,
+    )
     for result in results:
         if logger:
             logger.success(f"[{result.target}] {result.details} -> {result.path}")
