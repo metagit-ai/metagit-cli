@@ -16,6 +16,7 @@ from metagit.cli.config_patch_ops import (
     resolve_operations,
 )
 from metagit.cli.json_output import emit_json
+from metagit.core.agent.profile_service import AgentProfileService
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import (
@@ -161,33 +162,34 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None) ->
     """Validate metagit configuration"""
     logger = ctx.obj["logger"]
     target_path = config_path or ctx.obj["config_path"]
+    # Loading is the only step whose failures are "failed to load"; the validation
+    # blocks below abort with their own reasons and must not be reworded by that handler.
     try:
         config_manager = MetagitConfigManager(config_path=target_path)
         result = config_manager.load_config()
         if isinstance(result, Exception):
             raise result
-        from metagit.core.agent.profile_service import AgentProfileService
-
         definition_root = Path(resolve_definition_root(target_path))
         profile_issues = AgentProfileService(
             config=result,
             definition_root=definition_root,
         ).list_validation_issues()
-        if profile_issues:
-            for issue in profile_issues:
-                location = issue.repo or issue.project or issue.scope
-                logger.error(f"agent_profile ({location}): {issue.message}")
-            ctx.abort()
         graph_issues = validate_graph_relationships(result)
-        if graph_issues:
-            for issue in graph_issues:
-                logger.error(issue)
-            ctx.abort()
-        logger.success(f"Configuration file {target_path} is valid")
     except Exception as e:
         logger.error(f"Failed to load metagit configuration file: {e}")
         logger.debug(f"Error: {e}")
         ctx.abort()
+        return
+
+    if profile_issues:
+        for issue in profile_issues:
+            location = issue.repo or issue.project or issue.scope
+            logger.error(f"agent_profile ({location}): {issue.message}")
+    for issue in graph_issues:
+        logger.error(issue)
+    if profile_issues or graph_issues:
+        ctx.abort()
+    logger.success(f"Configuration file {target_path} is valid")
 
 
 @config.command("providers")
