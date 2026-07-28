@@ -14,6 +14,7 @@
 - **`graph.relationships[]` are written with the `from:` alias and explicit `status:`/`provenance:`.** Manifests previously round-tripped the internal `from_endpoint:` key, which fails `schemas/metagit_config.schema.json`. Both spellings still load; re-saving a manifest normalizes it to `from:`.
 
 ### Fixed
+- **`iter_repo_files` gitignore precedence:** `.gitignore` rules are now evaluated in file order with last-match-wins, and a deeper directory's `.gitignore` overrides its ancestors' rules — matching `git check-ignore` instead of letting any ancestor `!` negation unconditionally beat a later deny pattern.
 - **`metagit config graph suggest --apply`:** applying to a manifest with no `graph:` section no longer writes a placeholder `example-value` relationship that made the following `metagit config validate` fail. Promotion now issues a single `set graph.relationships` carrying the complete list, rebuilt from the manifest on disk.
 - **`metagit config validate`:** graph and `agent_profile` rejections no longer print a misleading "Failed to load metagit configuration file:" line after the real reason.
 - **Terraform import scanning:** `iter_repo_files` filters on `suffix` before running gitignore checks and caches each directory's ancestor rule chain, removing a large regression on repos with many non-matching files. `files_skipped_gitignore` / `files_skipped_scaffold` now count only suffix-matching files.

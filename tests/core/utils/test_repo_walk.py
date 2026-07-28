@@ -67,6 +67,42 @@ def test_iter_repo_files_honors_gitignore_negation(tmp_path: Path) -> None:
     assert stats.files_skipped_gitignore == 1
 
 
+def test_iter_repo_files_honors_gitignore_last_match_wins_within_file(
+    tmp_path: Path,
+) -> None:
+    """A later deny pattern re-excludes a file an earlier '!' re-included (git parity)."""
+    root = tmp_path / "repo"
+    root.mkdir(parents=True)
+    (root / ".gitignore").write_text("!keep.tf\n*.tf\n", encoding="utf-8")
+    (root / "keep.tf").write_text("x", encoding="utf-8")
+
+    files, _stats = iter_repo_files(root, suffix=".tf")
+    rels = {str(p.relative_to(root)) for p in files}
+    assert rels == set()
+
+
+def test_iter_repo_files_honors_gitignore_deeper_directory_overrides_ancestor(
+    tmp_path: Path,
+) -> None:
+    """A deeper .gitignore's deny overrides an ancestor's negation (git parity).
+
+    Root allows ``keep.tf`` back via ``!keep.tf``, but ``child/.gitignore`` denies
+    all ``*.tf`` files again. Verified against ``git check-ignore``: the deeper
+    rule, evaluated later, wins and ``child/keep.tf`` is ignored even though a
+    same-named file at the root would not be.
+    """
+    root = tmp_path / "repo"
+    (root / "child").mkdir(parents=True)
+    (root / ".gitignore").write_text("!keep.tf\n", encoding="utf-8")
+    (root / "child" / ".gitignore").write_text("*.tf\n", encoding="utf-8")
+    (root / "keep.tf").write_text("x", encoding="utf-8")
+    (root / "child" / "keep.tf").write_text("x", encoding="utf-8")
+
+    files, _stats = iter_repo_files(root, suffix=".tf")
+    rels = {str(p.relative_to(root)) for p in files}
+    assert rels == {"keep.tf"}
+
+
 def test_iter_repo_files_counts_only_suffix_matches_as_skipped(tmp_path: Path) -> None:
     """Ignore counters describe suffix-matching files, not the whole tree."""
     root = tmp_path / "repo"

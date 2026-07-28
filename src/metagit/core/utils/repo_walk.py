@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
+import fnmatch
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
-from metagit.core.utils.files import parse_gitignore, should_ignore_path
 from metagit.core.utils.scaffold_paths import (
     SCAFFOLD_PATH_SEGMENTS,
     path_has_scaffold_segment,
@@ -40,31 +40,70 @@ def sum_scan_stats(stats_by_repo: Mapping[str, Mapping[str, int]]) -> dict[str, 
 
 @dataclass
 class _DirRules:
-    """Ignore rules owned by a single directory, matched relative to it."""
+    """Ignore rules owned by a single directory, matched relative to it.
+
+    ``rules`` preserves ``.gitignore`` line order (pattern, is_negation) so that
+    last-match-wins semantics can be evaluated the same way ``git check-ignore``
+    does.
+    """
 
     base: Path
-    deny: set[str] = field(default_factory=set)
-    allow: set[str] = field(default_factory=set)
+    rules: tuple[tuple[str, bool], ...] = ()
 
     def __bool__(self) -> bool:
-        return bool(self.deny or self.allow)
+        return bool(self.rules)
+
+
+def _parse_gitignore_ordered(path: Path) -> tuple[tuple[str, bool], ...]:
+    """Parse a .gitignore file into ``(pattern, is_negation)`` pairs, in file order."""
+    if not path.exists():
+        return ()
+
+    rules: list[tuple[str, bool]] = []
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            for raw_line in handle:
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                is_negation = line.startswith("!")
+                pattern = (line[1:] if is_negation else line).rstrip("/")
+                if pattern:
+                    rules.append((pattern, is_negation))
+    except OSError:
+        return ()
+
+    return tuple(rules)
 
 
 def _dir_rules(directory: Path) -> _DirRules:
-    """Split a directory's .gitignore into deny patterns and ``!`` negations."""
-    patterns = parse_gitignore(directory / ".gitignore")
-    return _DirRules(
-        base=directory,
-        deny={item for item in patterns if not item.startswith("!")},
-        allow={item[1:] for item in patterns if item.startswith("!") and len(item) > 1},
-    )
+    """Load a directory's own .gitignore rules, preserving declaration order."""
+    return _DirRules(base=directory, rules=_parse_gitignore_ordered(directory / ".gitignore"))
+
+
+def _matches_pattern(target: Path, pattern: str, base: Path) -> bool:
+    """Match a single gitignore-style pattern against a path relative to ``base``."""
+    try:
+        relative_str = str(target.relative_to(base))
+    except ValueError:
+        relative_str = target.name
+    return fnmatch.fnmatch(relative_str, pattern) or fnmatch.fnmatch(target.name, pattern)
 
 
 def _is_ignored(target: Path, chain: tuple[_DirRules, ...]) -> bool:
-    """Return True when a deny pattern matches and no ``!`` negation re-includes it."""
-    if not any(rules.deny and should_ignore_path(target, rules.deny, rules.base) for rules in chain):
-        return False
-    return not any(rules.allow and should_ignore_path(target, rules.allow, rules.base) for rules in chain)
+    """Return True when the last matching rule across the ancestor chain denies target.
+
+    Rules are evaluated in order: ancestor directories before their descendants,
+    and within each ``.gitignore`` in file order. The last matching rule decides
+    the outcome, so a deeper directory's rules naturally override an ancestor's
+    because they are evaluated later — matching ``git check-ignore``.
+    """
+    ignored = False
+    for rules in chain:
+        for pattern, is_negation in rules.rules:
+            if _matches_pattern(target, pattern, rules.base):
+                ignored = not is_negation
+    return ignored
 
 
 def iter_repo_files(

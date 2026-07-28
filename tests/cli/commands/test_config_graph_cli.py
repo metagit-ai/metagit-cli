@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -94,17 +96,30 @@ def _workspace_manifest(tmp_path: Path) -> tuple[Path, Path]:
 
 
 def test_config_validate_rejects_graph_relationship_without_id(tmp_path: Path) -> None:
+    """Run in a real subprocess, not CliRunner.
+
+    UnifiedLogger's console sink uses loguru ``enqueue=True`` (a background
+    thread). Under CliRunner the process never exits, so nothing guarantees the
+    queued "missing required 'id'" record has been flushed to the captured
+    stream before the test asserts on it, making the assertion order-dependent
+    within the file. A real subprocess does not have that race: the interpreter
+    only exits once loguru's non-daemon enqueue thread has drained its queue.
+    """
     manifest = tmp_path / ".metagit.yml"
     manifest.write_text(
         "name: demo\nkind: umbrella\nworkspace:\n  projects:\n    - name: p\n      repos: []\n"
         "graph:\n  relationships:\n    - from:\n        project: p\n      to:\n        project: p\n",
         encoding="utf-8",
     )
-    runner = CliRunner()
-    result = runner.invoke(cli, ["config", "validate", "-c", str(manifest)])
+    result = subprocess.run(
+        [sys.executable, "-m", "metagit.cli.main", "config", "validate", "-c", str(manifest)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
-    assert result.exit_code != 0
-    combined = result.output + (result.stderr or "")
+    assert result.returncode != 0
+    combined = result.stdout + result.stderr
     assert "missing required 'id'" in combined
     assert "Failed to load" not in combined
 
