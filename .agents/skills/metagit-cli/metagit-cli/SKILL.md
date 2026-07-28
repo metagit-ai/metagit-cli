@@ -17,7 +17,7 @@ export METAGIT_AGENT_MODE=true
 Global flags (most commands):
 
 - `-c path/to/metagit.config.yaml` — app config (default `metagit.config.yaml`)
-- Workspace manifest: `--definition` / `-c` on catalog commands (default `.metagit.yml`)
+- Workspace manifest: `-c` on `config` / `workspace` catalog commands, `--definition` on the coordination families (`branch`, `lease`, `worktree`, `claim`, `task`, `semantic`, `merge`, `schedule`, `aos`) — default `.metagit.yml` either way
 
 ---
 

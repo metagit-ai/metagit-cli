@@ -108,7 +108,7 @@ Each relationship carries a lifecycle `status` (`active`, `deprecated`, `propose
 - Hand-authored edges default to `status: active`, `provenance: manual`.
 - Retire an edge by setting `status: deprecated` rather than deleting it — deprecated edges are excluded from `stale_manual` reporting and skipped by downstream tooling that only wants live edges.
 
-`config graph suggest` reports `stale_manual[]`: active manual relationships with no supporting inferred edge found during the current scan. This is **report-only** — agents and operators should confirm before editing or removing a flagged edge (the scan may simply be missing a clone, a scoped `--workspace-root`, or a dependency type).
+`config graph suggest` reports `stale_manual[]`: active manual relationships with no supporting inferred edge found during the current scan. Support is matched on the edge's **endpoints**, so an inferred edge of a different relationship type between the same two endpoints still counts as support. This is **report-only** — agents and operators should confirm before editing or removing a flagged edge (the scan may simply be missing a clone, a scoped `--workspace-root`, or a dependency type).
 
 ### Discover and suggest relationships (agent automation)
 

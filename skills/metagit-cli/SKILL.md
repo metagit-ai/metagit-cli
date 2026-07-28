@@ -25,6 +25,7 @@ Global flags (most commands):
 
 - `metagit -c path/to/metagit.config.yaml` — **appconfig** only (default `metagit.config.yaml`)
 - Workspace manifest: `-c .metagit.yml` on `metagit config …`, `metagit workspace …`, and leaf `config graph suggest|export -c …`
+- Workspace manifest on the coordination families (`branch`, `lease`, `worktree`, `claim`, `task`, `semantic`, `merge`, `schedule`, `aos`): `--definition .metagit.yml` — these commands expose **no `-c`**
 - `--workspace-root` on graph suggest — checkout root used to **scan** inferred deps (default: appconfig `workspace.path`); not the manifest path
 
 ---

@@ -61,7 +61,7 @@ MCP: `metagit_suggest_graph_relationships`
 
 Review `candidates[]` for `confidence`, `evidence`, and `source_edge_type`. Skip low-confidence edges unless the operator approves.
 
-Also review `stale_manual[]` — active manual relationships with no supporting inferred edge under the current scan (report-only; do not edit/remove without operator confirmation). Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.
+Also review `stale_manual[]` — active manual relationships with no supporting inferred edge under the current scan, matched on endpoints so a differing relationship type still counts as support (report-only; do not edit/remove without operator confirmation). Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.
 
 ### 3. Preview and apply
 
