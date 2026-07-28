@@ -94,9 +94,21 @@ graph:
       label: API stack depends on shared modules
       tags:
         layer: platform
+      status: active
+      provenance: manual
 ```
 
 These edges are merged into cross-project dependency maps (`type: manual`) and available via `MetagitConfig.graph_export_payload()` for GitNexus-style exports. Request dependency type `manual` when calling `metagit_cross_project_dependencies` to focus on manifest-declared edges.
+
+### Lifecycle: `status` and `provenance`
+
+Each relationship carries a lifecycle `status` (`active`, `deprecated`, `proposed`) and a `provenance` (`manual`, `promoted`, `imported`):
+
+- Edges promoted via `config graph suggest --apply` are written with `status: active`, `provenance: promoted`.
+- Hand-authored edges default to `status: active`, `provenance: manual`.
+- Retire an edge by setting `status: deprecated` rather than deleting it — deprecated edges are excluded from `stale_manual` reporting and skipped by downstream tooling that only wants live edges.
+
+`config graph suggest` reports `stale_manual[]`: active manual relationships with no supporting inferred edge found during the current scan. Support is matched on the edge's **endpoints**, so an inferred edge of a different relationship type between the same two endpoints still counts as support. This is **report-only** — agents and operators should confirm before editing or removing a flagged edge (the scan may simply be missing a clone, a scoped `--workspace-root`, or a dependency type).
 
 ### Discover and suggest relationships (agent automation)
 
@@ -114,6 +126,13 @@ metagit config graph suggest -c .metagit.yml --json
 metagit config graph suggest -c .metagit.yml --min-confidence high --apply
 metagit prompt workspace -c .metagit.yml -k graph-maintain --text-only
 ```
+
+### CLI flags
+
+- `metagit config graph suggest|export -c .metagit.yml` — path to the **manifest** (leaf or `metagit config -c … graph …`).
+- `--workspace-root` — checkout root used to **scan** inferred deps. Default: appconfig `workspace.path` resolved against the **manifest directory** (so `-c /other/umbrella/.metagit.yml` homes scans under that umbrella, not the caller cwd).
+- Global `metagit -c metagit.config.yaml` configures **appconfig**, not `.metagit.yml`.
+- Prefer `metagit config graph suggest -c .metagit.yml --verbose` when debugging empty candidates. Suggest JSON includes `workspace_root` for agents.
 
 MCP: `metagit_suggest_graph_relationships`, `metagit_apply_graph_relationships`. Bundled skill: `metagit-graph-maintain`.
 

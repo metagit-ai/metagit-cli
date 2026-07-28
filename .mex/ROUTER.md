@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-07-17
+last_updated: 2026-07-28
 ---
 
 # Session Bootstrap
@@ -27,6 +27,7 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **Durable graph suggest UX (2026-07-28, `feat/durable-graph-suggest-ux`):** leaf `--config-path/-c` on `metagit config graph suggest|export`; `suggest --verbose` human summary + `scan_stats`; shared ignore-aware `metagit.core.utils.repo_walk.iter_repo_files()` (always-on scaffold denylist + nested git-scoped `.gitignore`) wired into `ImportHintScanner` terraform scanning; `GraphRelationship.status`/`provenance` lifecycle fields with `graph_validation.validate_graph_relationships()` (required `id`, endpoint checks) enforced by `config validate` and `suggest --apply`; report-only `GraphSuggestResult.stale_manual[]` (endpoint-matched); docs/skills/prompts updated for flag semantics and lifecycle. Design `docs/superpowers/specs/2026-07-28-durable-graph-suggest-design.md`; plan `docs/superpowers/plans/2026-07-28-durable-graph-suggest.md`. **Review fixes (`.superpowers/sdd/branch-fix-report.md`):** apply writes one `set graph.relationships` and validates the patched document via `ConfigPatchService.draft()` (no more `example-value` placeholder breaking `config validate`); `config validate` no longer relabels aborts as load failures; walker filters on suffix before ignore checks with cached ancestor chains and honors `!` negations; `scan_stats` de-duplicated by repo path; graph edges written as `from:` with explicit `status`/`provenance`.
 - **Hermes install targeting (2026-07-17):** `HERMES_HOME` (default `~/.hermes`) for skills; MCP merges into `$HERMES_HOME/config.yaml` `mcp_servers` via installed `metagit` binary + `METAGIT_AGENT_MODE`; MCP stdio speaks NDJSON (fixes initialize handshake hang with standard clients); design `docs/superpowers/specs/2026-07-17-hermes-install-target-fix-design.md`.
 - **Skills/MCP `--scope project` root (2026-07-17):** CLI project-scope installs resolve against the nearest git repository root via `resolve_project_install_root()` so nested cwds do not create `src/.../.cursor/skills`; library callers still pass explicit `project_root` or rely on cwd after `chdir`.
 - **Derived projects + skills surface (2026-07-14):** in-manifest surgical `workspace.projects[]` via `metagit project derived create|refresh|include|exclude` and MCP `metagit_project_derived_*`; layered `metagit skills surface` / `metagit_skills_surface`; docs `derived-projects.md` / `skills-surface.md`; example `examples/derived-workspace/`; design `docs/superpowers/specs/2026-07-14-derived-projects-skills-inventory-design.md`.

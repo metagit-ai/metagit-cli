@@ -968,6 +968,28 @@
           "description": "Extensible payload for GitNexus or other graph ingestors",
           "title": "Metadata",
           "type": "object"
+        },
+        "status": {
+          "default": "active",
+          "description": "Lifecycle state of this relationship",
+          "enum": [
+            "active",
+            "deprecated",
+            "proposed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "provenance": {
+          "default": "manual",
+          "description": "Origin of this relationship (hand-authored, promoted from a suggestion, or imported)",
+          "enum": [
+            "manual",
+            "promoted",
+            "imported"
+          ],
+          "title": "Provenance",
+          "type": "string"
         }
       },
       "required": [

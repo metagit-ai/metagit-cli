@@ -139,6 +139,28 @@ class ConfigPatchService:
             validation_errors=validation_errors,
         )
 
+    def draft(
+        self,
+        target: ConfigTarget,
+        config_path: str,
+        operations: list[ConfigOperation],
+    ) -> tuple[BaseModel, list[dict[str, str]]] | Exception:
+        """Apply operations in memory and return the patched model with its errors.
+
+        Callers that need to inspect exactly what ``patch(save=True)`` would write
+        should validate this model rather than a hand-built prospective config.
+        """
+        resolved = str(Path(config_path).resolve())
+        if target == "metagit":
+            loaded = self._load_metagit(resolved)
+            model_class = MetagitConfig
+        else:
+            loaded = self._load_appconfig(resolved)
+            model_class = AppConfig
+        if isinstance(loaded, Exception):
+            return loaded
+        return self._schema.apply_operations(loaded, model_class, operations)
+
     def patch(
         self,
         target: ConfigTarget,

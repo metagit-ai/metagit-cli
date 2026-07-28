@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
+from metagit.core.utils.repo_walk import RepoWalkStats, iter_repo_files
+
 _PATH_DEP_PATTERN = re.compile(r"(?:file:|path:)\s*['\"]?([^'\"\s]+)['\"]?", re.IGNORECASE)
 _GO_REPLACE_PATTERN = re.compile(r"^\s*replace\s+[^\s]+\s+=>\s+(.+)$", re.MULTILINE)
 _TERRAFORM_MODULE_PATTERN = re.compile(r'source\s*=\s*"([^"]+)"', re.IGNORECASE)
@@ -16,12 +18,16 @@ _TERRAFORM_MODULE_PATTERN = re.compile(r'source\s*=\s*"([^"]+)"', re.IGNORECASE)
 class ImportHintScanner:
     """Detect cross-repo references from common manifest files."""
 
+    def __init__(self) -> None:
+        self.last_walk_stats: RepoWalkStats | None = None
+
     def scan_repo(
         self,
         repo_path: str,
         path_to_repo_id: dict[str, str],
     ) -> list[dict[str, Any]]:
         """Return import edges from one repo to other workspace repos."""
+        self.last_walk_stats = None
         root = Path(repo_path).expanduser().resolve()
         if not root.is_dir():
             return []
@@ -176,7 +182,9 @@ class ImportHintScanner:
     ) -> list[dict[str, Any]]:
         """Scan terraform files for module sources pointing at sibling repos."""
         hints: list[dict[str, Any]] = []
-        for tf_file in list(root.rglob("*.tf"))[:40]:
+        files, stats = iter_repo_files(root, suffix=".tf", max_files=40)
+        self.last_walk_stats = stats
+        for tf_file in files:
             if not tf_file.is_file():
                 continue
             try:

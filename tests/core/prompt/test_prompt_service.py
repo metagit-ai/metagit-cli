@@ -52,6 +52,8 @@ def test_emit_graph_discover_workspace() -> None:
     assert result.ok
     assert "graph discovery report" in result.text.lower()
     assert "do not apply" in result.text.lower()
+    assert "-c` selects the manifest" in result.text
+    assert "`--workspace-root` selects the checkout scan root" in result.text
 
 
 def test_emit_graph_maintain_workspace() -> None:
@@ -65,6 +67,8 @@ def test_emit_graph_maintain_workspace() -> None:
     )
     assert result.ok
     assert "graph suggest" in result.text.lower()
+    assert "-c` selects the manifest" in result.text
+    assert "`--workspace-root` selects the checkout scan root" in result.text
 
 
 def test_graph_discover_workspace_scope_only() -> None:

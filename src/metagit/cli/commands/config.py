@@ -16,13 +16,18 @@ from metagit.cli.config_patch_ops import (
     resolve_operations,
 )
 from metagit.cli.json_output import emit_json
+from metagit.core.agent.profile_service import AgentProfileService
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
-from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
+from metagit.core.config.graph_suggest import (
+    GraphRelationshipSuggestService,
+    GraphSuggestResult,
+)
+from metagit.core.config.graph_validation import validate_graph_relationships
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
-from metagit.core.workspace.root_resolver import resolve_definition_root
+from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_workspace_root
 
 
 @click.group(name="config", invoke_without_command=True)
@@ -157,28 +162,34 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None) ->
     """Validate metagit configuration"""
     logger = ctx.obj["logger"]
     target_path = config_path or ctx.obj["config_path"]
+    # Loading is the only step whose failures are "failed to load"; the validation
+    # blocks below abort with their own reasons and must not be reworded by that handler.
     try:
         config_manager = MetagitConfigManager(config_path=target_path)
         result = config_manager.load_config()
         if isinstance(result, Exception):
             raise result
-        from metagit.core.agent.profile_service import AgentProfileService
-
         definition_root = Path(resolve_definition_root(target_path))
         profile_issues = AgentProfileService(
             config=result,
             definition_root=definition_root,
         ).list_validation_issues()
-        if profile_issues:
-            for issue in profile_issues:
-                location = issue.repo or issue.project or issue.scope
-                logger.error(f"agent_profile ({location}): {issue.message}")
-            ctx.abort()
-        logger.success(f"Configuration file {target_path} is valid")
+        graph_issues = validate_graph_relationships(result)
     except Exception as e:
         logger.error(f"Failed to load metagit configuration file: {e}")
         logger.debug(f"Error: {e}")
         ctx.abort()
+        return
+
+    if profile_issues:
+        for issue in profile_issues:
+            location = issue.repo or issue.project or issue.scope
+            logger.error(f"agent_profile ({location}): {issue.message}")
+    for issue in graph_issues:
+        logger.error(issue)
+    if profile_issues or graph_issues:
+        ctx.abort()
+    logger.success(f"Configuration file {target_path} is valid")
 
 
 @config.command("providers")
@@ -643,9 +654,15 @@ def config_graph(ctx: click.Context) -> None:
 
 @config_graph.command("export")
 @click.option(
+    "--config-path",
+    "-c",
+    default=None,
+    help="Path to the metagit configuration file (overrides the config group's leaf path)",
+)
+@click.option(
     "--workspace-root",
     default=None,
-    help="Workspace root (default: appconfig workspace.path)",
+    help="Workspace root (default: appconfig workspace.path resolved against the manifest directory)",
 )
 @click.option(
     "--gitnexus-repo",
@@ -685,6 +702,7 @@ def config_graph(ctx: click.Context) -> None:
 @click.pass_context
 def config_graph_export(
     ctx: click.Context,
+    config_path: str | None,
     workspace_root: str | None,
     gitnexus_repo: str | None,
     include_structure: bool,
@@ -701,18 +719,24 @@ def config_graph_export(
     matching gitnexus_cypher MCP tool_calls. Run schema statements once per target index.
     """
     logger = ctx.obj["logger"]
-    config_path = ctx.obj["config_path"]
+    if config_path:
+        ctx.obj["config_path"] = config_path
+    target_config_path = ctx.obj["config_path"]
     app_config = ctx.obj.get("config")
     if app_config is None:
         logger.error("App config missing from CLI context")
         ctx.abort()
 
     try:
-        manager = MetagitConfigManager(config_path=config_path)
+        manager = MetagitConfigManager(config_path=target_config_path)
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
             raise loaded
-        root = workspace_root or str(Path(app_config.workspace.path).expanduser().resolve())
+        root = resolve_workspace_root(
+            target_config_path,
+            app_config.workspace.path,
+            override=workspace_root,
+        )
         result = GraphCypherExportService().export(
             loaded,
             root,
@@ -753,9 +777,15 @@ def config_graph_export(
 
 @config_graph.command("suggest")
 @click.option(
+    "--config-path",
+    "-c",
+    default=None,
+    help="Path to the metagit configuration file (overrides the config group's leaf path)",
+)
+@click.option(
     "--workspace-root",
     default=None,
-    help="Workspace root (default: appconfig workspace.path)",
+    help="Workspace root (default: appconfig workspace.path resolved against the manifest directory)",
 )
 @click.option(
     "--dependency-type",
@@ -808,6 +838,12 @@ def config_graph_export(
 )
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON")
 @click.option(
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Log a detailed summary (roots, candidate counts, prune stats) even with --json",
+)
+@click.option(
     "--output",
     "output_path",
     default=None,
@@ -816,6 +852,7 @@ def config_graph_export(
 @click.pass_context
 def config_graph_suggest(
     ctx: click.Context,
+    config_path: str | None,
     workspace_root: str | None,
     dependency_types: tuple[str, ...],
     depth: int,
@@ -825,6 +862,7 @@ def config_graph_suggest(
     do_apply: bool,
     dry_run: bool,
     as_json: bool,
+    verbose: bool,
     output_path: str | None,
 ) -> None:
     """
@@ -834,18 +872,24 @@ def config_graph_suggest(
     Use --apply to persist selected candidates (all by default, or --candidate-id).
     """
     logger = ctx.obj["logger"]
-    config_path = ctx.obj["config_path"]
+    if config_path:
+        ctx.obj["config_path"] = config_path
+    target_config_path = ctx.obj["config_path"]
     app_config = ctx.obj.get("config")
     if app_config is None:
         logger.error("App config missing from CLI context")
         ctx.abort()
 
     try:
-        manager = MetagitConfigManager(config_path=config_path)
+        manager = MetagitConfigManager(config_path=target_config_path)
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
             raise loaded
-        root = workspace_root or str(Path(app_config.workspace.path).expanduser().resolve())
+        root = resolve_workspace_root(
+            target_config_path,
+            app_config.workspace.path,
+            override=workspace_root,
+        )
         service = GraphRelationshipSuggestService()
         selected_types = list(dependency_types) if dependency_types else None
         selected_ids = list(candidate_ids) if candidate_ids else None
@@ -853,7 +897,7 @@ def config_graph_suggest(
             result = service.suggest_and_apply(
                 loaded,
                 root,
-                config_path,
+                target_config_path,
                 dependency_types=selected_types,
                 depth=depth,
                 min_confidence=min_confidence,
@@ -882,10 +926,17 @@ def config_graph_suggest(
     if output_path:
         Path(output_path).write_text(rendered, encoding="utf-8")
         logger.success(f"Graph suggest result written to {output_path}")
+        if verbose:
+            _emit_graph_suggest_summary(logger, result, config_path=target_config_path, workspace_root=root)
     elif as_json:
         emit_json(payload)
+        if verbose:
+            _emit_graph_suggest_summary(logger, result, config_path=target_config_path, workspace_root=root)
     else:
-        click.echo(rendered)
+        for line in _graph_suggest_summary_lines(result, config_path=target_config_path, workspace_root=root):
+            click.echo(line)
+        for line in _graph_suggest_candidate_lines(result):
+            click.echo(line)
 
     if result.warnings:
         for warning in result.warnings:
@@ -893,6 +944,66 @@ def config_graph_suggest(
     if result.apply and result.apply.validation_errors:
         for item in result.apply.validation_errors:
             logger.error(str(item))
+
+
+def _graph_suggest_summary_lines(
+    result: GraphSuggestResult,
+    *,
+    config_path: str,
+    workspace_root: str,
+) -> list[str]:
+    """Build human-readable summary lines (roots, candidate counts, prune stats)."""
+    confidence_counts: dict[str, int] = {}
+    for candidate in result.candidates:
+        confidence_counts[candidate.confidence] = confidence_counts.get(candidate.confidence, 0) + 1
+    counts_summary = ", ".join(f"{level}={count}" for level, count in sorted(confidence_counts.items())) or "none"
+
+    lines = [
+        "Graph suggest summary",
+        f"  manifest: {config_path}",
+        f"  workspace root: {workspace_root}",
+        f"  candidates: {len(result.candidates)} ({counts_summary})",
+        f"  already_manual: {len(result.already_manual)}",
+        f"  stale_manual: {len(result.stale_manual)}",
+        f"  skipped_low_confidence: {result.skipped_low_confidence}",
+    ]
+    if result.scan_stats:
+        stats_summary = ", ".join(f"{key}={value}" for key, value in sorted(result.scan_stats.items()))
+        lines.append(f"  scan_stats: {stats_summary}")
+    if result.apply is not None:
+        lines.append(
+            f"  apply: ok={result.apply.ok} saved={result.apply.saved} applied_count={result.apply.applied_count}"
+        )
+    return lines
+
+
+def _graph_suggest_candidate_lines(
+    result: GraphSuggestResult,
+    *,
+    limit: int = 10,
+) -> list[str]:
+    """Build a short candidate listing: id, from->to, type, confidence."""
+    lines: list[str] = []
+    for candidate in result.candidates[:limit]:
+        from_label = candidate.from_endpoint.repo or candidate.from_endpoint.project
+        to_label = candidate.to_endpoint.repo or candidate.to_endpoint.project
+        lines.append(f"  - {candidate.id}: {from_label} -> {to_label} ({candidate.type}, {candidate.confidence})")
+    remaining = len(result.candidates) - limit
+    if remaining > 0:
+        lines.append(f"  ... and {remaining} more")
+    return lines
+
+
+def _emit_graph_suggest_summary(
+    logger: object,
+    result: GraphSuggestResult,
+    *,
+    config_path: str,
+    workspace_root: str,
+) -> None:
+    """Log the graph suggest summary via the logger (stderr), used with --json --verbose."""
+    for line in _graph_suggest_summary_lines(result, config_path=config_path, workspace_root=workspace_root):
+        logger.info(line)
 
 
 @config.command("schema")

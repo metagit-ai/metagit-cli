@@ -9,7 +9,7 @@ import enum
 import types
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Union, get_args, get_origin
+from typing import Any, Literal, Union, get_args, get_origin
 
 import yaml
 from pydantic import BaseModel
@@ -194,6 +194,10 @@ class ConfigExampleGenerator:
         nested = self._nested_model_for_annotation(annotation)
         if nested is not None:
             return self._sample_model(nested)
+
+        if origin is Literal:
+            literal_args = get_args(annotation)
+            return literal_args[0] if literal_args else self._scalar_for_name(field_name)
 
         if isinstance(annotation, type) and issubclass(annotation, enum.Enum):
             return next(iter(annotation)).value

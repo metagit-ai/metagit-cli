@@ -273,7 +273,13 @@ Emit a **Graph Discovery Report** with:
 - `open_questions[]` — unresolved gaps
 - `operations_preview` — merged patch ops JSON (from suggest + manual), **not applied**
 
-Hand off apply/validate/ingest to `metagit prompt workspace -k graph-maintain` after operator sign-off.""",
+Hand off apply/validate/ingest to `metagit prompt workspace -k graph-maintain` after operator sign-off.
+
+## Lifecycle
+- Promoted edges should have status=active and provenance=promoted.
+- Review suggest `stale_manual[]` (report-only): confirm with operator before editing/removing.
+- Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.
+- `-c` selects the manifest; `--workspace-root` selects the checkout scan root.""",
         "graph-maintain": """Maintain durable cross-repo edges in `.metagit.yml` `graph.relationships` and sync them into GitNexus.
 
 ## 1. Discover inferred dependencies
@@ -300,7 +306,13 @@ Hand off apply/validate/ingest to `metagit prompt workspace -k graph-maintain` a
 - `metagit gitnexus group sync -c <definition> --json` or MCP `metagit_gitnexus_group_sync` after repos are indexed.
 - Then `npx gitnexus group query <group> "…"` / `group impact` for cross-repo symbol analysis.
 
-Safety: do not promote edges without evidence; do not overwrite existing manual relationships; fetch operator approval before `--apply`.""",
+Safety: do not promote edges without evidence; do not overwrite existing manual relationships; fetch operator approval before `--apply`.
+
+## Lifecycle
+- Promoted edges should have status=active and provenance=promoted.
+- Review suggest `stale_manual[]` (report-only): confirm with operator before editing/removing.
+- Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.
+- `-c` selects the manifest; `--workspace-root` selects the checkout scan root.""",
     }
     if kind == "instructions":
         return ""

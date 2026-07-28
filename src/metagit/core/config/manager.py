@@ -10,6 +10,7 @@ from typing import Optional, Union
 
 from git import Repo
 
+from metagit.core.config.graph_models import graph_relationships_payload
 from metagit.core.config.models import MetagitConfig
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.utils.yaml_class import yaml
@@ -165,11 +166,17 @@ class MetagitConfigManager:
                 save_path.write_text(formatted, encoding="utf-8")
                 return None
 
-            with open(save_path, "w", encoding="utf-8") as f:
-                yaml.dump(
-                    config_to_save.model_dump(exclude_none=True, exclude_defaults=True),
-                    f,
+            payload = config_to_save.model_dump(
+                exclude_none=True,
+                exclude_defaults=True,
+                by_alias=True,
+            )
+            if config_to_save.graph is not None and config_to_save.graph.relationships:
+                payload.setdefault("graph", {})["relationships"] = graph_relationships_payload(
+                    config_to_save.graph.relationships
                 )
+            with open(save_path, "w", encoding="utf-8") as f:
+                yaml.dump(payload, f)
             return None
         except Exception as e:
             return e

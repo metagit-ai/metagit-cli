@@ -60,3 +60,5 @@ class CrossProjectDependencyResult(BaseModel):
     nodes: list[DependencyNode] = Field(default_factory=list)
     edges: list[DependencyEdge] = Field(default_factory=list)
     impact_summary: ImpactSummary = Field(default_factory=ImpactSummary)
+    import_scan_stats: Optional[dict[str, int]] = None
+    import_scan_stats_by_repo: Optional[dict[str, dict[str, int]]] = None

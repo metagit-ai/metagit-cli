@@ -15,6 +15,7 @@ from metagit.core.mcp.services.gitnexus_registry import GitNexusRegistryAdapter
 from metagit.core.mcp.services.import_hint_scanner import ImportHintScanner
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.project.models import ProjectPath
+from metagit.core.utils.repo_walk import sum_scan_stats
 from metagit.core.workspace.dependency_models import (
     CrossProjectDependencyResult,
     DependencyEdge,
@@ -44,6 +45,8 @@ class CrossProjectDependencyService:
         self._index = index_service or WorkspaceIndexService()
         self._registry = registry or GitNexusRegistryAdapter()
         self._import_scanner = import_scanner or ImportHintScanner()
+        self._last_import_scan_stats: Optional[dict[str, int]] = None
+        self._last_import_scan_stats_by_repo: Optional[dict[str, dict[str, int]]] = None
 
     def map_dependencies(
         self,
@@ -73,6 +76,8 @@ class CrossProjectDependencyService:
         selected_types = self._normalize_types(dependency_types=dependency_types)
         rows = self._index.build_index(config=config, workspace_root=workspace_root)
         nodes, path_to_id, _id_to_node = self._build_nodes(config=config, rows=rows)
+        self._last_import_scan_stats = None
+        self._last_import_scan_stats_by_repo = None
         edges = self._collect_edges(
             config=config,
             rows=rows,
@@ -116,6 +121,8 @@ class CrossProjectDependencyService:
             nodes=filtered_nodes,
             edges=filtered_edges,
             impact_summary=impact,
+            import_scan_stats=self._last_import_scan_stats,
+            import_scan_stats_by_repo=self._last_import_scan_stats_by_repo,
         )
 
     def _normalize_types(self, dependency_types: Optional[list[str]]) -> set[str]:
@@ -378,6 +385,7 @@ class CrossProjectDependencyService:
     ) -> list[DependencyEdge]:
         """Edges from manifest import hints between repositories."""
         edges: list[DependencyEdge] = []
+        stats_by_repo: dict[str, dict[str, int]] = {}
         for row in rows:
             if not row.get("exists"):
                 continue
@@ -387,6 +395,15 @@ class CrossProjectDependencyService:
                 repo_path=repo_path,
                 path_to_repo_id=path_to_id,
             )
+            walk_stats = self._import_scanner.last_walk_stats
+            if walk_stats is not None:
+                # Keyed by repo path so callers that invoke map_dependencies once per
+                # project can merge scans without counting a repo more than once.
+                stats_by_repo[repo_path] = {
+                    "dirs_pruned": walk_stats.dirs_pruned,
+                    "files_skipped_gitignore": walk_stats.files_skipped_gitignore,
+                    "files_yielded": walk_stats.files_yielded,
+                }
             for hint in hints:
                 to_id = hint.get("to_id")
                 if not to_id or to_id == from_id:
@@ -399,6 +416,9 @@ class CrossProjectDependencyService:
                         evidence=list(hint.get("evidence") or []),
                     )
                 )
+        if stats_by_repo:
+            self._last_import_scan_stats_by_repo = stats_by_repo
+            self._last_import_scan_stats = sum_scan_stats(stats_by_repo)
         return edges
 
     def _filter_by_depth(

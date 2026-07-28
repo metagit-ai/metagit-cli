@@ -20,6 +20,8 @@ Use this skill whenever GitNexus context is stale or missing for target reposito
 
 ## Manual workspace graph (`.metagit.yml` → Cypher)
 
+**CLI flags:** script `-c` and `metagit config graph export -c .metagit.yml` point at the **manifest**. `--workspace-root` is only the scan root for suggest; global `metagit -c` is **appconfig**.
+
 Promote inferred edges first (see `metagit-graph-maintain` skill), then ingest:
 
 ```bash

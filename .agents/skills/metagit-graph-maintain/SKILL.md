@@ -40,6 +40,8 @@ After sign-off, continue with the maintenance workflow below (or `metagit prompt
 
 ## Maintenance workflow
 
+**CLI flags:** `-c` on `config graph suggest|export` is the **manifest** path (trailing leaf `-c` is valid). `--workspace-root` is the checkout root used to scan inferred deps. Global `metagit -c` configures **appconfig**, not `.metagit.yml`.
+
 ### 1. Bootstrap context
 
 ```bash
@@ -58,6 +60,8 @@ metagit config graph suggest -c .metagit.yml --min-confidence high --json
 MCP: `metagit_suggest_graph_relationships`
 
 Review `candidates[]` for `confidence`, `evidence`, and `source_edge_type`. Skip low-confidence edges unless the operator approves.
+
+Also review `stale_manual[]` — active manual relationships with no supporting inferred edge under the current scan, matched on endpoints so a differing relationship type still counts as support (report-only; do not edit/remove without operator confirmation). Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.
 
 ### 3. Preview and apply
 
@@ -116,6 +120,12 @@ Return:
 - validation result after apply
 - GitNexus ingest status (schema + statement count)
 - repos still stale/missing in GitNexus registry
+
+## Lifecycle
+
+- Promoted edges are written with `status: active`, `provenance: promoted`.
+- Deprecate retired edges by setting `status: deprecated` rather than deleting them.
+- `stale_manual[]` from suggest is report-only: confirm with the operator before editing or removing the flagged edges.
 
 ## Safety
 

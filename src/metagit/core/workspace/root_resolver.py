@@ -32,6 +32,26 @@ def resolve_sync_root(definition_root: str, workspace_path: str) -> str:
     return str((Path(definition_root) / path).resolve())
 
 
+def resolve_workspace_root(
+    definition_path: str,
+    workspace_path: str,
+    *,
+    override: str | None = None,
+) -> str:
+    """
+    Return the sync/scan root for a targeted ``.metagit.yml``.
+
+    When ``override`` is set, it wins (absolute or relative to the process cwd).
+    Otherwise relative ``workspace_path`` values resolve against the directory
+    containing the manifest so ``-c /other/umbrella/.metagit.yml`` homes file
+    operations under that umbrella rather than the caller's cwd.
+    """
+    if override:
+        return str(Path(override).expanduser().resolve())
+    definition_root = resolve_definition_root(definition_path)
+    return resolve_sync_root(definition_root, workspace_path)
+
+
 def resolve_session_root(definition_root: str) -> str:
     """Return root for ``.metagit/sessions`` and ``.metagit/approvals`` state."""
     return str(Path(definition_root).expanduser().resolve())
@@ -107,5 +127,6 @@ __all__ = [
     "resolve_definition_root",
     "resolve_session_root",
     "resolve_sync_root",
+    "resolve_workspace_root",
     "resolve_worktrees_root",
 ]
