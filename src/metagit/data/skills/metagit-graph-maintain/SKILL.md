@@ -40,6 +40,8 @@ After sign-off, continue with the maintenance workflow below (or `metagit prompt
 
 ## Maintenance workflow
 
+**CLI flags:** `-c` on `config graph suggest|export` is the **manifest** path (trailing leaf `-c` is valid). `--workspace-root` is the checkout root used to scan inferred deps. Global `metagit -c` configures **appconfig**, not `.metagit.yml`.
+
 ### 1. Bootstrap context
 
 ```bash

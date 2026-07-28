@@ -25,8 +25,9 @@ Repo-root agent docs: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob
 
 Global flags (most commands):
 
-- `-c path/to/metagit.config.yaml` — app config (default `metagit.config.yaml`)
-- Workspace manifest: `--definition` / `-c` on catalog commands (default `.metagit.yml`)
+- `metagit -c path/to/metagit.config.yaml` — **appconfig** only (default `metagit.config.yaml`)
+- Workspace manifest: `-c .metagit.yml` on `metagit config …`, `metagit workspace …`, and leaf `config graph suggest|export -c …`
+- `--workspace-root` on graph suggest — checkout root used to **scan** inferred deps (default: appconfig `workspace.path`); not the manifest path
 
 ---
 
@@ -118,6 +119,8 @@ metagit config providers --show
 3. If repos changed on disk: `metagit project sync` or `metagit project sync --hydrate`
 
 ### Graph relationships (suggest, apply, export)
+
+Trailing `-c .metagit.yml` on `config graph suggest|export` is valid (leaf manifest flag). Do not substitute `--workspace-root` for `-c`.
 
 | Task | Command |
 |------|---------|
