@@ -278,7 +278,8 @@ Hand off apply/validate/ingest to `metagit prompt workspace -k graph-maintain` a
 ## Lifecycle
 - Promoted edges should have status=active and provenance=promoted.
 - Review suggest `stale_manual[]` (report-only): confirm with operator before editing/removing.
-- Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.""",
+- Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.
+- `-c` selects the manifest; `--workspace-root` selects the checkout scan root.""",
         "graph-maintain": """Maintain durable cross-repo edges in `.metagit.yml` `graph.relationships` and sync them into GitNexus.
 
 ## 1. Discover inferred dependencies

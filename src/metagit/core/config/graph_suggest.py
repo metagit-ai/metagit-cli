@@ -397,7 +397,7 @@ class GraphRelationshipSuggestService:
         """Report active manual relationships with no supporting inferred edge in this scan."""
         stale: list[str] = []
         for rel, signature, from_id, to_id in manual_records:
-            if rel.status == "deprecated":
+            if rel.status != "active" or rel.provenance != "manual":
                 continue
             if signature in inferred_signatures:
                 continue

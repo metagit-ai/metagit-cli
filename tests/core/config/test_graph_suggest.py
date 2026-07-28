@@ -170,6 +170,61 @@ def test_suggest_reports_stale_manual_edges(tmp_path: Path) -> None:
     assert any("orphan-edge" in item for item in result.stale_manual)
 
 
+def test_suggest_does_not_flag_proposed_manual_edges_as_stale(tmp_path: Path) -> None:
+    config, workspace_root = _workspace_fixture(tmp_path, shared_url=False, with_import=False)
+    config.graph = {
+        "relationships": [
+            {
+                "id": "draft-edge",
+                "from": {"project": "alpha", "repo": "api"},
+                "to": {"project": "beta", "repo": "worker"},
+                "type": "depends_on",
+                "status": "proposed",
+                "provenance": "manual",
+            }
+        ]
+    }
+    registry = MagicMock()
+    registry.summarize_for_paths.return_value = {}
+    service = GraphRelationshipSuggestService(
+        dependency_service=CrossProjectDependencyService(registry=registry)
+    )
+    result = service.suggest(config, workspace_root, min_confidence="all", include_declared=True)
+    assert not any("draft-edge" in item for item in result.stale_manual)
+
+
+def test_suggest_does_not_flag_promoted_or_imported_edges_as_stale(tmp_path: Path) -> None:
+    config, workspace_root = _workspace_fixture(tmp_path, shared_url=False, with_import=False)
+    config.graph = {
+        "relationships": [
+            {
+                "id": "promoted-edge",
+                "from": {"project": "alpha", "repo": "api"},
+                "to": {"project": "beta", "repo": "worker"},
+                "type": "depends_on",
+                "status": "active",
+                "provenance": "promoted",
+            },
+            {
+                "id": "imported-edge",
+                "from": {"project": "alpha", "repo": "api"},
+                "to": {"project": "beta", "repo": "worker"},
+                "type": "consumes",
+                "status": "active",
+                "provenance": "imported",
+            },
+        ]
+    }
+    registry = MagicMock()
+    registry.summarize_for_paths.return_value = {}
+    service = GraphRelationshipSuggestService(
+        dependency_service=CrossProjectDependencyService(registry=registry)
+    )
+    result = service.suggest(config, workspace_root, min_confidence="all", include_declared=True)
+    assert not any("promoted-edge" in item for item in result.stale_manual)
+    assert not any("imported-edge" in item for item in result.stale_manual)
+
+
 def test_suggest_does_not_flag_deprecated_manual_edges_as_stale(tmp_path: Path) -> None:
     config, workspace_root = _workspace_fixture(tmp_path, shared_url=False, with_import=False)
     config.graph = {
