@@ -17,8 +17,10 @@ from metagit.core.config.yaml_display import (
     should_use_literal_block,
 )
 from metagit.core.config.yaml_order import (
+    field_source_keys,
     find_source_key,
     nested_model,
+    output_key,
 )
 
 _YAML_WIDTH = 88
@@ -92,12 +94,18 @@ def _merge_map(
 ) -> CommentedMap:
     merged = CommentedMap()
     consumed_source_keys: set[str] = set()
-    model_field_names = set(model.model_fields.keys())
+    model_field_names = {
+        key
+        for field_name, field_info in model.model_fields.items()
+        for key in field_source_keys(field_name, field_info)
+    }
 
     for field_name, field_info in model.model_fields.items():
-        if field_name not in payload:
+        payload_key = find_source_key(payload, field_name, field_info)
+        if payload_key is None:
             continue
-        payload_value = payload[field_name]
+        payload_value = payload[payload_key]
+        target_key = output_key(field_name, field_info)
         source_key = find_source_key(source, field_name, field_info)
         if source_key is not None:
             consumed_source_keys.add(source_key)
@@ -106,7 +114,7 @@ def _merge_map(
 
         if child_model is not None and isinstance(payload_value, dict):
             source_map = source_value if isinstance(source_value, CommentedMap) else CommentedMap()
-            merged[field_name] = _merge_map(
+            merged[target_key] = _merge_map(
                 source_map,
                 payload_value,
                 child_model,
@@ -114,17 +122,17 @@ def _merge_map(
             )
         elif child_model is not None and isinstance(payload_value, list):
             source_list = source_value if isinstance(source_value, CommentedSeq) else CommentedSeq()
-            merged[field_name] = _merge_list(
+            merged[target_key] = _merge_list(
                 source_list,
                 payload_value,
                 child_model,
                 strip_absent_model_fields=strip_absent_model_fields,
             )
         else:
-            merged[field_name] = _normalize_value(payload_value)
+            merged[target_key] = _normalize_value(payload_value)
 
         if source_key is not None:
-            _copy_map_key_comment(source, merged, source_key, field_name)
+            _copy_map_key_comment(source, merged, source_key, target_key)
 
     for key, value in source.items():
         if key in consumed_source_keys or key in merged:

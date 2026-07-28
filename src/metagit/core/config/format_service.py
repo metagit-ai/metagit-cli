@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.config.documentation_models import compact_documentation_list
+from metagit.core.config.graph_models import graph_relationships_payload
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.config.payload_compact import prepare_format_payload
@@ -96,9 +97,15 @@ class ConfigFormatService:
             exclude_none=True,
             exclude_defaults=not include_defaults,
             mode="json",
+            by_alias=True,
         )
         if config.documentation:
             payload["documentation"] = compact_documentation_list(config.documentation)
+        if config.graph is not None and config.graph.relationships:
+            payload.setdefault("graph", {})["relationships"] = graph_relationships_payload(
+                config.graph.relationships,
+                include_defaults=include_defaults,
+            )
         payload = prepare_format_payload(
             payload,
             MetagitConfig,

@@ -79,6 +79,30 @@ class GraphRelationship(BaseModel):
         return str(value).strip().lower()
 
 
+def graph_relationships_payload(
+    relationships: list[GraphRelationship],
+    *,
+    include_defaults: bool = False,
+) -> list[dict[str, Any]]:
+    """Serialize relationships for YAML output using the ``from`` alias.
+
+    ``status`` and ``provenance`` are always emitted so an edge's lifecycle stays
+    explicit on disk even when it matches the model default.
+    """
+    payload: list[dict[str, Any]] = []
+    for relationship in relationships:
+        item = relationship.model_dump(
+            mode="json",
+            by_alias=True,
+            exclude_none=True,
+            exclude_defaults=not include_defaults,
+        )
+        item["status"] = relationship.status
+        item["provenance"] = relationship.provenance
+        payload.append(item)
+    return payload
+
+
 class WorkspaceGraph(BaseModel):
     """Top-level manual graph data on a .metagit.yml manifest."""
 

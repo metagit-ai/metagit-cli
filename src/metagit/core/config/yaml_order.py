@@ -52,14 +52,13 @@ def order_payload(data: Any, model: type[BaseModel]) -> Any:
             continue
         consumed.update(key for key in _field_source_keys(field_name, field_info) if key in data)
         nested_model = _nested_model(field_info.annotation)
+        key = output_key(field_name, field_info)
         if isinstance(raw, list) and nested_model is not None:
-            ordered[field_name] = [
-                order_payload(item, nested_model) if isinstance(item, dict) else item for item in raw
-            ]
+            ordered[key] = [order_payload(item, nested_model) if isinstance(item, dict) else item for item in raw]
         elif nested_model is not None and isinstance(raw, dict):
-            ordered[field_name] = order_payload(raw, nested_model)
+            ordered[key] = order_payload(raw, nested_model)
         else:
-            ordered[field_name] = raw
+            ordered[key] = raw
 
     for key, value in data.items():
         if key not in consumed:
@@ -81,6 +80,18 @@ def _field_source_keys(field_name: str, field_info: FieldInfo) -> set[str]:
     if field_info.serialization_alias:
         keys.add(str(field_info.serialization_alias))
     return keys
+
+
+def field_source_keys(field_name: str, field_info: FieldInfo) -> set[str]:
+    """Return every key a model field may appear under (field name plus aliases)."""
+    return _field_source_keys(field_name, field_info)
+
+
+def output_key(field_name: str, field_info: FieldInfo) -> str:
+    """Return the key a model field must be written under (its serialization alias)."""
+    if field_info.serialization_alias:
+        return str(field_info.serialization_alias)
+    return field_name
 
 
 def find_source_key(

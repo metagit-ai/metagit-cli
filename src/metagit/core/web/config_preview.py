@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from metagit.core.appconfig.agent_mode import resolve_agent_mode
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.config.graph_models import graph_relationships_payload
 from metagit.core.config.models import MetagitConfig
 from metagit.core.config.yaml_display import dump_config_dict
 from metagit.core.web.schema_tree import SchemaTreeService
@@ -50,10 +51,18 @@ def render_metagit_yaml(
     style: PreviewStyle,
 ) -> str:
     """Serialize a metagit manifest for preview."""
-    if style == "minimal":
-        payload = config.model_dump(exclude_none=True, exclude_defaults=True, mode="json")
-    else:
-        payload = config.model_dump(exclude_none=True, mode="json")
+    include_defaults = style != "minimal"
+    payload = config.model_dump(
+        exclude_none=True,
+        exclude_defaults=not include_defaults,
+        mode="json",
+        by_alias=True,
+    )
+    if config.graph is not None and config.graph.relationships:
+        payload.setdefault("graph", {})["relationships"] = graph_relationships_payload(
+            config.graph.relationships,
+            include_defaults=include_defaults,
+        )
     return dump_config_dict(payload)
 
 
