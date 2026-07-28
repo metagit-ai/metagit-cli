@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.24.0] - 2026-07-28
+
+
+
 ### Added
 - **Manifest-homed workspace root:** when `-c` / `--config-path` targets a `.metagit.yml` outside the cwd, relative `workspace.path` resolves against that manifest’s directory (`resolve_workspace_root`) for `config graph suggest|export`, `workspace`, `project`, `prompt`, `skills`, and `gitnexus group sync`. JSON suggest output includes `workspace_root`.
 - **`metagit config graph suggest|export`:** accept a leaf `--config-path/-c` (overrides the `config` group's manifest path); `suggest` gains `--verbose` for a logger-emitted summary (roots, candidate counts, prune stats) even with `--json`. `GraphSuggestResult.scan_stats` aggregates `ImportHintScanner` walk stats (`dirs_pruned`, `files_skipped_gitignore`, `files_yielded`), de-duplicated by repo path so a workspace repo is counted once no matter how many projects are scanned.
@@ -20,7 +26,6 @@
 - **`metagit config validate`:** graph and `agent_profile` rejections no longer print a misleading "Failed to load metagit configuration file:" line after the real reason.
 - **Terraform import scanning:** `iter_repo_files` filters on `suffix` before running gitignore checks and caches each directory's ancestor rule chain, removing a large regression on repos with many non-matching files. `files_skipped_gitignore` / `files_skipped_scaffold` now count only suffix-matching files.
 - **`metagit config example`:** generate valid values for `Literal`-typed fields (e.g. `graph.relationships[].status`/`provenance`) instead of a placeholder string, so the generated exemplar validates against `MetagitConfig`.
-
 
 ## [0.23.3] - 2026-07-17
 
