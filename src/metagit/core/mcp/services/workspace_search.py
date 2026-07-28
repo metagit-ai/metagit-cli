@@ -11,40 +11,9 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Optional
 
-# Directory names that exclude a file when they appear as any path segment.
-_SCAFFOLD_PATH_SEGMENTS: frozenset[str] = frozenset(
-    {
-        ".git",
-        ".metagit",
-        ".venv",
-        "venv",
-        "node_modules",
-        "__pycache__",
-        ".tox",
-        ".pytest_cache",
-        ".mypy_cache",
-        ".ruff_cache",
-        "dist",
-        "build",
-        "out",
-        ".next",
-        ".nuxt",
-        ".svelte-kit",
-        "bower_components",
-        "vendor",
-        ".cache",
-        ".turbo",
-        ".parcel-cache",
-        "coverage",
-        "htmlcov",
-        ".eggs",
-        "site-packages",
-        "__pypackages__",
-        ".gradle",
-        "target",
-        ".yarn",
-        ".pnpm",
-    }
+from metagit.core.utils.scaffold_paths import (
+    SCAFFOLD_PATH_SEGMENTS,
+    path_has_scaffold_segment,
 )
 
 
@@ -508,9 +477,7 @@ class WorkspaceSearchService:
     @staticmethod
     def _path_has_scaffold_segment(file_path: str) -> bool:
         """True when any path component is local scaffolding (node_modules, .venv, …)."""
-        if not file_path.strip():
-            return False
-        return bool(_SCAFFOLD_PATH_SEGMENTS.intersection(Path(file_path).parts))
+        return path_has_scaffold_segment(file_path)
 
     def _iter_searchable_files(self, root: Path) -> Iterator[Path]:
         """Walk a repo tree, skipping scaffold directories."""
@@ -520,7 +487,7 @@ class WorkspaceSearchService:
             if rel_dir != "." and self._path_has_scaffold_segment(rel_dir):
                 dirnames.clear()
                 continue
-            dirnames[:] = [name for name in dirnames if name not in _SCAFFOLD_PATH_SEGMENTS]
+            dirnames[:] = [name for name in dirnames if name not in SCAFFOLD_PATH_SEGMENTS]
             for name in filenames:
                 file_path = current / name
                 rel_file = str(file_path.relative_to(root))
