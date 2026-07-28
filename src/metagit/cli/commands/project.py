@@ -3,7 +3,6 @@ Project subcommand
 """
 
 import sys
-from pathlib import Path
 from typing import Optional
 
 import click
@@ -32,7 +31,7 @@ from metagit.core.workspace.layout_resolver import (
 )
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace.models import WorkspaceProject
-from metagit.core.workspace.root_resolver import resolve_session_root
+from metagit.core.workspace.root_resolver import resolve_session_root, resolve_workspace_root
 
 
 @click.group(name="project", invoke_without_command=True)
@@ -113,7 +112,7 @@ def project_list(
     use_detail = bool(explicit_project) or show_detail
     if not use_detail:
         service = WorkspaceCatalogService()
-        workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+        workspace_root = resolve_workspace_root(config_path, app_config.workspace.path)
         result = service.list_workspace(
             local_config,
             config_path,
@@ -256,7 +255,7 @@ def project_rename(
     local_config: MetagitConfig = ctx.obj["local_config"]
     config_path: str = ctx.obj["config_path"]
     app_config: AppConfig = ctx.obj["config"]
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    workspace_root = resolve_workspace_root(config_path, app_config.workspace.path)
     dedupe = resolve_dedupe_for_layout(
         app_config.workspace.dedupe,
         local_config,

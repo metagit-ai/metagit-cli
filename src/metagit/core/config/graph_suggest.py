@@ -79,6 +79,7 @@ class GraphSuggestResult(BaseModel):
 
     ok: bool = True
     workspace_name: str = ""
+    workspace_root: str = ""
     candidates: list[SuggestedGraphRelationship] = Field(default_factory=list)
     already_manual: list[str] = Field(default_factory=list)
     stale_manual: list[str] = Field(default_factory=list)
@@ -256,6 +257,7 @@ class GraphRelationshipSuggestService:
         return GraphSuggestResult(
             ok=True,
             workspace_name=config.name or "workspace",
+            workspace_root=workspace_root,
             candidates=candidates,
             already_manual=sorted(already_manual),
             stale_manual=stale_manual,

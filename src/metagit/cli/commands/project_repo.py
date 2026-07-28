@@ -30,7 +30,7 @@ from metagit.core.workspace.dedupe_resolver import (
 )
 from metagit.core.workspace.layout_resolver import active_project_resolution_error
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
-from metagit.core.workspace.root_resolver import resolve_definition_root
+from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_workspace_root
 
 
 @click.group(name="repo")
@@ -117,9 +117,10 @@ def repo_list(ctx: click.Context, as_json: bool) -> None:
     project: str = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
     app_config: AppConfig = ctx.obj["config"]
+    config_path: str = ctx.obj["config_path"]
     if project == "local":
         raise click.UsageError("The local project is not supported for this command")
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    workspace_root = resolve_workspace_root(config_path, app_config.workspace.path)
     result = WorkspaceCatalogService().list_repos(
         local_config,
         workspace_root,
@@ -175,7 +176,7 @@ def repo_rename(
     local_config: MetagitConfig = ctx.obj["local_config"]
     config_path: str = ctx.obj["config_path"]
     app_config: AppConfig = ctx.obj["config"]
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    workspace_root = resolve_workspace_root(config_path, app_config.workspace.path)
     dedupe = resolve_dedupe_for_layout(
         app_config.workspace.dedupe,
         local_config,
@@ -218,7 +219,7 @@ def repo_move(
     local_config: MetagitConfig = ctx.obj["local_config"]
     config_path: str = ctx.obj["config_path"]
     app_config: AppConfig = ctx.obj["config"]
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    workspace_root = resolve_workspace_root(config_path, app_config.workspace.path)
     dedupe = resolve_dedupe_for_layout(
         app_config.workspace.dedupe,
         local_config,
@@ -443,7 +444,7 @@ def repo_promote(
         logger.warning(f"Failed to initialize ProjectManager: {exc}")
         ctx.abort()
 
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    workspace_root = resolve_workspace_root(config_path, app_config.workspace.path)
     result = RepoPromoteService().promote(
         local_config,
         config_path,
@@ -518,6 +519,7 @@ def repo_prune(
     project: str = ctx.obj["project"]
     app_config: AppConfig = ctx.obj["config"]
     local_config = ctx.obj["local_config"]
+    config_path: str = ctx.obj["config_path"]
 
     if project == "local":
         raise click.UsageError("The local project is not supported for this command")
@@ -537,7 +539,7 @@ def repo_prune(
         logger.warning(f"Failed to initialize ProjectManager: {exc}")
         ctx.abort()
 
-    workspace_root = Path(app_config.workspace.path).expanduser().resolve()
+    workspace_root = Path(resolve_workspace_root(config_path, app_config.workspace.path))
     project_sync_folder = (workspace_root / project).resolve()
     click.echo("Prune context:")
     click.echo(f"  workspace.path (sync root): {workspace_root}")

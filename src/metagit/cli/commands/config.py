@@ -27,7 +27,7 @@ from metagit.core.config.graph_validation import validate_graph_relationships
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
-from metagit.core.workspace.root_resolver import resolve_definition_root
+from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_workspace_root
 
 
 @click.group(name="config", invoke_without_command=True)
@@ -662,7 +662,7 @@ def config_graph(ctx: click.Context) -> None:
 @click.option(
     "--workspace-root",
     default=None,
-    help="Workspace root (default: appconfig workspace.path)",
+    help="Workspace root (default: appconfig workspace.path resolved against the manifest directory)",
 )
 @click.option(
     "--gitnexus-repo",
@@ -732,7 +732,11 @@ def config_graph_export(
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
             raise loaded
-        root = workspace_root or str(Path(app_config.workspace.path).expanduser().resolve())
+        root = resolve_workspace_root(
+            target_config_path,
+            app_config.workspace.path,
+            override=workspace_root,
+        )
         result = GraphCypherExportService().export(
             loaded,
             root,
@@ -781,7 +785,7 @@ def config_graph_export(
 @click.option(
     "--workspace-root",
     default=None,
-    help="Workspace root (default: appconfig workspace.path)",
+    help="Workspace root (default: appconfig workspace.path resolved against the manifest directory)",
 )
 @click.option(
     "--dependency-type",
@@ -881,7 +885,11 @@ def config_graph_suggest(
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
             raise loaded
-        root = workspace_root or str(Path(app_config.workspace.path).expanduser().resolve())
+        root = resolve_workspace_root(
+            target_config_path,
+            app_config.workspace.path,
+            override=workspace_root,
+        )
         service = GraphRelationshipSuggestService()
         selected_types = list(dependency_types) if dependency_types else None
         selected_ids = list(candidate_ids) if candidate_ids else None

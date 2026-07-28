@@ -3,7 +3,6 @@ Workspace subcommand
 """
 
 import sys
-from pathlib import Path
 
 import click
 
@@ -25,6 +24,7 @@ from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
 from metagit.core.workspace.layout_resolver import resolve_active_project_name
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
+from metagit.core.workspace.root_resolver import resolve_workspace_root
 
 _WORKSPACE_GREP_EPILOG = """
 Examples:
@@ -73,7 +73,7 @@ def _catalog_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str]:
     local_config: MetagitConfig = ctx.obj["local_config"]
     config_path: str = ctx.obj["config_path"]
     app_config: AppConfig = ctx.obj["config"]
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    workspace_root = resolve_workspace_root(config_path, app_config.workspace.path)
     return local_config, config_path, workspace_root
 
 

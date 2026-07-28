@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import click
 
 from metagit.cli.json_output import emit_json
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.gitnexus.group_sync import GitNexusGroupSyncService
+from metagit.core.workspace.root_resolver import resolve_workspace_root
 
 
 @click.group(name="gitnexus")
@@ -27,7 +27,7 @@ def gitnexus_group() -> None:
 @click.option(
     "--workspace-root",
     default=None,
-    help="Workspace sync root (default: appconfig workspace.path)",
+    help="Workspace sync root (default: appconfig workspace.path resolved against the manifest directory)",
 )
 @click.option(
     "--group-name",
@@ -100,7 +100,11 @@ def gitnexus_group_sync(
         loaded = manager.load_config()
         if isinstance(loaded, Exception):
             raise loaded
-        root = workspace_root or str(Path(app_config.workspace.path).expanduser().resolve())
+        root = resolve_workspace_root(
+            config_path,
+            app_config.workspace.path,
+            override=workspace_root,
+        )
         result = GitNexusGroupSyncService().sync_workspace(
             loaded,
             root,

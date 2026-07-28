@@ -3,7 +3,6 @@
 Skills command group for bundled skill management.
 """
 
-from pathlib import Path
 from typing import List, Optional
 
 import click
@@ -21,6 +20,7 @@ from metagit.core.skills import (
     skill_markdown,
 )
 from metagit.core.skills.surface_service import SkillSurfaceService
+from metagit.core.workspace.root_resolver import resolve_workspace_root
 
 
 @click.group(name="skills", invoke_without_command=True)
@@ -90,7 +90,7 @@ def skills_surface(
     if isinstance(local_config, Exception):
         logger.error(f"Failed to load metagit definition file: {local_config}")
         ctx.abort()
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    workspace_root = resolve_workspace_root(config, app_config.workspace.path)
     result = SkillSurfaceService().inventory(
         local_config,
         config,

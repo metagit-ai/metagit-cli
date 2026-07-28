@@ -5,8 +5,6 @@ Emit metagit prompts for workspace, project, and repo scopes.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import click
 
 from metagit.cli.json_output import emit_json
@@ -15,6 +13,7 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.prompt.catalog import kinds_for_scope
 from metagit.core.prompt.service import PromptService, PromptServiceError
+from metagit.core.workspace.root_resolver import resolve_workspace_root
 
 
 def _load_manifest(definition_path: str) -> MetagitConfig:
@@ -31,7 +30,7 @@ def _prompt_ctx(
 ) -> tuple[MetagitConfig, str, str, AppConfig]:
     app_config: AppConfig = ctx.obj["config"]
     config = _load_manifest(definition_path)
-    workspace_root = str(Path(app_config.workspace.path).expanduser().resolve())
+    workspace_root = resolve_workspace_root(definition_path, app_config.workspace.path)
     return config, definition_path, workspace_root, app_config
 
 

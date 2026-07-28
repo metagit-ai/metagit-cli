@@ -130,9 +130,9 @@ metagit prompt workspace -c .metagit.yml -k graph-maintain --text-only
 ### CLI flags
 
 - `metagit config graph suggest|export -c .metagit.yml` — path to the **manifest** (leaf or `metagit config -c … graph …`).
-- `--workspace-root` — checkout root used to **scan** inferred deps (default: appconfig `workspace.path`).
+- `--workspace-root` — checkout root used to **scan** inferred deps. Default: appconfig `workspace.path` resolved against the **manifest directory** (so `-c /other/umbrella/.metagit.yml` homes scans under that umbrella, not the caller cwd).
 - Global `metagit -c metagit.config.yaml` configures **appconfig**, not `.metagit.yml`.
-- Prefer `metagit config graph suggest -c .metagit.yml --verbose` when debugging empty candidates.
+- Prefer `metagit config graph suggest -c .metagit.yml --verbose` when debugging empty candidates. Suggest JSON includes `workspace_root` for agents.
 
 MCP: `metagit_suggest_graph_relationships`, `metagit_apply_graph_relationships`. Bundled skill: `metagit-graph-maintain`.
 

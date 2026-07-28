@@ -145,6 +145,34 @@ def test_config_validate_passes_after_graph_suggest_apply(tmp_path: Path) -> Non
     assert "example-value" not in manifest.read_text(encoding="utf-8")
 
 
+def test_graph_suggest_homes_workspace_root_to_manifest_dir(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """`-c` outside cwd must resolve relative workspace.path against the manifest dir."""
+    umbrella = tmp_path / "umbrella"
+    umbrella.mkdir()
+    sync = umbrella / ".metagit"
+    sync.mkdir()
+    manifest = umbrella / ".metagit.yml"
+    _minimal_manifest(manifest)
+
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["config", "graph", "suggest", "-c", str(manifest), "--json"],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["workspace_root"] == str(sync.resolve())
+    assert not payload["workspace_root"].startswith(str(elsewhere.resolve()))
+
+
 def test_graph_export_accepts_leaf_config_path(tmp_path: Path) -> None:
     manifest = tmp_path / ".metagit.yml"
     _minimal_manifest(manifest)
