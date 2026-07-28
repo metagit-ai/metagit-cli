@@ -44,6 +44,7 @@ class CrossProjectDependencyService:
         self._index = index_service or WorkspaceIndexService()
         self._registry = registry or GitNexusRegistryAdapter()
         self._import_scanner = import_scanner or ImportHintScanner()
+        self._last_import_scan_stats: Optional[dict[str, int]] = None
 
     def map_dependencies(
         self,
@@ -73,6 +74,7 @@ class CrossProjectDependencyService:
         selected_types = self._normalize_types(dependency_types=dependency_types)
         rows = self._index.build_index(config=config, workspace_root=workspace_root)
         nodes, path_to_id, _id_to_node = self._build_nodes(config=config, rows=rows)
+        self._last_import_scan_stats = None
         edges = self._collect_edges(
             config=config,
             rows=rows,
@@ -116,6 +118,7 @@ class CrossProjectDependencyService:
             nodes=filtered_nodes,
             edges=filtered_edges,
             impact_summary=impact,
+            import_scan_stats=self._last_import_scan_stats,
         )
 
     def _normalize_types(self, dependency_types: Optional[list[str]]) -> set[str]:
@@ -378,6 +381,7 @@ class CrossProjectDependencyService:
     ) -> list[DependencyEdge]:
         """Edges from manifest import hints between repositories."""
         edges: list[DependencyEdge] = []
+        stats_totals: dict[str, int] = {}
         for row in rows:
             if not row.get("exists"):
                 continue
@@ -387,6 +391,13 @@ class CrossProjectDependencyService:
                 repo_path=repo_path,
                 path_to_repo_id=path_to_id,
             )
+            walk_stats = self._import_scanner.last_walk_stats
+            if walk_stats is not None:
+                stats_totals["dirs_pruned"] = stats_totals.get("dirs_pruned", 0) + walk_stats.dirs_pruned
+                stats_totals["files_skipped_gitignore"] = (
+                    stats_totals.get("files_skipped_gitignore", 0) + walk_stats.files_skipped_gitignore
+                )
+                stats_totals["files_yielded"] = stats_totals.get("files_yielded", 0) + walk_stats.files_yielded
             for hint in hints:
                 to_id = hint.get("to_id")
                 if not to_id or to_id == from_id:
@@ -399,6 +410,8 @@ class CrossProjectDependencyService:
                         evidence=list(hint.get("evidence") or []),
                     )
                 )
+        if stats_totals:
+            self._last_import_scan_stats = stats_totals
         return edges
 
     def _filter_by_depth(

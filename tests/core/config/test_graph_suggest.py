@@ -120,6 +120,26 @@ def test_suggest_skips_existing_manual_relationships(tmp_path: Path) -> None:
     assert result.already_manual
 
 
+def test_suggest_aggregates_scan_stats_across_repos(tmp_path: Path) -> None:
+    config, workspace_root = _workspace_fixture(tmp_path)
+    registry = MagicMock()
+    registry.summarize_for_paths.return_value = {}
+    service = GraphRelationshipSuggestService(
+        dependency_service=CrossProjectDependencyService(registry=registry)
+    )
+
+    result = service.suggest(
+        config,
+        workspace_root,
+        min_confidence="medium",
+    )
+
+    assert result.ok is True
+    assert result.scan_stats is not None
+    assert set(result.scan_stats) <= {"dirs_pruned", "files_skipped_gitignore", "files_yielded"}
+    assert all(isinstance(value, int) for value in result.scan_stats.values())
+
+
 def test_suggest_and_apply_writes_manifest(tmp_path: Path) -> None:
     config, workspace_root = _workspace_fixture(tmp_path)
     manifest = tmp_path / ".metagit.yml"

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+### Added
+- **`metagit config graph suggest|export`:** accept a leaf `--config-path/-c` (overrides the `config` group's manifest path); `suggest` gains `--verbose` for a logger-emitted summary (roots, candidate counts, prune stats) even with `--json`. Default (non-JSON) output is now a human summary plus a short candidate list instead of a raw JSON dump. `GraphSuggestResult.scan_stats` aggregates `ImportHintScanner` walk stats (`dirs_pruned`, `files_skipped_gitignore`, `files_yielded`) across scanned repos.
 
 
 ## [0.23.3] - 2026-07-17

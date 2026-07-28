@@ -82,6 +82,7 @@ class GraphSuggestResult(BaseModel):
     operations: list[dict[str, Any]] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     apply: GraphSuggestApplyResult | None = None
+    scan_stats: dict[str, int] | None = None
 
 
 def node_id_to_endpoint(node_id: str) -> GraphEndpoint | None:
@@ -165,6 +166,7 @@ class GraphRelationshipSuggestService:
 
         allowed_edge_types = {_REQUEST_TO_EDGE_TYPE.get(item, item) for item in selected_types}
         merged_edges: dict[tuple[str, str, str], Any] = {}
+        scan_stats_totals: dict[str, int] = {}
         for project in config.workspace.projects:
             result = self._dependencies.map_dependencies(
                 config=config,
@@ -175,6 +177,8 @@ class GraphRelationshipSuggestService:
             )
             if not result.ok:
                 continue
+            for key, value in (result.import_scan_stats or {}).items():
+                scan_stats_totals[key] = scan_stats_totals.get(key, 0) + value
             for edge in result.edges:
                 if edge.type == "manual":
                     continue
@@ -244,6 +248,7 @@ class GraphRelationshipSuggestService:
             already_manual=sorted(already_manual),
             skipped_low_confidence=skipped_low_confidence,
             operations=operations,
+            scan_stats=scan_stats_totals or None,
         )
 
     def suggest_and_apply(
