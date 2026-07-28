@@ -83,6 +83,12 @@ graph:
       metadata:
         source: metagit-config-example
 ...
+      # Lifecycle state of this relationship
+      status: example-value
+...
+      # Origin of this relationship (hand-authored, promoted from a suggestion, or imported)
+      provenance: example-value
+...
   # Graph-level metadata for export pipelines
   metadata:
     source: metagit-config-example

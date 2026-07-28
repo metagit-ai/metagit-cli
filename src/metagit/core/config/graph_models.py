@@ -5,7 +5,7 @@ Manual workspace graph relationships for cross-repo knowledge graphs.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
 
@@ -61,6 +61,14 @@ class GraphRelationship(BaseModel):
     metadata: dict[str, Any] = Field(
         default_factory=dict,
         description="Extensible payload for GitNexus or other graph ingestors",
+    )
+    status: Literal["active", "deprecated", "proposed"] = Field(
+        default="active",
+        description="Lifecycle state of this relationship",
+    )
+    provenance: Literal["manual", "promoted", "imported"] = Field(
+        default="manual",
+        description="Origin of this relationship (hand-authored, promoted from a suggestion, or imported)",
     )
 
     @field_validator("type", mode="before")

@@ -22,6 +22,7 @@ from metagit.core.config.graph_suggest import (
     GraphRelationshipSuggestService,
     GraphSuggestResult,
 )
+from metagit.core.config.graph_validation import validate_graph_relationships
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
@@ -176,6 +177,11 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None) ->
             for issue in profile_issues:
                 location = issue.repo or issue.project or issue.scope
                 logger.error(f"agent_profile ({location}): {issue.message}")
+            ctx.abort()
+        graph_issues = validate_graph_relationships(result)
+        if graph_issues:
+            for issue in graph_issues:
+                logger.error(issue)
             ctx.abort()
         logger.success(f"Configuration file {target_path} is valid")
     except Exception as e:

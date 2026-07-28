@@ -8,8 +8,9 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from metagit.core.config.graph_models import GraphEndpoint, GraphRelationship
+from metagit.core.config.graph_models import GraphEndpoint, GraphRelationship, WorkspaceGraph
 from metagit.core.config.graph_resolver import resolve_graph_endpoint_id
+from metagit.core.config.graph_validation import validate_graph_relationships
 from metagit.core.config.models import MetagitConfig
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.mcp.services.cross_project_dependencies import (
@@ -283,6 +284,27 @@ class GraphRelationshipSuggestService:
             )
             return result
 
+        selected = self._filter_candidate_ids(
+            candidates=result.candidates,
+            candidate_ids=candidate_ids,
+        )
+        existing_relationships = config.graph.relationships if config.graph else []
+        new_relationships = [
+            GraphRelationship.model_validate(self._candidate_value(candidate)) for candidate in selected
+        ]
+        prospective_config = config.model_copy(
+            update={"graph": WorkspaceGraph(relationships=[*existing_relationships, *new_relationships])}
+        )
+        validation_issues = validate_graph_relationships(prospective_config)
+        if validation_issues:
+            result.apply = GraphSuggestApplyResult(
+                ok=False,
+                saved=False,
+                applied_count=0,
+                validation_errors=[{"message": issue} for issue in validation_issues],
+            )
+            return result
+
         operations = [
             ConfigOperation(
                 op=ConfigOpKind(item["op"]),
@@ -306,16 +328,10 @@ class GraphRelationshipSuggestService:
             )
             return result
 
-        selected_count = len(
-            self._filter_candidate_ids(
-                candidates=result.candidates,
-                candidate_ids=candidate_ids,
-            )
-        )
         result.apply = GraphSuggestApplyResult(
             ok=patch_result.ok,
             saved=patch_result.saved,
-            applied_count=selected_count,
+            applied_count=len(selected),
             validation_errors=patch_result.validation_errors,
         )
         return result
@@ -423,4 +439,6 @@ class GraphRelationshipSuggestService:
             description=candidate.description,
             tags=dict(candidate.tags),
             metadata=dict(candidate.metadata),
+            status="active",
+            provenance="promoted",
         ).model_dump(mode="json", by_alias=True)
