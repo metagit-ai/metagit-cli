@@ -58,6 +58,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [skills-install-project-scope.md](skills-install-project-scope.md) | Fixing `skills`/`mcp` `--scope project` so installs use the git repo root from nested cwds |
 | [semantic-graph-service.md](semantic-graph-service.md) | Implementing or extending RFC-0010 semantic graph models, JSON store, service queries, and events |
 | [github-gh-auth.md](github-gh-auth.md) | Creating PRs or running `gh` when `GH_TOKEN`/`GITHUB_TOKEN` cause 401 errors |
+| [graph-suggest-maintain.md](graph-suggest-maintain.md) | Maintaining `graph.relationships` — durable fields, validation, ignore-aware suggest scanning, stale review |
 | [run-graphify-analysis.md](run-graphify-analysis.md) | Running `graphify` on the repo or a focused subtree and turning the result into usable graph/report outputs |
 | [update-release-workflow.md](update-release-workflow.md) | Replacing or repairing GitHub release automation and tag-driven publish flow |
 | [validate-doc-links.md](validate-doc-links.md) | Adding or fixing links in README.md and docs/**/*.md; run `task docs:links` |
