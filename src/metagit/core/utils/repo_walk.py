@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from metagit.core.utils.files import parse_gitignore, should_ignore_path
@@ -16,10 +17,54 @@ from metagit.core.utils.scaffold_paths import (
 
 @dataclass
 class RepoWalkStats:
+    """Counters for one walk.
+
+    ``files_skipped_gitignore`` and ``files_skipped_scaffold`` only count files that
+    matched ``suffix``; non-matching files are discarded before any ignore checks run.
+    """
+
     dirs_pruned: int = 0
     files_skipped_gitignore: int = 0
     files_skipped_scaffold: int = 0
     files_yielded: int = 0
+
+
+def sum_scan_stats(stats_by_repo: Mapping[str, Mapping[str, int]]) -> dict[str, int]:
+    """Sum per-repo walk counters into workspace totals, one entry per repo path."""
+    totals: dict[str, int] = {}
+    for stats in stats_by_repo.values():
+        for key, value in stats.items():
+            totals[key] = totals.get(key, 0) + value
+    return totals
+
+
+@dataclass
+class _DirRules:
+    """Ignore rules owned by a single directory, matched relative to it."""
+
+    base: Path
+    deny: set[str] = field(default_factory=set)
+    allow: set[str] = field(default_factory=set)
+
+    def __bool__(self) -> bool:
+        return bool(self.deny or self.allow)
+
+
+def _dir_rules(directory: Path) -> _DirRules:
+    """Split a directory's .gitignore into deny patterns and ``!`` negations."""
+    patterns = parse_gitignore(directory / ".gitignore")
+    return _DirRules(
+        base=directory,
+        deny={item for item in patterns if not item.startswith("!")},
+        allow={item[1:] for item in patterns if item.startswith("!") and len(item) > 1},
+    )
+
+
+def _is_ignored(target: Path, chain: tuple[_DirRules, ...]) -> bool:
+    """Return True when a deny pattern matches and no ``!`` negation re-includes it."""
+    if not any(rules.deny and should_ignore_path(target, rules.deny, rules.base) for rules in chain):
+        return False
+    return not any(rules.allow and should_ignore_path(target, rules.allow, rules.base) for rules in chain)
 
 
 def iter_repo_files(
@@ -33,7 +78,8 @@ def iter_repo_files(
 
     Args:
         root: Repository root directory.
-        suffix: When set, only yield files whose names end with this suffix.
+        suffix: When set, only yield files whose names end with this suffix. Files that
+            do not match are skipped before ignore checks, so they cost nothing.
         max_files: Stop yielding after this many files (early exit).
 
     Returns:
@@ -43,64 +89,48 @@ def iter_repo_files(
     files: list[Path] = []
     # Each directory's own .gitignore patterns are kept separately (never merged
     # into a global set) so they can be matched relative to the directory that
-    # owns them and only applied to that directory's subtree.
-    dir_patterns: dict[Path, set[str]] = {root: parse_gitignore(root / ".gitignore")}
-
-    def _ancestors(current_dir: Path) -> list[Path]:
-        try:
-            rel_parts = current_dir.relative_to(root).parts
-        except ValueError:
-            rel_parts = ()
-        ancestor = root
-        chain = [root]
-        for part in rel_parts:
-            ancestor = ancestor / part
-            chain.append(ancestor)
-        return chain
-
-    def _is_ignored(target: Path, current_dir: Path) -> bool:
-        for ancestor in _ancestors(current_dir):
-            patterns = dir_patterns.get(ancestor)
-            if patterns and should_ignore_path(target, patterns, ancestor):
-                return True
-        return False
+    # owns them and only applied to that directory's subtree. The chain of
+    # rule-bearing ancestors is built once per directory as the walk descends,
+    # rather than rebuilt for every path that needs a check.
+    chains: dict[Path, tuple[_DirRules, ...]] = {}
 
     for dirpath, dirnames, filenames in os.walk(root, topdown=True, followlinks=False):
         current = Path(dirpath)
-        if current not in dir_patterns:
-            dir_patterns[current] = parse_gitignore(current / ".gitignore")
+        parent_chain = () if current == root else chains.get(current.parent, ())
+        own_rules = _dir_rules(current)
+        chain = (*parent_chain, own_rules) if own_rules else parent_chain
+        chains[current] = chain
 
         scaffold_pruned = [name for name in dirnames if name in SCAFFOLD_PATH_SEGMENTS]
         if scaffold_pruned:
             stats.dirs_pruned += len(scaffold_pruned)
         dirnames[:] = [name for name in dirnames if name not in SCAFFOLD_PATH_SEGMENTS]
 
-        ignored_dirs: list[str] = []
-        kept_dirnames: list[str] = []
-        for name in dirnames:
-            subdir = current / name
-            if _is_ignored(subdir, current):
-                ignored_dirs.append(name)
-            else:
-                kept_dirnames.append(name)
-        if ignored_dirs:
-            stats.dirs_pruned += len(ignored_dirs)
-        dirnames[:] = kept_dirnames
+        if chain:
+            ignored_dirs: list[str] = []
+            kept_dirnames: list[str] = []
+            for name in dirnames:
+                if _is_ignored(current / name, chain):
+                    ignored_dirs.append(name)
+                else:
+                    kept_dirnames.append(name)
+            if ignored_dirs:
+                stats.dirs_pruned += len(ignored_dirs)
+            dirnames[:] = kept_dirnames
 
         for name in filenames:
+            if suffix is not None and not name.endswith(suffix):
+                continue
             if max_files is not None and stats.files_yielded >= max_files:
                 return files, stats
 
             file_path = current / name
-            if _is_ignored(file_path, current):
+            if chain and _is_ignored(file_path, chain):
                 stats.files_skipped_gitignore += 1
                 continue
 
             if path_has_scaffold_segment(str(file_path.relative_to(root))):
                 stats.files_skipped_scaffold += 1
-                continue
-
-            if suffix is not None and not name.endswith(suffix):
                 continue
 
             files.append(file_path)

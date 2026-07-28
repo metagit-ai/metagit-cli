@@ -53,6 +53,46 @@ def test_iter_repo_files_scopes_nested_gitignore_to_owning_directory(
     assert rels == {"b/keep.tf"}
 
 
+def test_iter_repo_files_honors_gitignore_negation(tmp_path: Path) -> None:
+    """A '!pattern' line re-includes a file an earlier deny pattern excluded."""
+    root = tmp_path / "repo"
+    root.mkdir(parents=True)
+    (root / ".gitignore").write_text("*.tf\n!keep.tf\n", encoding="utf-8")
+    (root / "keep.tf").write_text("x", encoding="utf-8")
+    (root / "drop.tf").write_text("x", encoding="utf-8")
+
+    files, stats = iter_repo_files(root, suffix=".tf")
+    rels = {str(p.relative_to(root)) for p in files}
+    assert rels == {"keep.tf"}
+    assert stats.files_skipped_gitignore == 1
+
+
+def test_iter_repo_files_counts_only_suffix_matches_as_skipped(tmp_path: Path) -> None:
+    """Ignore counters describe suffix-matching files, not the whole tree."""
+    root = tmp_path / "repo"
+    root.mkdir(parents=True)
+    (root / ".gitignore").write_text("ignored.*\n", encoding="utf-8")
+    (root / "ignored.tf").write_text("x", encoding="utf-8")
+    (root / "ignored.md").write_text("x", encoding="utf-8")
+    (root / "keep.tf").write_text("x", encoding="utf-8")
+
+    files, stats = iter_repo_files(root, suffix=".tf")
+    rels = {str(p.relative_to(root)) for p in files}
+    assert rels == {"keep.tf"}
+    assert stats.files_skipped_gitignore == 1
+
+
+def test_iter_repo_files_stops_at_max_files(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    root.mkdir(parents=True)
+    for index in range(5):
+        (root / f"m{index}.tf").write_text("x", encoding="utf-8")
+
+    files, stats = iter_repo_files(root, suffix=".tf", max_files=2)
+    assert len(files) == 2
+    assert stats.files_yielded == 2
+
+
 def test_iter_repo_files_skips_file_named_like_scaffold_segment(
     tmp_path: Path,
 ) -> None:
