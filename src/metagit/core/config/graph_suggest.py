@@ -8,15 +8,17 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from metagit.core.config.graph_models import GraphEndpoint, GraphRelationship, WorkspaceGraph
+from metagit.core.config.graph_models import GraphEndpoint, GraphRelationship
 from metagit.core.config.graph_resolver import resolve_graph_endpoint_id
 from metagit.core.config.graph_validation import validate_graph_relationships
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.utils.repo_walk import sum_scan_stats
 from metagit.core.web.models import ConfigOperation, ConfigOpKind
 
 ConfidenceLevel = Literal["high", "medium", "low", "all"]
@@ -169,7 +171,9 @@ class GraphRelationshipSuggestService:
 
         allowed_edge_types = {_REQUEST_TO_EDGE_TYPE.get(item, item) for item in selected_types}
         merged_edges: dict[tuple[str, str, str], Any] = {}
-        scan_stats_totals: dict[str, int] = {}
+        # map_dependencies re-scans every workspace repo on each per-project call, so
+        # stats are collected per repo path and summed once instead of accumulated.
+        scan_stats_by_repo: dict[str, dict[str, int]] = {}
         for project in config.workspace.projects:
             result = self._dependencies.map_dependencies(
                 config=config,
@@ -180,8 +184,7 @@ class GraphRelationshipSuggestService:
             )
             if not result.ok:
                 continue
-            for key, value in (result.import_scan_stats or {}).items():
-                scan_stats_totals[key] = scan_stats_totals.get(key, 0) + value
+            scan_stats_by_repo.update(result.import_scan_stats_by_repo or {})
             for edge in result.edges:
                 if edge.type == "manual":
                     continue
@@ -247,7 +250,7 @@ class GraphRelationshipSuggestService:
         operations = self._build_operations(config=config, candidates=selected)
         stale_manual = self._stale_manual_relationships(
             manual_records=manual_records,
-            inferred_signatures=inferred_signatures,
+            inferred_endpoints={signature[:4] for signature in inferred_signatures},
         )
 
         return GraphSuggestResult(
@@ -258,7 +261,7 @@ class GraphRelationshipSuggestService:
             stale_manual=stale_manual,
             skipped_low_confidence=skipped_low_confidence,
             operations=operations,
-            scan_stats=scan_stats_totals or None,
+            scan_stats=sum_scan_stats(scan_stats_by_repo) or None,
         )
 
     def suggest_and_apply(
@@ -297,23 +300,19 @@ class GraphRelationshipSuggestService:
             candidates=result.candidates,
             candidate_ids=candidate_ids,
         )
-        existing_relationships = config.graph.relationships if config.graph else []
-        new_relationships = [
-            GraphRelationship.model_validate(self._candidate_value(candidate)) for candidate in selected
-        ]
-        prospective_config = config.model_copy(
-            update={"graph": WorkspaceGraph(relationships=[*existing_relationships, *new_relationships])}
-        )
-        validation_issues = validate_graph_relationships(prospective_config)
-        if validation_issues:
+        # Rebuild against the document on disk: the caller's in-memory config may
+        # carry edges the manifest does not, and a `set` of the whole list must not
+        # drop relationships that are only present on disk.
+        on_disk = MetagitConfigManager(config_path=config_path).load_config()
+        if isinstance(on_disk, Exception):
             result.apply = GraphSuggestApplyResult(
                 ok=False,
                 saved=False,
                 applied_count=0,
-                validation_errors=[{"message": issue} for issue in validation_issues],
+                validation_errors=[{"message": str(on_disk)}],
             )
             return result
-
+        result.operations = self._build_operations(config=on_disk, candidates=selected)
         operations = [
             ConfigOperation(
                 op=ConfigOpKind(item["op"]),
@@ -322,6 +321,27 @@ class GraphRelationshipSuggestService:
             )
             for item in result.operations
         ]
+        validation_errors = self._validate_draft(
+            config_path=config_path,
+            operations=operations,
+        )
+        if isinstance(validation_errors, Exception):
+            result.apply = GraphSuggestApplyResult(
+                ok=False,
+                saved=False,
+                applied_count=0,
+                validation_errors=[{"message": str(validation_errors)}],
+            )
+            return result
+        if validation_errors:
+            result.apply = GraphSuggestApplyResult(
+                ok=False,
+                saved=False,
+                applied_count=0,
+                validation_errors=validation_errors,
+            )
+            return result
+
         patch_result = self._patch.patch(
             "metagit",
             config_path,
@@ -344,6 +364,23 @@ class GraphRelationshipSuggestService:
             validation_errors=patch_result.validation_errors,
         )
         return result
+
+    def _validate_draft(
+        self,
+        *,
+        config_path: str,
+        operations: list[ConfigOperation],
+    ) -> list[dict[str, str]] | Exception:
+        """Validate the document these operations actually produce on disk."""
+        draft = self._patch.draft("metagit", config_path, operations)
+        if isinstance(draft, Exception):
+            return draft
+        patched, schema_errors = draft
+        if schema_errors:
+            return schema_errors
+        if not isinstance(patched, MetagitConfig):
+            return TypeError("patched config is not a metagit manifest")
+        return [{"message": issue} for issue in validate_graph_relationships(patched)]
 
     def _resolve_dependency_types(
         self,
@@ -392,14 +429,18 @@ class GraphRelationshipSuggestService:
         self,
         *,
         manual_records: list[tuple[GraphRelationship, tuple[str, str, str, str, str], str, str]],
-        inferred_signatures: set[tuple[str, str, str, str, str]],
+        inferred_endpoints: set[tuple[str, str, str, str]],
     ) -> list[str]:
-        """Report active manual relationships with no supporting inferred edge in this scan."""
+        """Report active manual relationships with no supporting inferred edge in this scan.
+
+        Support is matched on endpoints alone: an inferred edge between the same two
+        endpoints backs a manual edge even when the inferred relationship type differs.
+        """
         stale: list[str] = []
         for rel, signature, from_id, to_id in manual_records:
             if rel.status != "active" or rel.provenance != "manual":
                 continue
-            if signature in inferred_signatures:
+            if signature[:4] in inferred_endpoints:
                 continue
             stale.append(rel.id or f"{from_id}->{to_id}:{rel.type}")
         return sorted(stale)
@@ -437,21 +478,20 @@ class GraphRelationshipSuggestService:
         if not candidates:
             return []
 
-        operations: list[dict[str, Any]] = []
-        if config.graph is None:
-            operations.append({"op": "enable", "path": "graph"})
-
-        base_index = len(config.graph.relationships) if config.graph else 0
-        for offset, candidate in enumerate(candidates):
-            operations.append({"op": "append", "path": "graph.relationships"})
-            operations.append(
-                {
-                    "op": "set",
-                    "path": f"graph.relationships[{base_index + offset}]",
-                    "value": self._candidate_value(candidate),
-                }
-            )
-        return operations
+        # A single `set` of the complete list keeps the written document free of the
+        # placeholder slots that `enable` / `append` seed from schema defaults, and
+        # removes any index arithmetic coupling to SchemaTreeService.
+        existing = (
+            [rel.model_dump(mode="json", by_alias=True) for rel in config.graph.relationships] if config.graph else []
+        )
+        relationships = existing + [self._candidate_value(candidate) for candidate in candidates]
+        return [
+            {
+                "op": "set",
+                "path": "graph.relationships",
+                "value": relationships,
+            }
+        ]
 
     def _candidate_value(
         self,
