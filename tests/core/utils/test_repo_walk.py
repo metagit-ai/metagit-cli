@@ -35,3 +35,34 @@ def test_iter_repo_files_honors_gitignore(tmp_path: Path) -> None:
     rels = {str(p.relative_to(root)) for p in files}
     assert rels == {"keep/a.tf"}
     assert stats.files_skipped_gitignore >= 1 or stats.dirs_pruned >= 1
+
+
+def test_iter_repo_files_scopes_nested_gitignore_to_owning_directory(
+    tmp_path: Path,
+) -> None:
+    """Patterns from a/.gitignore must not leak into sibling directory b."""
+    root = tmp_path / "repo"
+    (root / "a").mkdir(parents=True)
+    (root / "a" / ".gitignore").write_text("*.tf\n", encoding="utf-8")
+    (root / "a" / "hidden.tf").write_text("x", encoding="utf-8")
+    (root / "b").mkdir(parents=True)
+    (root / "b" / "keep.tf").write_text("x", encoding="utf-8")
+
+    files, _stats = iter_repo_files(root, suffix=".tf")
+    rels = {str(p.relative_to(root)) for p in files}
+    assert rels == {"b/keep.tf"}
+
+
+def test_iter_repo_files_skips_file_named_like_scaffold_segment(
+    tmp_path: Path,
+) -> None:
+    """A file literally named 'node_modules' (not a dir) must still be skipped."""
+    root = tmp_path / "repo"
+    root.mkdir(parents=True)
+    (root / "node_modules").write_text("not a directory", encoding="utf-8")
+    (root / "keep.txt").write_text("x", encoding="utf-8")
+
+    files, stats = iter_repo_files(root)
+    rels = {str(p.relative_to(root)) for p in files}
+    assert rels == {"keep.txt"}
+    assert stats.files_skipped_scaffold >= 1
