@@ -18,7 +18,7 @@ def test_iter_repo_files_skips_node_modules_and_venv(tmp_path: Path) -> None:
     (root / ".venv" / "lib" / "bad.tf").write_text("x", encoding="utf-8")
 
     files, stats = iter_repo_files(root, suffix=".tf")
-    rels = {str(p.relative_to(root)) for p in files}
+    rels = {p.relative_to(root).as_posix() for p in files}
     assert rels == {"modules/ok.tf"}
     assert stats.dirs_pruned >= 2
 
@@ -32,7 +32,7 @@ def test_iter_repo_files_honors_gitignore(tmp_path: Path) -> None:
     (root / ".gitignore").write_text("secret/\n", encoding="utf-8")
 
     files, stats = iter_repo_files(root, suffix=".tf")
-    rels = {str(p.relative_to(root)) for p in files}
+    rels = {p.relative_to(root).as_posix() for p in files}
     assert rels == {"keep/a.tf"}
     assert stats.files_skipped_gitignore >= 1 or stats.dirs_pruned >= 1
 
@@ -49,7 +49,7 @@ def test_iter_repo_files_scopes_nested_gitignore_to_owning_directory(
     (root / "b" / "keep.tf").write_text("x", encoding="utf-8")
 
     files, _stats = iter_repo_files(root, suffix=".tf")
-    rels = {str(p.relative_to(root)) for p in files}
+    rels = {p.relative_to(root).as_posix() for p in files}
     assert rels == {"b/keep.tf"}
 
 
@@ -62,7 +62,7 @@ def test_iter_repo_files_honors_gitignore_negation(tmp_path: Path) -> None:
     (root / "drop.tf").write_text("x", encoding="utf-8")
 
     files, stats = iter_repo_files(root, suffix=".tf")
-    rels = {str(p.relative_to(root)) for p in files}
+    rels = {p.relative_to(root).as_posix() for p in files}
     assert rels == {"keep.tf"}
     assert stats.files_skipped_gitignore == 1
 
@@ -77,7 +77,7 @@ def test_iter_repo_files_honors_gitignore_last_match_wins_within_file(
     (root / "keep.tf").write_text("x", encoding="utf-8")
 
     files, _stats = iter_repo_files(root, suffix=".tf")
-    rels = {str(p.relative_to(root)) for p in files}
+    rels = {p.relative_to(root).as_posix() for p in files}
     assert rels == set()
 
 
@@ -99,7 +99,7 @@ def test_iter_repo_files_honors_gitignore_deeper_directory_overrides_ancestor(
     (root / "child" / "keep.tf").write_text("x", encoding="utf-8")
 
     files, _stats = iter_repo_files(root, suffix=".tf")
-    rels = {str(p.relative_to(root)) for p in files}
+    rels = {p.relative_to(root).as_posix() for p in files}
     assert rels == {"keep.tf"}
 
 
@@ -113,7 +113,7 @@ def test_iter_repo_files_counts_only_suffix_matches_as_skipped(tmp_path: Path) -
     (root / "keep.tf").write_text("x", encoding="utf-8")
 
     files, stats = iter_repo_files(root, suffix=".tf")
-    rels = {str(p.relative_to(root)) for p in files}
+    rels = {p.relative_to(root).as_posix() for p in files}
     assert rels == {"keep.tf"}
     assert stats.files_skipped_gitignore == 1
 
@@ -139,6 +139,6 @@ def test_iter_repo_files_skips_file_named_like_scaffold_segment(
     (root / "keep.txt").write_text("x", encoding="utf-8")
 
     files, stats = iter_repo_files(root)
-    rels = {str(p.relative_to(root)) for p in files}
+    rels = {p.relative_to(root).as_posix() for p in files}
     assert rels == {"keep.txt"}
     assert stats.files_skipped_scaffold >= 1
