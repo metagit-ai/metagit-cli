@@ -16,25 +16,32 @@ from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
-def _workspace_fixture(tmp_path: Path) -> tuple[MetagitConfig, str]:
+def _workspace_fixture(
+    tmp_path: Path,
+    *,
+    shared_url: bool = True,
+    with_import: bool = True,
+) -> tuple[MetagitConfig, str]:
     root = tmp_path / "workspace"
-    shared_url = "https://github.com/example/shared-lib.git"
+    alpha_url = "https://github.com/example/shared-lib.git"
+    beta_url = alpha_url if shared_url else "https://github.com/example/beta-only.git"
     alpha_repo = root / "alpha" / "api"
     beta_repo = root / "beta" / "worker"
     alpha_repo.mkdir(parents=True)
     beta_repo.mkdir(parents=True)
     (alpha_repo / ".git").mkdir()
     (beta_repo / ".git").mkdir()
-    relative_api = os.path.relpath(alpha_repo, beta_repo)
-    (beta_repo / "package.json").write_text(
-        json.dumps(
-            {
-                "name": "worker",
-                "dependencies": {"api-client": f"file:{relative_api}"},
-            }
-        ),
-        encoding="utf-8",
-    )
+    if with_import:
+        relative_api = os.path.relpath(alpha_repo, beta_repo)
+        (beta_repo / "package.json").write_text(
+            json.dumps(
+                {
+                    "name": "worker",
+                    "dependencies": {"api-client": f"file:{relative_api}"},
+                }
+            ),
+            encoding="utf-8",
+        )
     return (
         MetagitConfig(
             name="workspace",
@@ -47,7 +54,7 @@ def _workspace_fixture(tmp_path: Path) -> tuple[MetagitConfig, str]:
                             ProjectPath(
                                 name="api",
                                 path="alpha/api",
-                                url=shared_url,
+                                url=alpha_url,
                                 sync=True,
                             )
                         ],
@@ -58,7 +65,7 @@ def _workspace_fixture(tmp_path: Path) -> tuple[MetagitConfig, str]:
                             ProjectPath(
                                 name="worker",
                                 path="beta/worker",
-                                url=shared_url,
+                                url=beta_url,
                                 sync=True,
                             )
                         ],
@@ -138,6 +145,52 @@ def test_suggest_aggregates_scan_stats_across_repos(tmp_path: Path) -> None:
     assert result.scan_stats is not None
     assert set(result.scan_stats) <= {"dirs_pruned", "files_skipped_gitignore", "files_yielded"}
     assert all(isinstance(value, int) for value in result.scan_stats.values())
+
+
+def test_suggest_reports_stale_manual_edges(tmp_path: Path) -> None:
+    config, workspace_root = _workspace_fixture(tmp_path, shared_url=False, with_import=False)
+    config.graph = {
+        "relationships": [
+            {
+                "id": "orphan-edge",
+                "from": {"project": "alpha", "repo": "api"},
+                "to": {"project": "beta", "repo": "worker"},
+                "type": "depends_on",
+                "status": "active",
+                "provenance": "manual",
+            }
+        ]
+    }
+    registry = MagicMock()
+    registry.summarize_for_paths.return_value = {}
+    service = GraphRelationshipSuggestService(
+        dependency_service=CrossProjectDependencyService(registry=registry)
+    )
+    result = service.suggest(config, workspace_root, min_confidence="all", include_declared=True)
+    assert any("orphan-edge" in item for item in result.stale_manual)
+
+
+def test_suggest_does_not_flag_deprecated_manual_edges_as_stale(tmp_path: Path) -> None:
+    config, workspace_root = _workspace_fixture(tmp_path, shared_url=False, with_import=False)
+    config.graph = {
+        "relationships": [
+            {
+                "id": "retired-edge",
+                "from": {"project": "alpha", "repo": "api"},
+                "to": {"project": "beta", "repo": "worker"},
+                "type": "depends_on",
+                "status": "deprecated",
+                "provenance": "manual",
+            }
+        ]
+    }
+    registry = MagicMock()
+    registry.summarize_for_paths.return_value = {}
+    service = GraphRelationshipSuggestService(
+        dependency_service=CrossProjectDependencyService(registry=registry)
+    )
+    result = service.suggest(config, workspace_root, min_confidence="all", include_declared=True)
+    assert not any("retired-edge" in item for item in result.stale_manual)
 
 
 def test_suggest_and_apply_writes_manifest(tmp_path: Path) -> None:

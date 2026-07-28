@@ -79,6 +79,7 @@ class GraphSuggestResult(BaseModel):
     workspace_name: str = ""
     candidates: list[SuggestedGraphRelationship] = Field(default_factory=list)
     already_manual: list[str] = Field(default_factory=list)
+    stale_manual: list[str] = Field(default_factory=list)
     skipped_low_confidence: int = 0
     operations: list[dict[str, Any]] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
@@ -159,11 +160,12 @@ class GraphRelationshipSuggestService:
             workspace_root=workspace_root,
         )
         project_names = {project.name for project in config.workspace.projects}
-        manual_signatures = self._manual_signatures(
+        manual_records = self._manual_relationship_records(
             config=config,
             rows=rows,
             project_names=project_names,
         )
+        manual_signatures = {record[1] for record in manual_records}
 
         allowed_edge_types = {_REQUEST_TO_EDGE_TYPE.get(item, item) for item in selected_types}
         merged_edges: dict[tuple[str, str, str], Any] = {}
@@ -195,6 +197,7 @@ class GraphRelationshipSuggestService:
 
         candidates: list[SuggestedGraphRelationship] = []
         already_manual: list[str] = []
+        inferred_signatures: set[tuple[str, str, str, str, str]] = set()
         skipped_low_confidence = 0
         min_rank = _CONFIDENCE_ORDER[min_confidence]
 
@@ -206,6 +209,7 @@ class GraphRelationshipSuggestService:
 
             rel_type = _EDGE_TO_REL_TYPE.get(edge.type, "related")
             signature = _relationship_signature(from_endpoint, to_endpoint, rel_type)
+            inferred_signatures.add(signature)
             if signature in manual_signatures:
                 already_manual.append(f"{edge.from_id}->{edge.to_id}:{rel_type}")
                 continue
@@ -241,12 +245,17 @@ class GraphRelationshipSuggestService:
             candidate_ids=candidate_ids,
         )
         operations = self._build_operations(config=config, candidates=selected)
+        stale_manual = self._stale_manual_relationships(
+            manual_records=manual_records,
+            inferred_signatures=inferred_signatures,
+        )
 
         return GraphSuggestResult(
             ok=True,
             workspace_name=config.name or "workspace",
             candidates=candidates,
             already_manual=sorted(already_manual),
+            stale_manual=stale_manual,
             skipped_low_confidence=skipped_low_confidence,
             operations=operations,
             scan_stats=scan_stats_totals or None,
@@ -347,16 +356,17 @@ class GraphRelationshipSuggestService:
             selected.update({"declared", "ref"})
         return selected
 
-    def _manual_signatures(
+    def _manual_relationship_records(
         self,
         *,
         config: MetagitConfig,
         rows: list[dict[str, Any]],
         project_names: set[str],
-    ) -> set[tuple[str, str, str, str, str]]:
-        signatures: set[tuple[str, str, str, str, str]] = set()
+    ) -> list[tuple[GraphRelationship, tuple[str, str, str, str, str], str, str]]:
+        """Resolve manual graph.relationships entries to signatures and node ids."""
+        records: list[tuple[GraphRelationship, tuple[str, str, str, str, str], str, str]] = []
         if config.graph is None:
-            return signatures
+            return records
         for rel in config.graph.relationships:
             from_id = resolve_graph_endpoint_id(
                 rel.from_endpoint,
@@ -374,8 +384,25 @@ class GraphRelationshipSuggestService:
             to_endpoint = node_id_to_endpoint(to_id)
             if from_endpoint is None or to_endpoint is None:
                 continue
-            signatures.add(_relationship_signature(from_endpoint, to_endpoint, rel.type))
-        return signatures
+            signature = _relationship_signature(from_endpoint, to_endpoint, rel.type)
+            records.append((rel, signature, from_id, to_id))
+        return records
+
+    def _stale_manual_relationships(
+        self,
+        *,
+        manual_records: list[tuple[GraphRelationship, tuple[str, str, str, str, str], str, str]],
+        inferred_signatures: set[tuple[str, str, str, str, str]],
+    ) -> list[str]:
+        """Report active manual relationships with no supporting inferred edge in this scan."""
+        stale: list[str] = []
+        for rel, signature, from_id, to_id in manual_records:
+            if rel.status == "deprecated":
+                continue
+            if signature in inferred_signatures:
+                continue
+            stale.append(rel.id or f"{from_id}->{to_id}:{rel.type}")
+        return sorted(stale)
 
     def _build_relationship_id(
         self,

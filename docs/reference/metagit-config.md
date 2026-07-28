@@ -94,9 +94,21 @@ graph:
       label: API stack depends on shared modules
       tags:
         layer: platform
+      status: active
+      provenance: manual
 ```
 
 These edges are merged into cross-project dependency maps (`type: manual`) and available via `MetagitConfig.graph_export_payload()` for GitNexus-style exports. Request dependency type `manual` when calling `metagit_cross_project_dependencies` to focus on manifest-declared edges.
+
+### Lifecycle: `status` and `provenance`
+
+Each relationship carries a lifecycle `status` (`active`, `deprecated`, `proposed`) and a `provenance` (`manual`, `promoted`, `imported`):
+
+- Edges promoted via `config graph suggest --apply` are written with `status: active`, `provenance: promoted`.
+- Hand-authored edges default to `status: active`, `provenance: manual`.
+- Retire an edge by setting `status: deprecated` rather than deleting it — deprecated edges are excluded from `stale_manual` reporting and skipped by downstream tooling that only wants live edges.
+
+`config graph suggest` reports `stale_manual[]`: active manual relationships with no supporting inferred edge found during the current scan. This is **report-only** — agents and operators should confirm before editing or removing a flagged edge (the scan may simply be missing a clone, a scoped `--workspace-root`, or a dependency type).
 
 ### Discover and suggest relationships (agent automation)
 

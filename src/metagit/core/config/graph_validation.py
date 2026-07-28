@@ -30,8 +30,7 @@ def _validate_endpoint(
             return f"graph.relationships[{index}].{side}: unknown project '{endpoint.project}'"
         if endpoint.repo is not None and endpoint.repo not in project_repos[endpoint.project]:
             return (
-                f"graph.relationships[{index}].{side}: unknown repo '{endpoint.repo}' "
-                f"in project '{endpoint.project}'"
+                f"graph.relationships[{index}].{side}: unknown repo '{endpoint.repo}' in project '{endpoint.project}'"
             )
         return None
     if endpoint.repo is not None:

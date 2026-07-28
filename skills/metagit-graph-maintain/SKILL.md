@@ -60,6 +60,8 @@ MCP: `metagit_suggest_graph_relationships`
 
 Review `candidates[]` for `confidence`, `evidence`, and `source_edge_type`. Skip low-confidence edges unless the operator approves.
 
+Also review `stale_manual[]` — active manual relationships with no supporting inferred edge under the current scan (report-only; do not edit/remove without operator confirmation). Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.
+
 ### 3. Preview and apply
 
 ```bash
@@ -117,6 +119,12 @@ Return:
 - validation result after apply
 - GitNexus ingest status (schema + statement count)
 - repos still stale/missing in GitNexus registry
+
+## Lifecycle
+
+- Promoted edges are written with `status: active`, `provenance: promoted`.
+- Deprecate retired edges by setting `status: deprecated` rather than deleting them.
+- `stale_manual[]` from suggest is report-only: confirm with the operator before editing or removing the flagged edges.
 
 ## Safety
 

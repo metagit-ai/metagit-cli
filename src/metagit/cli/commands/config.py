@@ -954,6 +954,7 @@ def _graph_suggest_summary_lines(
         f"  workspace root: {workspace_root}",
         f"  candidates: {len(result.candidates)} ({counts_summary})",
         f"  already_manual: {len(result.already_manual)}",
+        f"  stale_manual: {len(result.stale_manual)}",
         f"  skipped_low_confidence: {result.skipped_low_confidence}",
     ]
     if result.scan_stats:
