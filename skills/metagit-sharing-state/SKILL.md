@@ -2,9 +2,10 @@
 name: metagit-sharing-state
 description: >-
   Configure shared coordination state (objectives, handoffs, approvals, events)
-  across multiple agents and machines via METAGIT_STATE_URL and the ops HTTP
-  backend. Use when Hermes subagents, CI runners, or humans must see the same
-  objective queue without Syncthing JSON files.
+  across multiple agents and machines via METAGIT_STATE_URL, optional DynamoDB /
+  MongoDB DocumentStore backends, and the ops HTTP path. Use when Hermes
+  subagents, CI runners, or humans must see the same objective queue without
+  Syncthing JSON files.
 ---
 # Metagit shared coordination state
 
@@ -12,27 +13,50 @@ Use when **more than one agent or machine** must read/write the same objectives,
 handoffs, approvals, and event feed — without syncing `.metagit/sessions/*.json`
 via Syncthing.
 
-Full reference: [docs/reference/sharing-state.md](../../../../docs/reference/sharing-state.md)
+Full references:
+
+- [docs/reference/sharing-state.md](../../../../docs/reference/sharing-state.md) — HTTP ops contract
+- [docs/reference/central-state-plane.md](../../../../docs/reference/central-state-plane.md) — plane backends, extras, org/workspace ids, Dynamo bootstrap
 
 ## When to use
 
 - Hermes controller + subagents on different hosts
 - Human on Metagit Web + agents on MCP/CLI
 - CI runner updating objectives while developers use Cursor MCP
+- Org-scale coordination on DynamoDB / MongoDB (RFC-0015)
 
-Prefer **remote state** over Syncthing for coordination JSON when agents run on
-separate machines. Keep Syncthing (or git) for `.metagit.yml` catalog edits only.
+Prefer **shared state** (HTTP or cloud DocumentStore) over Syncthing for
+coordination JSON when agents run on separate machines. Keep Syncthing (or git)
+for `.metagit.yml` catalog edits only.
 
-## Coordinator setup
+## Backends
 
-On one host with the workspace manifest:
+| Backend | Extra | Typical use |
+|---------|-------|-------------|
+| `local` | — | Single machine default |
+| `http` | — | Agents → `metagit web serve` via `METAGIT_STATE_URL` |
+| `memory` | — | Tests only |
+| `dynamodb` | `metagit-cli[state-dynamodb]` | Direct cloud or ops-server-hosted |
+| `mongodb` | `metagit-cli[state-mongodb]` | Direct cloud or ops-server-hosted |
+
+```bash
+uv tool install 'metagit-cli[state-dynamodb]'
+uv tool install 'metagit-cli[state-mongodb]'
+```
+
+## Coordinator setup (HTTP / deployment B)
+
+On one host with the workspace manifest (local JSON **or** cloud DocumentStore
+on the server):
 
 ```bash
 metagit web serve --host 127.0.0.1 --port 8787
 # production: TLS reverse proxy + bearer token in front
+# optional: METAGIT_STATE_BACKEND=dynamodb + table/region on this host only
 ```
 
-Persistence stays on that host under `.metagit/sessions/` and `.metagit/approvals/`.
+Agents keep `METAGIT_STATE_URL` — they do not need cloud extras when the
+coordinator hosts Dynamo/Mongo.
 
 ## Client setup (CLI, MCP, every agent host)
 
@@ -45,6 +69,8 @@ config:
     url: https://coordinator.example.com:8787
     token: your-bearer-token
     conflict_retries: 1
+    org_id: ""            # optional plane partition
+    workspace_id: ""
 ```
 
 Or environment (overrides file — **must be set on the MCP server process**):
@@ -53,6 +79,21 @@ Or environment (overrides file — **must be set on the MCP server process**):
 export METAGIT_AGENT_MODE=true
 export METAGIT_STATE_URL=https://coordinator.example.com:8787
 export METAGIT_STATE_TOKEN='…'
+# optional plane identity:
+# export METAGIT_STATE_ORG_ID=acme
+# export METAGIT_STATE_WORKSPACE_ID=platform-ws
+```
+
+### Deployment A (agents → cloud directly)
+
+```bash
+uv tool install 'metagit-cli[state-dynamodb]'
+export METAGIT_STATE_BACKEND=dynamodb
+export METAGIT_STATE_ORG_ID=acme
+export METAGIT_STATE_WORKSPACE_ID=platform-ws
+export METAGIT_STATE_DDB_TABLE=metagit-state
+export METAGIT_STATE_DDB_REGION=us-east-1
+# AWS credentials via IAM/env — never commit
 ```
 
 Restart MCP after changing env (`metagit mcp serve` inherits the shell env).
@@ -67,12 +108,14 @@ Check `state_backend`:
 
 | Field | Meaning |
 |-------|---------|
-| `backend` | `local` or `http` (effective) |
+| `backend` | `local` \| `http` \| `dynamodb` \| `mongodb` \| `memory` |
+| `org_id` / `workspace_id` | Plane partitions |
 | `url` | Remote ops base when `http` |
 | `token_configured` | Bearer token present (not the secret) |
+| `extras` | Whether dynamodb/mongodb extras are importable |
 | `env_overrides` | Which `METAGIT_STATE_*` vars are set |
 
-If `backend` is `local` but you expected remote, the MCP host is missing env/config.
+If `backend` is `local` but you expected remote/cloud, the MCP host is missing env/config.
 
 ## MCP tools (unchanged names — remote-aware)
 
@@ -95,9 +138,10 @@ metagit context approval list --json
 
 ## Anti-patterns
 
-- Mixed backends (some agents local, some remote) — objectives diverge silently
-- Syncthing `.metagit/sessions/objectives.json` **and** remote state on the same fleet
+- Mixed backends (some agents local, some remote/cloud) — objectives diverge silently
+- Syncthing `.metagit/sessions/objectives.json` **and** remote/cloud state on the same fleet
 - Forgetting to export `METAGIT_STATE_*` in the MCP launcher JSON (Cursor/Claude Desktop)
+- Committing AWS keys, Mongo URIs, or bearer tokens into git or `.metagit.yml`
 
 ## Related skills
 

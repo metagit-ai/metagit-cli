@@ -9,7 +9,7 @@
 Today Metagit has two persistence layers:
 
 1. **Catalog / footprint** — git-tracked `.metagit.yml` (projects, repos, graph).
-2. **Coordination state** — local `.metagit/` JSON, optionally shared via HTTP (`RemoteHttpBackend` → `metagit web serve`). See [sharing-state.md](../../reference/sharing-state.md).
+2. **Coordination state** — local `.metagit/` JSON, optionally shared via HTTP (`RemoteHttpBackend` → `metagit web serve`) or cloud DocumentStore backends. See [sharing-state.md](../../reference/sharing-state.md) and [central-state-plane.md](../../reference/central-state-plane.md).
 
 ACL, task graph, scheduler, merge, and semantic stores remain **local filesystem** under the session/manifest root. Architecture still states there is no application database backing core runtime flows.
 
@@ -39,7 +39,7 @@ RFC-0015 Central State Plane (foundation)
 
 | RFC | Title | Design | Plan | Status |
 |-----|-------|--------|------|--------|
-| 0015 | Central State Plane | [design](2026-07-31-rfc-0015-central-state-plane-design.md) | [plan](../plans/2026-07-31-rfc-0015-central-state-plane.md) | **Proposed** (plan ready) |
+| 0015 | Central State Plane | [design](2026-07-31-rfc-0015-central-state-plane-design.md) | [plan](../plans/2026-07-31-rfc-0015-central-state-plane.md) | **Implemented** (coord plane + docs; [ACL migration design-only](2026-07-31-rfc-0015-acl-namespace-migration.md)) |
 | 0016 | Org Catalog Backend | [design](2026-07-31-rfc-0016-org-catalog-backend-design.md) | (pending) | **Proposed** |
 | 0017 | Agentic Workload Harness | [design](2026-07-31-rfc-0017-agentic-workload-harness-design.md) | (pending) | **Proposed** |
 | 0018 | Pluggable Ontology Layer | [design](2026-07-31-rfc-0018-pluggable-ontology-layer-design.md) | (pending) | **Proposed** |
