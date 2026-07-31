@@ -111,8 +111,22 @@ def resolve_document_store(workspace_root: str) -> DocumentStore:
                 store = InMemoryDocumentStore()
                 _MEMORY_STORES[identity] = store
             return store
-    if backend_kind in {"dynamodb", "mongodb"}:
-        raise ValueError(f"{backend_kind} state backend is not implemented")
+    if backend_kind == "dynamodb":
+        from metagit.core.state.dynamodb import DynamoDocumentStore
+
+        table = state.dynamodb.table.strip()
+        if not table:
+            raise ValueError(
+                "dynamodb state backend requires table "
+                "(state.dynamodb.table or METAGIT_STATE_DDB_TABLE)"
+            )
+        return DynamoDocumentStore(
+            table,
+            region=state.dynamodb.region.strip(),
+            endpoint_url=state.dynamodb.endpoint_url.strip(),
+        )
+    if backend_kind == "mongodb":
+        raise ValueError("mongodb state backend is not implemented")
     from metagit.core.state.local_document import LocalDocumentStore
 
     return LocalDocumentStore(
@@ -140,7 +154,7 @@ def resolve_backend(workspace_root: str) -> BackendBundle:
         if not url:
             raise ValueError("remote state backend selected but no state.url configured")
         return remote_bundle(url, bearer_token=_resolve_bearer_token(state))
-    if backend_kind == "memory":
+    if backend_kind in {"memory", "dynamodb"}:
         from metagit.core.state.adapters.coord import coord_bundle
 
         store = resolve_document_store(workspace_root)
@@ -149,8 +163,8 @@ def resolve_backend(workspace_root: str) -> BackendBundle:
             org_id=resolve_org_id(state),
             workspace_id=resolve_workspace_id(state, workspace_root),
         )
-    if backend_kind in {"dynamodb", "mongodb"}:
-        raise ValueError(f"{backend_kind} state backend is not implemented")
+    if backend_kind == "mongodb":
+        raise ValueError("mongodb state backend is not implemented")
     from metagit.core.state.local import local_bundle
 
     return local_bundle(workspace_root)

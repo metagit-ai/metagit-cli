@@ -204,13 +204,34 @@ def test_resolve_document_store_for_supported_backends(monkeypatch, tmp_path) ->
     assert isinstance(resolve_document_store(str(tmp_path)), HttpDocumentStore)
 
 
-def test_unimplemented_document_store_backends_raise(monkeypatch, tmp_path) -> None:
-    for backend in ("dynamodb", "mongodb"):
-        monkeypatch.setenv("METAGIT_STATE_BACKEND", backend)
-        with pytest.raises(ValueError, match=f"{backend} state backend is not implemented"):
-            resolve_document_store(str(tmp_path))
-        with pytest.raises(ValueError, match=f"{backend} state backend is not implemented"):
-            resolve_backend(str(tmp_path))
+def test_unimplemented_mongodb_backend_raises(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "mongodb")
+    with pytest.raises(ValueError, match="mongodb state backend is not implemented"):
+        resolve_document_store(str(tmp_path))
+    with pytest.raises(ValueError, match="mongodb state backend is not implemented"):
+        resolve_backend(str(tmp_path))
+
+
+def test_dynamodb_backend_requires_table(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "dynamodb")
+    monkeypatch.delenv("METAGIT_STATE_DDB_TABLE", raising=False)
+    with pytest.raises(ValueError, match="requires table"):
+        resolve_document_store(str(tmp_path))
+    with pytest.raises(ValueError, match="requires table"):
+        resolve_backend(str(tmp_path))
+
+
+def test_resolve_dynamodb_document_store(monkeypatch, tmp_path) -> None:
+    pytest.importorskip("boto3")
+    from metagit.core.state.dynamodb import DynamoDocumentStore
+
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "dynamodb")
+    monkeypatch.setenv("METAGIT_STATE_DDB_TABLE", "metagit-state")
+    monkeypatch.setenv("METAGIT_STATE_DDB_REGION", "us-east-1")
+    store = resolve_document_store(str(tmp_path))
+    assert isinstance(store, DynamoDocumentStore)
+    assert store.describe()["table"] == "metagit-state"
+    assert "secret" not in store.describe()
 
 
 def test_describe_includes_org_workspace_and_extras(monkeypatch) -> None:

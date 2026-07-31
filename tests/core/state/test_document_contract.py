@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 import pytest
 
@@ -15,14 +15,38 @@ from metagit.core.state.plane import KEY_DOCUMENT, NS_COORD_OBJECTIVES, default_
 
 DOCUMENT_STORE_FACTORIES: dict[str, Callable[..., DocumentStore]] = {
     "memory": lambda **_: InMemoryDocumentStore(),
-  "local": lambda tmp_path=None, **_: LocalDocumentStore(str(tmp_path)),
+    "local": lambda tmp_path=None, **_: LocalDocumentStore(str(tmp_path)),
 }
 
 
-@pytest.fixture(params=list(DOCUMENT_STORE_FACTORIES.keys()))
-def document_store(request, tmp_path) -> DocumentStore:
-  factory = DOCUMENT_STORE_FACTORIES[request.param]
-  return factory(tmp_path=tmp_path)
+@pytest.fixture(params=list(DOCUMENT_STORE_FACTORIES.keys()) + ["dynamodb"])
+def document_store(request, tmp_path) -> Iterator[DocumentStore]:
+    if request.param == "dynamodb":
+        boto3 = pytest.importorskip("boto3")
+        pytest.importorskip("moto")
+        from moto import mock_aws
+
+        from metagit.core.state.dynamodb import DynamoDocumentStore
+
+        with mock_aws():
+            ddb = boto3.client("dynamodb", region_name="us-east-1")
+            ddb.create_table(
+                TableName="metagit-state-contract",
+                BillingMode="PAY_PER_REQUEST",
+                AttributeDefinitions=[
+                    {"AttributeName": "pk", "AttributeType": "S"},
+                    {"AttributeName": "sk", "AttributeType": "S"},
+                ],
+                KeySchema=[
+                    {"AttributeName": "pk", "KeyType": "HASH"},
+                    {"AttributeName": "sk", "KeyType": "RANGE"},
+                ],
+            )
+            yield DynamoDocumentStore(table="metagit-state-contract", region="us-east-1")
+        return
+
+    factory = DOCUMENT_STORE_FACTORIES[request.param]
+    yield factory(tmp_path=tmp_path)
 
 
 def _ref(key: str = KEY_DOCUMENT) -> DocumentRef:
