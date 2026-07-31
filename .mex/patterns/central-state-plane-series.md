@@ -20,6 +20,7 @@ Working on shared central state (DocumentStore, Dynamo/Mongo/HTTP), org catalog 
 8. Local document paths must reject traversal and separators, verify resolved paths remain under the state root or exact legacy path, and use locked atomic replacement.
 9. Treat `coord.events/document` as derived read-only state: reads may consume an existing legacy file, but all mutations must fail.
 10. A local `get()` must parse the body and derive its CAS token from one byte snapshot; keep local document modules cold-importable by avoiding `state.base` and context-dependent stores at module import time.
+11. HTTP document reads for approvals must request `status=all`; the bare ops route defaults to pending and is not a whole-document snapshot.
 
 ## Verify
 - Contract tests for DocumentStore backends.

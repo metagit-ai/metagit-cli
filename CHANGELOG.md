@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore` and locked JSON `LocalDocumentStore` implementations of the shared `DocumentStore` contract, including CAS writes/deletes, prefix listing, content tokens, legacy `coord.*` paths, and handoff envelope compatibility.
+- **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore`, locked JSON `LocalDocumentStore`, and cold-import-safe `HttpDocumentStore` implementations of the shared `DocumentStore` contract, including CAS writes/deletes, prefix listing, content tokens, legacy `coord.*` paths, handoff envelope compatibility, and ETag-backed coordination access over existing v3 ops routes.
 
 ### Fixed
 - **Local document store hardening:** reject unsafe namespace/key paths, replace locked JSON files atomically, prevent mutations of the derived coordination events document, derive `get()` bodies and CAS tokens from one byte snapshot, and cold-import without the context/state cycle.
