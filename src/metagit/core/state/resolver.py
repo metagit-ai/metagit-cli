@@ -152,28 +152,18 @@ def resolve_backend(workspace_root: str) -> BackendBundle:
     1. ``METAGIT_STATE_URL`` / ``METAGIT_STATE_BACKEND=http``
     2. App-config ``state`` block
     3. Local files (default)
+
+    All selected backends route through ``resolve_document_store`` + ``coord_bundle``.
     """
     state = _load_state_config()
-    url = _resolve_remote_url(state)
-    backend_kind = _resolve_backend_kind(state)
-    if url or backend_kind == "http":
-        from metagit.core.state.remote import remote_bundle
+    from metagit.core.state.adapters.coord import coord_bundle
 
-        if not url:
-            raise ValueError("remote state backend selected but no state.url configured")
-        return remote_bundle(url, bearer_token=_resolve_bearer_token(state))
-    if backend_kind in {"memory", "dynamodb", "mongodb"}:
-        from metagit.core.state.adapters.coord import coord_bundle
-
-        store = resolve_document_store(workspace_root)
-        return coord_bundle(
-            store,
-            org_id=resolve_org_id(state),
-            workspace_id=resolve_workspace_id(state, workspace_root),
-        )
-    from metagit.core.state.local import local_bundle
-
-    return local_bundle(workspace_root)
+    store = resolve_document_store(workspace_root)
+    return coord_bundle(
+        store,
+        org_id=resolve_org_id(state),
+        workspace_id=resolve_workspace_id(state, workspace_root),
+    )
 
 
 __all__ = [

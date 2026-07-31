@@ -18,7 +18,6 @@ from metagit.core.state.http_document import HttpDocumentStore
 from metagit.core.state.identity import resolve_org_id, resolve_workspace_id
 from metagit.core.state.local_document import LocalDocumentStore
 from metagit.core.state.memory import InMemoryDocumentStore
-from metagit.core.state.remote import RemoteHttpBackend
 from metagit.core.state.resolver import (
     describe_state_backend,
     resolve_backend,
@@ -37,11 +36,11 @@ def test_default_state_config_is_local() -> None:
     assert objectives == []
 
 
-def test_state_url_env_selects_remote_bundle() -> None:
+def test_state_url_env_selects_http_document_store() -> None:
     with patch.dict(os.environ, {"METAGIT_STATE_URL": "http://127.0.0.1:8787"}, clear=False):
         bundle = resolve_backend("/tmp/unused")
         backend = bundle.objectives()
-        assert isinstance(getattr(backend, "_backend", None), RemoteHttpBackend)
+        assert isinstance(getattr(backend, "_store", None), HttpDocumentStore)
 
 
 def test_state_env_overrides_config_fields() -> None:

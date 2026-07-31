@@ -5,6 +5,9 @@
 ### Added
 - **Central state plane (RFC-0015):** pluggable `DocumentStore` with memory/local/http adapters and optional DynamoDB/MongoDB extras; extended `state` app-config and `gate/status` diagnostics; see `docs/reference/central-state-plane.md`.
 
+### Changed
+- **Coordination backend resolution:** `resolve_backend()` routes local and HTTP (as well as memory/DynamoDB/MongoDB) through `resolve_document_store()` + `coord_bundle` DocumentStore adapters; legacy `local_bundle` / `remote_bundle` remain available for direct callers and contract tests.
+
 ### Fixed
 - **Local document store hardening:** reject unsafe namespace/key paths, replace locked JSON files atomically, prevent mutations of the derived coordination events document, derive `get()` bodies and CAS tokens from one byte snapshot, and cold-import without the context/state cycle.
 - **State identity cold imports:** organization/workspace identity helpers now live in an independent state module, avoiding the `state.base` ↔ `context` package initialization cycle.

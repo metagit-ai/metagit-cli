@@ -1102,7 +1102,7 @@ git commit -m "docs(state): document central state plane backends and skills"
 **Files:**
 - Possibly modify: `resolver.py` only if cutover is green
 
-- [ ] **Step 1: Run full state + context + mcp subset**
+- [x] **Step 1: Run full state + context + mcp subset**
 
 ```bash
 uv run pytest tests/core/state tests/core/context tests/core/mcp/test_resource_service.py -q
@@ -1110,11 +1110,11 @@ uv run pytest tests/core/state tests/core/context tests/core/mcp/test_resource_s
 
 Expected: PASS
 
-- [ ] **Step 2 (optional cutover):** Point `local` at `coord_bundle(LocalDocumentStore(...))` and `http` at `coord_bundle(HttpDocumentStore(...))`. Re-run Step 1 + `tests/core/state/test_backend_contract.py` + `test_backend_contract_remote.py`. Revert cutover if any failure; shipping without cutover is acceptable if `resolve_document_store` exists for 0016.
+- [x] **Step 2 (optional cutover):** Point `local` at `coord_bundle(LocalDocumentStore(...))` and `http` at `coord_bundle(HttpDocumentStore(...))`. Re-run Step 1 + `tests/core/state/test_backend_contract.py` + `test_backend_contract_remote.py`. Revert cutover if any failure; shipping without cutover is acceptable if `resolve_document_store` exists for 0016.
 
-- [ ] **Step 3: `task qa:prepush` then `task gitnexus:analyze`**
+- [x] **Step 3: `task qa:prepush` then `task gitnexus:analyze`**
 
-- [ ] **Step 4: Final commit if cutover landed**
+- [x] **Step 4: Final commit if cutover landed**
 
 ```bash
 git commit -m "feat(state): route local/http coordination through DocumentStore adapters"
