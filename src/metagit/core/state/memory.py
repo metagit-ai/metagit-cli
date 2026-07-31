@@ -11,6 +11,7 @@ from typing import Any
 from metagit.core.state.base import StateToken
 from metagit.core.state.document import DocumentRef, StateRecord
 from metagit.core.state.errors import StateConflictError
+from metagit.core.state.plane import KEY_DOCUMENT, NS_COORD_HANDOFFS
 
 
 def _canonical_token(body: dict[str, Any]) -> str:
@@ -58,12 +59,13 @@ class InMemoryDocumentStore:
         with self._lock:
             key = _ref_key(ref)
             current = self._docs.get(key)
-            body = {"items": []} if current is None else dict(current[0])
-            items = body.get("items")
+            envelope = "handoffs" if ref.namespace == NS_COORD_HANDOFFS and ref.key == KEY_DOCUMENT else "items"
+            body = {envelope: []} if current is None else dict(current[0])
+            items = body.get(envelope)
             if not isinstance(items, list):
                 items = []
             items = list(items) + [dict(item)]
-            body["items"] = items
+            body[envelope] = items
             token = _canonical_token(body)
             self._docs[key] = (body, token)
             return dict(item)
