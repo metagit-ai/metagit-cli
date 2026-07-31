@@ -143,10 +143,14 @@ def test_local_document_store_is_cold_importable() -> None:
 @pytest.mark.parametrize(
   ("namespace", "key"),
   [
+    ("", KEY_DOCUMENT),
+    (".", KEY_DOCUMENT),
     ("../escape", KEY_DOCUMENT),
     ("/absolute", KEY_DOCUMENT),
     ("catalog/workspace", KEY_DOCUMENT),
     ("catalog\\workspace", KEY_DOCUMENT),
+    ("catalog.workspace", ""),
+    ("catalog.workspace", "."),
     ("catalog.workspace", "../escape"),
     ("catalog.workspace", "/absolute"),
     ("catalog.workspace", "nested/key"),
@@ -178,6 +182,26 @@ def test_events_document_is_read_only(tmp_path: Path) -> None:
     store.put(ref, {"events": []}, expected=None)
 
   assert not (tmp_path / ".metagit" / "sessions" / "events.json").exists()
+
+
+@pytest.mark.parametrize(
+  ("namespace", "key"),
+  [
+    ("", KEY_DOCUMENT),
+    (".", KEY_DOCUMENT),
+    ("catalog.workspace", ""),
+    ("catalog.workspace", "."),
+  ],
+)
+def test_ref_for_rejects_empty_and_dot_components(
+  tmp_path: Path,
+  namespace: str,
+  key: str,
+) -> None:
+  store = LocalDocumentStore(str(tmp_path))
+
+  with pytest.raises(StateBackendError):
+    store.ref_for(namespace, key)
 
 
 def test_ref_for_uses_store_identity(tmp_path: Path) -> None:

@@ -177,6 +177,8 @@ class LocalDocumentStore:
         return path
 
     def _validate_component(self, name: str, value: str) -> None:
+        if not value or value == ".":
+            raise StateBackendError(f"invalid document {name}: {value!r}")
         if ".." in value or "/" in value or "\\" in value or Path(value).is_absolute():
             raise StateBackendError(f"invalid document {name}: {value!r}")
 

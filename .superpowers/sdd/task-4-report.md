@@ -64,3 +64,15 @@ Complete. Implemented and committed Task 4 only.
   token mismatch and circular-import traceback).
 - GREEN evidence: requested focused suites passed, 26 tests total, including
   the cold-import subprocess assertion.
+
+## Empty and Dot Path Component Fix
+
+- `_validate_component` now rejects empty string and `"."` for namespace and
+  key before path resolution.
+- Regression coverage: extended `test_invalid_document_ref_paths_are_rejected`
+  and added `test_ref_for_rejects_empty_and_dot_components`.
+- Focused suite: 24 passed (`tests/core/state/test_local_document_store.py`).
+
+## Commit
+
+- `fix(state): reject empty and dot path components in LocalDocumentStore`
