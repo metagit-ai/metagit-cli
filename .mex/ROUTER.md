@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-07-28
+last_updated: 2026-07-31
 ---
 
 # Session Bootstrap
@@ -27,6 +27,7 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **Central State Plane series RFC-0015–0018 (2026-07-31, `cursor/rfc-0015-central-state-specs`):** design specs + series index for org control plane — generic DocumentStore (local/http/Dynamo/Mongo), org catalog backend, agentic workload harness, pluggable ontology adapters. Index [docs/superpowers/specs/2026-07-31-central-state-plane-series-index.md](../docs/superpowers/specs/2026-07-31-central-state-plane-series-index.md). Implementation plans not yet written; start with RFC-0015 after design review.
 - **Durable graph suggest UX (2026-07-28, `feat/durable-graph-suggest-ux`):** leaf `--config-path/-c` on `metagit config graph suggest|export`; `suggest --verbose` human summary + `scan_stats`; shared ignore-aware `metagit.core.utils.repo_walk.iter_repo_files()` (always-on scaffold denylist + nested git-scoped `.gitignore`) wired into `ImportHintScanner` terraform scanning; `GraphRelationship.status`/`provenance` lifecycle fields with `graph_validation.validate_graph_relationships()` (required `id`, endpoint checks) enforced by `config validate` and `suggest --apply`; report-only `GraphSuggestResult.stale_manual[]` (endpoint-matched); docs/skills/prompts updated for flag semantics and lifecycle. Design `docs/superpowers/specs/2026-07-28-durable-graph-suggest-design.md`; plan `docs/superpowers/plans/2026-07-28-durable-graph-suggest.md`. **Review fixes (`.superpowers/sdd/branch-fix-report.md`):** apply writes one `set graph.relationships` and validates the patched document via `ConfigPatchService.draft()` (no more `example-value` placeholder breaking `config validate`); `config validate` no longer relabels aborts as load failures; walker filters on suffix before ignore checks with cached ancestor chains and honors `!` negations; `scan_stats` de-duplicated by repo path; graph edges written as `from:` with explicit `status`/`provenance`.
 - **Hermes install targeting (2026-07-17):** `HERMES_HOME` (default `~/.hermes`) for skills; MCP merges into `$HERMES_HOME/config.yaml` `mcp_servers` via installed `metagit` binary + `METAGIT_AGENT_MODE`; MCP stdio speaks NDJSON (fixes initialize handshake hang with standard clients); design `docs/superpowers/specs/2026-07-17-hermes-install-target-fix-design.md`.
 - **Skills/MCP `--scope project` root (2026-07-17):** CLI project-scope installs resolve against the nearest git repository root via `resolve_project_install_root()` so nested cwds do not create `src/.../.cursor/skills`; library callers still pass explicit `project_root` or rely on cwd after `chdir`.
@@ -107,6 +108,7 @@ Then read this file fully before doing anything else in this session.
 - **Web Config Studio unsaved edits:** `SchemaTreeService._navigate_parent(..., mutate=True)` materializes null list/object parents before REMOVE/APPEND; React `SchemaTree` sends cumulative `pendingOps` on each PATCH so preview removes work before disk save.
 
 **Not yet built:**
+- **RFC-0015–0018 implementation** (Central State Plane, Org Catalog Backend, Agentic Workload Harness, Pluggable Ontology Layer) — designs proposed; plans pending after review.
 - **`task repomix:profile` automation:** bundled profiles + CLI `metagit context repomix` ship in code; repo Taskfile wrappers may remain future scope (see design note in `docs/superpowers/specs/2026-05-21-context-packs-phase2-design.md`).
 - **Metagit Web hardened/exposed deployments:** intentional v1 localhost-only framing; authentication and safe non-local binds are future scope.
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
