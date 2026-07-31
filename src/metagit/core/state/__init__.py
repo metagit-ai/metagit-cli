@@ -9,16 +9,21 @@ from metagit.core.state.base import (
     ObjectiveBackend,
     StateToken,
 )
+from metagit.core.state.document import DocumentRef, DocumentStore
 from metagit.core.state.errors import StateBackendError, StateConflictError
 from metagit.core.state.local import LocalFileBackend, local_bundle
+from metagit.core.state.memory import InMemoryDocumentStore
 from metagit.core.state.remote import remote_bundle
 from metagit.core.state.resolver import describe_state_backend, resolve_backend
 
 __all__ = [
     "ApprovalBackend",
     "BackendBundle",
+    "DocumentRef",
+    "DocumentStore",
     "EventsBackend",
     "HandoffBackend",
+    "InMemoryDocumentStore",
     "LocalFileBackend",
     "ObjectiveBackend",
     "StateBackendError",
