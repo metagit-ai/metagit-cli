@@ -101,4 +101,5 @@ class InMemoryDocumentStore:
             del self._docs[key]
 
     def describe(self) -> dict[str, Any]:
-        return {"backend": "memory", "document_count": len(self._docs)}
+        with self._lock:
+            return {"backend": "memory", "document_count": len(self._docs)}

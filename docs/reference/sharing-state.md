@@ -138,6 +138,9 @@ Full operator guide: [central-state-plane.md](central-state-plane.md).
 3. **Agents → cloud directly** — install a state extra and set
    `METAGIT_STATE_BACKEND=dynamodb|mongodb` on each host
    ([deployment A](central-state-plane.md#deployment-a-agents-to-cloud-directly)).
+   Direct cloud/memory backends expose only the persisted `coord.events`
+   document for events (not the local derived objective/handoff stream); see
+   [central-state-plane events caveat](central-state-plane.md#deployment-a-agents-to-cloud-directly).
 
 Granular web routes (`POST /v3/ops/objectives`, `PATCH …/{id}`, approval
 resolve) remain available for the SPA. Remote clients and `RemoteHttpBackend`

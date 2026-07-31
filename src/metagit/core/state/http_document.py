@@ -42,7 +42,8 @@ def _format_if_match(token: StateToken) -> str:
     return '""' if token is None else f'"{token}"'
 
 
-def _sanitize_base_url_for_describe(base_url: str) -> str:
+def sanitize_base_url_for_describe(base_url: str) -> str:
+    """Redact userinfo and query values from a base URL for diagnostics."""
     parsed = urllib.parse.urlparse(base_url)
     hostname = parsed.hostname or ""
     port = parsed.port
@@ -135,7 +136,7 @@ class HttpDocumentStore:
     def describe(self) -> dict[str, Any]:
         return {
             "backend": "http",
-            "base_url": _sanitize_base_url_for_describe(self._base_url),
+            "base_url": sanitize_base_url_for_describe(self._base_url),
             "namespaces": sorted(_COORD_PATHS),
         }
 
@@ -196,4 +197,4 @@ class HttpDocumentStore:
             raise StateBackendError(f"invalid HTTP document response for {path}: {exc}") from exc
 
 
-__all__ = ["HttpDocumentStore"]
+__all__ = ["HttpDocumentStore", "sanitize_base_url_for_describe"]

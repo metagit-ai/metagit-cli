@@ -61,11 +61,14 @@ class MongoDocumentStore:
         else:
             self._client = client
         self._collection = self._client[self._database][self._collection_name]
+
+    @staticmethod
+    def _is_duplicate_key_error(exc: BaseException) -> bool:
         try:
             from pymongo.errors import DuplicateKeyError
         except ImportError:
-            DuplicateKeyError = Exception  # type: ignore[misc, assignment]
-        self._duplicate_key_error = DuplicateKeyError
+            return type(exc).__name__ == "DuplicateKeyError"
+        return isinstance(exc, DuplicateKeyError) or type(exc).__name__ == "DuplicateKeyError"
 
     def get(self, ref: DocumentRef) -> StateRecord | None:
         try:
@@ -98,7 +101,9 @@ class MongoDocumentStore:
             if expected is None:
                 try:
                     self._collection.insert_one({"_id": doc_id, **payload})
-                except self._duplicate_key_error as exc:
+                except Exception as exc:
+                    if not self._is_duplicate_key_error(exc):
+                        raise
                     raise StateConflictError(
                         f"state conflict for {ref.namespace}/{ref.key}: expected {expected!r}"
                     ) from exc

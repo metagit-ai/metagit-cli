@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from pydantic import ValidationError
+
 from metagit.core.context.models import (
     ApprovalRequest,
     HandoffItem,
@@ -72,7 +74,12 @@ class _HandoffsAdapter:
         return self._store.put(self._ref, body, expected=expected)
 
     def append(self, item: HandoffItem) -> HandoffItem:
-        self._store.append(self._ref, item.model_dump(mode="json"))
+        returned = self._store.append(self._ref, item.model_dump(mode="json"))
+        if isinstance(returned, dict) and returned.get("id"):
+            try:
+                return HandoffItem.model_validate(returned)
+            except ValidationError:
+                return item
         return item
 
 

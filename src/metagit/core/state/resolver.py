@@ -66,9 +66,9 @@ def describe_state_backend(workspace_root: str) -> dict[str, Any]:
     if not url and backend_kind in {"memory", "dynamodb", "mongodb"}:
         effective = backend_kind
     if effective == "http":
-        from metagit.core.state.http_document import _sanitize_base_url_for_describe
+        from metagit.core.state.http_document import sanitize_base_url_for_describe
 
-        url = _sanitize_base_url_for_describe(url)
+        url = sanitize_base_url_for_describe(url)
     return {
         "backend": effective,
         "url": url if effective == "http" else "",

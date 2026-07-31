@@ -108,6 +108,14 @@ export METAGIT_STATE_DDB_REGION=us-east-1
 MongoDB shape is the same with `METAGIT_STATE_BACKEND=mongodb`,
 `METAGIT_STATE_MONGO_URI`, and `METAGIT_STATE_MONGO_DB`.
 
+**Events caveat (Deployment A / cloud+memory DocumentStore):** for
+`dynamodb`, `mongodb`, and `memory`, `list_events` reads only the persisted
+`coord.events` document. It does **not** synthesize the locally derived
+objective/handoff timeline that `LocalFileBackend.list_events` builds under a
+local DocumentStore. HTTP clients (`METAGIT_STATE_URL`) still call
+`GET /v3/ops/events` on the ops server; that server’s own backend selection
+determines whether events are derived (local) or document-backed (cloud/memory).
+
 ### Deployment B: ops server hosts cloud store
 
 Run `metagit web serve` on a coordinator with DynamoDB/Mongo configured

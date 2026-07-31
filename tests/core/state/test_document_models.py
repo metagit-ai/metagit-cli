@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from metagit.core.state.document import DocumentRef, StateRecord
+from metagit.core.state.document import DocumentRef
 from metagit.core.state.plane import (
     KEY_DOCUMENT,
     NS_COORD_OBJECTIVES,

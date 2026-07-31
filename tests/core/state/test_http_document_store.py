@@ -142,6 +142,44 @@ def test_append_handoff_posts_item_body(monkeypatch) -> None:
     assert json.loads(requests[0].data) == {"id": "h1", "title": "New handoff"}
 
 
+def test_coord_http_append_returns_server_normalized_handoff(monkeypatch) -> None:
+    """Coord adapter must return HttpDocumentStore POST body when server normalizes fields."""
+    from metagit.core.context.models import HandoffItem
+    from metagit.core.state.adapters.coord import coord_bundle
+    from metagit.core.workspace.context_models import utc_now_iso
+
+    now = utc_now_iso()
+    server_body = {
+        "id": "h1",
+        "title": "server-normalized",
+        "status": "open",
+        "created_by": "ops-server",
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    def fake_urlopen(request, timeout):
+        _ = timeout
+        assert request.method == "POST"
+        return _FakeResponse(server_body)
+
+    monkeypatch.setattr("metagit.core.state.http_document.urllib.request.urlopen", fake_urlopen)
+    store = HttpDocumentStore("https://state.example")
+    bundle = coord_bundle(store, org_id="_", workspace_id="ws")
+    item = HandoffItem(
+        id="h1",
+        title="client title",
+        created_by="agent",
+        created_at=now,
+        updated_at=now,
+    )
+
+    saved = bundle.handoffs().append(item)
+
+    assert saved.title == "server-normalized"
+    assert saved.created_by == "ops-server"
+
+
 def test_http_412_raises_state_conflict(monkeypatch) -> None:
     def fake_urlopen(request, timeout):
         _ = timeout

@@ -53,6 +53,35 @@ def test_coord_bundle_handoffs_append_uses_handoffs_envelope() -> None:
     assert list(record.body) == ["handoffs"]
 
 
+def test_coord_handoffs_append_returns_server_normalized_body() -> None:
+    """HTTP append must re-validate the store response when it includes id."""
+
+    class _NormalizingStore(InMemoryDocumentStore):
+        def append(self, ref, item):  # type: ignore[no-untyped-def]
+            _ = super().append(ref, item)
+            out = dict(item)
+            out["title"] = "server-normalized"
+            out["created_by"] = "ops-server"
+            return out
+
+    store = _NormalizingStore()
+    bundle = coord_bundle(store, org_id="_", workspace_id="ws")
+    now = utc_now_iso()
+    item = HandoffItem(
+        id="h1",
+        title="client title",
+        created_by="agent",
+        created_at=now,
+        updated_at=now,
+    )
+
+    saved = bundle.handoffs().append(item)
+
+    assert saved.id == "h1"
+    assert saved.title == "server-normalized"
+    assert saved.created_by == "ops-server"
+
+
 def test_coord_bundle_approvals_round_trip() -> None:
     store = InMemoryDocumentStore()
     bundle = coord_bundle(store, org_id="org", workspace_id="ws")
