@@ -21,9 +21,10 @@ Working on shared central state (DocumentStore, Dynamo/Mongo/HTTP), org catalog 
 9. Treat `coord.events/document` as derived read-only state: reads may consume an existing legacy file, but all mutations must fail.
 10. A local `get()` must parse the body and derive its CAS token from one byte snapshot; keep local document modules cold-importable by avoiding `state.base` and context-dependent stores at module import time.
 11. HTTP document reads for approvals must request `status=all`; the bare ops route defaults to pending and is not a whole-document snapshot.
+12. Optional cloud stores (`DynamoDocumentStore`, `MongoDocumentStore`) lazy-import SDKs behind `metagit-cli[state-dynamodb]` / `[state-mongodb]`; inject test doubles (`moto`, `client=` + mongomock); `describe()` must never return credentials or Mongo URIs.
 
 ## Verify
-- Contract tests for DocumentStore backends.
+- Contract tests for DocumentStore backends (memory/local/http + optional Dynamo/Mongo).
 - Existing coordination tests green with no config.
 - `metagit://gate/status` → `state_backend` diagnostics without secrets.
 - Skills/docs updated (`metagit-sharing-state` for 0015).

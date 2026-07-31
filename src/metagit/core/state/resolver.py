@@ -123,7 +123,18 @@ def resolve_document_store(workspace_root: str) -> DocumentStore:
             endpoint_url=state.dynamodb.endpoint_url.strip(),
         )
     if backend_kind == "mongodb":
-        raise ValueError("mongodb state backend is not implemented")
+        from metagit.core.state.mongodb import MongoDocumentStore
+
+        uri = state.mongodb.uri.strip()
+        database = state.mongodb.database.strip()
+        if not uri:
+            raise ValueError("mongodb state backend requires uri (state.mongodb.uri or METAGIT_STATE_MONGO_URI)")
+        if not database:
+            raise ValueError(
+                "mongodb state backend requires database (state.mongodb.database or METAGIT_STATE_MONGO_DB)"
+            )
+        collection = state.mongodb.collection.strip() or "metagit_state"
+        return MongoDocumentStore(uri, database, collection=collection)
     from metagit.core.state.local_document import LocalDocumentStore
 
     return LocalDocumentStore(
@@ -151,7 +162,7 @@ def resolve_backend(workspace_root: str) -> BackendBundle:
         if not url:
             raise ValueError("remote state backend selected but no state.url configured")
         return remote_bundle(url, bearer_token=_resolve_bearer_token(state))
-    if backend_kind in {"memory", "dynamodb"}:
+    if backend_kind in {"memory", "dynamodb", "mongodb"}:
         from metagit.core.state.adapters.coord import coord_bundle
 
         store = resolve_document_store(workspace_root)
@@ -160,8 +171,6 @@ def resolve_backend(workspace_root: str) -> BackendBundle:
             org_id=resolve_org_id(state),
             workspace_id=resolve_workspace_id(state, workspace_root),
         )
-    if backend_kind == "mongodb":
-        raise ValueError("mongodb state backend is not implemented")
     from metagit.core.state.local import local_bundle
 
     return local_bundle(workspace_root)

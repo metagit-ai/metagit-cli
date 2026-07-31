@@ -204,11 +204,19 @@ def test_resolve_document_store_for_supported_backends(monkeypatch, tmp_path) ->
     assert isinstance(resolve_document_store(str(tmp_path)), HttpDocumentStore)
 
 
-def test_unimplemented_mongodb_backend_raises(monkeypatch, tmp_path) -> None:
+def test_mongodb_backend_requires_uri_and_database(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("METAGIT_STATE_BACKEND", "mongodb")
-    with pytest.raises(ValueError, match="mongodb state backend is not implemented"):
+    monkeypatch.delenv("METAGIT_STATE_MONGO_URI", raising=False)
+    monkeypatch.delenv("METAGIT_STATE_MONGO_DB", raising=False)
+    with pytest.raises(ValueError, match="requires uri"):
         resolve_document_store(str(tmp_path))
-    with pytest.raises(ValueError, match="mongodb state backend is not implemented"):
+    with pytest.raises(ValueError, match="requires uri"):
+        resolve_backend(str(tmp_path))
+
+    monkeypatch.setenv("METAGIT_STATE_MONGO_URI", "mongodb://localhost:27017")
+    with pytest.raises(ValueError, match="requires database"):
+        resolve_document_store(str(tmp_path))
+    with pytest.raises(ValueError, match="requires database"):
         resolve_backend(str(tmp_path))
 
 
@@ -232,6 +240,22 @@ def test_resolve_dynamodb_document_store(monkeypatch, tmp_path) -> None:
     assert isinstance(store, DynamoDocumentStore)
     assert store.describe()["table"] == "metagit-state"
     assert "secret" not in store.describe()
+
+
+def test_resolve_mongodb_document_store(monkeypatch, tmp_path) -> None:
+    pytest.importorskip("pymongo")
+    from metagit.core.state.mongodb import MongoDocumentStore
+
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "mongodb")
+    monkeypatch.setenv("METAGIT_STATE_MONGO_URI", "mongodb://localhost:27017")
+    monkeypatch.setenv("METAGIT_STATE_MONGO_DB", "metagit")
+    store = resolve_document_store(str(tmp_path))
+    assert isinstance(store, MongoDocumentStore)
+    info = store.describe()
+    assert info["database"] == "metagit"
+    assert info["collection"] == "metagit_state"
+    assert "uri" not in info
+    assert "secret" not in info
 
 
 def test_describe_includes_org_workspace_and_extras(monkeypatch) -> None:

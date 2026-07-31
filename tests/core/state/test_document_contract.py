@@ -19,7 +19,7 @@ DOCUMENT_STORE_FACTORIES: dict[str, Callable[..., DocumentStore]] = {
 }
 
 
-@pytest.fixture(params=list(DOCUMENT_STORE_FACTORIES.keys()) + ["dynamodb"])
+@pytest.fixture(params=list(DOCUMENT_STORE_FACTORIES.keys()) + ["dynamodb", "mongodb"])
 def document_store(request, tmp_path) -> Iterator[DocumentStore]:
     if request.param == "dynamodb":
         boto3 = pytest.importorskip("boto3")
@@ -43,6 +43,18 @@ def document_store(request, tmp_path) -> Iterator[DocumentStore]:
                 ],
             )
             yield DynamoDocumentStore(table="metagit-state-contract", region="us-east-1")
+        return
+
+    if request.param == "mongodb":
+        mongomock = pytest.importorskip("mongomock")
+        from metagit.core.state.mongodb import MongoDocumentStore
+
+        yield MongoDocumentStore(
+            uri="mongodb://localhost",
+            database="metagit",
+            collection="state_contract",
+            client=mongomock.MongoClient(),
+        )
         return
 
     factory = DOCUMENT_STORE_FACTORIES[request.param]
