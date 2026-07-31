@@ -9,6 +9,7 @@ from typing import Any
 from metagit.core.appconfig.models import AppConfig, StateConfig
 from metagit.core.state.base import BackendBundle
 from metagit.core.state.local import local_bundle
+from metagit.core.state.plane import default_org_id, derive_workspace_id
 from metagit.core.state.remote import remote_bundle
 
 
@@ -43,6 +44,30 @@ def _resolve_bearer_token(state: StateConfig) -> str:
     if isinstance(loaded, AppConfig) and loaded.api_key.strip():
         return loaded.api_key.strip()
     return ""
+
+
+def _resolve_org_id(state: StateConfig) -> str:
+    env_org_id = os.getenv("METAGIT_STATE_ORG_ID", "").strip()
+    if env_org_id:
+        return env_org_id
+    return state.org_id.strip() or default_org_id()
+
+
+def _resolve_workspace_id(state: StateConfig, workspace_root: str) -> str:
+    env_workspace_id = os.getenv("METAGIT_STATE_WORKSPACE_ID", "").strip()
+    if env_workspace_id:
+        return env_workspace_id
+    return state.workspace_id.strip() or derive_workspace_id(workspace_root)
+
+
+def resolve_org_id(state: StateConfig) -> str:
+    """Resolve the effective organization partition identifier."""
+    return _resolve_org_id(state)
+
+
+def resolve_workspace_id(state: StateConfig, workspace_root: str) -> str:
+    """Resolve the effective workspace partition identifier."""
+    return _resolve_workspace_id(state, workspace_root)
 
 
 def describe_state_backend(workspace_root: str) -> dict[str, Any]:
@@ -90,4 +115,9 @@ def resolve_backend(workspace_root: str) -> BackendBundle:
     return local_bundle(workspace_root)
 
 
-__all__ = ["describe_state_backend", "resolve_backend"]
+__all__ = [
+    "describe_state_backend",
+    "resolve_backend",
+    "resolve_org_id",
+    "resolve_workspace_id",
+]

@@ -200,14 +200,40 @@ class Providers(BaseModel):
         extra = "forbid"
 
 
+class StateDynamoConfig(BaseModel):
+    """DynamoDB document-state backend settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    table: str = Field(default="", description="DynamoDB table name")
+    region: str = Field(default="", description="AWS region for DynamoDB")
+    endpoint_url: str = Field(
+        default="",
+        description="Optional custom DynamoDB endpoint for local development",
+    )
+
+
+class StateMongoConfig(BaseModel):
+    """MongoDB document-state backend settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    uri: str = Field(default="", description="MongoDB connection URI")
+    database: str = Field(default="", description="MongoDB database name")
+    collection: str = Field(
+        default="metagit_state",
+        description="MongoDB collection name",
+    )
+
+
 class StateConfig(BaseModel):
     """Remote or local coordination-state backend settings."""
 
     model_config = ConfigDict(extra="forbid")
 
-    backend: Literal["local", "http"] = Field(
+    backend: Literal["local", "http", "dynamodb", "mongodb", "memory"] = Field(
         default="local",
-        description="State backend selector: local JSON files or remote HTTP ops API",
+        description="State backend selector",
     )
     url: str = Field(
         default="",
@@ -221,6 +247,22 @@ class StateConfig(BaseModel):
         default=1,
         ge=0,
         description="Optimistic concurrency retries for mutating services",
+    )
+    org_id: str = Field(
+        default="",
+        description="Organization partition identifier; defaults to _ when empty",
+    )
+    workspace_id: str = Field(
+        default="",
+        description="Workspace partition identifier; derived from workspace root when empty",
+    )
+    dynamodb: StateDynamoConfig = Field(
+        default_factory=StateDynamoConfig,
+        description="DynamoDB state backend settings",
+    )
+    mongodb: StateMongoConfig = Field(
+        default_factory=StateMongoConfig,
+        description="MongoDB state backend settings",
     )
 
 
@@ -363,6 +405,20 @@ class AppConfig(BaseModel):
             config.state.backend = os.getenv("METAGIT_STATE_BACKEND", "local")  # type: ignore[assignment]
         if os.getenv("METAGIT_STATE_TOKEN"):
             config.state.token = os.getenv("METAGIT_STATE_TOKEN", "")
+        if os.getenv("METAGIT_STATE_ORG_ID"):
+            config.state.org_id = os.getenv("METAGIT_STATE_ORG_ID", "")
+        if os.getenv("METAGIT_STATE_WORKSPACE_ID"):
+            config.state.workspace_id = os.getenv("METAGIT_STATE_WORKSPACE_ID", "")
+        if os.getenv("METAGIT_STATE_DDB_TABLE"):
+            config.state.dynamodb.table = os.getenv("METAGIT_STATE_DDB_TABLE", "")
+        if os.getenv("METAGIT_STATE_DDB_REGION"):
+            config.state.dynamodb.region = os.getenv("METAGIT_STATE_DDB_REGION", "")
+        if os.getenv("METAGIT_STATE_DDB_ENDPOINT"):
+            config.state.dynamodb.endpoint_url = os.getenv("METAGIT_STATE_DDB_ENDPOINT", "")
+        if os.getenv("METAGIT_STATE_MONGO_URI"):
+            config.state.mongodb.uri = os.getenv("METAGIT_STATE_MONGO_URI", "")
+        if os.getenv("METAGIT_STATE_MONGO_DB"):
+            config.state.mongodb.database = os.getenv("METAGIT_STATE_MONGO_DB", "")
 
         # Workspace configuration
         if os.getenv("METAGIT_WORKSPACE_PATH"):

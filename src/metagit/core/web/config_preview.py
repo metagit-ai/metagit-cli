@@ -28,21 +28,25 @@ def read_disk_text(path: str) -> str:
 
 def redact_secrets(payload: Any) -> Any:
     """Return a copy of nested dict/list data with sensitive string values masked."""
-    if isinstance(payload, dict):
-        redacted: dict[str, Any] = {}
-        for key, value in payload.items():
-            if key in _SENSITIVE_KEYS or key.endswith("_token"):
-                if isinstance(value, str) and value:
-                    suffix = value[-4:] if len(value) > 4 else ""
+
+    def _redact(value: Any, parent_key: str = "") -> Any:
+        if isinstance(value, dict):
+            redacted: dict[str, Any] = {}
+            for key, nested_value in value.items():
+                sensitive = (
+                    key in _SENSITIVE_KEYS or key.endswith("_token") or (parent_key == "mongodb" and key == "uri")
+                )
+                if sensitive and isinstance(nested_value, str) and nested_value:
+                    suffix = nested_value[-4:] if len(nested_value) > 4 else ""
                     redacted[key] = f"***{suffix}" if suffix else "***"
                 else:
-                    redacted[key] = value
-            else:
-                redacted[key] = redact_secrets(value)
-        return redacted
-    if isinstance(payload, list):
-        return [redact_secrets(item) for item in payload]
-    return payload
+                    redacted[key] = _redact(nested_value, key)
+            return redacted
+        if isinstance(value, list):
+            return [_redact(item, parent_key) for item in value]
+        return value
+
+    return _redact(payload)
 
 
 def render_metagit_yaml(
