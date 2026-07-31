@@ -9,7 +9,7 @@
 Today Metagit has two persistence layers:
 
 1. **Catalog / footprint** — git-tracked `.metagit.yml` (projects, repos, graph).
-2. **Coordination state** — local `.metagit/` JSON, optionally shared via HTTP (`RemoteHttpBackend` → `metagit web serve`). See [sharing-state.md](../../reference/sharing-state.md) and [remote-state-backend-design](2026-07-01-remote-state-backend-design.md).
+2. **Coordination state** — local `.metagit/` JSON, optionally shared via HTTP (`RemoteHttpBackend` → `metagit web serve`). See [sharing-state.md](../../reference/sharing-state.md).
 
 ACL, task graph, scheduler, merge, and semantic stores remain **local filesystem** under the session/manifest root. Architecture still states there is no application database backing core runtime flows.
 

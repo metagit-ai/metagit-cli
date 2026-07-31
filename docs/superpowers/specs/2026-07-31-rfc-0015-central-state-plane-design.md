@@ -3,7 +3,7 @@
 **Status:** Proposed (plan ready)  
 **Date:** 2026-07-31  
 **Series:** [Central State Plane series index](2026-07-31-central-state-plane-series-index.md)  
-**Supersedes / extends:** [Remote State Backend Design](2026-07-01-remote-state-backend-design.md) (keeps local + HTTP; generalizes storage)  
+**Supersedes / extends:** [Sharing state](../../reference/sharing-state.md) remote/local coordination backends (keeps local + HTTP; generalizes storage)  
 **Depends on:** Shipped `metagit.core.state` (`LocalFileBackend`, `RemoteHttpBackend`, `BackendBundle`)  
 **Enables:** RFC-0016 (catalog), RFC-0017 (harness), RFC-0018 (ontology)  
 **Plan:** [2026-07-31-rfc-0015-central-state-plane.md](../plans/2026-07-31-rfc-0015-central-state-plane.md)
