@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -70,6 +73,71 @@ def test_generic_namespace_uses_state_dir(tmp_path: Path) -> None:
   assert record is not None
   assert record.body == body
   assert record.token == token
+
+
+def test_get_body_and_token_share_one_file_snapshot(
+  tmp_path: Path,
+  monkeypatch: pytest.MonkeyPatch,
+) -> None:
+  store = LocalDocumentStore(str(tmp_path))
+  ref = store.ref_for("catalog.workspace", KEY_DOCUMENT)
+  original_body = {"version": "original"}
+  replacement_body = {"version": "replacement"}
+  store.put(ref, original_body, expected=None)
+  path = tmp_path / ".metagit" / "state" / "catalog.workspace" / "document.json"
+  original_raw = path.read_bytes()
+  original_read_text = Path.read_text
+
+  def replace_after_read(
+    current_path: Path,
+    *args: object,
+    **kwargs: object,
+  ) -> str:
+    content = original_read_text(current_path, *args, **kwargs)
+    if current_path == path:
+      current_path.write_text(
+        '{"version": "replacement"}\n',
+        encoding="utf-8",
+      )
+    return content
+
+  monkeypatch.setattr(Path, "read_text", replace_after_read)
+
+  record = store.get(ref)
+
+  assert record is not None
+  assert record.body == original_body
+  assert record.body != replacement_body
+  assert record.token == hashlib.sha256(original_raw).hexdigest()
+
+
+def test_local_document_store_is_cold_importable() -> None:
+  repository_root = Path(__file__).resolve().parents[3]
+  environment = {
+    "HOME": os.environ["HOME"],
+    "PATH": os.environ["PATH"],
+    "PYTHONNOUSERSITE": "1",
+  }
+  result = subprocess.run(
+    [
+      "uv",
+      "run",
+      "python",
+      "-c",
+      (
+        "from metagit.core.state.local_document import "
+        "LocalDocumentStore; print(LocalDocumentStore.__name__)"
+      ),
+    ],
+    cwd=repository_root,
+    env=environment,
+    check=False,
+    capture_output=True,
+    text=True,
+  )
+
+  assert result.returncode == 0, result.stderr
+  assert result.stdout.strip() == "LocalDocumentStore"
 
 
 @pytest.mark.parametrize(

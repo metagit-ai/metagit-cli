@@ -13,8 +13,6 @@ from contextlib import AbstractContextManager
 from pathlib import Path
 from typing import Any
 
-from metagit.core.mcp.services.session_store import SessionStore
-from metagit.core.state.base import StateToken
 from metagit.core.state.document import DocumentRef, StateRecord
 from metagit.core.state.errors import StateBackendError, StateConflictError
 from metagit.core.state.plane import (
@@ -25,6 +23,8 @@ from metagit.core.state.plane import (
     NS_COORD_OBJECTIVES,
     derive_workspace_id,
 )
+
+StateToken = str | None
 
 try:
     import fcntl
@@ -60,7 +60,13 @@ class LocalDocumentStore:
         self._workspace_root = str(Path(workspace_root).expanduser().resolve())
         self._org_id = org_id
         self._workspace_id = workspace_id or derive_workspace_id(self._workspace_root)
-        self._session_store = SessionStore(workspace_root=self._workspace_root)
+        session_path = os.getenv("METAGIT_WORKSPACE_SESSION_PATH") or ".metagit/sessions"
+        session_path_candidate = Path(session_path).expanduser()
+        self._sessions_dir = (
+            session_path_candidate.resolve()
+            if session_path_candidate.is_absolute()
+            else (Path(self._workspace_root) / session_path_candidate).resolve()
+        )
 
     def ref_for(self, namespace: str, key: str) -> DocumentRef:
         """Build a document reference using this store's identity."""
@@ -75,10 +81,14 @@ class LocalDocumentStore:
 
     def get(self, ref: DocumentRef) -> StateRecord | None:
         path = self._path_for(ref.namespace, ref.key)
-        body = self._read_json(path)
-        if body is None:
+        try:
+            raw = path.read_bytes()
+            body = json.loads(raw)
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             return None
-        return StateRecord(ref=ref, body=body, token=_token_for_path(path))
+        if not isinstance(body, dict):
+            return None
+        return StateRecord(ref=ref, body=body, token=_token_for_bytes(raw))
 
     def put(
         self,
@@ -197,12 +207,11 @@ class LocalDocumentStore:
     def _legacy_path(self, namespace: str, key: str) -> Path | None:
         if key != KEY_DOCUMENT:
             return None
-        sessions_dir = Path(self._session_store.sessions_dir)
         paths = {
-            NS_COORD_OBJECTIVES: sessions_dir / "objectives.json",
-            NS_COORD_HANDOFFS: sessions_dir / "handoffs.json",
+            NS_COORD_OBJECTIVES: self._sessions_dir / "objectives.json",
+            NS_COORD_HANDOFFS: self._sessions_dir / "handoffs.json",
             NS_COORD_APPROVALS: (Path(self._workspace_root) / ".metagit" / "approvals" / "pending.json"),
-            NS_COORD_EVENTS: sessions_dir / "events.json",
+            NS_COORD_EVENTS: self._sessions_dir / "events.json",
         }
         return paths.get(namespace)
 

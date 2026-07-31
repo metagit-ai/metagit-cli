@@ -49,3 +49,18 @@ Complete. Implemented and committed Task 4 only.
   cases and events `put`).
 - GREEN evidence: requested focused suites passed, 24 tests total, including
   local atomic write round-trip behavior.
+
+## Remaining Important Review Fixes
+
+- `get()` now reads bytes once and derives both the parsed JSON body and
+  SHA-256 CAS token from that single immutable snapshot.
+- Removed module-level imports of `StateToken` from `state.base` and
+  `SessionStore`; the local store resolves the configured sessions directory
+  directly without importing context-dependent session models.
+- Added a clean-process subprocess regression test for
+  `LocalDocumentStore` import and a replacement-race regression test proving
+  the returned body and token describe the same bytes.
+- RED evidence: both new regressions failed before implementation (snapshot
+  token mismatch and circular-import traceback).
+- GREEN evidence: requested focused suites passed, 26 tests total, including
+  the cold-import subprocess assertion.

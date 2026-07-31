@@ -6,7 +6,7 @@
 - **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore` and locked JSON `LocalDocumentStore` implementations of the shared `DocumentStore` contract, including CAS writes/deletes, prefix listing, content tokens, legacy `coord.*` paths, and handoff envelope compatibility.
 
 ### Fixed
-- **Local document store hardening:** reject unsafe namespace/key paths, replace locked JSON files atomically, and prevent mutations of the derived coordination events document.
+- **Local document store hardening:** reject unsafe namespace/key paths, replace locked JSON files atomically, prevent mutations of the derived coordination events document, derive `get()` bodies and CAS tokens from one byte snapshot, and cold-import without the context/state cycle.
 - **State identity cold imports:** organization/workspace identity helpers now live in an independent state module, avoiding the `state.base` ↔ `context` package initialization cycle.
 - **Dependency security baseline:** require GitPython 3.1.55 and pymdown-extensions 11.0.0 or newer to resolve advisories reported by the pre-push audit.
 
