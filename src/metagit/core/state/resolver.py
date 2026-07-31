@@ -4,19 +4,19 @@
 from __future__ import annotations
 
 import os
+import threading
 from importlib.util import find_spec
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from metagit.core.appconfig.models import AppConfig, StateConfig
-from metagit.core.state.adapters.coord import coord_bundle
-from metagit.core.state.base import BackendBundle
 from metagit.core.state.document import DocumentStore
-from metagit.core.state.http_document import HttpDocumentStore
 from metagit.core.state.identity import resolve_org_id, resolve_workspace_id
-from metagit.core.state.local import local_bundle
-from metagit.core.state.local_document import LocalDocumentStore
-from metagit.core.state.memory import InMemoryDocumentStore
-from metagit.core.state.remote import remote_bundle
+
+if TYPE_CHECKING:
+    from metagit.core.state.base import BackendBundle
+
+_MEMORY_STORES: dict[tuple[str, str], DocumentStore] = {}
+_MEMORY_STORES_LOCK = threading.RLock()
 
 
 def _load_state_config() -> StateConfig:
@@ -65,6 +65,10 @@ def describe_state_backend(workspace_root: str) -> dict[str, Any]:
     effective = "http" if url or backend_kind == "http" else "local"
     if not url and backend_kind in {"memory", "dynamodb", "mongodb"}:
         effective = backend_kind
+    if effective == "http":
+        from metagit.core.state.http_document import _sanitize_base_url_for_describe
+
+        url = _sanitize_base_url_for_describe(url)
     return {
         "backend": effective,
         "url": url if effective == "http" else "",
@@ -91,13 +95,26 @@ def resolve_document_store(workspace_root: str) -> DocumentStore:
     url = _resolve_remote_url(state)
     backend_kind = _resolve_backend_kind(state)
     if url or backend_kind == "http":
+        from metagit.core.state.http_document import HttpDocumentStore
+
         if not url:
             raise ValueError("remote state backend selected but no state.url configured")
         return HttpDocumentStore(url, bearer_token=_resolve_bearer_token(state))
     if backend_kind == "memory":
-        return InMemoryDocumentStore()
+        from metagit.core.state.memory import InMemoryDocumentStore
+
+        identity = (resolve_org_id(state), resolve_workspace_id(state, workspace_root))
+        # Resolver-scoped cache makes the ephemeral backend stable within this process.
+        with _MEMORY_STORES_LOCK:
+            store = _MEMORY_STORES.get(identity)
+            if store is None:
+                store = InMemoryDocumentStore()
+                _MEMORY_STORES[identity] = store
+            return store
     if backend_kind in {"dynamodb", "mongodb"}:
         raise ValueError(f"{backend_kind} state backend is not implemented")
+    from metagit.core.state.local_document import LocalDocumentStore
+
     return LocalDocumentStore(
         workspace_root,
         org_id=resolve_org_id(state),
@@ -118,17 +135,24 @@ def resolve_backend(workspace_root: str) -> BackendBundle:
     url = _resolve_remote_url(state)
     backend_kind = _resolve_backend_kind(state)
     if url or backend_kind == "http":
+        from metagit.core.state.remote import remote_bundle
+
         if not url:
             raise ValueError("remote state backend selected but no state.url configured")
         return remote_bundle(url, bearer_token=_resolve_bearer_token(state))
     if backend_kind == "memory":
+        from metagit.core.state.adapters.coord import coord_bundle
+
+        store = resolve_document_store(workspace_root)
         return coord_bundle(
-            InMemoryDocumentStore(),
+            store,
             org_id=resolve_org_id(state),
             workspace_id=resolve_workspace_id(state, workspace_root),
         )
     if backend_kind in {"dynamodb", "mongodb"}:
         raise ValueError(f"{backend_kind} state backend is not implemented")
+    from metagit.core.state.local import local_bundle
+
     return local_bundle(workspace_root)
 
 

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import hashlib
 import os
+import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -23,6 +25,7 @@ from metagit.core.state.resolver import (
     resolve_document_store,
 )
 from metagit.core.web.config_preview import redact_secrets
+from metagit.core.workspace.context_models import utc_now_iso
 
 
 def test_default_state_config_is_local() -> None:
@@ -130,6 +133,38 @@ def test_describe_state_backend_reports_remote_env(monkeypatch) -> None:
     assert info["token_configured"] is True
 
 
+def test_describe_state_backend_sanitizes_remote_url(monkeypatch) -> None:
+    monkeypatch.setenv(
+        "METAGIT_STATE_URL",
+        "https://user:password@example.test/state?token=secret&key=value",
+    )
+
+    info = describe_state_backend("/tmp/ws")
+
+    assert info["url"] == "https://example.test/state?token=***&key=***"
+    assert "user" not in info["url"]
+    assert "password" not in info["url"]
+    assert "secret" not in info["url"]
+
+
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "from metagit.core.state import resolve_backend",
+        "from metagit.core.state.resolver import resolve_backend",
+    ],
+)
+def test_resolver_is_cold_importable_in_subprocess(statement: str) -> None:
+    completed = subprocess.run(
+        [sys.executable, "-c", statement],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+
+
 def test_resolve_memory_backend(monkeypatch) -> None:
     monkeypatch.setenv("METAGIT_STATE_BACKEND", "memory")
     bundle = resolve_backend("/tmp/ws")
@@ -137,6 +172,24 @@ def test_resolve_memory_backend(monkeypatch) -> None:
     rows, loaded_token = bundle.objectives().load()
     assert rows == []
     assert loaded_token == token
+
+
+def test_resolve_memory_backend_reuses_store(monkeypatch) -> None:
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "memory")
+    first = resolve_backend("/tmp/shared-memory-ws")
+    now = utc_now_iso()
+    objective = Objective(
+        id="shared",
+        title="Shared objective",
+        created_at=now,
+        updated_at=now,
+    )
+    first.objectives().save([objective], expected=None)
+
+    second = resolve_backend("/tmp/shared-memory-ws")
+    rows, _ = second.objectives().load()
+
+    assert [row.id for row in rows] == ["shared"]
 
 
 def test_resolve_document_store_for_supported_backends(monkeypatch, tmp_path) -> None:
