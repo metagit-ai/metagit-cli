@@ -23,6 +23,7 @@ _EXPORTS: dict[str, tuple[str, str]] = {
     "local_bundle": ("metagit.core.state.local", "local_bundle"),
     "remote_bundle": ("metagit.core.state.remote", "remote_bundle"),
     "resolve_backend": ("metagit.core.state.resolver", "resolve_backend"),
+    "resolve_document_store": ("metagit.core.state.resolver", "resolve_document_store"),
 }
 
 
@@ -54,4 +55,5 @@ __all__ = [
     "local_bundle",
     "remote_bundle",
     "resolve_backend",
+    "resolve_document_store",
 ]

@@ -8,11 +8,20 @@ import os
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from metagit.core.appconfig.models import AppConfig, StateConfig, StateMongoConfig
 from metagit.core.context.models import Objective
+from metagit.core.state.http_document import HttpDocumentStore
 from metagit.core.state.identity import resolve_org_id, resolve_workspace_id
+from metagit.core.state.local_document import LocalDocumentStore
+from metagit.core.state.memory import InMemoryDocumentStore
 from metagit.core.state.remote import RemoteHttpBackend
-from metagit.core.state.resolver import resolve_backend
+from metagit.core.state.resolver import (
+    describe_state_backend,
+    resolve_backend,
+    resolve_document_store,
+)
 from metagit.core.web.config_preview import redact_secrets
 
 
@@ -112,8 +121,6 @@ def test_describe_state_backend_defaults_local() -> None:
 
 
 def test_describe_state_backend_reports_remote_env(monkeypatch) -> None:
-    from metagit.core.state.resolver import describe_state_backend
-
     monkeypatch.setenv("METAGIT_STATE_URL", "http://127.0.0.1:8787")
     monkeypatch.setenv("METAGIT_STATE_TOKEN", "secret")
     info = describe_state_backend("/tmp/ws")
@@ -121,3 +128,43 @@ def test_describe_state_backend_reports_remote_env(monkeypatch) -> None:
     assert info["url"] == "http://127.0.0.1:8787"
     assert info["env_overrides"]["METAGIT_STATE_URL"] is True
     assert info["token_configured"] is True
+
+
+def test_resolve_memory_backend(monkeypatch) -> None:
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "memory")
+    bundle = resolve_backend("/tmp/ws")
+    token = bundle.objectives().save([], expected=None)
+    rows, loaded_token = bundle.objectives().load()
+    assert rows == []
+    assert loaded_token == token
+
+
+def test_resolve_document_store_for_supported_backends(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "local")
+    assert isinstance(resolve_document_store(str(tmp_path)), LocalDocumentStore)
+
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "memory")
+    assert isinstance(resolve_document_store(str(tmp_path)), InMemoryDocumentStore)
+
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "http")
+    monkeypatch.setenv("METAGIT_STATE_URL", "http://example.test")
+    assert isinstance(resolve_document_store(str(tmp_path)), HttpDocumentStore)
+
+
+def test_unimplemented_document_store_backends_raise(monkeypatch, tmp_path) -> None:
+    for backend in ("dynamodb", "mongodb"):
+        monkeypatch.setenv("METAGIT_STATE_BACKEND", backend)
+        with pytest.raises(ValueError, match=f"{backend} state backend is not implemented"):
+            resolve_document_store(str(tmp_path))
+        with pytest.raises(ValueError, match=f"{backend} state backend is not implemented"):
+            resolve_backend(str(tmp_path))
+
+
+def test_describe_includes_org_workspace_and_extras(monkeypatch) -> None:
+    monkeypatch.setenv("METAGIT_STATE_ORG_ID", "acme")
+    monkeypatch.setenv("METAGIT_STATE_WORKSPACE_ID", "ws1")
+    info = describe_state_backend("/tmp/ws")
+    assert info["org_id"] == "acme"
+    assert info["workspace_id"] == "ws1"
+    assert isinstance(info["extras"]["dynamodb"], bool)
+    assert isinstance(info["extras"]["mongodb"], bool)
