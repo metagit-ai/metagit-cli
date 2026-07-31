@@ -8,8 +8,8 @@ import json
 import threading
 from typing import Any
 
-from metagit.core.state.document import DocumentRef, StateRecord
 from metagit.core.state.base import StateToken
+from metagit.core.state.document import DocumentRef, StateRecord
 from metagit.core.state.errors import StateConflictError
 
 
@@ -48,8 +48,7 @@ class InMemoryDocumentStore:
             current_token = None if current is None else current[1]
             if current_token != expected:
                 raise StateConflictError(
-                    f"state conflict for {ref.namespace}/{ref.key}: "
-                    f"expected {expected!r}, have {current_token!r}"
+                    f"state conflict for {ref.namespace}/{ref.key}: expected {expected!r}, have {current_token!r}"
                 )
             token = _canonical_token(body)
             self._docs[key] = (dict(body), token)
@@ -85,9 +84,7 @@ class InMemoryDocumentStore:
                     continue
                 if prefix and not k.startswith(prefix):
                     continue
-                out.append(
-                    DocumentRef(org_id=o, workspace_id=w, namespace=ns, key=k)
-                )
+                out.append(DocumentRef(org_id=o, workspace_id=w, namespace=ns, key=k))
                 if len(out) >= limit:
                     break
             return out
@@ -98,9 +95,7 @@ class InMemoryDocumentStore:
             current = self._docs.get(key)
             current_token = None if current is None else current[1]
             if current is None or current_token != expected:
-                raise StateConflictError(
-                    f"state conflict deleting {ref.namespace}/{ref.key}"
-                )
+                raise StateConflictError(f"state conflict deleting {ref.namespace}/{ref.key}")
             del self._docs[key]
 
     def describe(self) -> dict[str, Any]:
