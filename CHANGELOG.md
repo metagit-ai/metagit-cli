@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore`, locked JSON `LocalDocumentStore`, and cold-import-safe `HttpDocumentStore` implementations of the shared `DocumentStore` contract, including CAS writes/deletes, prefix listing, content tokens, legacy `coord.*` paths, handoff envelope compatibility, ETag-backed coordination access over existing v3 ops routes, `coord_bundle` adapters for objectives, handoffs, approvals, and events, generic backend resolution, and identity/optional-extra diagnostics.
+- **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore`, locked JSON `LocalDocumentStore`, cold-import-safe `HttpDocumentStore`, and optional `DynamoDocumentStore` (`metagit-cli[state-dynamodb]`) implementations of the shared `DocumentStore` contract, including CAS writes/deletes, prefix listing, content tokens, legacy `coord.*` paths, handoff envelope compatibility, ETag-backed coordination access over existing v3 ops routes, `coord_bundle` adapters for objectives, handoffs, approvals, and events, generic backend resolution (including DynamoDB table/region/endpoint wiring), and identity/optional-extra diagnostics.
 
 ### Fixed
 - **Local document store hardening:** reject unsafe namespace/key paths, replace locked JSON files atomically, prevent mutations of the derived coordination events document, derive `get()` bodies and CAS tokens from one byte snapshot, and cold-import without the context/state cycle.
