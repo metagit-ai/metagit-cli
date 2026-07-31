@@ -17,6 +17,8 @@ Working on shared central state (DocumentStore, Dynamo/Mongo/HTTP), org catalog 
 5. Reserved namespaces (`catalog.*`, `harness.*`, `ontology.*`, `acl.*`) are extension points; do not invent parallel stores.
 6. After design approval, write plans under `docs/superpowers/plans/2026-07-31-*.md` (gitignored until allowlisted — already allowlisted for 2026-07-31).
 7. Update series index status + `.mex/ROUTER.md` when a phase ships.
+8. Local document paths must reject traversal and separators, verify resolved paths remain under the state root or exact legacy path, and use locked atomic replacement.
+9. Treat `coord.events/document` as derived read-only state: reads may consume an existing legacy file, but all mutations must fail.
 
 ## Verify
 - Contract tests for DocumentStore backends.

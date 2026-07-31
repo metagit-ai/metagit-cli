@@ -7,6 +7,7 @@ import contextlib
 import hashlib
 import json
 import os
+import tempfile
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 from pathlib import Path
@@ -15,7 +16,7 @@ from typing import Any
 from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.state.base import StateToken
 from metagit.core.state.document import DocumentRef, StateRecord
-from metagit.core.state.errors import StateConflictError
+from metagit.core.state.errors import StateBackendError, StateConflictError
 from metagit.core.state.plane import (
     KEY_DOCUMENT,
     NS_COORD_APPROVALS,
@@ -63,6 +64,8 @@ class LocalDocumentStore:
 
     def ref_for(self, namespace: str, key: str) -> DocumentRef:
         """Build a document reference using this store's identity."""
+        self._validate_component("namespace", namespace)
+        self._validate_component("key", key)
         return DocumentRef(
             org_id=self._org_id,
             workspace_id=self._workspace_id,
@@ -84,11 +87,13 @@ class LocalDocumentStore:
         *,
         expected: StateToken,
     ) -> StateToken:
+        self._assert_writable(ref)
         path = self._path_for(ref.namespace, ref.key)
         with self._file_lock(path):
             return self._write_json_locked(path, body=body, expected=expected)
 
     def append(self, ref: DocumentRef, item: dict[str, Any]) -> dict[str, Any]:
+        self._assert_writable(ref)
         path = self._path_for(ref.namespace, ref.key)
         envelope = "handoffs" if ref.namespace == NS_COORD_HANDOFFS and ref.key == KEY_DOCUMENT else "items"
         with self._file_lock(path):
@@ -111,11 +116,14 @@ class LocalDocumentStore:
     ) -> list[DocumentRef]:
         if limit <= 0:
             return []
+        self._validate_component("namespace", namespace)
         keys: set[str] = set()
         legacy_path = self._legacy_path(namespace, KEY_DOCUMENT)
         if legacy_path is not None and legacy_path.is_file():
             keys.add(KEY_DOCUMENT)
-        namespace_dir = Path(self._workspace_root) / ".metagit" / "state" / namespace
+        state_root = Path(self._workspace_root) / ".metagit" / "state"
+        namespace_dir = state_root / namespace
+        self._assert_under_root(namespace_dir, state_root)
         if namespace_dir.is_dir():
             keys.update(path.stem for path in namespace_dir.glob("*.json"))
         return [
@@ -130,6 +138,7 @@ class LocalDocumentStore:
         ][:limit]
 
     def delete(self, ref: DocumentRef, *, expected: StateToken) -> None:
+        self._assert_writable(ref)
         path = self._path_for(ref.namespace, ref.key)
         with self._file_lock(path):
             current = _token_for_path(path)
@@ -146,10 +155,44 @@ class LocalDocumentStore:
         }
 
     def _path_for(self, namespace: str, key: str) -> Path:
+        self._validate_component("namespace", namespace)
+        self._validate_component("key", key)
         legacy_path = self._legacy_path(namespace, key)
         if legacy_path is not None:
+            self._assert_known_legacy_path(legacy_path)
             return legacy_path
-        return Path(self._workspace_root) / ".metagit" / "state" / namespace / f"{key}.json"
+        state_root = Path(self._workspace_root) / ".metagit" / "state"
+        path = state_root / namespace / f"{key}.json"
+        self._assert_under_root(path, state_root)
+        return path
+
+    def _validate_component(self, name: str, value: str) -> None:
+        if ".." in value or "/" in value or "\\" in value or Path(value).is_absolute():
+            raise StateBackendError(f"invalid document {name}: {value!r}")
+
+    def _assert_under_root(self, path: Path, root: Path) -> None:
+        resolved_path = path.resolve()
+        resolved_root = root.resolve()
+        if not resolved_path.is_relative_to(resolved_root):
+            raise StateBackendError(f"document path escapes state root: {path}")
+
+    def _assert_known_legacy_path(self, path: Path) -> None:
+        known_paths = {
+            legacy_path.absolute()
+            for namespace in (
+                NS_COORD_OBJECTIVES,
+                NS_COORD_HANDOFFS,
+                NS_COORD_APPROVALS,
+                NS_COORD_EVENTS,
+            )
+            if (legacy_path := self._legacy_path(namespace, KEY_DOCUMENT)) is not None
+        }
+        if path.resolve() not in known_paths:
+            raise StateBackendError(f"document path is not a known legacy path: {path}")
+
+    def _assert_writable(self, ref: DocumentRef) -> None:
+        if ref.namespace == NS_COORD_EVENTS and ref.key == KEY_DOCUMENT:
+            raise StateBackendError("coord events document is read-only")
 
     def _legacy_path(self, namespace: str, key: str) -> Path | None:
         if key != KEY_DOCUMENT:
@@ -185,9 +228,23 @@ class LocalDocumentStore:
             raise StateConflictError(f"state conflict for {path.name}: expected token {expected!r}, found {current!r}")
         serialized = json.dumps(body, indent=2) + "\n"
         raw = serialized.encode("utf-8")
-        path.write_bytes(raw)
-        with contextlib.suppress(OSError):
-            os.chmod(path, 0o600)
+        file_descriptor, temporary_name = tempfile.mkstemp(
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+        )
+        temporary_path = Path(temporary_name)
+        try:
+            with os.fdopen(file_descriptor, "wb") as handle:
+                handle.write(raw)
+                handle.flush()
+                os.fsync(handle.fileno())
+            with contextlib.suppress(OSError):
+                os.chmod(temporary_path, 0o600)
+            os.replace(temporary_path, path)
+        finally:
+            with contextlib.suppress(FileNotFoundError):
+                temporary_path.unlink()
         return _token_for_bytes(raw)
 
     def _file_lock(self, path: Path) -> AbstractContextManager[None]:

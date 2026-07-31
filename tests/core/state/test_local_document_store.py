@@ -5,10 +5,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
+from metagit.core.state.document import DocumentRef
+from metagit.core.state.errors import StateBackendError
 from metagit.core.state.local_document import LocalDocumentStore
 from metagit.core.state.plane import (
   KEY_DOCUMENT,
   NS_COORD_APPROVALS,
+  NS_COORD_EVENTS,
   NS_COORD_HANDOFFS,
   NS_COORD_OBJECTIVES,
   default_org_id,
@@ -56,10 +61,55 @@ def test_generic_namespace_uses_state_dir(tmp_path: Path) -> None:
   store = LocalDocumentStore(str(tmp_path))
   ref = store.ref_for("catalog.workspace", KEY_DOCUMENT)
 
-  store.put(ref, {"projects": []}, expected=None)
+  body = {"projects": [{"id": "project-1"}]}
+  token = store.put(ref, body, expected=None)
 
   path = tmp_path / ".metagit" / "state" / "catalog.workspace" / "document.json"
   assert path.is_file()
+  record = store.get(ref)
+  assert record is not None
+  assert record.body == body
+  assert record.token == token
+
+
+@pytest.mark.parametrize(
+  ("namespace", "key"),
+  [
+    ("../escape", KEY_DOCUMENT),
+    ("/absolute", KEY_DOCUMENT),
+    ("catalog/workspace", KEY_DOCUMENT),
+    ("catalog\\workspace", KEY_DOCUMENT),
+    ("catalog.workspace", "../escape"),
+    ("catalog.workspace", "/absolute"),
+    ("catalog.workspace", "nested/key"),
+    ("catalog.workspace", "nested\\key"),
+  ],
+)
+def test_invalid_document_ref_paths_are_rejected(
+  tmp_path: Path,
+  namespace: str,
+  key: str,
+) -> None:
+  store = LocalDocumentStore(str(tmp_path))
+  ref = DocumentRef(
+    org_id=default_org_id(),
+    workspace_id="workspace-test",
+    namespace=namespace,
+    key=key,
+  )
+
+  with pytest.raises(StateBackendError):
+    store.put(ref, {"value": "unsafe"}, expected=None)
+
+
+def test_events_document_is_read_only(tmp_path: Path) -> None:
+  store = LocalDocumentStore(str(tmp_path))
+  ref = store.ref_for(NS_COORD_EVENTS, KEY_DOCUMENT)
+
+  with pytest.raises(StateBackendError, match="read-only"):
+    store.put(ref, {"events": []}, expected=None)
+
+  assert not (tmp_path / ".metagit" / "sessions" / "events.json").exists()
 
 
 def test_ref_for_uses_store_identity(tmp_path: Path) -> None:
