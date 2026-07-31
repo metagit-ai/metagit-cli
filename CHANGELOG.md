@@ -9,6 +9,8 @@
 - **Coordination backend resolution:** `resolve_backend()` routes local and HTTP (as well as memory/DynamoDB/MongoDB) through `resolve_document_store()` + `coord_bundle` DocumentStore adapters; legacy `local_bundle` / `remote_bundle` remain available for direct callers and contract tests.
 
 ### Fixed
+- **Ops whole-document state (Deployment B):** `OpsWebHandler` GET/PUT for objectives/handoffs/approvals (and handoff append) now uses `resolve_backend()` so DynamoDB/MongoDB/HTTP/memory DocumentStore planes are honored instead of always reading local files.
+- **HTTP handoff append:** coord `_HandoffsAdapter.append` returns the server-normalized body from `DocumentStore.append` when it includes `id` (parity with prior `RemoteHttpBackend.append_handoff`).
 - **Local document store hardening:** reject unsafe namespace/key paths, replace locked JSON files atomically, prevent mutations of the derived coordination events document, derive `get()` bodies and CAS tokens from one byte snapshot, and cold-import without the context/state cycle.
 - **State identity cold imports:** organization/workspace identity helpers now live in an independent state module, avoiding the `state.base` ↔ `context` package initialization cycle.
 - **Dependency security baseline:** require GitPython 3.1.55 and pymdown-extensions 11.0.0 or newer to resolve advisories reported by the pre-push audit.
