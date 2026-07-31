@@ -9,17 +9,20 @@ import pytest
 
 from metagit.core.state.document import DocumentRef, DocumentStore
 from metagit.core.state.errors import StateConflictError
+from metagit.core.state.local_document import LocalDocumentStore
 from metagit.core.state.memory import InMemoryDocumentStore
 from metagit.core.state.plane import KEY_DOCUMENT, NS_COORD_OBJECTIVES, default_org_id
 
 DOCUMENT_STORE_FACTORIES: dict[str, Callable[..., DocumentStore]] = {
     "memory": lambda **_: InMemoryDocumentStore(),
+  "local": lambda tmp_path=None, **_: LocalDocumentStore(str(tmp_path)),
 }
 
 
 @pytest.fixture(params=list(DOCUMENT_STORE_FACTORIES.keys()))
-def document_store(request) -> DocumentStore:
-    return DOCUMENT_STORE_FACTORIES[request.param]()
+def document_store(request, tmp_path) -> DocumentStore:
+  factory = DOCUMENT_STORE_FACTORIES[request.param]
+  return factory(tmp_path=tmp_path)
 
 
 def _ref(key: str = KEY_DOCUMENT) -> DocumentRef:

@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore` thread-safe in-memory `DocumentStore` with CAS `put`/`delete`, append-to-`items`, prefix listing, and SHA-256 content tokens; parametrized document contract test suite.
+- **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore` and locked JSON `LocalDocumentStore` implementations of the shared `DocumentStore` contract, including CAS writes/deletes, prefix listing, content tokens, legacy `coord.*` paths, and handoff envelope compatibility.
 
 ### Fixed
 - **State identity cold imports:** organization/workspace identity helpers now live in an independent state module, avoiding the `state.base` ↔ `context` package initialization cycle.
