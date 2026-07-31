@@ -5,6 +5,10 @@
 ### Added
 - **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore` thread-safe in-memory `DocumentStore` with CAS `put`/`delete`, append-to-`items`, prefix listing, and SHA-256 content tokens; parametrized document contract test suite.
 
+### Fixed
+- **State identity cold imports:** organization/workspace identity helpers now live in an independent state module, avoiding the `state.base` ↔ `context` package initialization cycle.
+- **Dependency security baseline:** require GitPython 3.1.55 and pymdown-extensions 11.0.0 or newer to resolve advisories reported by the pre-push audit.
+
 ## [0.24.0] - 2026-07-28
 
 

@@ -10,8 +10,9 @@ from unittest.mock import patch
 
 from metagit.core.appconfig.models import AppConfig, StateConfig, StateMongoConfig
 from metagit.core.context.models import Objective
+from metagit.core.state.identity import resolve_org_id, resolve_workspace_id
 from metagit.core.state.remote import RemoteHttpBackend
-from metagit.core.state.resolver import resolve_backend, resolve_org_id, resolve_workspace_id
+from metagit.core.state.resolver import resolve_backend
 from metagit.core.web.config_preview import redact_secrets
 
 
