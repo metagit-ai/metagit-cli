@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Added
+- **Central state plane (RFC-0015, in progress):** `InMemoryDocumentStore` thread-safe in-memory `DocumentStore` with CAS `put`/`delete`, append-to-`items`, prefix listing, and SHA-256 content tokens; parametrized document contract test suite.
 
 ## [0.24.0] - 2026-07-28
 
