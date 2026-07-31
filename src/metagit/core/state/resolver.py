@@ -116,10 +116,7 @@ def resolve_document_store(workspace_root: str) -> DocumentStore:
 
         table = state.dynamodb.table.strip()
         if not table:
-            raise ValueError(
-                "dynamodb state backend requires table "
-                "(state.dynamodb.table or METAGIT_STATE_DDB_TABLE)"
-            )
+            raise ValueError("dynamodb state backend requires table (state.dynamodb.table or METAGIT_STATE_DDB_TABLE)")
         return DynamoDocumentStore(
             table,
             region=state.dynamodb.region.strip(),

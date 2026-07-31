@@ -60,9 +60,7 @@ class DynamoDocumentStore:
         try:
             import boto3
         except ImportError as exc:
-            raise StateBackendError(
-                f"DynamoDB state backend requires boto3; {_INSTALL_HINT}"
-            ) from exc
+            raise StateBackendError(f"DynamoDB state backend requires boto3; {_INSTALL_HINT}") from exc
 
         self._table = table.strip()
         self._region = region.strip()
@@ -98,13 +96,9 @@ class DynamoDocumentStore:
             body = json.loads(item["body"]["S"])
             token = item["token"]["S"]
         except (KeyError, TypeError, json.JSONDecodeError, UnicodeDecodeError) as exc:
-            raise StateBackendError(
-                f"dynamodb item is corrupt for {ref.namespace}/{ref.key}"
-            ) from exc
+            raise StateBackendError(f"dynamodb item is corrupt for {ref.namespace}/{ref.key}") from exc
         if not isinstance(body, dict):
-            raise StateBackendError(
-                f"dynamodb body must be a JSON object for {ref.namespace}/{ref.key}"
-            )
+            raise StateBackendError(f"dynamodb body must be a JSON object for {ref.namespace}/{ref.key}")
         return StateRecord(ref=ref, body=body, token=token)
 
     def put(
@@ -143,9 +137,7 @@ class DynamoDocumentStore:
         return token
 
     def append(self, ref: DocumentRef, item: dict[str, Any]) -> dict[str, Any]:
-        envelope = (
-            "handoffs" if ref.namespace == NS_COORD_HANDOFFS and ref.key == KEY_DOCUMENT else "items"
-        )
+        envelope = "handoffs" if ref.namespace == NS_COORD_HANDOFFS and ref.key == KEY_DOCUMENT else "items"
         with self._lock:
             for _ in range(_APPEND_RETRIES):
                 current = self.get(ref)
@@ -231,9 +223,7 @@ class DynamoDocumentStore:
             )
         except self._client_error as exc:
             if _is_conditional_failure(exc):
-                raise StateConflictError(
-                    f"state conflict deleting {ref.namespace}/{ref.key}"
-                ) from exc
+                raise StateConflictError(f"state conflict deleting {ref.namespace}/{ref.key}") from exc
             raise StateBackendError(f"dynamodb delete failed: {exc}") from exc
 
     def describe(self) -> dict[str, Any]:
