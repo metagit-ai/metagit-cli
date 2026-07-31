@@ -226,6 +226,17 @@ def test_describe_omits_bearer_token() -> None:
     }
 
 
+def test_describe_sanitizes_base_url_userinfo_and_query() -> None:
+    described = HttpDocumentStore(
+        "https://user:secret@example.com:8787/path?token=abc",
+    ).describe()
+
+    base_url = described["base_url"]
+    assert "secret" not in base_url
+    assert "token=abc" not in base_url
+    assert base_url == "https://example.com:8787/path?token=***"
+
+
 def test_http_document_store_is_cold_importable() -> None:
     repository_root = Path(__file__).resolve().parents[3]
     environment = {

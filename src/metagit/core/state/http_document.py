@@ -42,6 +42,19 @@ def _format_if_match(token: StateToken) -> str:
     return '""' if token is None else f'"{token}"'
 
 
+def _sanitize_base_url_for_describe(base_url: str) -> str:
+    parsed = urllib.parse.urlparse(base_url)
+    hostname = parsed.hostname or ""
+    port = parsed.port
+    default_port = 443 if parsed.scheme == "https" else 80
+    netloc = f"{hostname}:{port}" if port is not None and port != default_port else hostname
+    redacted_query = ""
+    if parsed.query:
+        pairs = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
+        redacted_query = "&".join(f"{key}=***" for key, _ in pairs)
+    return urllib.parse.urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, redacted_query, ""))
+
+
 class HttpDocumentStore:
     """Expose coordination documents through the existing v3 ops HTTP API."""
 
@@ -122,7 +135,7 @@ class HttpDocumentStore:
     def describe(self) -> dict[str, Any]:
         return {
             "backend": "http",
-            "base_url": self._base_url,
+            "base_url": _sanitize_base_url_for_describe(self._base_url),
             "namespaces": sorted(_COORD_PATHS),
         }
 
