@@ -28,6 +28,7 @@ class ToolRegistry:
         "metagit_workspace_sync",
         "metagit_bootstrap_config",
         "metagit_project_context_switch",
+        "metagit_context_switch",
         "metagit_workspace_state_snapshot",
         "metagit_workspace_state_restore",
         "metagit_session_update",

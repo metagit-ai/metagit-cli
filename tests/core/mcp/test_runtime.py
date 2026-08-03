@@ -391,6 +391,7 @@ def test_tools_list_includes_project_context_tools(tmp_path: Path) -> None:
     assert response is not None
     names = [item["name"] for item in response["result"]["tools"]]
     assert "metagit_project_context_switch" in names
+    assert "metagit_context_switch" in names
     assert "metagit_workspace_state_snapshot" in names
 
 
@@ -426,6 +427,54 @@ def test_tools_call_project_context_switch_unknown_project(tmp_path: Path) -> No
     payload = json.loads(response["result"]["content"][0]["text"])
     assert payload["ok"] is False
     assert payload["error"] == "project_not_found"
+
+
+def test_tools_call_context_switch_returns_envelope(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: alpha",
+                "      tags:",
+                "        hermes_profile: alpha",
+                "      repos:",
+                "        - name: api",
+                "          path: alpha/api",
+                "          sync: true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "alpha" / "api").mkdir(parents=True)
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 22,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_context_switch",
+                "arguments": {
+                    "project_name": "alpha",
+                    "repo_name": "api",
+                    "include_pack": False,
+                    "include_prompt": False,
+                    "include_objective": False,
+                },
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is True
+    assert payload["project_name"] == "alpha"
+    assert payload["env"]["METAGIT_PROJECT"] == "alpha"
+    assert payload["env"]["METAGIT_AGENT_MODE"] == "true"
+    assert payload["env"]["METAGIT_HERMES_PROFILE"] == "alpha"
 
 
 def test_tools_call_cross_project_dependencies(tmp_path: Path) -> None:

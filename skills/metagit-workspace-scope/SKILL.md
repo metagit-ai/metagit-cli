@@ -64,8 +64,16 @@ metagit search "<query>" -c .metagit.yml --json
 
 Interactive (human sessions only):
 
+- `metagit nav` / `metagit navigate` — FuzzyFinder project then repo, then open editor
 - `metagit workspace select --project <name>`
-- MCP `metagit_project_context_switch` with `project_name`
+
+Agent context switch (preferred):
+
+<!-- modality:context_switch -->
+
+- `metagit context switch <project> [<repo>]` — pack + prompt + objective + shell-eval env
+- MCP `metagit_context_switch` — same envelope as JSON
+- Lean MCP `metagit_project_context_switch` when pack/objective are not needed
 - MCP `metagit_workspace_state_snapshot` before leaving a project for a long switch
 
 ## Multi-instance workspaces (Syncthing)

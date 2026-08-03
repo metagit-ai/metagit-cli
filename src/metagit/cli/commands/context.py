@@ -26,6 +26,10 @@ from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.compiler import ContextCompiler
 from metagit.core.context.context_pack_service import ContextPackService
+from metagit.core.context.context_switch_service import (
+    ContextSwitchService,
+    format_shell_exports,
+)
 from metagit.core.context.event_service import WorkspaceEventService
 from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.models import (
@@ -370,6 +374,91 @@ def session_begin_cmd(
     if result.warnings:
         for warning in result.warnings:
             click.echo(f"warning: {warning}")
+
+
+@context.command("switch")
+@click.argument("project", shell_complete=complete_projects)
+@click.argument("repo", required=False, default=None, shell_complete=complete_repos)
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+    help="Path to the workspace .metagit.yml definition file",
+)
+@click.option(
+    "--tier",
+    type=click.IntRange(0, 2),
+    default=2,
+    show_default=True,
+    help="Context pack tier when packing (0=map, 1=cards, 2=digest)",
+)
+@click.option("--no-pack", is_flag=True, default=False, help="Skip context pack")
+@click.option("--no-prompt", is_flag=True, default=False, help="Skip prompt emission")
+@click.option("--no-objective", is_flag=True, default=False, help="Skip objective upsert")
+@click.option(
+    "--prompt-kind",
+    type=click.Choice(["context-switch", "session-start"]),
+    default="context-switch",
+    show_default=True,
+    help="Prompt template to emit",
+)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Emit full envelope JSON")
+@click.pass_context
+def switch_cmd(
+    ctx: click.Context,
+    project: str,
+    repo: str | None,
+    definition_path: str,
+    tier: int,
+    no_pack: bool,
+    no_prompt: bool,
+    no_objective: bool,
+    prompt_kind: str,
+    as_json: bool,
+) -> None:
+    """Switch project context and emit shell-evalable bootstrap exports."""
+    definition_file = Path(definition_path).expanduser()
+    if not definition_file.exists():
+        click.echo(f"Workspace definition not found: {definition_path}", err=True)
+        ctx.exit(EXIT_NO_WORKSPACE)
+
+    config, config_path, sync_root, session_root, _ = _context_paths(
+        ctx,
+        definition_path,
+    )
+    definition_root = resolve_definition_root(definition_path)
+    result = ContextSwitchService().switch(
+        config=config,
+        config_path=config_path,
+        workspace_root=sync_root,
+        session_root=session_root,
+        definition_root=definition_root,
+        project_name=project,
+        repo_name=repo,
+        tier=tier,  # type: ignore[arg-type]
+        include_pack=not no_pack,
+        include_prompt=not no_prompt,
+        include_objective=not no_objective,
+        prompt_kind=prompt_kind,  # type: ignore[arg-type]
+    )
+    if not result.ok:
+        raise click.ClickException(result.error or "context switch failed")
+
+    if as_json:
+        emit_json(result)
+        return
+
+    click.echo(format_shell_exports(result.env), nl=False)
+    if result.objective_id:
+        click.echo(f"# objective_id={result.objective_id}", err=True)
+    if result.pack is not None:
+        click.echo(result.pack.model_dump_json(), err=True)
+    if result.prompt:
+        click.echo(result.prompt, err=True)
+    for warning in result.warnings:
+        click.echo(f"# warning: {warning}", err=True)
 
 
 @context.command("repo-card")

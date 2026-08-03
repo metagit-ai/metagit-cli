@@ -238,6 +238,22 @@ class SessionBeginResult(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
+class ContextSwitchResult(BaseModel):
+    """Full context-switch bootstrap envelope for CLI and MCP."""
+
+    ok: bool = True
+    error: Optional[str] = None
+    project_name: str = ""
+    repo_name: Optional[str] = None
+    switch: Optional[dict[str, Any]] = None
+    pack: Optional[ContextPackResult] = None
+    prompt: Optional[str] = None
+    prompt_kind: Optional[str] = None
+    objective_id: Optional[str] = None
+    env: dict[str, str] = Field(default_factory=dict)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class HandoffEvent(BaseModel):
     """Audit trail entry for handoff state transitions."""
 

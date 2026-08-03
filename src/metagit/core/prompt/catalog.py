@@ -21,6 +21,12 @@ _CATALOG: list[PromptCatalogEntry] = [
         scopes=["workspace"],
     ),
     PromptCatalogEntry(
+        kind="context-switch",
+        title="Workspace context switch",
+        description="Mid-session project/repo bootstrap checklist after metagit context switch.",
+        scopes=["workspace"],
+    ),
+    PromptCatalogEntry(
         kind="catalog-edit",
         title="Catalog registration workflow",
         description="Search-before-create and validate manifest edits.",
@@ -92,6 +98,7 @@ _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
         {
             "instructions",
             "session-start",
+            "context-switch",
             "catalog-edit",
             "health-preflight",
             "sync-safe",
@@ -158,6 +165,13 @@ def template_body(
 3. `metagit config info -c <definition>` — manifest summary.
 4. `metagit search "<name-or-url>" -c <definition> --json` before creating projects or repos.
 5. Prefer `metagit workspace project|repo add` over hand-editing repo lists; always `metagit config validate -c <definition>` after edits.""",
+        "context-switch": """You are switching Metagit workspace context mid-session (not a cold session-start).
+
+1. Trust env exports already set (METAGIT_PROJECT, METAGIT_WORKSPACE_ROOT, METAGIT_WORKING_DIR, optional METAGIT_HERMES_PROFILE).
+2. Use the attached/available context pack as current scope; do not re-run a full cold session-start checklist unless the pack is missing.
+3. If an objective id was created for this switch (ctx-*), treat it as the active work item unless superseded.
+4. Prefer search/sync scoped to the switched project; avoid unrelated catalog mutations.
+5. For lean switch-only (no pack/objective), MCP metagit_project_context_switch remains available.""",
         "catalog-edit": """When registering or changing workspace catalog entries:
 
 1. Search first: `metagit search "<name-or-url>" -c <definition> --json`.

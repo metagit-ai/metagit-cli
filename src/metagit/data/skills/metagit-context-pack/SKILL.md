@@ -67,6 +67,21 @@ metagit context pack --tier 1 --json --project portfolio --repo api-gateway
 metagit context pack --tier 2 --json --project portfolio
 ```
 
+### Mid-session context switch
+
+<!-- modality:context_switch -->
+
+Prefer one command instead of manually chaining pack + session-start + objective:
+
+```bash
+eval "$(metagit context switch portfolio api-gateway)"
+metagit context switch portfolio --json
+metagit prompt workspace -k context-switch --text-only
+```
+
+MCP: `metagit_context_switch`. Lean switch without pack/objective: `metagit_project_context_switch`.
+See [Context switch](../../docs/reference/context-switch.md).
+
 ## Single repo card
 
 When you already know the target repo:
@@ -219,6 +234,7 @@ metagit config validate -c .metagit.yml
 | `context pack --tier N` | `metagit_context_pack` (required `tier`) |
 | `skills surface` | `metagit_skills_surface` <!-- modality:skills_surface --> |
 | `context compile` | `metagit_context_compile` <!-- modality:context_compile --> |
+| `context switch` | `metagit_context_switch` <!-- modality:context_switch --> |
 | `context repo-card` | `metagit_repo_card` |
 | `context objective list/set/complete/cancel` | `metagit_objective_list` / `metagit_objective_upsert` / `metagit_objective_edit` |
 | `context approval request/list/approve/deny` | `metagit_approval_request` / `metagit_approval_list` / `metagit_approval_resolve` |

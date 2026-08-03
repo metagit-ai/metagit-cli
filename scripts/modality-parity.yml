@@ -418,6 +418,34 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:context_compile"
 
+  - id: context_switch
+    description: Full agent context switch with pack, prompt, objective, and env exports
+    service: metagit.core.context.context_switch_service.ContextSwitchService
+    reference_doc: docs/reference/context-switch.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/context.py
+            contains: '@context.command("switch")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_context_switch
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_context_switch
+      documentation:
+        markers:
+          - path: docs/reference/context-switch.md
+            contains: "modality:context_switch"
+          - path: docs/agents.md
+            contains: "modality:context_switch"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-context-pack/SKILL.md
+            contains: "modality:context_switch"
+          - path: src/metagit/data/skills/metagit-workspace-scope/SKILL.md
+            contains: "modality:context_switch"
+
   - id: semantic_ownership
     description: Concept-level ownership declare/query/owners/conflicts plus seed/ingest
     service: metagit.core.semantic.service.SemanticGraphService

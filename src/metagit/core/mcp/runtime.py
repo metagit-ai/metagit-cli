@@ -17,6 +17,7 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.compiler import ContextCompiler
 from metagit.core.context.context_pack_service import ContextPackService
+from metagit.core.context.context_switch_service import ContextSwitchService
 from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.models import ApprovalStatus
 from metagit.core.context.objective_service import ObjectiveService
@@ -103,6 +104,7 @@ class MetagitMcpRuntime:
         self._workspace_health = WorkspaceHealthService()
         self._context_pack = ContextPackService()
         self._session_begin = SessionBeginService()
+        self._context_switch = ContextSwitchService()
         self._repo_card = RepoCardService()
         self._workspace_catalog = WorkspaceCatalogService()
         self._derived_projects = DerivedProjectService()
@@ -257,6 +259,23 @@ class MetagitMcpRuntime:
                     "restore_session": {"type": "boolean"},
                     "save_previous": {"type": "boolean"},
                     "primary_repo": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_context_switch": {
+                "type": "object",
+                "required": ["project_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                    "tier": {"type": "integer", "enum": [0, 1, 2]},
+                    "include_pack": {"type": "boolean"},
+                    "include_prompt": {"type": "boolean"},
+                    "include_objective": {"type": "boolean"},
+                    "prompt_kind": {
+                        "type": "string",
+                        "enum": ["context-switch", "session-start"],
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -1650,6 +1669,51 @@ class MetagitMcpRuntime:
                 primary_repo=arguments.get("primary_repo"),
             )
             return bundle.model_dump(mode="json")
+
+        if name == "metagit_context_switch":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("context switch requires an active workspace")
+            project_name = str(arguments.get("project_name", "")).strip()
+            if not project_name:
+                raise InvalidToolArgumentsError("project_name is required")
+            repo_raw = arguments.get("repo_name")
+            repo_opt = str(repo_raw).strip() if isinstance(repo_raw, str) and repo_raw.strip() else None
+            tier_raw = arguments.get("tier", 2)
+            try:
+                tier = int(tier_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("tier must be 0, 1, or 2") from exc
+            if tier not in (0, 1, 2):
+                raise InvalidToolArgumentsError("tier must be 0, 1, or 2")
+            prompt_kind_raw = arguments.get("prompt_kind", "context-switch")
+            prompt_kind = str(prompt_kind_raw) if prompt_kind_raw is not None else "context-switch"
+            if prompt_kind not in ("context-switch", "session-start"):
+                raise InvalidToolArgumentsError(
+                    "prompt_kind must be context-switch or session-start",
+                )
+            config_path = str(Path(status.root_path) / ".metagit.yml")
+            definition_root = status.root_path
+            app_config = AppConfig.load()
+            sync_root = (
+                resolve_sync_root(definition_root, app_config.workspace.path)
+                if not isinstance(app_config, Exception)
+                else definition_root
+            )
+            envelope = self._context_switch.switch(
+                config=config,
+                config_path=config_path,
+                workspace_root=sync_root,
+                session_root=definition_root,
+                definition_root=definition_root,
+                project_name=project_name,
+                repo_name=repo_opt,
+                tier=tier,  # type: ignore[arg-type]
+                include_pack=bool(arguments.get("include_pack", True)),
+                include_prompt=bool(arguments.get("include_prompt", True)),
+                include_objective=bool(arguments.get("include_objective", True)),
+                prompt_kind=prompt_kind,  # type: ignore[arg-type]
+            )
+            return envelope.model_dump(mode="json")
 
         if name == "metagit_workspace_state_snapshot":
             if not config or not status.root_path:
