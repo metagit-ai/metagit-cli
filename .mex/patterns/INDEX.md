@@ -32,6 +32,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [task-graph-intent.md](task-graph-intent.md) | Implementing or extending RFC-0008 task DAG + intent (CLI/MCP/events) |
 | [pythonpath-import-guard.md](pythonpath-import-guard.md) | Fixing or preserving the metagit `__init__` sys.path guard against hostile PYTHONPATH |
 | [cli-tui-hub.md](cli-tui-hub.md) | Adding `metagit tui`, configuration wizard flows, or `--repo` direct-open on select |
+| [context-switch.md](context-switch.md) | Implementing `metagit context switch` / `metagit_context_switch` bootstrap (pack + prompt + objective) |
 | [derived-projects-skills-surface.md](derived-projects-skills-surface.md) | Creating derived surgical projects and inventorying layered skills for agents |
 | [add-cli-command.md](add-cli-command.md) | Adding or extending a Click CLI command while keeping core logic in `src/metagit/core/*` |
 | [add-prompt-catalog-kind.md](add-prompt-catalog-kind.md) | Adding a new built-in `metagit prompt` kind (catalog + template + tests) |
