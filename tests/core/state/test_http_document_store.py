@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import io
 import json
-import os
 import subprocess
 import urllib.error
 from email.message import Message
@@ -275,13 +274,9 @@ def test_describe_sanitizes_base_url_userinfo_and_query() -> None:
     assert base_url == "https://example.com:8787/path?token=***"
 
 
-def test_http_document_store_is_cold_importable() -> None:
+def test_http_document_store_is_cold_importable(cold_import_environment) -> None:
     repository_root = Path(__file__).resolve().parents[3]
-    environment = {
-        "HOME": os.environ["HOME"],
-        "PATH": os.environ["PATH"],
-        "PYTHONNOUSERSITE": "1",
-    }
+    environment = cold_import_environment
     result = subprocess.run(
         [
             "uv",
