@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.25.0] - 2026-08-03
+
+
+
 ### Added
 - **Central state plane (RFC-0015):** pluggable `DocumentStore` with memory/local/http adapters and optional DynamoDB/MongoDB extras; extended `state` app-config and `gate/status` diagnostics; see `docs/reference/central-state-plane.md`.
 
