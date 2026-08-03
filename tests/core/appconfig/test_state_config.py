@@ -204,6 +204,11 @@ def test_resolve_document_store_for_supported_backends(monkeypatch, tmp_path) ->
 
 
 def test_mongodb_backend_requires_uri_and_database(monkeypatch, tmp_path) -> None:
+    # CI runners often have no ~/.config/metagit/config.yml; keep HOME empty so
+    # AppConfig.load() cannot mask missing env via a developer config file.
+    empty_home = tmp_path / "empty-home"
+    empty_home.mkdir()
+    monkeypatch.setenv("HOME", str(empty_home))
     monkeypatch.setenv("METAGIT_STATE_BACKEND", "mongodb")
     monkeypatch.delenv("METAGIT_STATE_MONGO_URI", raising=False)
     monkeypatch.delenv("METAGIT_STATE_MONGO_DB", raising=False)
@@ -217,6 +222,21 @@ def test_mongodb_backend_requires_uri_and_database(monkeypatch, tmp_path) -> Non
         resolve_document_store(str(tmp_path))
     with pytest.raises(ValueError, match="requires database"):
         resolve_backend(str(tmp_path))
+
+
+def test_appconfig_load_applies_state_env_without_config_file(monkeypatch, tmp_path) -> None:
+    empty_home = tmp_path / "empty-home"
+    empty_home.mkdir()
+    monkeypatch.setenv("HOME", str(empty_home))
+    monkeypatch.setenv("METAGIT_STATE_BACKEND", "mongodb")
+    monkeypatch.setenv("METAGIT_STATE_MONGO_URI", "mongodb://localhost:27017")
+    monkeypatch.setenv("METAGIT_STATE_MONGO_DB", "metagit")
+
+    loaded = AppConfig.load()
+    assert not isinstance(loaded, Exception)
+    assert loaded.state.backend == "mongodb"
+    assert loaded.state.mongodb.uri == "mongodb://localhost:27017"
+    assert loaded.state.mongodb.database == "metagit"
 
 
 def test_dynamodb_backend_requires_table(monkeypatch, tmp_path) -> None:

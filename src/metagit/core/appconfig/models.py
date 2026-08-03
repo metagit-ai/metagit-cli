@@ -339,15 +339,16 @@ class AppConfig(BaseModel):
                 config_path = os.path.join(Path.home(), ".config", "metagit", "config.yml")
 
             config_file = Path(config_path)
-            if not config_file.exists():
-                return cls()
+            if config_file.exists():
+                with config_file.open("r") as f:
+                    config_data = yaml.safe_load(f)
 
-            with config_file.open("r") as f:
-                config_data = yaml.safe_load(f)
+                config = cls(**config_data["config"]) if "config" in config_data else cls(**config_data)
+            else:
+                config = cls()
 
-            config = cls(**config_data["config"]) if "config" in config_data else cls(**config_data)
-
-            # Override with environment variables
+            # Always apply env overrides so CI/agent hosts without a config file
+            # still honor METAGIT_* (including METAGIT_STATE_* plane settings).
             config = cls._override_from_environment(config)
             os.environ.setdefault("METAGIT_WORKSPACE_SESSION_PATH", config.workspace.session_path)
             os.environ.setdefault("METAGIT_WORKSPACE_CAMPAIGNS_PATH", config.workspace.campaigns_path)

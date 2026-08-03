@@ -114,19 +114,30 @@ def resolve_document_store(workspace_root: str) -> DocumentStore:
     if backend_kind == "dynamodb":
         from metagit.core.state.dynamodb import DynamoDocumentStore
 
-        table = state.dynamodb.table.strip()
+        table = (
+            os.getenv("METAGIT_STATE_DDB_TABLE", "").strip() or state.dynamodb.table.strip()
+        )
+        region = (
+            os.getenv("METAGIT_STATE_DDB_REGION", "").strip() or state.dynamodb.region.strip()
+        )
+        endpoint_url = (
+            os.getenv("METAGIT_STATE_DDB_ENDPOINT", "").strip()
+            or state.dynamodb.endpoint_url.strip()
+        )
         if not table:
             raise ValueError("dynamodb state backend requires table (state.dynamodb.table or METAGIT_STATE_DDB_TABLE)")
         return DynamoDocumentStore(
             table,
-            region=state.dynamodb.region.strip(),
-            endpoint_url=state.dynamodb.endpoint_url.strip(),
+            region=region,
+            endpoint_url=endpoint_url,
         )
     if backend_kind == "mongodb":
         from metagit.core.state.mongodb import MongoDocumentStore
 
-        uri = state.mongodb.uri.strip()
-        database = state.mongodb.database.strip()
+        uri = os.getenv("METAGIT_STATE_MONGO_URI", "").strip() or state.mongodb.uri.strip()
+        database = (
+            os.getenv("METAGIT_STATE_MONGO_DB", "").strip() or state.mongodb.database.strip()
+        )
         if not uri:
             raise ValueError("mongodb state backend requires uri (state.mongodb.uri or METAGIT_STATE_MONGO_URI)")
         if not database:
