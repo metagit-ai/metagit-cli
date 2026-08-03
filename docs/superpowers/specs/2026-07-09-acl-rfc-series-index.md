@@ -53,6 +53,7 @@ RFC-0012 shipped on `main` via PR #63. RFC-0010 + RFC-0011 shipped on `main` via
 | RFC | Title | Design | Plan | Status |
 |-----|-------|--------|------|--------|
 | 0014 | Metagit Atlas (repo-local semantic layer) | [design](2026-07-14-rfc-0014-atlas-design.md) | [plan Phase 0–1](../plans/2026-07-14-rfc-0014-atlas.md) | **Proposed** — not an ACL engine; complements 0009/0010/GitNexus |
+| 0015–0018 | Central State Plane series (org control plane, catalog, harness, ontology) | [series index](2026-07-31-central-state-plane-series-index.md) | (pending) | **Proposed** — persistence/control-plane follow-on; does not reopen ACL engines |
 
 ## Document conventions
 

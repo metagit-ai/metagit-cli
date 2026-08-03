@@ -94,3 +94,57 @@ def test_ops_events_get(tmp_path: Path) -> None:
     assert handler.handle("GET", "/v3/ops/events", "", b"", respond)
     assert recorder[-1][0] == 200
     assert "events" in recorder[-1][1]
+
+
+def test_ops_state_routes_use_resolve_backend(tmp_path: Path, monkeypatch) -> None:
+    """Whole-doc GET/PUT must honor configured DocumentStore plane (Deployment B)."""
+    from unittest.mock import MagicMock
+
+    handler, respond, recorder = _build_handler(tmp_path)
+    calls: list[str] = []
+    mock_bundle = MagicMock()
+    mock_objectives = MagicMock()
+    mock_objectives.load.return_value = ([], "tok-obj")
+    mock_objectives.save.return_value = "tok-obj-saved"
+    mock_approvals = MagicMock()
+    mock_approvals.load.return_value = ([], "tok-appr")
+    mock_handoffs = MagicMock()
+    mock_handoffs.load.return_value = ([], "tok-hand")
+    mock_bundle.objectives.return_value = mock_objectives
+    mock_bundle.approvals.return_value = mock_approvals
+    mock_bundle.handoffs.return_value = mock_handoffs
+
+    def fake_resolve(root: str):
+        calls.append(root)
+        return mock_bundle
+
+    monkeypatch.setattr("metagit.core.web.ops_handler.resolve_backend", fake_resolve)
+
+    assert handler.handle("GET", "/v3/ops/objectives", "", b"", respond)
+    assert handler.handle("GET", "/v3/ops/approvals", "status=all", b"", respond)
+    assert handler.handle("GET", "/v3/ops/handoffs", "", b"", respond)
+    now = utc_now_iso()
+    objective = Objective(
+        id="via-resolve",
+        title="Plane path",
+        status="pending",
+        created_at=now,
+        updated_at=now,
+    )
+    body = json.dumps({"objectives": [objective.model_dump(mode="json")]}).encode("utf-8")
+    assert handler.handle(
+        "PUT",
+        "/v3/ops/objectives",
+        "",
+        body,
+        respond,
+        {"If-Match": '""'},
+    )
+
+    assert calls
+    assert all(call == handler._root for call in calls)
+    assert mock_objectives.load.called
+    assert mock_approvals.load.called
+    assert mock_handoffs.load.called
+    assert mock_objectives.save.called
+    assert recorder[-1][0] == 200

@@ -5,6 +5,48 @@ import pytest
 from dotenv import load_dotenv
 from loguru import logger
 
+# Windows runners often omit HOME; cold-import subprocesses still need a
+# usable home + PATH (+ Windows process essentials) when env is replaced.
+_COLD_IMPORT_ENV_KEYS = (
+    "PATH",
+    "HOME",
+    "USERPROFILE",
+    "USER",
+    "USERNAME",
+    "SYSTEMROOT",
+    "SYSTEMDRIVE",
+    "WINDIR",
+    "COMSPEC",
+    "PATHEXT",
+    "TEMP",
+    "TMP",
+    "TMPDIR",
+    "APPDATA",
+    "LOCALAPPDATA",
+    "ProgramFiles",
+    "ProgramData",
+    "UV_CACHE_DIR",
+    "UV_PYTHON",
+    "VIRTUAL_ENV",
+)
+
+
+def cold_import_env() -> dict[str, str]:
+    """Minimal env for ``subprocess.run(..., env=...)`` cold-import checks."""
+    env = {key: value for key in _COLD_IMPORT_ENV_KEYS if (value := os.environ.get(key))}
+    env["PYTHONNOUSERSITE"] = "1"
+    if "HOME" not in env and "USERPROFILE" in env:
+        env["HOME"] = env["USERPROFILE"]
+    if "USERPROFILE" not in env and "HOME" in env:
+        env["USERPROFILE"] = env["HOME"]
+    return env
+
+
+@pytest.fixture
+def cold_import_environment() -> dict[str, str]:
+    """Fixture wrapper so tests need not import ``tests.conftest``."""
+    return cold_import_env()
+
 
 @pytest.fixture(scope="session", autouse=True)
 def load_env():

@@ -21,6 +21,7 @@ nav:
     - 'Configuration exemplar': 'reference/metagit-config.md'
     - 'Workspace layout API': 'reference/workspace-layout-api.md'
     - 'Sharing state (multi-agent)': 'reference/sharing-state.md'
+    - 'Central state plane': 'reference/central-state-plane.md'
     - 'Agent profile': 'reference/agent-profile.md'
     - 'Derived projects': 'reference/derived-projects.md'
     - 'Skills surface': 'reference/skills-surface.md'

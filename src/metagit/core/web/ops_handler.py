@@ -39,8 +39,8 @@ from metagit.core.project.manager import project_manager_from_app
 from metagit.core.project.source_manifest_sync import SourceManifestSyncService
 from metagit.core.state.base import StateToken
 from metagit.core.state.errors import StateConflictError
-from metagit.core.state.local import local_bundle
 from metagit.core.state.remote import _normalize_token
+from metagit.core.state.resolver import resolve_backend
 from metagit.core.utils.common import open_editor
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.web.graph_service import WorkspaceGraphService
@@ -237,7 +237,7 @@ class OpsWebHandler:
         self._stream_sync_events(job_id, stream)
 
     def _get_objectives(self, respond: JsonResponder) -> None:
-        backend = local_bundle(self._root).objectives()
+        backend = resolve_backend(self._root).objectives()
         objectives, token = backend.load()
         body = ObjectiveListResult(objectives=objectives).model_dump(mode="json")
         self._respond_json(respond, 200, body, etag=token)
@@ -266,7 +266,7 @@ class OpsWebHandler:
             )
             return
         objectives = [Objective.model_validate(item) for item in raw_rows if isinstance(item, dict)]
-        backend = local_bundle(self._root).objectives()
+        backend = resolve_backend(self._root).objectives()
         expected = _normalize_token(
             request_headers.get("If-Match") or request_headers.get("if-match"),
         )
@@ -442,7 +442,7 @@ class OpsWebHandler:
     def _get_approvals(self, query: str, respond: JsonResponder) -> None:
         params = parse_qs(query.lstrip("?"))
         raw_status = (params.get("status") or ["pending"])[0].strip().lower()
-        backend = local_bundle(self._root).approvals()
+        backend = resolve_backend(self._root).approvals()
         requests, token = backend.load()
         if raw_status in ("", "pending"):
             filtered = [row for row in requests if row.status == "pending"]
@@ -491,7 +491,7 @@ class OpsWebHandler:
             )
             return
         rows = [ApprovalRequest.model_validate(item) for item in raw_rows if isinstance(item, dict)]
-        backend = local_bundle(self._root).approvals()
+        backend = resolve_backend(self._root).approvals()
         expected = _normalize_token(
             request_headers.get("If-Match") or request_headers.get("if-match"),
         )
@@ -511,7 +511,7 @@ class OpsWebHandler:
         self._respond_json(respond, 200, result, etag=token)
 
     def _get_handoffs(self, respond: JsonResponder) -> None:
-        backend = local_bundle(self._root).handoffs()
+        backend = resolve_backend(self._root).handoffs()
         handoffs, token = backend.load()
         body = HandoffListResult(handoffs=handoffs).model_dump(mode="json")
         self._respond_json(respond, 200, body, etag=token)
@@ -540,7 +540,7 @@ class OpsWebHandler:
             )
             return
         handoffs = [HandoffItem.model_validate(item) for item in raw_rows if isinstance(item, dict)]
-        backend = local_bundle(self._root).handoffs()
+        backend = resolve_backend(self._root).handoffs()
         expected = _normalize_token(
             request_headers.get("If-Match") or request_headers.get("if-match"),
         )
@@ -572,7 +572,7 @@ class OpsWebHandler:
                 None,
             )
             return
-        saved = local_bundle(self._root).handoffs().append(item)
+        saved = resolve_backend(self._root).handoffs().append(item)
         respond(200, saved.model_dump(mode="json"), None)
 
     def _get_events(self, query: str, respond: JsonResponder) -> None:

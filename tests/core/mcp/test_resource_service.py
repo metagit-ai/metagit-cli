@@ -187,6 +187,10 @@ def test_read_gate_status_includes_state_backend() -> None:
         _active_context(config, root="/tmp/ws"),
     )
     assert result.data["state_backend"]["backend"] == "local"
+    assert result.data["state_backend"]["org_id"]
+    assert result.data["state_backend"]["workspace_id"]
+    assert isinstance(result.data["state_backend"]["extras"]["dynamodb"], bool)
+    assert isinstance(result.data["state_backend"]["extras"]["mongodb"], bool)
 
 
 def test_read_events_recent_uses_state_backend(tmp_path) -> None:

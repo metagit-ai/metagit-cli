@@ -4,10 +4,12 @@ Metagit stores **coordination data** — objectives, handoffs, approvals, and th
 events feed — under `.metagit/` in each workspace root. By default this is local
 JSON on disk with optimistic concurrency (content-hash tokens and file locking).
 You can opt into a **remote HTTP backend** so several machines and agents share
-one canonical state through a metagit ops server.
+one canonical state through a metagit ops server, or (RFC-0015) point the
+pluggable **central state plane** at DynamoDB / MongoDB.
 
 Related docs:
 
+- [Central state plane](central-state-plane.md) — backends (`local` \| `http` \| `memory` \| `dynamodb` \| `mongodb`), extras, org/workspace ids, Dynamo bootstrap, deployment shapes
 - [Metagit for AI agents](../agents.md#human-agent-shared-state) — CLI/MCP usage from agents
 - [Metagit Web UI](metagit-web.md#shared-coordination-state) — SPA + ops HTTP routes
 - [Hermes orchestrator workspace](../hermes-orchestrator-workspace.md) — multi-repo control plane
@@ -90,10 +92,13 @@ Environment overrides (take precedence over the file):
 | Variable | Purpose |
 |----------|---------|
 | `METAGIT_STATE_URL` | Ops server base URL |
-| `METAGIT_STATE_BACKEND` | Set to `http` to force remote |
+| `METAGIT_STATE_BACKEND` | `local` \| `http` \| `dynamodb` \| `mongodb` \| `memory` |
 | `METAGIT_STATE_TOKEN` | Bearer token for `Authorization` |
+| `METAGIT_STATE_ORG_ID` | Org partition (plane backends; see [central-state-plane](central-state-plane.md#identity)) |
+| `METAGIT_STATE_WORKSPACE_ID` | Workspace partition |
 
 If `state.token` is empty, metagit falls back to `api_key` when present.
+Never commit tokens or cloud credentials — use environment or IAM.
 
 ### Agent client setup
 
@@ -113,13 +118,29 @@ echo '{"id":"ship-api","status":"in_progress","title":"Ship API","repos":["platf
 MCP tools (`metagit_objective_list`, `metagit_objective_upsert`, approval/handoff
 tools) use the same stores and inherit the configured backend automatically.
 
+## Plane backends (RFC-0015)
+
+Beyond `local` and `http`, app config `state.backend` accepts `memory`,
+`dynamodb`, and `mongodb`. Cloud backends need optional extras
+(`metagit-cli[state-dynamodb]` / `metagit-cli[state-mongodb]`), plus
+`METAGIT_STATE_ORG_ID` / `METAGIT_STATE_WORKSPACE_ID` (and table/URI settings).
+Full operator guide: [central-state-plane.md](central-state-plane.md).
+
 ## Deployment shapes
 
 1. **Orchestrator serves state** — run `metagit web serve` on a shared host;
    clients set `state.url` to that host. The server persists documents on its
-   workspace root using `LocalFileBackend` and exposes whole-document routes (below).
+   workspace root using `LocalFileBackend` (or a cloud DocumentStore when
+   configured — [deployment B](central-state-plane.md#deployment-b-ops-server-hosts-cloud-store))
+   and exposes whole-document routes (below).
 2. **Any HTTP endpoint** — implement the same contract; `RemoteHttpBackend`
    uses stdlib `urllib` with `If-Match` / `ETag` for compare-and-swap writes.
+3. **Agents → cloud directly** — install a state extra and set
+   `METAGIT_STATE_BACKEND=dynamodb|mongodb` on each host
+   ([deployment A](central-state-plane.md#deployment-a-agents-to-cloud-directly)).
+   Direct cloud/memory backends expose only the persisted `coord.events`
+   document for events (not the local derived objective/handoff stream); see
+   [central-state-plane events caveat](central-state-plane.md#deployment-a-agents-to-cloud-directly).
 
 Granular web routes (`POST /v3/ops/objectives`, `PATCH …/{id}`, approval
 resolve) remain available for the SPA. Remote clients and `RemoteHttpBackend`
@@ -219,6 +240,8 @@ Bundled skill: **`metagit-sharing-state`**. See [agents guide](../agents.md#shar
 
 ## Implementation reference
 
-- Package: `src/metagit/core/state/` (`LocalFileBackend`, `RemoteHttpBackend`, `resolve_backend`)
+- Package: `src/metagit/core/state/` (`LocalFileBackend`, `RemoteHttpBackend`, `DocumentStore`, `resolve_backend`)
 - Ops handlers: `src/metagit/core/web/ops_handler.py`
+- Plane operator guide: [central-state-plane.md](central-state-plane.md)
 - Plan: `docs/superpowers/plans/2026-07-01-remote-state-backend.md`
+- RFC-0015 plan: [2026-07-31-rfc-0015-central-state-plane.md](../superpowers/plans/2026-07-31-rfc-0015-central-state-plane.md)
