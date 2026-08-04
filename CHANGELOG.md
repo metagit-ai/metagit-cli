@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.26.0] - 2026-08-04
+
+
+
 ### Changed
 - Raise `aiohttp` floor to `>=3.14.3` and lock `pymdown-extensions` to `11.0.1` for current advisories.
 
