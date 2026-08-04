@@ -29,6 +29,7 @@ nav:
     - 'Agent coordination (ACL)': 'reference/agent-coordination.md'
     - 'Task graph & intent': 'reference/task-graph.md'
     - 'Context compiler': 'reference/context-compiler.md'
+    - 'Context switch': 'reference/context-switch.md'
     - 'Semantic ownership': 'reference/semantic-ownership.md'
     - 'Merge orchestrator': 'reference/merge-orchestrator.md'
     - 'Agent scheduler': 'reference/agent-scheduler.md'

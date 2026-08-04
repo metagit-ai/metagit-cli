@@ -89,6 +89,7 @@ Agent profile and campaigns: [reference/agent-profile.md](reference/agent-profil
 | Kind | Scope | Use when |
 |------|-------|----------|
 | `session-start` | workspace | Bootstrap checklist after context pack |
+| `context-switch` | workspace | Mid-session switch checklist after `metagit context switch` |
 | `context-pack` | workspace, project, repo | Tier 0→2 escalation guidance |
 | `sync-safe` | all | Before fetch/pull/clone |
 | `catalog-edit` | workspace, project | Before adding projects/repos |
@@ -278,6 +279,21 @@ task node). See [Context compiler](reference/context-compiler.md).
 metagit context compile --project P --repo R --tier 1 --budget 8000 --json
 metagit context compile --project P --repo R --task-id NODE --graph-id G --json
 ```
+
+### Context switch
+
+<!-- modality:context_switch -->
+
+Mid-session bootstrap into a project (optional repo): env exports, tiered pack,
+`context-switch` prompt, and an objective. See [Context switch](reference/context-switch.md).
+
+```bash
+eval "$(metagit context switch <project> [<repo>])"
+metagit context switch <project> --json
+metagit prompt workspace -k context-switch --text-only
+```
+
+MCP: `metagit_context_switch` (full bootstrap). Lean alternative: `metagit_project_context_switch`.
 
 ### Semantic Ownership (RFC-0010)
 

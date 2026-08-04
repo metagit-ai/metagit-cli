@@ -2,7 +2,15 @@
 
 ## Unreleased
 
+### Changed
+- Raise `aiohttp` floor to `>=3.14.3` and lock `pymdown-extensions` to `11.0.1` for current advisories.
 
+### Added
+- `metagit nav` / `metagit navigate`: FuzzyFinder project pick then repo pick, then open the configured editor.
+- `metagit context switch`: agent bootstrap composing project context switch, tiered pack, `context-switch` prompt, and objective; shell-evalable exports by default (`--json` for full envelope).
+- Prompt kind `context-switch` for mid-session workspace bootstrap (cold start remains `session-start`).
+- MCP tool `metagit_context_switch` returning the same bootstrap envelope; lean `metagit_project_context_switch` unchanged.
+- Docs: `docs/reference/context-switch.md` (tag conventions for `hermes_profile`, `working_dir`, `default_task_namespace`).
 
 ## [0.25.0] - 2026-08-03
 

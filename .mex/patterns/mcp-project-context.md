@@ -10,13 +10,17 @@ edges:
     condition: when changing runtime schemas, dispatch, or services
   - target: patterns/add-mcp-tool.md
     condition: when adding another MCP tool in the same area
-last_updated: 2026-05-15
+  - target: patterns/context-switch.md
+    condition: when implementing full CLI/MCP context switch bootstrap (pack + prompt + objective)
+last_updated: 2026-08-03
 ---
 
 # MCP Project Context
 
 ## Context
 Load `context/mcp-runtime.md`. Core code lives in `session_store.py`, `project_context.py`, `workspace_snapshot.py`, and `context_models.py`.
+
+Full agent bootstrap (`metagit context switch` / `metagit_context_switch`) composes this lean switch — see `patterns/context-switch.md`. Do not remove or redefine `metagit_project_context_switch`.
 
 ## Steps
 1. Extend Pydantic models in `context_models.py` for any new persisted fields.
@@ -29,6 +33,7 @@ Load `context/mcp-runtime.md`. Core code lives in `session_store.py`, `project_c
 - `metagit_workspace_state_restore` does not checkout branches or reset dirty repos.
 - `project_name` session filenames must match `^[\w.-]+$`.
 - Env exports skip sensitive variable refs and session overrides are validated.
+- Full bootstrap env/pack/objective belongs in `ContextSwitchService`, not inside lean `ProjectContextService.switch`.
 
 ## Verify
 - [ ] `uv run pytest tests/core/mcp/services/test_project_context.py tests/core/mcp/services/test_workspace_snapshot.py tests/core/mcp/test_runtime.py -q`

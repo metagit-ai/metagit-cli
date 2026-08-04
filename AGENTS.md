@@ -55,6 +55,8 @@ metagit prompt workspace --kind session-start --text-only
 | ACL file claims | `metagit claim declare` · `metagit claim check` |
 | Task graph / intent | `metagit task create` · `metagit task expand` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R [--task-id N] --json` |
+| Context switch | `metagit context switch <project> [<repo>]` · `--json` · MCP `metagit_context_switch` |
+| Nav (human) | `metagit nav` / `navigate` [-p PROJECT] [--repo REPO] |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |

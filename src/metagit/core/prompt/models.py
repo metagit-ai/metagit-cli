@@ -15,6 +15,7 @@ PromptScope = Literal["workspace", "project", "repo"]
 PromptKind = Literal[
     "instructions",
     "session-start",
+    "context-switch",
     "catalog-edit",
     "health-preflight",
     "sync-safe",

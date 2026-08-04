@@ -41,6 +41,7 @@ from metagit.cli.commands.init import init
 from metagit.cli.commands.lease import lease_group
 from metagit.cli.commands.mcp import mcp
 from metagit.cli.commands.merge_cmd import merge_group
+from metagit.cli.commands.nav import nav_cmd
 from metagit.cli.commands.project import project
 from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
@@ -165,6 +166,8 @@ cli.add_command(completion_group)
 cli.add_command(fmt_cmd, name="fmt")
 cli.add_command(fmt_cmd, name="format")
 cli.add_command(tui_cmd, name="tui")
+cli.add_command(nav_cmd, name="nav")
+cli.add_command(nav_cmd, name="navigate")
 
 
 def main() -> None:
