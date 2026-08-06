@@ -5,6 +5,10 @@ import ConfigPreview from '../components/ConfigPreview'
 import FieldEditor from '../components/FieldEditor'
 import SchemaTree from '../components/SchemaTree'
 import {
+  DEFAULT_CONFIG_DISPLAY_OPTIONS,
+  type ConfigDisplayOptions,
+} from './configDisplayOptions'
+import {
   configTreeQueryKey,
   fetchConfigTree,
   type ConfigTarget,
@@ -15,6 +19,17 @@ interface ConfigPageProps {
   target: ConfigTarget
   title: string
 }
+
+const DISPLAY_OPTION_LABELS: {
+  key: keyof ConfigDisplayOptions
+  label: string
+}[] = [
+  { key: 'showYamlPreview', label: 'Show YAML preview' },
+  { key: 'showUnassigned', label: 'Show unassigned fields' },
+  { key: 'showListItemHeaders', label: 'Show list item headers' },
+  { key: 'showElementNumbering', label: 'Show element numbering' },
+  { key: 'showTypeLabels', label: 'Show type labels' },
+]
 
 function findNodeByPath(
   root: SchemaFieldNode | undefined,
@@ -52,6 +67,9 @@ function mergePendingOp(
 export default function ConfigPage({ target, title }: ConfigPageProps) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null)
   const [pendingOps, setPendingOps] = useState<ConfigOperation[]>([])
+  const [displayOptions, setDisplayOptions] = useState<ConfigDisplayOptions>(
+    DEFAULT_CONFIG_DISPLAY_OPTIONS,
+  )
 
   const { data } = useQuery({
     queryKey: configTreeQueryKey(target),
@@ -71,6 +89,21 @@ export default function ConfigPage({ target, title }: ConfigPageProps) {
     setPendingOps((current) => mergePendingOp(current, op))
   }, [])
 
+  const handleDisplayOptionChange = useCallback(
+    (key: keyof ConfigDisplayOptions, checked: boolean) => {
+      setDisplayOptions((current) => ({ ...current, [key]: checked }))
+    },
+    [],
+  )
+
+  const {
+    showYamlPreview,
+    showUnassigned,
+    showListItemHeaders,
+    showElementNumbering,
+    showTypeLabels,
+  } = displayOptions
+
   return (
     <section className={styles.page}>
       <header className={styles.header}>
@@ -80,6 +113,21 @@ export default function ConfigPage({ target, title }: ConfigPageProps) {
             <p className={styles.subtitle}>{data.config_path}</p>
           ) : null}
         </div>
+        <fieldset className={styles.displayOptions}>
+          <legend className={styles.displayLegend}>Display</legend>
+          {DISPLAY_OPTION_LABELS.map(({ key, label }) => (
+            <label key={key} className={styles.displayOption}>
+              <input
+                type="checkbox"
+                checked={displayOptions[key]}
+                onChange={(event) =>
+                  handleDisplayOptionChange(key, event.target.checked)
+                }
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </fieldset>
       </header>
 
       <div className={styles.layout}>
@@ -89,6 +137,12 @@ export default function ConfigPage({ target, title }: ConfigPageProps) {
             target={target}
             selectedPath={selectedPath}
             pendingOps={pendingOps}
+            displayOptions={{
+              showUnassigned,
+              showListItemHeaders,
+              showElementNumbering,
+              showTypeLabels,
+            }}
             onSelect={handleSelect}
             onOperationApplied={handleOperationApplied}
           />
@@ -99,8 +153,12 @@ export default function ConfigPage({ target, title }: ConfigPageProps) {
           pendingOps={pendingOps}
           onPendingChange={setPendingOps}
         />
-        <ConfigPreview target={target} pendingOps={pendingOps} />
       </div>
+      {showYamlPreview ? (
+        <div className={styles.previewBelow}>
+          <ConfigPreview target={target} pendingOps={pendingOps} />
+        </div>
+      ) : null}
     </section>
   )
 }

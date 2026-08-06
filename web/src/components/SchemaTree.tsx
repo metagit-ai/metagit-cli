@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ConfigOperation, SchemaFieldNode } from '../api/client'
+import type { SchemaTreeDisplayOptions } from '../pages/configDisplayOptions'
 import {
   configTreeQueryKey,
   fetchConfigTree,
@@ -13,6 +14,7 @@ interface SchemaTreeProps {
   target: ConfigTarget
   selectedPath: string | null
   pendingOps: ConfigOperation[]
+  displayOptions: SchemaTreeDisplayOptions
   onSelect: (node: SchemaFieldNode) => void
   onOperationApplied?: (op: ConfigOperation) => void
 }
@@ -43,10 +45,31 @@ function mergePendingOp(
   return next
 }
 
+function visibleChildNodes(
+  nodes: SchemaFieldNode[],
+  displayOptions: SchemaTreeDisplayOptions,
+): SchemaFieldNode[] {
+  const result: SchemaFieldNode[] = []
+  for (const node of nodes) {
+    if (!displayOptions.showUnassigned && node.enabled === false) {
+      continue
+    }
+    if (isListItemNode(node) && !displayOptions.showListItemHeaders) {
+      if ((node.children?.length ?? 0) > 0) {
+        result.push(...visibleChildNodes(node.children ?? [], displayOptions))
+      }
+      continue
+    }
+    result.push(node)
+  }
+  return result
+}
+
 export default function SchemaTree({
   target,
   selectedPath,
   pendingOps,
+  displayOptions,
   onSelect,
   onOperationApplied,
 }: SchemaTreeProps) {
@@ -112,6 +135,7 @@ export default function SchemaTree({
       <TreeNodes
         nodes={data.tree.children ?? []}
         selectedPath={selectedPath}
+        displayOptions={displayOptions}
         onSelect={onSelect}
         onToggle={handleToggle}
         onAppend={handleAppend}
@@ -125,6 +149,7 @@ export default function SchemaTree({
 interface TreeNodesProps {
   nodes: SchemaFieldNode[]
   selectedPath: string | null
+  displayOptions: SchemaTreeDisplayOptions
   onSelect: (node: SchemaFieldNode) => void
   onToggle: (node: SchemaFieldNode, checked: boolean) => void
   onAppend: (node: SchemaFieldNode) => void
@@ -135,19 +160,26 @@ interface TreeNodesProps {
 function TreeNodes({
   nodes,
   selectedPath,
+  displayOptions,
   onSelect,
   onToggle,
   onAppend,
   onRemove,
   mutationPending,
 }: TreeNodesProps) {
+  const visibleNodes = useMemo(
+    () => visibleChildNodes(nodes, displayOptions),
+    [nodes, displayOptions],
+  )
+
   return (
     <>
-      {nodes.map((node) => (
+      {visibleNodes.map((node) => (
         <TreeNode
           key={node.path || node.key}
           node={node}
           selectedPath={selectedPath}
+          displayOptions={displayOptions}
           onSelect={onSelect}
           onToggle={onToggle}
           onAppend={onAppend}
@@ -162,6 +194,7 @@ function TreeNodes({
 interface TreeNodeProps {
   node: SchemaFieldNode
   selectedPath: string | null
+  displayOptions: SchemaTreeDisplayOptions
   onSelect: (node: SchemaFieldNode) => void
   onToggle: (node: SchemaFieldNode, checked: boolean) => void
   onAppend: (node: SchemaFieldNode) => void
@@ -172,6 +205,7 @@ interface TreeNodeProps {
 function TreeNode({
   node,
   selectedPath,
+  displayOptions,
   onSelect,
   onToggle,
   onAppend,
@@ -179,11 +213,16 @@ function TreeNode({
   mutationPending,
 }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(true)
-  const hasChildren = (node.children?.length ?? 0) > 0
+  const visibleChildren = useMemo(
+    () => visibleChildNodes(node.children ?? [], displayOptions),
+    [node.children, displayOptions],
+  )
+  const hasChildren = visibleChildren.length > 0
   const showToggle = isOptionalToggleable(node)
   const isSelected = selectedPath === node.path
   const isArray = node.type === 'array'
   const isListItem = isListItemNode(node)
+  const showKey = !(isListItem && !displayOptions.showElementNumbering)
   const rowClass = [
     styles.row,
     isSelected ? styles.rowSelected : '',
@@ -206,6 +245,21 @@ function TreeNode({
         role="button"
         tabIndex={0}
       >
+        {hasChildren ? (
+          <button
+            type="button"
+            className={styles.expandBtn}
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+            onClick={(event) => {
+              event.stopPropagation()
+              setExpanded((value) => !value)
+            }}
+          >
+            {expanded ? '▾' : '▸'}
+          </button>
+        ) : (
+          <span className={styles.expandPlaceholder} aria-hidden />
+        )}
         {showToggle ? (
           <input
             type="checkbox"
@@ -223,8 +277,10 @@ function TreeNode({
           <span className={styles.checkboxPlaceholder} aria-hidden />
         )}
         <span className={styles.label}>
-          <span className={styles.key}>{node.key}</span>
-          <span className={styles.type}>{displayType(node)}</span>
+          {showKey ? <span className={styles.key}>{node.key}</span> : null}
+          {displayOptions.showTypeLabels ? (
+            <span className={styles.type}>{displayType(node)}</span>
+          ) : null}
           {node.required ? <span className={styles.required}>required</span> : null}
           {isArray && node.enabled ? (
             <span className={styles.count}>
@@ -262,25 +318,13 @@ function TreeNode({
             ×
           </button>
         ) : null}
-        {hasChildren ? (
-          <button
-            type="button"
-            className={styles.expandBtn}
-            aria-label={expanded ? 'Collapse' : 'Expand'}
-            onClick={(event) => {
-              event.stopPropagation()
-              setExpanded((value) => !value)
-            }}
-          >
-            {expanded ? '−' : '+'}
-          </button>
-        ) : null}
       </div>
       {hasChildren && expanded ? (
         <ul className={`${styles.tree} ${styles.nested}`}>
           <TreeNodes
             nodes={node.children ?? []}
             selectedPath={selectedPath}
+            displayOptions={displayOptions}
             onSelect={onSelect}
             onToggle={onToggle}
             onAppend={onAppend}
