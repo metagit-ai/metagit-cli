@@ -10,11 +10,13 @@ import click
 from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
-from metagit.core.project.manager import project_manager_from_app
+from metagit.core.project.manager import ProjectManager, resolve_effective_dedupe
 from metagit.core.project.project_picker import select_project_name
 from metagit.core.utils.common import open_editor
 from metagit.core.workspace.layout_resolver import find_project, list_project_names
-from metagit.core.workspace.root_resolver import resolve_definition_root
+from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_workspace_root
+
+DEFAULT_MANIFEST = ".metagit.yml"
 
 
 @click.command("nav")
@@ -54,7 +56,12 @@ def nav_cmd(
         raise click.UsageError("Interactive navigation is disabled in agent mode")
 
     app_config: AppConfig = ctx.obj["config"]
-    manager = MetagitConfigManager(manifest_path)
+    definition_from_ctx = ctx.obj.get("definition_path")
+    effective_manifest = manifest_path
+    if manifest_path == DEFAULT_MANIFEST and definition_from_ctx:
+        effective_manifest = definition_from_ctx
+
+    manager = MetagitConfigManager(effective_manifest)
     local_config = manager.load_config()
     if isinstance(local_config, Exception):
         raise click.ClickException(str(local_config))
@@ -77,13 +84,11 @@ def nav_cmd(
             raise click.ClickException("No project selected")
         resolved_project = picked
 
-    project_manager = project_manager_from_app(
-        app_config,
-        logger,
-        metagit_config=local_config,
-        project_name=resolved_project,
-    )
-    definition_root = resolve_definition_root(manifest_path)
+    project = find_project(local_config, resolved_project) if resolved_project else None
+    dedupe = resolve_effective_dedupe(app_config.workspace.dedupe, project)
+    sync_root = resolve_workspace_root(effective_manifest, app_config.workspace.path)
+    project_manager = ProjectManager(sync_root, logger, dedupe=dedupe)
+    definition_root = resolve_definition_root(effective_manifest)
 
     if repo_name:
         selected_repo = project_manager.resolve_selected_repo_path(
