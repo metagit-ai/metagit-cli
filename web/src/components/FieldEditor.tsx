@@ -236,8 +236,9 @@ export default function FieldEditor({
 
       {isArray && node.enabled ? (
         <p className={styles.hint}>
-          List of {typeLabel}. Use <strong>+</strong> in the schema tree to add items
-          and <strong>×</strong> on each row to remove. Currently{' '}
+          List of {typeLabel}. Use <strong>+</strong> in the schema tree to add items.
+          To remove items, enable <strong>Show list item headers</strong> in display
+          options (each row shows <strong>×</strong>). Currently{' '}
           {node.item_count ?? 0} item{(node.item_count ?? 0) === 1 ? '' : 's'}.
         </p>
       ) : null}
