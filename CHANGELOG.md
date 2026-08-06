@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Fixed
+- Global CLI `-c` detects `.metagit.yml` workspace manifests and loads bundled AppConfig while exposing `definition_path` on the Click context.
 
 ## [0.26.0] - 2026-08-04
 
