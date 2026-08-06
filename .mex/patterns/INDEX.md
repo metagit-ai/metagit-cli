@@ -55,6 +55,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [debug-mcp-runtime.md](debug-mcp-runtime.md) | Diagnosing MCP runtime protocol, framing, gating, and tool/resource failures |
 | [debug-workspace-discovery.md](debug-workspace-discovery.md) | Diagnosing empty/incorrect workspace index, search hits, or upstream hint ranking |
 | [extend-agents-web-console.md](extend-agents-web-console.md) | Extending the `/agents` SPA route with additional sub-tabs or workflow panels backed by existing agent and ops APIs |
+| [fuzzyfinder-tui-empty-or-stuck.md](fuzzyfinder-tui-empty-or-stuck.md) | Empty FuzzyFinder lists (esp. `metagit nav`) or Ctrl+C/Esc not quitting |
 | [project-cli-resolution.md](project-cli-resolution.md) | Fixing or extending `metagit project list/select` when app-config default ≠ manifest projects |
 | [repo-promote-local-to-git.md](repo-promote-local-to-git.md) | Migrating a path-based workspace repo entry to a git-managed clone (`project repo promote`) |
 | [rewrite-campaign-workspace.md](rewrite-campaign-workspace.md) | Reference-implementation rewrite coordinator (source + target repos, campaign, parity registry) |

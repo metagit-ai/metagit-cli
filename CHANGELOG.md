@@ -8,7 +8,9 @@
 ### Fixed
 - Global CLI `-c` detects `.metagit.yml` workspace manifests and loads bundled AppConfig while exposing `definition_path` on the Click context.
 - FuzzyFinder non-preview mode uses full-width results (fixes empty project list in `metagit nav`).
-- `metagit nav` homes relative `workspace.path` to the manifest directory and honors global `-c` definition_path.
+- FuzzyFinder quit keys (`Ctrl+C`, `Esc`, `Ctrl+Q`) use priority bindings and treat `KeyboardInterrupt` as cancel so stuck pickers can exit.
+- FuzzyFinder `get_item_opacity` no longer references nonexistent `self.config` (emptied `metagit nav` project list for string items).
+- `metagit nav` expands `~` in `-c` manifest paths, homes relative `workspace.path` to the manifest directory, and honors global `-c` definition_path.
 
 ## [0.26.0] - 2026-08-04
 
