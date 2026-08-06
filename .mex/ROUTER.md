@@ -157,3 +157,4 @@ For every task, follow this loop:
 - Use `fix:` by default (patch-level intent).
 - Use `feat:` only for additive backward-compatible behavior.
 - Use breaking-change markers (`type(scope)!:` or `BREAKING CHANGE:`) only when intentionally breaking schema/config compatibility (for example `.metagit.yml` or app configuration schema changes).
+ci-trigger
