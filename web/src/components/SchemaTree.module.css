@@ -81,21 +81,29 @@
 
 .expandBtn {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 1.5rem;
   height: 1.5rem;
-  border: 1px solid var(--color-border);
+  border: none;
   border-radius: var(--radius-sm);
-  background: var(--color-bg-muted);
+  background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   line-height: 1;
   padding: 0;
 }
 
 .expandBtn:hover {
-  border-color: var(--color-border-strong);
+  background: var(--color-bg-muted);
   color: var(--color-text);
+}
+
+.expandPlaceholder {
+  width: 1.5rem;
+  flex-shrink: 0;
 }
 
 .listBtn {

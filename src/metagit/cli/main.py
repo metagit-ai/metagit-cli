@@ -55,7 +55,8 @@ from metagit.cli.commands.version_cmd import version_group
 from metagit.cli.commands.web import web
 from metagit.cli.commands.workspace import workspace
 from metagit.cli.commands.worktree import worktree_group
-from metagit.core.appconfig import load_config, resolve_agent_mode
+from metagit.cli.config_path import detect_cli_config_file, resolve_cli_bootstrap
+from metagit.core.appconfig import resolve_agent_mode
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 CONTEXT_SETTINGS: dict = {
@@ -95,17 +96,21 @@ def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
     try:
         logger: UnifiedLogger = UnifiedLogger(LoggerConfig(log_level=log_level, minimal_console=minimal_console))
 
-        if not Path(config).exists():
+        kind = detect_cli_config_file(config)
+        if kind == "missing" and not Path(config).expanduser().is_file():
             logger.debug(f"Config file '{config}' not found, using default: {DEFAULT_CONFIG}")
-            config = DEFAULT_CONFIG
-        cfg = load_config(config)
+
+        cfg, definition_path = resolve_cli_bootstrap(config)
         if isinstance(cfg, Exception):
-            logger.error(f"Error loading config: {cfg}")
+            logger.error(str(cfg))
             ctx.abort()
+
+        config_path = config if kind == "appconfig" else DEFAULT_CONFIG
 
         # Store the configuration and logger in the context
         ctx.obj = {
-            "config_path": config,
+            "config_path": config_path,
+            "definition_path": definition_path,
             "config": cfg,
             "agent_mode": resolve_agent_mode(cfg),
             "logger": logger,

@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### Added
+- Config Studio display options (session-only): hide unassigned fields, list headers, element numbering, type labels (all default off); optional bottom YAML preview (default hidden); left chevron tree expand.
 
+### Fixed
+- Global CLI `-c` detects `.metagit.yml` workspace manifests and loads bundled AppConfig while exposing `definition_path` on the Click context.
+- FuzzyFinder non-preview mode uses full-width results (fixes empty project list in `metagit nav`).
+- `metagit nav` homes relative `workspace.path` to the manifest directory and honors global `-c` definition_path.
 
 ## [0.26.0] - 2026-08-04
 

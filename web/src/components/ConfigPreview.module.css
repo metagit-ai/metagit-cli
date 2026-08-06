@@ -8,7 +8,7 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   min-height: 12rem;
-  max-height: calc(100vh - 12rem);
+  max-height: min(40vh, 24rem);
   transition: var(--transition-theme);
 }
 

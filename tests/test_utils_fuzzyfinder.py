@@ -4,6 +4,7 @@ Unit tests for metagit.core.utils.fuzzyfinder
 """
 
 import asyncio
+import inspect
 import threading
 from unittest.mock import MagicMock
 
@@ -27,6 +28,14 @@ def test_fuzzyfinder_empty():
 def test_fuzzyfinder_no_match():
     collection = ["cat", "dog"]
     assert list(fuzzyfinder.fuzzyfinder("zebra", collection)) == []
+
+
+def test_fuzzyfinder_non_preview_results_class_in_css_and_compose_source():
+    assert ".fuzzy-finder-results-full" in FuzzyFinderApp.CSS
+    assert "width: 100%" in FuzzyFinderApp.CSS
+    src = inspect.getsource(FuzzyFinderApp.compose)
+    assert "fuzzy-finder-results-full" in src
+    assert "enable_preview" in src
 
 
 def test_fuzzyfinder_app_search_not_capped_by_max_results():

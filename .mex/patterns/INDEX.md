@@ -49,6 +49,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [modality-feature-registry.md](modality-feature-registry.md) | Registering features in modality-parity.yml and flowing docs/skills updates |
 | [bootstrap-metagit-config.md](bootstrap-metagit-config.md) | Creating, validating, or repairing `.metagit.yml` for workspace and MCP flows |
 | [changelog-release.md](changelog-release.md) | Updating `CHANGELOG.md`, docs publishing, and semantic-release note promotion |
+| [config-studio-display-options.md](config-studio-display-options.md) | Changing Config Studio session display prefs, list-header remove UX, or related FieldEditor hints |
 | [context-pack-repo-cards.md](context-pack-repo-cards.md) | Tier-1 context pack repo cards (`RepoCardService`, index + `inspect_repo_state`) |
 | [optimize-agent-access.md](optimize-agent-access.md) | Scaffold llms.txt, AGENTS.md, hidden README agent HTML via `metagit-agent-access` skill |
 | [debug-mcp-runtime.md](debug-mcp-runtime.md) | Diagnosing MCP runtime protocol, framing, gating, and tool/resource failures |
