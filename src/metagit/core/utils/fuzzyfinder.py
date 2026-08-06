@@ -198,8 +198,20 @@ class FuzzyFinderApp(App):
         height: 1fr;
     }
 
+    .fuzzy-finder-body {
+        height: 1fr;
+    }
+
     .fuzzy-finder-results {
         width: 35%;
+        border: solid $primary;
+        scrollbar-gutter: stable;
+        overflow-y: auto;
+        height: 1fr;
+    }
+
+    .fuzzy-finder-results-full {
+        width: 100%;
         border: solid $primary;
         scrollbar-gutter: stable;
         overflow-y: auto;
@@ -266,7 +278,8 @@ class FuzzyFinderApp(App):
                     yield Static("", id="preview_pane", classes="fuzzy-finder-preview")
             else:
                 # Just results
-                yield ListView(id="results_list", classes="fuzzy-finder-results")
+                with Vertical(classes="fuzzy-finder-body"):
+                    yield ListView(id="results_list", classes="fuzzy-finder-results-full")
             yield Static("", id="results_meta")
 
     def on_mount(self) -> None:
