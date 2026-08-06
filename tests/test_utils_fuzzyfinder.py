@@ -38,11 +38,54 @@ def test_fuzzyfinder_non_preview_results_class_in_css_and_compose_source():
     assert "enable_preview" in src
 
 
+def test_fuzzyfinder_quit_bindings_have_priority():
+    """Ctrl+C / Esc must beat focused Input so nav can exit an empty-looking TUI."""
+    by_key = {binding.key: binding for binding in FuzzyFinderApp.BINDINGS}
+    for key in ("ctrl+c", "escape", "ctrl+q"):
+        assert key in by_key
+        assert by_key[key].priority is True
+        assert by_key[key].action == "quit"
+
+
+def test_fuzzyfinder_config_get_item_opacity_for_strings():
+    """String items (project picker) must not raise via a bogus self.config lookup."""
+    config = FuzzyFinderConfig(items=["ai", "default"], item_opacity=0.75)
+    assert config.get_item_opacity("ai") == 0.75
+    assert config.get_item_opacity(fuzzyfinder.FuzzyFinderTarget(name="x", description="y", opacity=0.25)) == 0.25
+
+
+def test_fuzzyfinder_app_shows_string_items_on_mount():
+    """Regression: nav project picker uses plain strings; list must populate on mount."""
+
+    async def _run() -> None:
+        config = FuzzyFinderConfig(
+            items=["ai", "default", "gdo"],
+            prompt_text="Search projects: ",
+            max_results=10,
+            total_count=3,
+            enable_preview=False,
+        )
+        app = FuzzyFinderApp(config)
+        async with app.run_test(size=(80, 24)) as pilot:
+            await pilot.pause()
+            assert app.current_results == ["ai", "default", "gdo"]
+            results = app.query_one("#results_list")
+            assert len(results.children) == 3
+
+    asyncio.run(_run())
+
+
 def test_fuzzyfinder_app_search_not_capped_by_max_results():
     config = FuzzyFinderConfig(items=["a", "b", "c"], max_results=1)
     app = FuzzyFinderApp(config)
     results = app._search("")
     assert results == ["a", "b", "c"]
+
+
+def test_run_textual_app_keyboard_interrupt_returns_none() -> None:
+    app = MagicMock()
+    app.run.side_effect = KeyboardInterrupt()
+    assert _run_textual_app(app) is None
 
 
 def test_run_textual_app_uses_thread_when_event_loop_is_running(monkeypatch) -> None:

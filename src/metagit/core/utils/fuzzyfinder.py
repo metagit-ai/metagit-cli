@@ -172,16 +172,15 @@ class FuzzyFinderConfig(BaseModel):
             return None
 
     def get_item_opacity(self, item: Any) -> Optional[float]:
-        """Get the opacity for an item, prioritizing FuzzyFinderTarget.opacity over config.item_opacity."""
+        """Get the opacity for an item, prioritizing FuzzyFinderTarget.opacity over item_opacity."""
         try:
             # First check if item is a FuzzyFinderTarget with an opacity property
             if isinstance(item, FuzzyFinderTarget) and item.opacity is not None:
                 return item.opacity
 
-            # Fall back to config's item_opacity
-            return self.config.item_opacity
+            return self.item_opacity
         except Exception:
-            return self.config.item_opacity
+            return self.item_opacity
 
 
 class FuzzyFinderApp(App):
@@ -244,8 +243,10 @@ class FuzzyFinderApp(App):
     """
 
     BINDINGS = [
-        Binding("ctrl+c", "quit", "Quit"),
-        Binding("escape", "quit", "Quit"),
+        # priority=True so focused Input does not swallow quit keys
+        Binding("ctrl+c", "quit", "Quit", priority=True),
+        Binding("escape", "quit", "Quit", priority=True),
+        Binding("ctrl+q", "quit", "Quit", priority=True),
         Binding("enter", "select", "Select", priority=True),
         Binding("up", "cursor_up", "Up", show=False, priority=True),
         Binding("down", "cursor_down", "Down", show=False, priority=True),
@@ -296,25 +297,21 @@ class FuzzyFinderApp(App):
 
     def _perform_search(self, query: str) -> None:
         """Perform fuzzy search and update results."""
-        try:
-            results = self._search(query)
-            if isinstance(results, Exception):
-                # Handle error - for now just show empty results
-                results = []
+        results = self._search(query)
+        if isinstance(results, Exception):
+            results = []
 
-            self.current_results = results
-            self.highlighted_index = 0
+        self.current_results = results
+        self.highlighted_index = 0
+        try:
             self._update_results_list()
             self._update_results_meta(query)
-
             if self.config.enable_preview:
                 self._update_preview()
-
         except Exception:
-            # Handle error gracefully
-            self.current_results = []
-            self._update_results_list()
-            self._update_results_meta(query)
+            # Keep current_results even if the ListView refresh fails.
+            with suppress(Exception):
+                self._update_results_meta(query)
 
     def _update_results_meta(self, query: str) -> None:
         """Show concise result counters for current query."""
@@ -622,7 +619,10 @@ def _run_textual_app(app: App) -> Any:
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        return app.run()
+        try:
+            return app.run()
+        except KeyboardInterrupt:
+            return None
 
     result_box: list[Any] = []
     error_box: list[BaseException] = []
@@ -630,6 +630,8 @@ def _run_textual_app(app: App) -> Any:
     def _thread_main() -> None:
         try:
             result_box.append(app.run())
+        except KeyboardInterrupt:
+            result_box.append(None)
         except BaseException as exc:
             error_box.append(exc)
 
@@ -658,6 +660,8 @@ class FuzzyFinder:
                 # Multi-select not fully implemented yet
                 return [result] if result else []
             return result
+        except KeyboardInterrupt:
+            return None
         except Exception as e:
             return e
 

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -60,6 +61,7 @@ def nav_cmd(
     effective_manifest = manifest_path
     if manifest_path == DEFAULT_MANIFEST and definition_from_ctx:
         effective_manifest = definition_from_ctx
+    effective_manifest = str(Path(effective_manifest).expanduser())
 
     manager = MetagitConfigManager(effective_manifest)
     local_config = manager.load_config()

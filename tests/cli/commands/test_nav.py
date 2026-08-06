@@ -167,6 +167,36 @@ def test_nav_global_manifest_c_sets_definition_for_nav(tmp_path: Path, monkeypat
     assert opened
 
 
+def test_nav_expands_user_in_manifest_path(tmp_path: Path, monkeypatch) -> None:
+    app_cfg, metagit_yml = _write_multi_project_fixture(tmp_path)
+    opened: list[str] = []
+    monkeypatch.setattr("metagit.cli.commands.nav.open_editor", lambda _e, p: opened.append(p))
+    monkeypatch.setenv("HOME", str(tmp_path))
+    home_manifest = Path("~") / metagit_yml.name
+    # Place manifest at $HOME/.metagit.yml so expanduser resolves it.
+    home_copy = tmp_path / ".metagit.yml"
+    home_copy.write_text(metagit_yml.read_text(encoding="utf-8"), encoding="utf-8")
+    # Sync mounts still live under tmp_path/.metagit from the fixture appconfig.
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--config",
+            str(app_cfg),
+            "nav",
+            "-c",
+            str(home_manifest),
+            "-p",
+            "platform",
+            "--repo",
+            "backend",
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0, result.output
+    assert opened
+
+
 def test_nav_resolves_sync_root_from_manifest_dir(tmp_path: Path, monkeypatch) -> None:
     """Nav must not use cwd-relative ./.metagit when manifest is elsewhere."""
     app_cfg, metagit_yml = _write_multi_project_fixture(tmp_path)
