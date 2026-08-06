@@ -31,11 +31,11 @@ def test_fuzzyfinder_no_match():
 
 
 def test_fuzzyfinder_non_preview_results_class_in_css_and_compose_source():
-  assert ".fuzzy-finder-results-full" in FuzzyFinderApp.CSS
-  assert "width: 100%" in FuzzyFinderApp.CSS
-  src = inspect.getsource(FuzzyFinderApp.compose)
-  assert "fuzzy-finder-results-full" in src
-  assert "enable_preview" in src
+    assert ".fuzzy-finder-results-full" in FuzzyFinderApp.CSS
+    assert "width: 100%" in FuzzyFinderApp.CSS
+    src = inspect.getsource(FuzzyFinderApp.compose)
+    assert "fuzzy-finder-results-full" in src
+    assert "enable_preview" in src
 
 
 def test_fuzzyfinder_app_search_not_capped_by_max_results():
