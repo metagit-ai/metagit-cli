@@ -74,7 +74,6 @@ def test_build_view_filters_by_project(tmp_path: Path) -> None:
                         {
                             "name": "api",
                             "path": "services/api",
-                            "url": "https://example.com/api.git",
                             "tags": {"team": "platform"},
                         },
                     ],
@@ -133,13 +132,11 @@ def test_build_view_places_nodes_and_dependencies(tmp_path: Path) -> None:
                         {
                             "name": "api",
                             "path": "services/api",
-                            "url": "https://example.com/api.git",
                             "tags": {"team": "platform"},
                         },
                         {
                             "name": "core",
                             "path": "libs/core",
-                            "url": "https://example.com/core.git",
                         },
                     ],
                 }

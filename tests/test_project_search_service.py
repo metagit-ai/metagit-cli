@@ -28,7 +28,6 @@ def _config(tmp_path: Path) -> MetagitConfig:
                     repos=[
                         ProjectPath(
                             name="abacus-app",
-                            path="platform/abacus-app",
                             url="https://github.com/example/abacus-app.git",
                             sync=True,
                             tags={"code": "abacus", "domain": "terraform"},
@@ -40,7 +39,6 @@ def _config(tmp_path: Path) -> MetagitConfig:
                     repos=[
                         ProjectPath(
                             name="abacus-module",
-                            path="shared/abacus-module",
                             url="https://github.com/example/abacus-module.git",
                             sync=True,
                             tags={"code": "abacus", "domain": "terraform-module"},

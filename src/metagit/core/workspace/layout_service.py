@@ -644,9 +644,7 @@ class WorkspaceLayoutService:
 
         source_session = store.get_project_session(project_name=source_project_name)
         source_had_primary = self._path_matches(source_session.primary_repo_path, old_resolved)
-        source_recent = [
-            item for item in source_session.recent_repos if not self._path_matches(item, old_resolved)
-        ]
+        source_recent = [item for item in source_session.recent_repos if not self._path_matches(item, old_resolved)]
         source_had_recent = len(source_recent) != len(source_session.recent_repos)
         if source_had_primary:
             source_session.primary_repo_path = None

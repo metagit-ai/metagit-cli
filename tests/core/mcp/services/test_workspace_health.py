@@ -33,7 +33,6 @@ def _config(tmp_path: Path) -> tuple[MetagitConfig, str]:
                             ProjectPath(
                                 name="api",
                                 path="alpha/api",
-                                url="https://github.com/example/api.git",
                                 sync=True,
                             ),
                             ProjectPath(

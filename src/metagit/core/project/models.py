@@ -13,8 +13,8 @@ from pydantic import (
     Field,
     HttpUrl,
     field_serializer,
-    model_validator,
     field_validator,
+    model_validator,
 )
 from pydantic_core import core_schema
 

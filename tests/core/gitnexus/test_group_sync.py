@@ -74,7 +74,6 @@ def _workspace_config(tmp_path: Path) -> tuple[MetagitConfig, str]:
                             ProjectPath(
                                 name="api",
                                 path="alpha/api",
-                                url="https://example.com/a.git",
                             )
                         ],
                     )
