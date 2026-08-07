@@ -6,6 +6,7 @@ from pathlib import Path
 import yaml
 
 from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 
 
@@ -90,6 +91,38 @@ def test_move_repo_between_projects(tmp_path: Path) -> None:
     assert not isinstance(reloaded, Exception)
     beta = next(p for p in reloaded.workspace.projects if p.name == "beta")
     assert any(repo.name == "svc-a" for repo in beta.repos)
+
+
+def test_move_repo_migrates_project_session_cache(tmp_path: Path) -> None:
+    config, config_path, sync_root = _setup_workspace(tmp_path)
+    old_mount = str((Path(sync_root) / "alpha" / "svc-a").resolve())
+    new_mount = str((Path(sync_root) / "beta" / "svc-a").resolve())
+    store = SessionStore(workspace_root=sync_root)
+    _ = store.update_project_session(
+        "alpha",
+        recent_repos=[old_mount],
+        primary_repo_path=old_mount,
+    )
+
+    service = WorkspaceLayoutService()
+    result = service.move_repo(
+        config,
+        config_path,
+        sync_root,
+        repo_name="svc-a",
+        from_project="alpha",
+        to_project="beta",
+    )
+
+    assert result.ok
+
+    alpha_session = store.get_project_session(project_name="alpha")
+    beta_session = store.get_project_session(project_name="beta")
+
+    assert alpha_session.primary_repo_path is None
+    assert old_mount not in alpha_session.recent_repos
+    assert beta_session.primary_repo_path == new_mount
+    assert new_mount in beta_session.recent_repos
 
 
 def test_dry_run_does_not_mutate(tmp_path: Path) -> None:

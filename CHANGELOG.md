@@ -14,7 +14,7 @@
 - AppConfig loading and `metagit appconfig validate` now reject unknown non-schema keys while still normalizing legacy `version` and `default_profile` metadata.
 - Windows nav test coverage now seeds `USERPROFILE`/`HOMEDRIVE`/`HOMEPATH` alongside `HOME` so `Path("~")` expansion is deterministic in GitHub Actions.
 - TUI project/repo pickers now initialize `ListView` selection index to the first row before focus, fixing Enter-key no-op transitions seen on Windows (`ProjectSelectScreen` staying active instead of pushing `RepoSelectScreen`).
-- Metagit skill docs now explicitly describe `workspace.projects[].repos[]` entries as supporting both git `url` targets and local-folder `path` targets in `metagit-cli` and `metagit-projects` playbooks.
+- Project repo entries now enforce a single locator (`path` or `url`, not both), and metagit skill docs were updated to document that exact-one rule.
 - Regenerated `schemas/metagit_config.schema.json` and `schemas/metagit_appconfig.schema.json` after skills/schema sync to keep generated artifacts current.
 
 ## [0.26.0] - 2026-08-04

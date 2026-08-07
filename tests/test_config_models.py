@@ -189,6 +189,25 @@ def test_workspace_project_dedupe_override() -> None:
     assert project.dedupe.enabled is False
 
 
+def test_project_path_accepts_single_locator() -> None:
+    path_repo = ProjectPath(name="local", path="~/Sites/local")
+    url_repo = ProjectPath(name="remote", url="https://github.com/example/remote.git")
+
+    assert path_repo.path == "~/Sites/local"
+    assert path_repo.url is None
+    assert str(url_repo.url) == "https://github.com/example/remote.git"
+    assert url_repo.path is None
+
+
+def test_project_path_rejects_path_and_url_together() -> None:
+    with pytest.raises(ValidationError, match="only one of 'path' or 'url'"):
+        ProjectPath(
+            name="both",
+            path="~/Sites/both",
+            url="https://github.com/example/both.git",
+        )
+
+
 class TestMetagitConfig:
     """Test MetagitConfig class."""
 

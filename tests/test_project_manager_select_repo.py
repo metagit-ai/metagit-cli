@@ -34,7 +34,6 @@ def _build_metagit_config() -> MetagitConfig:
             ProjectPath(
               name="repo-a",
               description="Core repository",
-              path="/tmp/repo-a",
               url="https://example.com/repo-a.git",
               language="python",
               language_version="3.12",
@@ -108,7 +107,6 @@ def test_select_repo_preview_contains_extended_metadata(tmp_path, monkeypatch) -
   )
   preview = target_item.description
   assert "Status: ✅ Managed" in preview
-  assert "Path: /tmp/repo-a" in preview
   assert "URL: https://example.com/repo-a.git" in preview
   assert "Language: python" in preview
   assert "Language Version: 3.12" in preview
