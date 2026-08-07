@@ -1,0 +1,1 @@
+{"operations": [{"op": "append", "path": "workspace.projects"}, {"op": "set", "path": "workspace.projects[0].name", "value": "from-file"}]}

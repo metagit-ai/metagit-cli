@@ -1,0 +1,4 @@
+kind: application
+name: cli-patch-test
+workspace:
+  projects: []
