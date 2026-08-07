@@ -27,7 +27,6 @@ def test_build_index_synced_git_repo_with_tags_and_paths(tmp_path: Path) -> None
                         {
                             "name": "svc-auth",
                             "path": "./svc-auth",
-                            "url": "https://example.com/org/svc-auth.git",
                             "sync": True,
                             "tags": {"tier": "1", "domain": "auth"},
                         }
@@ -48,7 +47,7 @@ def test_build_index_synced_git_repo_with_tags_and_paths(tmp_path: Path) -> None
     assert row["exists"] is True
     assert row["is_git_repo"] is True
     assert row["status"] == "synced"
-    assert row["url"] == "https://example.com/org/svc-auth.git"
+    assert row["url"] is None
     assert row["sync"] is True
 
 

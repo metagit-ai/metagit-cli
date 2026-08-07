@@ -224,10 +224,13 @@
       "properties": {
         "backend": {
           "default": "local",
-          "description": "State backend selector: local JSON files or remote HTTP ops API",
+          "description": "State backend selector",
           "enum": [
             "local",
-            "http"
+            "http",
+            "dynamodb",
+            "mongodb",
+            "memory"
           ],
           "title": "Backend",
           "type": "string"
@@ -250,9 +253,81 @@
           "minimum": 0,
           "title": "Conflict Retries",
           "type": "integer"
+        },
+        "org_id": {
+          "default": "",
+          "description": "Organization partition identifier; defaults to _ when empty",
+          "title": "Org Id",
+          "type": "string"
+        },
+        "workspace_id": {
+          "default": "",
+          "description": "Workspace partition identifier; derived from workspace root when empty",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "dynamodb": {
+          "$ref": "#/$defs/StateDynamoConfig",
+          "description": "DynamoDB state backend settings"
+        },
+        "mongodb": {
+          "$ref": "#/$defs/StateMongoConfig",
+          "description": "MongoDB state backend settings"
         }
       },
       "title": "StateConfig",
+      "type": "object"
+    },
+    "StateDynamoConfig": {
+      "additionalProperties": false,
+      "description": "DynamoDB document-state backend settings.",
+      "properties": {
+        "table": {
+          "default": "",
+          "description": "DynamoDB table name",
+          "title": "Table",
+          "type": "string"
+        },
+        "region": {
+          "default": "",
+          "description": "AWS region for DynamoDB",
+          "title": "Region",
+          "type": "string"
+        },
+        "endpoint_url": {
+          "default": "",
+          "description": "Optional custom DynamoDB endpoint for local development",
+          "title": "Endpoint Url",
+          "type": "string"
+        }
+      },
+      "title": "StateDynamoConfig",
+      "type": "object"
+    },
+    "StateMongoConfig": {
+      "additionalProperties": false,
+      "description": "MongoDB document-state backend settings.",
+      "properties": {
+        "uri": {
+          "default": "",
+          "description": "MongoDB connection URI",
+          "title": "Uri",
+          "type": "string"
+        },
+        "database": {
+          "default": "",
+          "description": "MongoDB database name",
+          "title": "Database",
+          "type": "string"
+        },
+        "collection": {
+          "default": "metagit_state",
+          "description": "MongoDB collection name",
+          "title": "Collection",
+          "type": "string"
+        }
+      },
+      "title": "StateMongoConfig",
       "type": "object"
     },
     "WorkspaceConfig": {
@@ -397,6 +472,7 @@
       "type": "string"
     }
   },
+  "additionalProperties": false,
   "description": "Application-level settings (not the Metagit package release version \u2014 use `metagit version`).",
   "properties": {
     "agent_mode": {

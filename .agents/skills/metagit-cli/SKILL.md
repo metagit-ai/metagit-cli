@@ -59,12 +59,14 @@ Use this table first when changing a workspace manifest from the CLI. Prefer **c
 | Add project | `metagit workspace project add -c .metagit.yml --name <p> --json` |
 | Remove project | `metagit workspace project remove -c .metagit.yml --name <p> --json` |
 | Rename project (dry-run) | `metagit workspace project rename -c .metagit.yml --name <old> --new-name <new> --dry-run --json` |
-| Add repo | `metagit workspace repo add -c .metagit.yml --project <p> --name <r> --url <url> --json` |
+| Add repo | `metagit workspace repo add -c .metagit.yml --project <p> --name <r> (--url <url> | --path <path>) --json` |
 | Remove repo (manifest only) | `metagit workspace repo remove -c .metagit.yml --project <p> --name <r> --json` |
 | Rename / move repo (dry-run) | `metagit workspace repo rename …` / `metagit workspace repo move … --dry-run --json` |
 | Search before adding | `metagit search "<name>" -c .metagit.yml --json` |
 
-Active project context (optional): `metagit project repo add --name <r> --url <url>` after `metagit project select`.
+Active project context (optional): `metagit project repo add --name <r> (--url <url> | --path <path>)` after `metagit project select`.
+
+For `workspace.projects[].repos[]`, use `--url` for git-backed entries and `--path` for local-folder entries.
 
 ### Schema patch examples (`ops.json`)
 
@@ -254,6 +256,7 @@ metagit workspace repo list -c .metagit.yml --project <name> --json
 
 metagit workspace project add --name <name> --json
 metagit workspace repo add --project <name> --name <repo> --url <url> --json
+metagit workspace repo add --project <name> --name <repo> --path <path> --json
 metagit workspace project remove --name <name> --json
 metagit workspace repo remove --project <name> --name <repo> --json
 ```
@@ -281,6 +284,7 @@ metagit project sync --hydrate   # symlink mounts → full directory copies (per
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>
+metagit project repo add --project <name> --name <repo> --path <path>
 metagit project repo promote --name <repo> --dry-run   # path entry → git clone under sync root
 metagit project repo remove --name <repo> --json
 metagit project repo rename --name <old> --new-name <new> --dry-run --json

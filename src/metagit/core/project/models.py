@@ -14,6 +14,7 @@ from pydantic import (
     HttpUrl,
     field_serializer,
     field_validator,
+    model_validator,
 )
 from pydantic_core import core_schema
 
@@ -132,6 +133,13 @@ class ProjectPath(BaseModel):
     def serialize_url(self, url: Optional[Union[HttpUrl, GitUrl]], _info: Any) -> Optional[str]:
         """Serialize the URL to a string."""
         return str(url) if url else None
+
+    @model_validator(mode="after")
+    def validate_repo_locator(self) -> "ProjectPath":
+        """Require repo entries to specify at most one locator."""
+        if self.path and self.url:
+            raise ValueError("Provide only one of 'path' or 'url' for a repository entry")
+        return self
 
     class Config:
         """Pydantic configuration."""

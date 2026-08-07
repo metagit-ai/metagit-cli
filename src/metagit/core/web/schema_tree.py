@@ -633,7 +633,12 @@ class SchemaTreeService:
 
     def _default_model_dict(self, model_class: type[BaseModel]) -> dict[str, Any]:
         """Build a valid sample dict for a nested model."""
-        return self._example_generator._sample_model(model_class)
+        sample = self._example_generator._sample_model(model_class)
+        # ProjectPath now requires a single locator. Keep URL in defaults so
+        # append operations stay valid when repo sample entries are generated.
+        if "path" in sample and "url" in sample and sample.get("path") and sample.get("url"):
+            sample.pop("path", None)
+        return sample
 
     def _accepts_none(self, annotation: Any) -> bool:
         origin = get_origin(annotation)

@@ -39,6 +39,36 @@ This page contains the auto-generated documentation for the `metagit` command-li
 
 Under `workspace.projects[].repos`, each repository entry may include a flat string-to-string `tags` map (for example `tier: "1"`). These tags are carried into the workspace index and into `metagit search` / `metagit find` for filtering.
 
+Repository entries must use exactly one locator: `path` (local folder) or `url` (git remote).
+
+## Repo Locator Migration (path -> url)
+
+Promote path-based entries to git-managed clones when they should be reproducible across machines or used in CI.
+
+### Preview a promotion
+
+- `metagit project --project <project_name> repo promote --name <repo_name> --dry-run`
+
+### Apply a promotion
+
+- `metagit project --project <project_name> repo promote --name <repo_name>`
+- `metagit project --project <project_name> repo promote --name <repo_name> --url <git-url>`
+
+### Validation after promotion
+
+- `metagit config validate --config-path .metagit.yml`
+- `metagit project sync --project <project_name>`
+- `metagit project repo list --project <project_name> --json`
+
+### Common failures and fixes
+
+- `protected`: rerun with `--force` only after approval.
+- `source_missing`: fix or remove stale local path before promoting.
+- `no_url`: pass `--url` explicitly or configure the source repo remote.
+- `invalid_url`: supply a valid SSH/HTTPS git URL.
+- `duplicate_identity`: remove or consolidate duplicate repo identity entries.
+- `sync_failed`: rerun `project sync`; inspect sync output and filesystem permissions.
+
 ## Managed repository search
 
 - `metagit search QUERY` — list managed repositories from the workspace definition that match the query (name, URL substring, tag keys/values, project name). Only repos declared under `workspace.projects[].repos` are considered. Supports `--status` (repeatable) and `--sort score|project|name`.

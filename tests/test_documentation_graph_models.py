@@ -63,7 +63,6 @@ def test_graph_relationships_and_export() -> None:
                         {
                             "name": "api",
                             "path": "alpha/api",
-                            "url": "https://github.com/example/api.git",
                         }
                     ],
                 },
@@ -73,7 +72,6 @@ def test_graph_relationships_and_export() -> None:
                         {
                             "name": "lib",
                             "path": "beta/lib",
-                            "url": "https://github.com/example/lib.git",
                         }
                     ],
                 },

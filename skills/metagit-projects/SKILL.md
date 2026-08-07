@@ -14,8 +14,8 @@ Metagit uses a three-level hierarchy (see project terminology docs):
 | Level | Meaning |
 |-------|---------|
 | **Workspace** | Root folder where projects are synced (from app config `workspace.path`, often `./.metagit/`). Holds many projects. |
-| **Project** | Named group of one or more Git repositories. Multi-repo products are one project; unrelated repos can also share a workspace under different project names. |
-| **Repo** | A single Git repository entry under `workspace.projects[].repos` in `.metagit.yml`. |
+| **Project** | Named group of one or more managed repositories or local folders. Multi-repo products are one project; unrelated repos can also share a workspace under different project names. |
+| **Repo** | A single repository entry under `workspace.projects[].repos` in `.metagit.yml`, using exactly one locator: `url` (git remote) or `path` (local folder). |
 
 A **project** is not always “one product.” It is whatever grouping helps the user and agents reason about related (or intentionally grouped) repositories. A workspace may contain unrelated projects side by side (for example `default`, `client-a`, `experiments`).
 
@@ -60,6 +60,7 @@ From the directory containing the workspace `.metagit.yml` (or pass `--config`):
 metagit project repo add --project <project_name> --prompt
 # or non-interactive:
 metagit project repo add --project <project_name> --name <repo> --url <git-url>
+metagit project repo add --project <project_name> --name <repo> --path <local-folder-path>
 metagit config validate --config-path .metagit.yml
 metagit project sync --project <project_name>
 ```
@@ -103,6 +104,30 @@ metagit init --kind umbrella
 metagit project repo add --project default --prompt
 metagit project sync
 ```
+
+## Repo Locator Migration (path to url)
+
+Use this decision rule for `workspace.projects[].repos[]` entries:
+
+- Keep `path` for local-only, machine-specific, or non-git sources.
+- Use `url` for shared repos, CI-targeted repos, or reproducible agent workflows.
+
+When converting a path-based entry to git-managed form, use promote:
+
+```bash
+metagit project --project <project_name> repo promote --name <repo_name> --dry-run
+metagit project --project <project_name> repo promote --name <repo_name>
+metagit project --project <project_name> repo promote --name <repo_name> --url <git-url>
+```
+
+After promotion:
+
+```bash
+metagit config validate --config-path .metagit.yml
+metagit project sync --project <project_name>
+```
+
+If promote fails, report the specific failure (`protected`, `source_missing`, `no_url`, `invalid_url`, `duplicate_identity`, `sync_failed`) and suggest the minimal safe remediation.
 
 ## Ongoing session habits
 

@@ -597,6 +597,13 @@ class WorkspaceLayoutService:
                     kind="save_failed",
                     message=str(save_err),
                 )
+            self._migrate_repo_session_refs(
+                workspace_root=root,
+                source_project_name=source_project_name,
+                target_project_name=target_project_name,
+                old_repo_path=old_mount,
+                new_repo_path=new_mount,
+            )
         except LayoutExecutionError as exc:
             target_project.repos = [item for item in target_project.repos if item.name != repo_key]
             source_project.repos.append(moved_repo)
@@ -620,6 +627,73 @@ class WorkspaceLayoutService:
             plan=plan,
             manifest_updated=True,
         )
+
+    def _migrate_repo_session_refs(
+        self,
+        *,
+        workspace_root: Path,
+        source_project_name: str,
+        target_project_name: str,
+        old_repo_path: Path,
+        new_repo_path: Path,
+    ) -> None:
+        """Move persisted session references from old mount path to new mount path."""
+        store = SessionStore(workspace_root=str(workspace_root))
+        old_resolved = old_repo_path.resolve()
+        new_resolved_str = str(new_repo_path.resolve())
+
+        source_session = store.get_project_session(project_name=source_project_name)
+        source_had_primary = self._path_matches(source_session.primary_repo_path, old_resolved)
+        source_recent = [item for item in source_session.recent_repos if not self._path_matches(item, old_resolved)]
+        source_had_recent = len(source_recent) != len(source_session.recent_repos)
+        if source_had_primary:
+            source_session.primary_repo_path = None
+        if source_had_recent:
+            source_session.recent_repos = source_recent
+        if source_had_primary or source_had_recent:
+            store.save_project_session(session=source_session)
+
+        if not (source_had_primary or source_had_recent):
+            return
+
+        target_session = store.get_project_session(project_name=target_project_name)
+        if source_had_primary and not target_session.primary_repo_path:
+            target_session.primary_repo_path = new_resolved_str
+
+        updated_recent: list[str] = [
+            (new_resolved_str if self._path_matches(item, old_resolved) else item)
+            for item in target_session.recent_repos
+        ]
+        if source_had_recent:
+            updated_recent.insert(0, new_resolved_str)
+        target_session.recent_repos = self._dedupe_paths(updated_recent)
+        store.save_project_session(session=target_session)
+
+    @staticmethod
+    def _path_matches(candidate: str | None, target: Path) -> bool:
+        """True when candidate resolves to the same absolute path as target."""
+        if not candidate:
+            return False
+        try:
+            return Path(candidate).expanduser().resolve() == target
+        except Exception:
+            return candidate == str(target)
+
+    @staticmethod
+    def _dedupe_paths(paths: list[str]) -> list[str]:
+        """Dedupe path strings by resolved path while preserving order."""
+        seen: set[str] = set()
+        deduped: list[str] = []
+        for item in paths:
+            try:
+                key = str(Path(item).expanduser().resolve())
+            except Exception:
+                key = item
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(item)
+        return deduped
 
     def _git_warnings(self, mount: Path) -> list[str]:
         """Warn when a git checkout under mount has a dirty working tree."""

@@ -20,9 +20,6 @@ documentation:
     # Source type (markdown, web, confluence, sharepoint, wiki, api, other)
     kind: example-value
 ...
-    # Repo-relative or absolute path to a documentation file
-    path: example-value
-...
     # Remote documentation URL
     url: https://example.com/org/repo
 ...
@@ -232,9 +229,6 @@ paths:
     description: Example text for documentation; replace before production use.
     # Reference in the current project for the target project, used in dependencies
     ref: example
-    # Local project path
-    path: example-value
-...
     # Project branches
     branches:
       - example-value
@@ -316,9 +310,6 @@ dependencies:
     description: Example text for documentation; replace before production use.
     # Reference in the current project for the target project, used in dependencies
     ref: example
-    # Local project path
-    path: example-value
-...
     # Project branches
     branches:
       - example-value
@@ -402,9 +393,6 @@ components:
     description: Example text for documentation; replace before production use.
     # Reference in the current project for the target project, used in dependencies
     ref: example
-    # Local project path
-    path: example-value
-...
     # Project branches
     branches:
       - example-value

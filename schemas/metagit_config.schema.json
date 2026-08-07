@@ -1886,6 +1886,7 @@
       "type": "string"
     },
     "Workspace": {
+      "additionalProperties": false,
       "description": "Model for workspace configuration.",
       "properties": {
         "description": {

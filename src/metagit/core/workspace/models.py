@@ -183,3 +183,4 @@ class Workspace(BaseModel):
         """Pydantic configuration."""
 
         use_enum_values = True
+        extra = "forbid"

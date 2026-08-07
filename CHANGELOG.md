@@ -4,6 +4,7 @@
 
 ### Added
 - Config Studio display options (session-only): hide unassigned fields, list headers, element numbering, type labels (all default off); optional bottom YAML preview (default hidden); left chevron tree expand.
+- New `metagit-stamp` skill for idempotent non-umbrella manifest stamping on target folders (local or git-backed).
 
 ### Fixed
 - Global CLI `-c` detects `.metagit.yml` workspace manifests and loads bundled AppConfig while exposing `definition_path` on the Click context.
@@ -11,6 +12,15 @@
 - FuzzyFinder quit keys (`Ctrl+C`, `Esc`, `Ctrl+Q`) use priority bindings and treat `KeyboardInterrupt` as cancel so stuck pickers can exit.
 - FuzzyFinder `get_item_opacity` no longer references nonexistent `self.config` (emptied `metagit nav` project list for string items).
 - `metagit nav` expands `~` in `-c` manifest paths, homes relative `workspace.path` to the manifest directory, and honors global `-c` definition_path.
+- AppConfig loading and `metagit appconfig validate` now reject unknown non-schema keys while still normalizing legacy `version` and `default_profile` metadata.
+- Windows nav test coverage now seeds `USERPROFILE`/`HOMEDRIVE`/`HOMEPATH` alongside `HOME` so `Path("~")` expansion is deterministic in GitHub Actions.
+- TUI project/repo pickers now initialize `ListView` selection index to the first row before focus, fixing Enter-key no-op transitions seen on Windows (`ProjectSelectScreen` staying active instead of pushing `RepoSelectScreen`).
+- Project repo entries now enforce a single locator (`path` or `url`, not both), and metagit skill docs were updated to document that exact-one rule.
+- Regenerated `schemas/metagit_config.schema.json` and `schemas/metagit_appconfig.schema.json` after skills/schema sync to keep generated artifacts current.
+- Graph suggestion and GitNexus group-sync test fixtures now comply with the single-locator repository rule, preventing CI regressions from legacy dual-locator test data.
+- Cross-project dependency service fixtures now use path-only repos under the single-locator rule while preserving declared/import edge coverage.
+- Workspace health service fixtures now use path-only repos under the single-locator rule, fixing failing health-check unit coverage.
+- Additional web/index/search/documentation test fixtures now avoid dual `path`+`url` repo definitions so CI reflects the enforced single-locator contract.
 
 ## [0.26.0] - 2026-08-04
 

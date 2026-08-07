@@ -82,7 +82,7 @@ class MetagitConfigManager:
         """
         try:
             load_result = self.load_config()
-            not isinstance(load_result, Exception)
+            return not isinstance(load_result, Exception)
         except Exception as e:
             return e
 

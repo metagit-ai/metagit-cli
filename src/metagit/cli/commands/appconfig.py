@@ -111,7 +111,8 @@ def appconfig_validate(ctx: click.Context, config_path: Union[str, None] = None)
                 raise config_data
         # Step 2: Validate structure with Pydantic model
         try:
-            _ = AppConfig(**config_data["config"])
+            payload = AppConfig._normalize_loaded_payload(config_data["config"])
+            _ = AppConfig(**payload)
         except ValidationError as ve:
             logger.error(f"Model validation failed: {ve}")
             sys.exit(1)

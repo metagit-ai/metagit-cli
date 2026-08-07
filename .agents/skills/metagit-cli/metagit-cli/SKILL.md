@@ -17,7 +17,7 @@ export METAGIT_AGENT_MODE=true
 Global flags (most commands):
 
 - `-c path/to/metagit.config.yaml` — app config (default `metagit.config.yaml`)
-- Workspace manifest: `-c` on `config` / `workspace` catalog commands, `--definition` on the coordination families (`branch`, `lease`, `worktree`, `claim`, `task`, `semantic`, `merge`, `schedule`, `aos`) — default `.metagit.yml` either way
+- Workspace manifest: `--definition` / `-c` on catalog commands (default `.metagit.yml`)
 
 ---
 
@@ -121,9 +121,12 @@ workspace:
         enabled: false
       repos: []
 ```
+metagit workspace repo add --project <name> --name <repo> --path <path> --json
 
 ```bash
 metagit appconfig show --format json
+
+For `workspace.projects[].repos[]`, use `--url` for git-backed entries and `--path` for local-folder entries.
 metagit config info -c .metagit.yml
 metagit config show -c .metagit.yml
 metagit config validate -c .metagit.yml
@@ -161,6 +164,7 @@ metagit project sync
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>
+metagit project repo add --project <name> --name <repo> --path <path>
 metagit project repo remove --name <repo> --json
 metagit project repo rename --name <old> --new-name <new> --dry-run --json
 metagit project repo move --name <repo> --to-project <other> --dry-run --json

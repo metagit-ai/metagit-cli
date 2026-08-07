@@ -18,7 +18,6 @@ from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 def _workspace_config(tmp_path: Path) -> tuple[MetagitConfig, str]:
     root = tmp_path / "workspace"
-    shared_url = "https://github.com/example/shared-lib.git"
     alpha_repo = root / "alpha" / "api"
     beta_repo = root / "beta" / "worker"
     alpha_repo.mkdir(parents=True)
@@ -47,7 +46,6 @@ def _workspace_config(tmp_path: Path) -> tuple[MetagitConfig, str]:
                             ProjectPath(
                                 name="api",
                                 path="alpha/api",
-                                url=shared_url,
                                 sync=True,
                                 tags={"depends_on": "beta"},
                             )
@@ -59,7 +57,6 @@ def _workspace_config(tmp_path: Path) -> tuple[MetagitConfig, str]:
                             ProjectPath(
                                 name="worker",
                                 path="beta/worker",
-                                url=shared_url,
                                 sync=True,
                             )
                         ],
@@ -71,7 +68,7 @@ def _workspace_config(tmp_path: Path) -> tuple[MetagitConfig, str]:
     )
 
 
-def test_map_dependencies_finds_url_match_and_imports(tmp_path: Path) -> None:
+def test_map_dependencies_finds_declared_and_import_edges(tmp_path: Path) -> None:
     config, workspace_root = _workspace_config(tmp_path)
     registry = MagicMock()
     registry.summarize_for_paths.return_value = {
@@ -90,8 +87,8 @@ def test_map_dependencies_finds_url_match_and_imports(tmp_path: Path) -> None:
 
     assert result.ok is True
     edge_types = {edge.type for edge in result.edges}
-    assert "url_match" in edge_types
     assert "declared" in edge_types
+    assert "import" in edge_types
     assert result.impact_summary.affected_projects == ["beta"]
 
 

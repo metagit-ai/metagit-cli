@@ -55,7 +55,6 @@ def _workspace_fixture(
                         repos=[
                             ProjectPath(
                                 name="api",
-                                path="alpha/api",
                                 url=alpha_url,
                                 sync=True,
                             )
@@ -66,7 +65,6 @@ def _workspace_fixture(
                         repos=[
                             ProjectPath(
                                 name="worker",
-                                path="beta/worker",
                                 url=beta_url,
                                 sync=True,
                             )
@@ -83,16 +81,27 @@ def _applyable_fixture(tmp_path: Path) -> tuple[MetagitConfig, str, Path]:
     """Workspace fixture plus an on-disk manifest that mirrors it, with no graph section."""
     config, workspace_root = _workspace_fixture(tmp_path)
     manifest = tmp_path / ".metagit.yml"
-    projects = "\n".join(
-        f"    - name: {project.name}\n      repos:\n"
-        + "\n".join(
-            f"        - name: {repo.name}\n          path: {repo.path}\n          url: {repo.url}"
-            for repo in project.repos
-        )
-        for project in config.workspace.projects
-    )
+    projects = []
+    for project in config.workspace.projects:
+        repos = []
+        for repo in project.repos:
+            repo_payload = {"name": repo.name}
+            if repo.path:
+                repo_payload["path"] = repo.path
+            if repo.url:
+                repo_payload["url"] = str(repo.url)
+            if repo.sync is not None:
+                repo_payload["sync"] = repo.sync
+            repos.append(repo_payload)
+        projects.append({"name": project.name, "repos": repos})
     manifest.write_text(
-        f"name: workspace\nkind: application\nworkspace:\n  projects:\n{projects}\n",
+        json.dumps(
+            {
+                "name": "workspace",
+                "kind": "application",
+                "workspace": {"projects": projects},
+            }
+        ),
         encoding="utf-8",
     )
     return config, workspace_root, manifest

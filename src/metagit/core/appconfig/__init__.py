@@ -34,7 +34,8 @@ def load_config(config_path: str) -> Union[AppConfig, Exception]:
         with config_file.open("r") as file:
             config_data = yaml.safe_load(file)
 
-        config = AppConfig(**config_data["config"])
+        payload = AppConfig._normalize_loaded_payload(config_data["config"])
+        config = AppConfig(**payload)
         config = AppConfig._override_from_environment(config)
         # Keep session path discoverable for components that initialize without direct
         # access to AppConfig but honor METAGIT_WORKSPACE_SESSION_PATH overrides.

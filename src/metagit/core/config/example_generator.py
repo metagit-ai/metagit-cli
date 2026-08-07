@@ -156,6 +156,9 @@ class ConfigExampleGenerator:
         payload: dict[str, Any] = {}
         for name, field_info in model.model_fields.items():
             payload[name] = self._sample_field(name, field_info, model)
+        if "path" in model.model_fields and "url" in model.model_fields and payload.get("path") and payload.get("url"):
+            # Locator models accept exactly one locator; keep URL in generated samples.
+            payload.pop("path", None)
         return payload
 
     def _sample_field(

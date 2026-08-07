@@ -76,6 +76,58 @@ GitHub org/user listing is flat (no nested subgroups). GitLab groups honor `--re
 | `--mode additive --apply --ensure` | Add missing; noop for existing URLs |
 | `--ensure --refresh-metadata` | Ensure plus provider metadata refresh |
 
+## Repo Locator Migration Policy
+
+Workspace repo entries must use exactly one locator: `path` or `url`.
+
+Use this policy when deciding whether path-based entries should be promoted to git-managed clones.
+
+### Keep as path-based
+
+- local sandboxes or one-off experiments
+- generated/vendor directories without stable git remotes
+- machine-specific paths that are intentionally not shared
+
+### Promote to git-managed (`url`)
+
+- shared codebases used by multiple contributors or agents
+- repos expected to run in CI or cross-machine workflows
+- entries with stable remotes and reproducibility requirements
+
+### Migration workflow
+
+1. Inventory path-based entries in target projects.
+2. Classify each entry as local-only or shared.
+3. Dry-run promotion first:
+
+```bash
+metagit project --project <project_name> repo promote --name <repo_name> --dry-run
+```
+
+4. Execute promotion (use explicit `--url` when origin is missing/nonstandard):
+
+```bash
+metagit project --project <project_name> repo promote --name <repo_name>
+metagit project --project <project_name> repo promote --name <repo_name> --url <git-url>
+```
+
+5. Validate and sync state:
+
+```bash
+metagit config validate --config-path .metagit.yml
+metagit project sync --project <project_name>
+metagit project repo list --project <project_name> --json
+```
+
+### Common promotion failures
+
+- `protected`: repo/project is protected; rerun with `--force` only when approved.
+- `source_missing`: configured path does not exist on disk.
+- `no_url`: no explicit URL and no usable git remote discovered.
+- `invalid_url`: URL failed git URL validation.
+- `duplicate_identity`: same remote identity already exists elsewhere in workspace.
+- `sync_failed`: manifest update succeeded but clone/sync failed; investigate workspace sync logs.
+
 ## Changelog and releases
 
 - Maintain user-facing changes under `## Unreleased` in root `CHANGELOG.md`.

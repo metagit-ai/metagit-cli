@@ -51,6 +51,7 @@ Other targets: `opencode`, `claude_code`, `cursor`, `github_copilot`, `windsurf`
 | `metagit-workspace-grep` | On-disk content search across managed repos (CLI, MCP, HTTP); not manifest `metagit search` |
 | `metagit-agent-access` | On-demand: optimize any repo for minimal-token agent onboarding (`llms.txt`, hidden README comments, AGENTS.md) |
 | `metagit-projects` | Starting work; check for existing projects/repos before new folders |
+| `metagit-stamp` | Stamp or refresh a non-umbrella `.metagit.yml` for a target folder using detection-driven, idempotent updates |
 | `metagit-workspace-scope` | Session start; workspace boundaries; Hermes bootstrap wiring |
 | `metagit-control-center` | Ongoing multi-repo coordination |
 | `metagit-agent-coordination` | Isolate concurrent agents: ACL branches, leases, worktrees, file claims, merge conflict hints, schedule-next dispatch |
