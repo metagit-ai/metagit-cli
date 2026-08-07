@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.26.2] - 2026-08-07
+
+
+
 ### Added
 - Config Studio display options (session-only): hide unassigned fields, list headers, element numbering, type labels (all default off); optional bottom YAML preview (default hidden); left chevron tree expand.
 - New `metagit-stamp` skill for idempotent non-umbrella manifest stamping on target folders (local or git-backed).
