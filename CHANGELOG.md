@@ -13,6 +13,7 @@
 - `metagit nav` expands `~` in `-c` manifest paths, homes relative `workspace.path` to the manifest directory, and honors global `-c` definition_path.
 - AppConfig loading and `metagit appconfig validate` now reject unknown non-schema keys while still normalizing legacy `version` and `default_profile` metadata.
 - Windows nav test coverage now seeds `USERPROFILE`/`HOMEDRIVE`/`HOMEPATH` alongside `HOME` so `Path("~")` expansion is deterministic in GitHub Actions.
+- TUI project/repo pickers now initialize `ListView` selection index to the first row before focus, fixing Enter-key no-op transitions seen on Windows (`ProjectSelectScreen` staying active instead of pushing `RepoSelectScreen`).
 
 ## [0.26.0] - 2026-08-04
 

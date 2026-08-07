@@ -213,7 +213,9 @@ class RepoSelectScreen(BackScreen):
 
     def on_mount(self) -> None:
         if self._repos:
-            self.query_one("#repo_list", ListView).focus()
+            repo_list = self.query_one("#repo_list", ListView)
+            repo_list.index = 0
+            repo_list.focus()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id != "repo_list":
@@ -299,7 +301,9 @@ class ProjectSelectScreen(BackScreen):
             )
             return
         if self._projects:
-            self.query_one("#project_list", ListView).focus()
+            project_list = self.query_one("#project_list", ListView)
+            project_list.index = 0
+            project_list.focus()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view.id != "project_list" or not self._manifest_path:
@@ -447,7 +451,9 @@ class MetagitTuiApp(App):
         if self._start_wizard:
             self.push_screen(WizardScreen(self._wizard))
         else:
-            self.query_one("#home_list", ListView).focus()
+            home_list = self.query_one("#home_list", ListView)
+            home_list.index = 0
+            home_list.focus()
 
     def action_quit(self) -> None:
         """Exit the hub without raising after terminal restore."""
