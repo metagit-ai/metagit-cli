@@ -112,13 +112,30 @@ def test_appconfig_load_file_not_found(tmp_path):
 
 
 def test_appconfig_load_ignores_legacy_version_key(tmp_path):
-    """Older metagit.config.yaml files stored a frozen CLI version; ignore it on load."""
+    """Older metagit.config.yaml files stored deprecated top-level metadata; ignore it on load."""
     config_path = os.path.join(tmp_path, "legacy.yaml")
     with open(config_path, "w", encoding="utf-8") as handle:
         yaml.dump(
-            {"config": {"version": "0.1.7", "description": "legacy"}},
+            {"config": {"version": "0.1.7", "default_profile": "default", "description": "legacy"}},
             handle,
         )
     cfg = AppConfig.load(config_path)
     assert isinstance(cfg, AppConfig)
     assert cfg.description == "legacy"
+
+
+def test_appconfig_load_rejects_unknown_config_key(tmp_path):
+    config_path = os.path.join(tmp_path, "unknown-key.yaml")
+    with open(config_path, "w", encoding="utf-8") as handle:
+        yaml.dump(
+            {
+                "config": {
+                    "description": "strict",
+                    "unexpected_root": True,
+                }
+            },
+            handle,
+        )
+
+    cfg = AppConfig.load(config_path)
+    assert isinstance(cfg, Exception)

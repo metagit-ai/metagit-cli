@@ -280,7 +280,7 @@ class MergeConfig(BaseModel):
 class AppConfig(BaseModel):
     """Application-level settings (not the Metagit package release version — use `metagit version`)."""
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="forbid")
 
     agent_mode: bool = Field(
         default=False,
@@ -324,6 +324,17 @@ class AppConfig(BaseModel):
     merge: MergeConfig = Field(default_factory=MergeConfig, description="Merge orchestrator settings")
 
     @classmethod
+    def _normalize_loaded_payload(cls, payload: object) -> object:
+        """Normalize legacy top-level keys before strict validation."""
+        if not isinstance(payload, dict):
+            return payload
+        normalized = dict(payload)
+        # Older appconfig files carried frozen metadata and profile selectors.
+        for key in ("version", "default_profile"):
+            normalized.pop(key, None)
+        return normalized
+
+    @classmethod
     def load(cls, config_path: str = None) -> Union["AppConfig", Exception]:
         """
         Load AppConfig from file.
@@ -343,7 +354,9 @@ class AppConfig(BaseModel):
                 with config_file.open("r") as f:
                     config_data = yaml.safe_load(f)
 
-                config = cls(**config_data["config"]) if "config" in config_data else cls(**config_data)
+                config_payload = config_data.get("config", config_data)
+                config_payload = cls._normalize_loaded_payload(config_payload)
+                config = cls(**config_payload)
             else:
                 config = cls()
 

@@ -172,6 +172,9 @@ def test_nav_expands_user_in_manifest_path(tmp_path: Path, monkeypatch) -> None:
     opened: list[str] = []
     monkeypatch.setattr("metagit.cli.commands.nav.open_editor", lambda _e, p: opened.append(p))
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    monkeypatch.setenv("HOMEDRIVE", tmp_path.drive or "")
+    monkeypatch.setenv("HOMEPATH", str(tmp_path).removeprefix(tmp_path.drive) if tmp_path.drive else str(tmp_path))
     home_manifest = Path("~") / metagit_yml.name
     # Place manifest at $HOME/.metagit.yml so expanduser resolves it.
     home_copy = tmp_path / ".metagit.yml"

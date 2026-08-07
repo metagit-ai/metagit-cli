@@ -11,6 +11,8 @@
 - FuzzyFinder quit keys (`Ctrl+C`, `Esc`, `Ctrl+Q`) use priority bindings and treat `KeyboardInterrupt` as cancel so stuck pickers can exit.
 - FuzzyFinder `get_item_opacity` no longer references nonexistent `self.config` (emptied `metagit nav` project list for string items).
 - `metagit nav` expands `~` in `-c` manifest paths, homes relative `workspace.path` to the manifest directory, and honors global `-c` definition_path.
+- AppConfig loading and `metagit appconfig validate` now reject unknown non-schema keys while still normalizing legacy `version` and `default_profile` metadata.
+- Windows nav test coverage now seeds `USERPROFILE`/`HOMEDRIVE`/`HOMEPATH` alongside `HOME` so `Path("~")` expansion is deterministic in GitHub Actions.
 
 ## [0.26.0] - 2026-08-04
 
