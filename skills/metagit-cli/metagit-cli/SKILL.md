@@ -120,9 +120,12 @@ workspace:
         enabled: false
       repos: []
 ```
+metagit workspace repo add --project <name> --name <repo> --path <path> --json
 
 ```bash
 metagit appconfig show --format json
+
+For `workspace.projects[].repos[]`, use `--url` for git-backed entries and `--path` for local-folder entries.
 metagit config info -c .metagit.yml
 metagit config show -c .metagit.yml
 metagit config validate -c .metagit.yml
@@ -160,6 +163,7 @@ metagit project sync
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>
+metagit project repo add --project <name> --name <repo> --path <path>
 metagit project repo remove --name <repo> --json
 metagit project repo rename --name <old> --new-name <new> --dry-run --json
 metagit project repo move --name <repo> --to-project <other> --dry-run --json

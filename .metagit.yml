@@ -94,12 +94,3 @@ workspace:
       repos:
         - name: metagit-cli
           path: .
-  # research:
-  #     - name: metagit
-  #       description: |-
-  #         Metagit is situational awareness for developers and agents. It can make
-  #         a sprawling multi-repo project feel more like a monorepo or be used as a standalone
-  #         tool to provide concise information on the project's used languages/frameworks,
-  #         artifacts, upstream dependencies, and more.
-  #       repos:
-  #         - name: metagit-cli
