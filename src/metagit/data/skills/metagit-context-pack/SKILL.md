@@ -70,6 +70,7 @@ metagit context pack --tier 2 --json --project portfolio
 ### Mid-session context switch
 
 <!-- modality:context_switch -->
+<!-- modality:context_resume_status_tracking -->
 
 Prefer one command instead of manually chaining pack + session-start + objective:
 
@@ -81,6 +82,21 @@ metagit prompt workspace -k context-switch --text-only
 
 MCP: `metagit_context_switch`. Lean switch without pack/objective: `metagit_project_context_switch`.
 See [Context switch](../../docs/reference/context-switch.md).
+
+Resume/pause objective loop (ADHD-friendly):
+
+```bash
+metagit context pause --title "Paused for handoff" --repo P/R --left-off "finished parser" --next "wire CLI"
+metagit context resume --format detailed
+metagit context resume "P/R" --json
+```
+
+For lightweight status/note updates, prefer ergonomic objective flags:
+
+```bash
+metagit context objective set --id obj-123 --status in_progress --left-off "tests green" --next "open PR" --human-notes "handoff"
+metagit context objective edit --id obj-123 --field human_notes --value "waiting on review"
+```
 
 ## Single repo card
 

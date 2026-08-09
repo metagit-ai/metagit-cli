@@ -196,6 +196,204 @@ def test_context_objective_partial_update_without_title(tmp_path: Path, monkeypa
     assert "Initial" in update.output
 
 
+def test_context_objective_set_supports_human_notes_flags_and_file(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    notes_file = tmp_path / "notes.txt"
+    notes_file.write_text("From file note", encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "context",
+            "objective",
+            "set",
+            "--id",
+            "note-1",
+            "--title",
+            "Capture notes",
+            "--human-notes",
+            "Quick manual note",
+            "--left-off",
+            "finished parser",
+            "--next",
+            "wire CLI",
+            "--blockers",
+            "none",
+            "--notes-file",
+            str(notes_file),
+        ],
+        env=_env_workspace_root(tmp_path),
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    notes = payload["human_notes"]
+    assert "Quick manual note" in notes
+    assert "From file note" in notes
+    assert "LEFT OFF: finished parser" in notes
+    assert "NEXT: wire CLI" in notes
+    assert "BLOCKERS: none" in notes
+
+
+def test_context_objective_edit_updates_human_notes(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+    created = runner.invoke(
+        cli,
+        ["context", "objective", "set", "--id", "edit-1", "--title", "Editable objective"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert created.exit_code == 0
+
+    edited = runner.invoke(
+        cli,
+        [
+            "context",
+            "objective",
+            "edit",
+            "--id",
+            "edit-1",
+            "--field",
+            "human_notes",
+            "--value",
+            "Updated human note",
+        ],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert edited.exit_code == 0
+    payload = json.loads(edited.output)
+    assert payload["id"] == "edit-1"
+    assert payload["human_notes"] == "Updated human note"
+
+
+def test_context_resume_prefers_latest_in_progress_and_respects_filter(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+
+    assert (
+        runner.invoke(
+            cli,
+            ["context", "objective", "set", "--id", "old-ip", "--title", "Old in progress", "--status", "in_progress"],
+            env=env,
+            catch_exceptions=False,
+        ).exit_code
+        == 0
+    )
+    assert (
+        runner.invoke(
+            cli,
+            ["context", "objective", "set", "--id", "done-1", "--title", "Done objective", "--status", "done"],
+            env=env,
+            catch_exceptions=False,
+        ).exit_code
+        == 0
+    )
+    assert (
+        runner.invoke(
+            cli,
+            ["context", "objective", "set", "--id", "new-ip", "--title", "New in progress", "--status", "in_progress"],
+            env=env,
+            catch_exceptions=False,
+        ).exit_code
+        == 0
+    )
+
+    resume_default = runner.invoke(
+        cli,
+        ["context", "resume", "--json"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert resume_default.exit_code == 0
+    assert json.loads(resume_default.output)["id"] == "new-ip"
+
+    resume_filtered = runner.invoke(
+        cli,
+        ["context", "resume", "old", "--json"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert resume_filtered.exit_code == 0
+    assert json.loads(resume_filtered.output)["id"] == "old-ip"
+
+
+def test_context_resume_detailed_format_includes_notes_and_update_hint(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    env = _env_workspace_root(tmp_path)
+
+    created = runner.invoke(
+        cli,
+        [
+            "context",
+            "objective",
+            "set",
+            "--id",
+            "resume-1",
+            "--title",
+            "Resume objective",
+            "--status",
+            "in_progress",
+            "--human-notes",
+            "LEFT OFF: reviewed spec",
+            "--repo",
+            "demo/svc",
+        ],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert created.exit_code == 0
+
+    detailed = runner.invoke(
+        cli,
+        ["context", "resume", "--format", "detailed"],
+        env=env,
+        catch_exceptions=False,
+    )
+    assert detailed.exit_code == 0
+    assert "=== RESUME POINT: resume-1 ===" in detailed.output
+    assert "Human Notes:" in detailed.output
+    assert "LEFT OFF: reviewed spec" in detailed.output
+    assert "To update notes:" in detailed.output
+
+
+def test_context_pause_creates_in_progress_objective(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=False)
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "context",
+            "pause",
+            "--title",
+            "Paused for handoff",
+            "--repo",
+            "demo/svc",
+            "--left-off",
+            "completed tests",
+        ],
+        env=_env_workspace_root(tmp_path),
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["status"] == "in_progress"
+    assert payload["title"] == "Paused for handoff"
+    assert payload["id"].startswith("pause-")
+    assert payload["repos"] == ["demo/svc"]
+    assert "LEFT OFF: completed tests" in (payload.get("human_notes") or "")
+
+
 def test_context_approval_request_json(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     _write_workspace(tmp_path, with_git_repo=False)

@@ -494,6 +494,13 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_context_resume": {
+                "type": "object",
+                "properties": {
+                    "filter": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_approval_request": {
                 "type": "object",
                 "required": ["action", "payload"],
@@ -2029,6 +2036,26 @@ class MetagitMcpRuntime:
             except ValueError as exc:
                 raise InvalidToolArgumentsError(str(exc)) from exc
             return saved.model_dump(mode="json")
+
+        if name == "metagit_context_resume":
+            if not status.root_path:
+                raise InvalidToolArgumentsError(
+                    "context resume requires an active workspace",
+                )
+            filter_text: str | None = None
+            if "filter" in arguments:
+                raw_filter = arguments.get("filter")
+                if raw_filter is not None and not isinstance(raw_filter, str):
+                    raise InvalidToolArgumentsError("filter must be a string")
+                if isinstance(raw_filter, str):
+                    stripped = raw_filter.strip()
+                    filter_text = stripped if stripped else None
+
+            svc = ObjectiveService(workspace_root=status.root_path)
+            candidate = svc.select_resume_candidate(filter_text=filter_text)
+            if candidate is None:
+                raise InvalidToolArgumentsError("no objective matches resume criteria")
+            return candidate.model_dump(mode="json")
 
         if name == "metagit_approval_request":
             if not status.root_path:

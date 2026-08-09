@@ -28,6 +28,36 @@ metagit context switch attune --no-pack --no-prompt --no-objective --json
 
 Default stdout is only `export KEY=value` lines (safe for `eval`). Pack and prompt go to stderr.
 
+## Objective pause/resume ergonomics
+
+<!-- modality:context_resume_status_tracking -->
+
+Use these commands to capture quick handoff notes and resume the right objective with minimal typing:
+
+```bash
+metagit context pause --title "Paused for handoff" --repo demo/svc --left-off "completed parser" --next "wire CLI"
+metagit context resume --format detailed
+metagit context resume "demo/svc" --json
+```
+
+Resume scoring is deterministic:
+
+1. Prefer objectives with `status=in_progress`.
+2. Break ties by latest `updated_at`, then `created_at`, then id.
+3. Optional filter matches id, title, repos, human notes, and agent notes.
+
+For status/note updates without full JSON payload replacement:
+
+```bash
+metagit context objective set --id obj-123 --status in_progress --left-off "tests green" --next "open PR" --blockers "none" --human-notes "handoff"
+metagit context objective edit --id obj-123 --field human_notes --value "Waiting on review"
+metagit context objective edit --id obj-123 --field status --value done
+```
+
+MCP parity: `metagit_context_resume` returns the same selected objective JSON as CLI `context resume --json`.
+
+Helper script example: [examples/resume-project.sh](../../examples/resume-project.sh)
+
 ## Prompt
 
 ```bash

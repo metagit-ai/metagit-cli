@@ -166,3 +166,103 @@ def test_upsert_partial_appends_agent_notes(tmp_path: Path) -> None:
         {"id": "log", "agent_notes": "second"},
     )
     assert second.agent_notes == "first\nsecond"
+
+
+def test_upsert_partial_normalizes_in_workspace_absolute_repo_path(tmp_path: Path) -> None:
+    service = ObjectiveService(workspace_root=str(tmp_path))
+    repo_path = tmp_path / "repos" / "demo"
+    created = service.upsert_partial(
+        {
+            "id": "path-in-workspace",
+            "title": "Track repo",
+            "repos": [str(repo_path)],
+        }
+    )
+    assert created.repos == ["./repos/demo"]
+
+
+def test_upsert_partial_preserves_outside_workspace_absolute_repo_path(tmp_path: Path) -> None:
+    service = ObjectiveService(workspace_root=str(tmp_path))
+    outside_path = tmp_path.parent / "outside-repo"
+    created = service.upsert_partial(
+        {
+            "id": "path-outside-workspace",
+            "title": "Track external repo",
+            "repos": [str(outside_path)],
+        }
+    )
+    assert created.repos == [outside_path.resolve().as_posix()]
+
+
+def test_upsert_partial_synthesizes_human_notes_on_create(tmp_path: Path) -> None:
+    service = ObjectiveService(workspace_root=str(tmp_path))
+    created = service.upsert_partial(
+        {
+            "id": "notes-create",
+            "title": "Create with notes",
+            "left_off": "wired state handling",
+            "next": "add tests",
+            "blockers": "none",
+        }
+    )
+    assert created.human_notes == (
+        "LEFT OFF: wired state handling\n"
+        "NEXT: add tests\n"
+        "BLOCKERS: none"
+    )
+
+
+def test_upsert_partial_synthesizes_human_notes_on_update(tmp_path: Path) -> None:
+    service = ObjectiveService(workspace_root=str(tmp_path))
+    service.upsert_partial(
+        {
+            "id": "notes-update",
+            "title": "Update with notes",
+            "human_notes": "Existing summary",
+        }
+    )
+
+    updated = service.upsert_partial(
+        {
+            "id": "notes-update",
+            "left_off": "completed API refactor",
+            "next": "run focused tests",
+            "blockers": ["awaiting review", "pending CI"],
+        }
+    )
+    assert updated.human_notes == (
+        "Existing summary\n"
+        "LEFT OFF: completed API refactor\n"
+        "NEXT: run focused tests\n"
+        "BLOCKERS: awaiting review; pending CI"
+    )
+
+
+def test_edit_synthesizes_human_notes_and_normalizes_repos(tmp_path: Path) -> None:
+    service = ObjectiveService(workspace_root=str(tmp_path))
+    service.upsert_partial(
+        {
+            "id": "notes-edit",
+            "title": "Edit with notes",
+            "human_notes": "Initial note",
+        }
+    )
+
+    repo_path = tmp_path / "repos" / "beta"
+    updated = service.edit(
+        "notes-edit",
+        {
+            "repos": [str(repo_path)],
+            "left_off": "updated parser defaults",
+            "next": "verify integration",
+            "blockers": "none",
+        },
+    )
+
+    assert updated.repos == ["./repos/beta"]
+    assert updated.human_notes == (
+        "Initial note\n"
+        "LEFT OFF: updated parser defaults\n"
+        "NEXT: verify integration\n"
+        "BLOCKERS: none"
+    )

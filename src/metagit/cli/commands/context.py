@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -615,7 +616,29 @@ def _resolve_objective_dict_from_cli(
     title: str | None,
     status: str | None,
     repos_tuple: tuple[str, ...],
+    human_notes: str | None = None,
+    left_off: str | None = None,
+    next_steps: str | None = None,
+    blockers: str | None = None,
+    notes_file: str | None = None,
 ) -> dict[str, Any]:
+    def _merge_notes(*parts: str | None) -> str | None:
+        items: list[str] = []
+        for part in parts:
+            if not isinstance(part, str):
+                continue
+            stripped = part.strip()
+            if stripped:
+                items.append(stripped)
+        return "\n".join(items) if items else None
+
+    file_notes: str | None = None
+    if notes_file:
+        try:
+            file_notes = Path(notes_file).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            raise click.ClickException(f"unable to read --notes-file: {exc}") from exc
+
     merged = dict(stdin_obj)
     if objective_id:
         merged["id"] = objective_id
@@ -625,6 +648,19 @@ def _resolve_objective_dict_from_cli(
         merged["status"] = status
     if repos_tuple:
         merged["repos"] = list(repos_tuple)
+    merged_notes = _merge_notes(
+        merged.get("human_notes") if isinstance(merged.get("human_notes"), str) else None,
+        human_notes,
+        file_notes,
+    )
+    if merged_notes is not None:
+        merged["human_notes"] = merged_notes
+    if left_off is not None:
+        merged["left_off"] = left_off
+    if next_steps is not None:
+        merged["next"] = next_steps
+    if blockers is not None:
+        merged["blockers"] = blockers
     return merged
 
 
@@ -643,6 +679,11 @@ def _resolve_objective_dict_from_cli(
     type=click.Choice(["pending", "in_progress", "done", "cancelled"]),
 )
 @click.option("--repo", "repos_sel", multiple=True)
+@click.option("--human-notes", default=None)
+@click.option("--left-off", default=None)
+@click.option("--next", "next_steps", default=None)
+@click.option("--blockers", default=None)
+@click.option("--notes-file", default=None)
 @click.pass_context
 def objective_set_cmd(
     ctx: click.Context,
@@ -651,6 +692,11 @@ def objective_set_cmd(
     title: str | None,
     status: str | None,
     repos_sel: tuple[str, ...],
+    human_notes: str | None,
+    left_off: str | None,
+    next_steps: str | None,
+    blockers: str | None,
+    notes_file: str | None,
 ) -> None:
     """Upsert an objective from JSON on stdin or from flags (--id and --title)."""
     base: dict[str, Any]
@@ -674,9 +720,177 @@ def objective_set_cmd(
         title=title,
         status=status,
         repos_tuple=repos_sel,
+        human_notes=human_notes,
+        left_off=left_off,
+        next_steps=next_steps,
+        blockers=blockers,
+        notes_file=notes_file,
     )
     if "id" not in merged or not str(merged.get("id", "")).strip():
         raise click.ClickException("objective id is required (stdin or --id)")
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    svc = ObjectiveService(workspace_root=session_root)
+    try:
+        saved = svc.upsert_partial(merged)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    emit_json(saved)
+
+
+@objective_group.command("edit")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--id", "objective_id", required=True)
+@click.option(
+    "--field",
+    "field_name",
+    type=click.Choice(["title", "status", "repos", "acceptance", "human_notes", "agent_notes"]),
+    required=True,
+)
+@click.option("--value", default=None)
+@click.option("--repo", "repos_sel", multiple=True)
+@click.pass_context
+def objective_edit_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    objective_id: str,
+    field_name: str,
+    value: str | None,
+    repos_sel: tuple[str, ...],
+) -> None:
+    """Edit one objective field and print the saved objective JSON."""
+    updates: dict[str, Any] = {}
+    if field_name == "repos":
+        if repos_sel:
+            updates["repos"] = list(repos_sel)
+        elif value is not None:
+            updates["repos"] = [item.strip() for item in value.split(",") if item.strip()]
+        else:
+            raise click.ClickException("repos update requires --repo (repeatable) or --value")
+    else:
+        if value is None:
+            raise click.ClickException("--value is required for this field")
+        if field_name == "status" and value not in {"pending", "in_progress", "done", "cancelled"}:
+            raise click.ClickException("status must be one of: pending, in_progress, done, cancelled")
+        updates[field_name] = value
+
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    svc = ObjectiveService(workspace_root=session_root)
+    try:
+        saved = svc.edit(objective_id=objective_id, updates=updates)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    emit_json(saved)
+
+
+@context.command("resume")
+@click.argument("filter_text", required=False)
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["concise", "detailed"]),
+    default="concise",
+    show_default=True,
+)
+@click.option("--json", "as_json", is_flag=True, default=False)
+@click.pass_context
+def context_resume_cmd(
+    ctx: click.Context,
+    filter_text: str | None,
+    definition_path: str,
+    output_format: str,
+    as_json: bool,
+) -> None:
+    """Select the best objective to resume, optionally filtered by substring."""
+    _, _, _, session_root, _ = _context_paths(ctx, definition_path)
+    selected = ObjectiveService(workspace_root=session_root).select_resume_candidate(filter_text=filter_text)
+    if selected is None:
+        click.echo("No matching objectives found.", err=True)
+        ctx.exit(1)
+
+    if as_json:
+        emit_json(selected)
+        return
+
+    repos_text = ",".join(selected.repos) if selected.repos else "—"
+    if output_format == "concise":
+        click.echo(f"{selected.id} [{selected.status}] {selected.title} repos={repos_text}")
+        return
+
+    click.echo(f"=== RESUME POINT: {selected.id} ===")
+    click.echo(f"Title: {selected.title}")
+    click.echo(f"Status: {selected.status}")
+    click.echo(f"Updated: {selected.updated_at}")
+    click.echo(f"Repos: {repos_text}")
+    if selected.human_notes:
+        click.echo("\nHuman Notes:")
+        for line in selected.human_notes.splitlines():
+            click.echo(f"  {line}")
+    if selected.agent_notes:
+        click.echo("\nAgent Notes:")
+        for line in selected.agent_notes.splitlines():
+            click.echo(f"  {line}")
+    click.echo(
+        f'\nTo update notes: metagit context objective edit --id {selected.id} --field human_notes --value "..."',
+    )
+
+
+@context.command("pause")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--id", "objective_id", default=None)
+@click.option("--title", default=None)
+@click.option("--repo", "repos_sel", multiple=True)
+@click.option("--human-notes", default=None)
+@click.option("--left-off", default=None)
+@click.option("--next", "next_steps", default=None)
+@click.option("--blockers", default=None)
+@click.option("--notes-file", default=None)
+@click.pass_context
+def context_pause_cmd(
+    ctx: click.Context,
+    definition_path: str,
+    objective_id: str | None,
+    title: str | None,
+    repos_sel: tuple[str, ...],
+    human_notes: str | None,
+    left_off: str | None,
+    next_steps: str | None,
+    blockers: str | None,
+    notes_file: str | None,
+) -> None:
+    """Upsert an in-progress objective from quick note-capture flags."""
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    merged = _resolve_objective_dict_from_cli(
+        {},
+        objective_id=objective_id or f"pause-{timestamp.lower()}",
+        title=title or f"Resume work from {timestamp}",
+        status="in_progress",
+        repos_tuple=repos_sel,
+        human_notes=human_notes,
+        left_off=left_off,
+        next_steps=next_steps,
+        blockers=blockers,
+        notes_file=notes_file,
+    )
+
     _, _, _, session_root, _ = _context_paths(ctx, definition_path)
     svc = ObjectiveService(workspace_root=session_root)
     try:

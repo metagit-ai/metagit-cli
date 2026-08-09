@@ -446,6 +446,34 @@ features:
           - path: src/metagit/data/skills/metagit-workspace-scope/SKILL.md
             contains: "modality:context_switch"
 
+  - id: context_resume_status_tracking
+    description: Resume candidate selection and pause/note capture ergonomics for objective status flow
+    service: metagit.core.context.objective_service.ObjectiveService
+    reference_doc: docs/reference/context-switch.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/context.py
+            contains: '@context.command("resume")'
+          - path: src/metagit/cli/commands/context.py
+            contains: '@context.command("pause")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_context_resume
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_context_resume
+      documentation:
+        markers:
+          - path: docs/reference/context-switch.md
+            contains: "modality:context_resume_status_tracking"
+          - path: docs/agents.md
+            contains: "modality:context_resume_status_tracking"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-context-pack/SKILL.md
+            contains: "modality:context_resume_status_tracking"
+
   - id: semantic_ownership
     description: Concept-level ownership declare/query/owners/conflicts plus seed/ingest
     service: metagit.core.semantic.service.SemanticGraphService

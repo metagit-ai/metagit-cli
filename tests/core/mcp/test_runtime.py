@@ -756,6 +756,190 @@ def test_tools_call_metagit_objective_edit(tmp_path: Path) -> None:
     assert payload["human_notes"] == "Need API + UI"
 
 
+def test_tools_list_includes_metagit_context_resume_when_active(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: demo",
+                "      repos: []",
+            ],
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 150, "method": "tools/list", "params": {}},
+    )
+    assert response is not None
+    names = [item["name"] for item in response["result"]["tools"]]
+    assert "metagit_context_resume" in names
+
+
+def test_tools_call_metagit_context_resume_prefers_in_progress_latest(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: demo",
+                "      repos: []",
+            ],
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    from metagit.core.context.models import Objective
+    from metagit.core.context.objective_service import ObjectiveService
+    from metagit.core.workspace.context_models import utc_now_iso
+
+    stamp = utc_now_iso()
+    svc = ObjectiveService(workspace_root=str(tmp_path))
+    svc.upsert(
+        Objective(
+            id="resume-old-active",
+            title="Old active",
+            status="in_progress",
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+    svc.upsert(
+        Objective(
+            id="resume-pending-new",
+            title="Newest pending",
+            status="pending",
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+    svc.upsert(
+        Objective(
+            id="resume-new-active",
+            title="Newest active",
+            status="in_progress",
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 151,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_context_resume",
+                "arguments": {},
+            },
+        },
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["id"] == "resume-new-active"
+    assert payload["status"] == "in_progress"
+
+
+def test_tools_call_metagit_context_resume_respects_filter(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: demo",
+                "      repos: []",
+            ],
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    from metagit.core.context.models import Objective
+    from metagit.core.context.objective_service import ObjectiveService
+    from metagit.core.workspace.context_models import utc_now_iso
+
+    stamp = utc_now_iso()
+    svc = ObjectiveService(workspace_root=str(tmp_path))
+    svc.upsert(
+        Objective(
+            id="resume-alpha",
+            title="Alpha objective",
+            status="in_progress",
+            repos=["alpha/repo"],
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+    svc.upsert(
+        Objective(
+            id="resume-beta",
+            title="Beta objective",
+            status="pending",
+            repos=["beta/repo"],
+            created_at=stamp,
+            updated_at=stamp,
+        ),
+    )
+
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 152,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_context_resume",
+                "arguments": {"filter": "beta/repo"},
+            },
+        },
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["id"] == "resume-beta"
+
+
+def test_tools_call_metagit_context_resume_no_candidate_returns_invalid_arguments(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: demo",
+                "      repos: []",
+            ],
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 153,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_context_resume",
+                "arguments": {"filter": "does-not-exist"},
+            },
+        },
+    )
+    assert response is not None
+    assert response["error"]["code"] == -32602
+    assert response["error"]["data"]["kind"] == "invalid_arguments"
+
+
 def test_tools_list_includes_project_source_sync_when_active(tmp_path: Path) -> None:
     (tmp_path / ".metagit.yml").write_text(
         "\n".join(
