@@ -51,6 +51,10 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Scoped repo snapshot | `metagit context repomix --profile bugfix-local --project P --repo R` |
 | Record objective | `echo '{"id":"…","status":"in_progress","title":"…","repos":[]}' \| metagit context objective set` |
 | Update objective (merge) | `echo '{"id":"…","status":"in_progress","notes":"progress"}' \| metagit context objective set` — title/repos optional when id exists |
+| Objective quick-note flags | `metagit context objective set --id obj-1 --status in_progress --left-off "done parser" --next "wire CLI" --blockers "none" --human-notes "handoff" --notes-file ./notes.txt` |
+| Objective field edit | `metagit context objective edit --id obj-1 --field status --value in_progress` |
+| Pause current work | `metagit context pause --title "Paused for handoff" --repo P/R --left-off "tests passing" --next "open PR"` |
+| Resume best objective | `metagit context resume --format detailed` (or `metagit context resume "substring" --json`) |
 | Request approval (CLI) | `echo '{"action":"repo_sync","requested_by":"agent","payload":{}}' \| metagit context approval request` |
 | List pending approvals | `metagit context approval list --json` |
 | Installed vs latest release | `metagit version check --json` |
@@ -217,6 +221,31 @@ Catalog adds support **`--ensure`** (auto-enabled in agent mode): re-run succeed
 - **Approvals** — mutating ops queue; `metagit context approval …`
 - **Handoffs** — `.metagit/sessions/handoffs.json`; CLI `metagit context handoff …`
 - **Web UI** (local): `metagit web serve` → objectives/approvals at `/v3/ops/*`
+
+### Objective pause/resume and notes ergonomics
+
+<!-- modality:context_resume_status_tracking -->
+
+Use `pause` when you need a low-friction checkpoint, then `resume` to pick the best objective quickly.
+
+```bash
+metagit context pause --title "Paused for handoff" --repo demo/svc --left-off "completed parser" --next "wire CLI" --blockers "none"
+metagit context resume --format detailed
+metagit context resume "demo/svc" --json
+```
+
+Resume selection prefers `in_progress` objectives, then most recently updated entries. The optional filter matches objective id/title/repos plus human/agent notes.
+
+Objective set/edit supports ergonomic updates without rewriting full payloads:
+
+```bash
+metagit context objective set --id obj-123 --status in_progress --left-off "tests green" --next "open PR" --human-notes "handoff"
+metagit context objective edit --id obj-123 --field human_notes --value "Waiting on review"
+```
+
+Helper script template: [examples/resume-project.sh](examples/resume-project.sh)
+
+MCP parity: `metagit_context_resume` exposes the same resume candidate logic.
 
 ### Handoffs and leases
 

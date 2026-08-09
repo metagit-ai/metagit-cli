@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+- `metagit context resume` to select the best objective to continue (prefers `in_progress`, then most recently updated) with optional substring filtering and `--json` output.
+- `metagit context pause` as a low-friction capture command that creates or updates an `in_progress` objective with quick note fields.
+- `metagit context objective edit` for direct field updates (`title`, `status`, `repos`, `acceptance`, `human_notes`, `agent_notes`) without JSON stdin.
+
+### Changed
+- `metagit context objective set` now accepts ADHD-friendly note capture flags (`--human-notes`, `--left-off`, `--next`, `--blockers`, `--notes-file`) alongside existing stdin JSON flow.
+- Objective service now normalizes absolute in-workspace repo references to manifest-relative `./...` paths and preserves external absolute paths for portability across machines.
+- MCP adds `metagit_context_resume` parity tooling, and docs/skills/modality registry now document the resume/pause workflow.
+
 
 
 ## [0.26.2] - 2026-08-07
