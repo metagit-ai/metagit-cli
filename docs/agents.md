@@ -243,7 +243,7 @@ metagit context objective set --id obj-123 --status in_progress --left-off "test
 metagit context objective edit --id obj-123 --field human_notes --value "Waiting on review"
 ```
 
-Helper script template: [examples/resume-project.sh](examples/resume-project.sh)
+Helper script template: [examples/resume-project.sh](../examples/resume-project.sh)
 
 MCP parity: `metagit_context_resume` exposes the same resume candidate logic.
 

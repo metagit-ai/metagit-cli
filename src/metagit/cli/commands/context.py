@@ -843,8 +843,7 @@ def context_resume_cmd(
         for line in selected.agent_notes.splitlines():
             click.echo(f"  {line}")
     click.echo(
-        "\nTo update notes: "
-        f"metagit context objective edit --id {selected.id} --field human_notes --value \"...\"",
+        f'\nTo update notes: metagit context objective edit --id {selected.id} --field human_notes --value "..."',
     )
 
 
