@@ -45,6 +45,7 @@ class ToolRegistry:
         "metagit_objective_list",
         "metagit_objective_upsert",
         "metagit_objective_edit",
+        "metagit_context_resume",
         "metagit_approval_request",
         "metagit_approval_list",
         "metagit_approval_resolve",

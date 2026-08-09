@@ -4,6 +4,7 @@ CRUD-style operations for workspace objectives.
 """
 
 import re
+from pathlib import Path
 from typing import Any, Optional
 
 from metagit.core.context.models import Objective, ObjectiveListResult, ObjectiveStatus
@@ -13,6 +14,7 @@ from metagit.core.workspace.context_models import utc_now_iso
 
 _OBJECTIVE_ID_PATTERN = re.compile(r"^[\w.-]+$")
 _SKIP_MERGE_KEYS = frozenset({"id", "created_at", "updated_at"})
+_HUMAN_NOTE_KEYS = ("left_off", "next", "blockers")
 
 
 def _append_agent_note(existing: Optional[str], new: str) -> str:
@@ -23,6 +25,46 @@ def _append_agent_note(existing: Optional[str], new: str) -> str:
     if not existing or not str(existing).strip():
         return addition
     return f"{str(existing).rstrip()}\n{addition}"
+
+
+def _stringify_note_value(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        return stripped or None
+    if isinstance(value, (list, tuple, set)):
+        parts = [str(item).strip() for item in value if str(item).strip()]
+        if not parts:
+            return None
+        return "; ".join(parts)
+    text = str(value).strip()
+    return text or None
+
+
+def _synthesize_human_notes(data: dict[str, Any]) -> Optional[str]:
+    left_off = _stringify_note_value(data.get("left_off"))
+    next_steps = _stringify_note_value(data.get("next"))
+    blockers = _stringify_note_value(data.get("blockers"))
+    lines: list[str] = []
+    if left_off:
+        lines.append(f"LEFT OFF: {left_off}")
+    if next_steps:
+        lines.append(f"NEXT: {next_steps}")
+    if blockers:
+        lines.append(f"BLOCKERS: {blockers}")
+    if not lines:
+        return None
+    return "\n".join(lines)
+
+
+def _append_human_notes(existing: Optional[str], addition: Optional[str]) -> Optional[str]:
+    if not addition:
+        return existing
+    existing_text = existing.strip() if isinstance(existing, str) else ""
+    if not existing_text:
+        return addition
+    return f"{existing_text}\n{addition}"
 
 
 def normalize_objective_partial(partial: dict[str, Any]) -> dict[str, Any]:
@@ -39,11 +81,73 @@ class ObjectiveService:
     """List, fetch, upsert, and resolve objectives for a workspace."""
 
     def __init__(self, workspace_root: str) -> None:
+        self._workspace_root = Path(workspace_root).expanduser().resolve()
         self._store = ObjectiveStore(workspace_root=workspace_root)
+
+    def _normalize_repo_entry(self, repo: str) -> str:
+        value = repo.strip()
+        if not value:
+            return repo
+
+        candidate = Path(value).expanduser()
+        if not candidate.is_absolute():
+            return repo
+
+        resolved = candidate.resolve(strict=False)
+        try:
+            relative = resolved.relative_to(self._workspace_root)
+        except ValueError:
+            return resolved.as_posix()
+
+        if not relative.parts:
+            return "."
+        return f"./{relative.as_posix()}"
+
+    def _normalize_repos(self, repos: Any) -> Any:
+        if not isinstance(repos, list):
+            return repos
+        normalized: list[Any] = []
+        for repo in repos:
+            if isinstance(repo, str):
+                normalized.append(self._normalize_repo_entry(repo))
+                continue
+            normalized.append(repo)
+        return normalized
 
     def list(self) -> ObjectiveListResult:
         """Return all objectives."""
         return ObjectiveListResult(objectives=self._store.load_objectives())
+
+    def select_resume_candidate(self, filter_text: str | None = None) -> Optional[Objective]:
+        """Pick the best objective to resume, preferring active and recently updated."""
+        objectives = self._store.load_objectives()
+        needle = (filter_text or "").strip().lower()
+
+        def _matches(row: Objective) -> bool:
+            if not needle:
+                return True
+            haystacks = [
+                row.id,
+                row.title,
+                "\n".join(row.repos or []),
+                row.human_notes or "",
+                row.agent_notes or "",
+            ]
+            return any(needle in value.lower() for value in haystacks)
+
+        candidates = [row for row in objectives if _matches(row)]
+        if not candidates:
+            return None
+
+        return max(
+            candidates,
+            key=lambda row: (
+                1 if row.status == "in_progress" else 0,
+                row.updated_at,
+                row.created_at,
+                row.id,
+            ),
+        )
 
     def get(self, objective_id: str) -> Optional[Objective]:
         """Return an objective by id, or None when not found."""
@@ -88,6 +192,9 @@ class ObjectiveService:
 
         def _run() -> Objective:
             data = normalize_objective_partial(partial)
+            synthesized_human_notes = _synthesize_human_notes(data)
+            if "repos" in data:
+                data["repos"] = self._normalize_repos(data.get("repos"))
             obj_id = str(data.get("id", "")).strip()
             if not obj_id:
                 raise ValueError("objective id is required")
@@ -107,7 +214,10 @@ class ObjectiveService:
                         "status": data.get("status") or "pending",
                         "repos": data.get("repos") if data.get("repos") is not None else [],
                         "acceptance": data.get("acceptance"),
-                        "human_notes": data.get("human_notes"),
+                        "human_notes": _append_human_notes(
+                            data.get("human_notes") if isinstance(data.get("human_notes"), str) else None,
+                            synthesized_human_notes,
+                        ),
                         "agent_notes": data.get("agent_notes"),
                         "created_at": now,
                         "updated_at": now,
@@ -121,6 +231,8 @@ class ObjectiveService:
             for key, value in data.items():
                 if key in _SKIP_MERGE_KEYS:
                     continue
+                if key in _HUMAN_NOTE_KEYS:
+                    continue
                 if key == "agent_notes" and isinstance(value, str):
                     merged["agent_notes"] = _append_agent_note(
                         merged.get("agent_notes") if isinstance(merged.get("agent_notes"), str) else None,
@@ -132,6 +244,10 @@ class ObjectiveService:
                         merged["title"] = str(value).strip()
                     continue
                 merged[key] = value
+            merged["human_notes"] = _append_human_notes(
+                merged.get("human_notes") if isinstance(merged.get("human_notes"), str) else None,
+                synthesized_human_notes,
+            )
             merged["updated_at"] = now
             updated = Objective.model_validate(merged)
             for index, row in enumerate(objectives):
@@ -155,6 +271,11 @@ class ObjectiveService:
         """Apply a partial objective update and refresh ``updated_at``."""
 
         def _run() -> Objective:
+            data = dict(updates)
+            synthesized_human_notes = _synthesize_human_notes(data)
+            if "repos" in data:
+                data["repos"] = self._normalize_repos(data.get("repos"))
+
             self._validate_objective_id(objective_id=objective_id)
             objectives = self._store.load_objectives()
             existing = next((row for row in objectives if row.id == objective_id), None)
@@ -171,7 +292,7 @@ class ObjectiveService:
                 "human_notes",
                 "agent_notes",
             }
-            for key, value in updates.items():
+            for key, value in data.items():
                 if key not in allowed_keys or value is None:
                     continue
                 if key == "title":
@@ -181,6 +302,11 @@ class ObjectiveService:
                     merged[key] = stripped
                     continue
                 merged[key] = value
+
+            merged["human_notes"] = _append_human_notes(
+                merged.get("human_notes") if isinstance(merged.get("human_notes"), str) else None,
+                synthesized_human_notes,
+            )
 
             merged["updated_at"] = now
             updated = Objective.model_validate(merged)
