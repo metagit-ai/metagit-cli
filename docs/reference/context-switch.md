@@ -56,7 +56,7 @@ metagit context objective edit --id obj-123 --field status --value done
 
 MCP parity: `metagit_context_resume` returns the same selected objective JSON as CLI `context resume --json`.
 
-Helper script example: [examples/resume-project.sh](../../examples/resume-project.sh)
+Helper script example: [examples/resume-project.sh](https://github.com/metagit-ai/metagit-cli/blob/main/examples/resume-project.sh)
 
 ## Prompt
 
