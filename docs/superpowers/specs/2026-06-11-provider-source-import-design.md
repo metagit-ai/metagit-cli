@@ -60,7 +60,7 @@ Manifest-driven reconcile (`sources[].mode: reconcile`) uses **partial apply**:
 - **Removals** are held until approval resolves or the operator passes **`--force`**.
 - Imperative CLI `--mode reconcile --apply` remains **atomic** with `--yes` (no approval queue) for one-shot operator use.
 
-See [Phase 3](#phase-3--declarative-sources-in-metagityml) for approval payload and executor details.
+See [Phase 3](#phase-3-declarative-sources) for approval payload and executor details.
 
 ### Command surface
 
@@ -258,6 +258,7 @@ Fixtures: extend `scripts/manifest-fixtures.yml` only if schema changes (not req
 - `--sync` post-apply clone
 - HTTP v2 route if needed for Web Console
 
+<a id="phase-3-declarative-sources"></a>
 ### Phase 3 — Declarative sources in `.metagit.yml`
 
 Persist upstream import scope on the workspace project; sync reconciles `repos[]` against it.
