@@ -259,6 +259,24 @@ tasks:
       - |
         python3 scripts/delete_legacy_tags.py --target-v-prefix --no-safety-floor --apply
 
+  releases:cleanup:preview:
+    desc: Preview GitHub releases eligible for cleanup (keep latest semver and release floor)
+    cmds:
+      - |
+        python3 scripts/cleanup_github_releases.py
+
+  releases:cleanup:apply:
+    desc: Delete GitHub releases eligible for cleanup (requires confirmation)
+    cmds:
+      - |
+        python3 scripts/cleanup_github_releases.py --apply
+
+  releases:cleanup:apply-with-tags:
+    desc: Delete GitHub releases and matching remote tags (requires confirmation)
+    cmds:
+      - |
+        python3 scripts/cleanup_github_releases.py --apply --delete-tag
+
   release:next:
     desc: Compute next release version from git history using workflow rules
     cmds:

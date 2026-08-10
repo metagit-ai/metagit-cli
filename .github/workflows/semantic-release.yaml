@@ -7,6 +7,7 @@ on:
       - main
     paths-ignore:
       - CHANGELOG.md
+      - docs/changelog.md
   workflow_dispatch:
 
 env:
@@ -45,11 +46,43 @@ jobs:
           PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
           echo "tag=$PREV_TAG" >> $GITHUB_OUTPUT
 
+      - name: Check Unreleased changelog notes
+        id: unreleased
+        run: |
+          if [[ ! -f CHANGELOG.md ]]; then
+            echo "has_unreleased=false" >> $GITHUB_OUTPUT
+            echo "reason=CHANGELOG.md missing" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          UNRELEASED=$(awk '
+            /^## Unreleased$/ {in_unreleased=1; next}
+            /^## \[/ {if (in_unreleased) exit}
+            {if (in_unreleased) print}
+          ' CHANGELOG.md | sed '/^[[:space:]]*$/d')
+
+          if [[ -n "$UNRELEASED" ]]; then
+            echo "has_unreleased=true" >> $GITHUB_OUTPUT
+            echo "reason=non-empty ## Unreleased section" >> $GITHUB_OUTPUT
+          else
+            echo "has_unreleased=false" >> $GITHUB_OUTPUT
+            echo "reason=empty ## Unreleased section" >> $GITHUB_OUTPUT
+          fi
+
       - name: Parse commits and determine version bump
         id: version
         run: |
           PREV_TAG=${{ steps.prev_tag.outputs.tag }}
           PREV_VERSION="${PREV_TAG#v}"
+
+          if [[ "${{ steps.unreleased.outputs.has_unreleased }}" != "true" ]]; then
+            echo "new_version=$PREV_VERSION" >> $GITHUB_OUTPUT
+            echo "should_release=false" >> $GITHUB_OUTPUT
+            echo "New version: $PREV_VERSION"
+            echo "Should release: false"
+            echo "Reason: ${{ steps.unreleased.outputs.reason }}"
+            exit 0
+          fi
 
           if git rev-parse "${{ steps.prev_tag.outputs.tag }}" >/dev/null 2>&1; then
             COMMITS=$(git log "${{ steps.prev_tag.outputs.tag }}..HEAD" --pretty=format:%s)
@@ -157,6 +190,7 @@ jobs:
             --version "$NEW_VERSION" \
             --range "$RANGE" \
             --body-out /tmp/release_body.md
+          uv run python scripts/sync_docs_changelog.py
 
           {
             echo ""
@@ -166,7 +200,7 @@ jobs:
       - name: Commit promoted changelog
         if: steps.version.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         run: |
-          git add CHANGELOG.md
+          git add CHANGELOG.md docs/changelog.md
           if git diff --cached --quiet; then
             echo "No changelog promotion changes to commit"
           else
@@ -197,5 +231,7 @@ jobs:
           echo "New version: ${{ steps.version.outputs.new_version }}"
           echo "Release floor: ${{ env.RELEASE_FLOOR }}"
           echo "Should release: ${{ steps.version.outputs.should_release }}"
+          echo "Unreleased notes present: ${{ steps.unreleased.outputs.has_unreleased }}"
+          echo "Unreleased reason: ${{ steps.unreleased.outputs.reason }}"
           echo "Release tag: ${{ steps.check_tag.outputs.release_tag }}"
           echo "Tag exists: ${{ steps.check_tag.outputs.tag_exists }}"
