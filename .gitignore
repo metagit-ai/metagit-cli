@@ -32,20 +32,11 @@ site
 .crush
 
 graphify-*
+
 # Local superpowers drafts; track shipped RFC series + approved design/plans for MR continuity
 docs/superpowers/*
 !docs/superpowers/specs/
 !docs/superpowers/plans/
-docs/superpowers/specs/*
-docs/superpowers/plans/*
-!docs/superpowers/specs/2026-07-09-*.md
-!docs/superpowers/plans/2026-07-09-*.md
-!docs/superpowers/specs/2026-07-14-*.md
-!docs/superpowers/plans/2026-07-14-*.md
-!docs/superpowers/specs/2026-07-31-*.md
-!docs/superpowers/plans/2026-07-31-*.md
-!docs/superpowers/specs/2026-08-03-*.md
-!docs/superpowers/plans/2026-08-03-*.md
 docs/changelog.md
 web/node_modules
 .gitnexus
