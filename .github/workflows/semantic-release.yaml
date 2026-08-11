@@ -201,11 +201,11 @@ jobs:
       - name: Commit promoted changelog
         if: steps.version.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         run: |
-          git add CHANGELOG.md docs/changelog.md
+          git add -f CHANGELOG.md docs/changelog.md
           if git diff --cached --quiet; then
             echo "No changelog promotion changes to commit"
           else
-            git commit -m "chore: promote CHANGELOG for ${{ steps.check_tag.outputs.release_tag }}" -f
+            git commit -m "chore: promote CHANGELOG for ${{ steps.check_tag.outputs.release_tag }}"
             git push origin main
           fi
 
