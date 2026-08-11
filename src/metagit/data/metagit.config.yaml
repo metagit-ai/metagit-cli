@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/metagit-ai/metagit-cli/refs/heads/main/schemas/metagit_appconfig.schema.json
 config:
   description: "Configuration for metagit CLI"
   agent_mode: false
