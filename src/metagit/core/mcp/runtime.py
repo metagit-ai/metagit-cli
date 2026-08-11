@@ -67,6 +67,7 @@ from metagit.core.merge.service import MergeOrchestrator
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
+from metagit.core.routing.routing_service import RoutingService
 from metagit.core.scheduler.service import SchedulerService
 from metagit.core.semantic.service import SemanticGraphService
 from metagit.core.skills.surface_service import SkillSurfaceService
@@ -195,6 +196,23 @@ class MetagitMcpRuntime:
                         "type": "object",
                         "additionalProperties": {"type": "string"},
                     },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_route_query": {
+                "type": "object",
+                "required": ["ask"],
+                "properties": {
+                    "ask": {"type": "string"},
+                    "limit": {"type": "integer", "minimum": 1},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_lane_eval": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "dry_run": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -1612,6 +1630,54 @@ class MetagitMcpRuntime:
                 limit=limit_val,
             )
             return result.model_dump(mode="json")
+
+        if name == "metagit_route_query":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("route query requires an active workspace")
+            ask = str(arguments.get("ask", "")).strip()
+            if not ask:
+                raise InvalidToolArgumentsError("ask is required")
+            limit_raw = arguments.get("limit", 5)
+            try:
+                limit_val = int(limit_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("limit must be an integer") from exc
+            if limit_val < 1:
+                raise InvalidToolArgumentsError("limit must be at least 1")
+            try:
+                service = RoutingService(config, workspace_root=status.root_path)
+                matches = service.query(ask, limit=limit_val)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return {
+                "ask": ask,
+                "count": len(matches),
+                "matches": [
+                    {
+                        "id": item.request_class.id,
+                        "title": item.request_class.title,
+                        "confidence": item.confidence,
+                        "why": item.why,
+                        "class": item.request_class.model_dump(mode="json", exclude_none=True),
+                    }
+                    for item in matches
+                ],
+            }
+
+        if name == "metagit_lane_eval":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("lane eval requires an active workspace")
+            class_id = str(arguments.get("id", "")).strip() or None
+            dry_run = bool(arguments.get("dry_run", False))
+            try:
+                service = RoutingService(config, workspace_root=status.root_path)
+                rows = service.evaluate(class_id=class_id, dry_run=dry_run)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return {
+                "dry_run": dry_run,
+                "updated": [row.model_dump(mode="json", exclude_none=True) for row in rows],
+            }
 
         if name == "metagit_upstream_hints":
             blocker = str(arguments.get("blocker", "")).strip()

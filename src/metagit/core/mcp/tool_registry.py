@@ -21,6 +21,8 @@ class ToolRegistry:
         "metagit_workspace_search",
         "metagit_workspace_grep_info",
         "metagit_workspace_semantic_search",
+        "metagit_route_query",
+        "metagit_lane_eval",
         "metagit_repo_search",
         "metagit_upstream_hints",
         "metagit_repo_inspect",

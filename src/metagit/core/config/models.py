@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 import yaml
 from pydantic import (
@@ -711,6 +711,35 @@ class Metrics(BaseModel):
         extra = "forbid"
 
 
+class RoutingPolicy(BaseModel):
+    """Promotion policy for routing class tier evaluation."""
+
+    promote_after_clean: int = Field(default=5, description="Consecutive landed runs needed for promotion")
+    demote_on: list[Literal["bounced", "noop"]] = Field(
+        default_factory=lambda: ["bounced", "noop"],
+        description="Outcomes that trigger immediate demotion",
+    )
+    retain_success_days: int = Field(
+        default=60,
+        description="Window for retaining landed run detail before optional roll-up",
+    )
+
+
+class RoutingConfig(BaseModel):
+    """Routing class catalog and run ledger storage settings."""
+
+    catalog: str = Field(
+        default="knowledge/requests/entries",
+        description="Directory containing one YAML file per request class",
+    )
+    runs: str = Field(
+        default="knowledge/requests/runs",
+        description="Directory containing one YAML file per execution run",
+    )
+    id_prefix: str = Field(default="REQ", description="Prefix used when creating request-class identifiers")
+    policy: RoutingPolicy = Field(default_factory=RoutingPolicy)
+
+
 # New configuration models for AppConfig
 class MetagitConfig(BaseModel):
     """Main model for .metagit.yml configuration file."""
@@ -739,6 +768,10 @@ class MetagitConfig(BaseModel):
         description=(
             "Manual cross-repo relationships and graph metadata for exports and GitNexus-style dependency maps"
         ),
+    )
+    routing: Optional[RoutingConfig] = Field(
+        default=None,
+        description="Routing engine catalog/run paths and promotion policy",
     )
     license: Optional[License] = Field(None, description="License information")
     maintainers: Optional[List[Maintainer]] = Field(None, description="Project maintainers")
