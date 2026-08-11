@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/metagit-ai/metagit-cli/refs/heads/main/schemas/metagit_appconfig.schema.json
 config:
   agent_mode: false
   description: Configuration for metagit CLI
@@ -18,45 +17,64 @@ config:
     api_key: ''
   workspace:
     path: ./.metagit
-    # default_project: remote  # optional session preference
+    session_path: .metagit/sessions
+    campaigns_path: _campaigns
+    worktrees_path: .worktrees
     dedupe:
       enabled: false
       scope: workspace
       strategy: symlink
       canonical_dir: _canonical
     ui_show_preview: true
-    ui_menu_length: 20
+    ui_menu_length: 10
     ui_preview_height: 3
     ui_ignore_hidden: true
   profiles:
-    - name: default
-      boundaries:
-        - name: github
-          values: []
-        - name: jfrog
-          values: []
-        - name: gitlab
-          values: []
-        - name: bitbucket
-          values: []
-        - name: azure_devops
-          values: []
-        - name: dockerhub
-          values: []
-        - name: domain
-          values:
-            - localhost
-            - 127.0.0.1
-            - 0.0.0.0
-            - 192.168.*
-            - 10.0.*
-            - 172.16.*
+  - name: default
+    boundaries:
+    - name: github
+      values: []
+    - name: jfrog
+      values: []
+    - name: gitlab
+      values: []
+    - name: bitbucket
+      values: []
+    - name: azure_devops
+      values: []
+    - name: dockerhub
+      values: []
+    - name: domain
+      values:
+      - localhost
+      - 127.0.0.1
+      - 0.0.0.0
+      - 192.168.*
+      - 10.0.*
+      - 172.16.*
   providers:
     github:
-      enabled: true
+      enabled: false
       api_token: ''
       base_url: https://api.github.com
     gitlab:
       enabled: false
       api_token: ''
       base_url: https://gitlab.com/api/v4
+  state:
+    backend: local
+    url: ''
+    token: ''
+    conflict_retries: 1
+    org_id: ''
+    workspace_id: ''
+    dynamodb:
+      table: ''
+      region: ''
+      endpoint_url: ''
+    mongodb:
+      uri: ''
+      database: ''
+      collection: metagit_state
+  merge:
+    validators: []
