@@ -98,6 +98,21 @@ def appconfig_validate(ctx: click.Context, config_path: Union[str, None] = None)
     """Validate a configuration file"""
     logger = ctx.obj["logger"]
     try:
+        # Priority: explicit --config-path > CLI -c flag context (if appconfig) >
+        #           CLI -c flag context definition_path (if manifest) > internal default
+        if not config_path:
+            config_path = ctx.obj.get("config_path")
+        if not config_path:
+            # Check if we were given a manifest path (definition_path)
+            definition_path = ctx.obj.get("definition_path")
+            if definition_path:
+                # Look for appconfig in the same directory as the manifest
+                import os
+
+                manifest_dir = os.path.dirname(definition_path) or "."
+                candidate = os.path.join(manifest_dir, "metagit.config.yaml")
+                if os.path.isfile(candidate):
+                    config_path = candidate
         if not config_path:
             config_path = os.path.join(DATA_PATH, "metagit.config.yaml")
         logger.echo(f"Validating configuration file: {config_path}")

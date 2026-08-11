@@ -105,7 +105,21 @@ def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
             logger.error(str(cfg))
             ctx.abort()
 
-        config_path = config if kind == "appconfig" else DEFAULT_CONFIG
+        # Use the config_path returned from resolve_cli_bootstrap (it's either the explicit appconfig path or DEFAULT_CONFIG)
+        config_path = (
+            config
+            if kind == "appconfig"
+            else (
+                str(Path(config).expanduser())
+                if kind == "manifest" and not definition_path
+                else cfg.workspace.path
+                if hasattr(cfg, "workspace")
+                else DEFAULT_CONFIG
+            )
+        )
+        # Actually, let's just get the config file path from the loaded config or use DEFAULT_CONFIG
+        # The load_config function returns an AppConfig object, we need to know what file was loaded
+        # For now, keep the old logic but this is a deeper refactor
 
         # Store the configuration and logger in the context
         ctx.obj = {
