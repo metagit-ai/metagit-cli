@@ -138,6 +138,7 @@ async def test_home_opens_project_then_repo_screens(tmp_path: Path, monkeypatch)
     await pilot.press("enter")
     assert isinstance(app.screen, ProjectSelectScreen)
     await pilot.press("enter")  # platform
+    await pilot.pause()
     assert isinstance(app.screen, RepoSelectScreen)
     await pilot.press("enter")  # backend
     assert isinstance(app.screen, MessageScreen)
