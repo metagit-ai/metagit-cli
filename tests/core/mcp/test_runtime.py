@@ -11,6 +11,77 @@ import pytest
 from metagit.core.mcp.runtime import MetagitMcpRuntime
 
 
+def _write_routing_fixture(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "routing:",
+                "  catalog: knowledge/requests/entries",
+                "  runs: knowledge/requests/runs",
+                "  id_prefix: REQ",
+                "  policy:",
+                "    promote_after_clean: 5",
+                "    demote_on:",
+                "      - bounced",
+                "      - noop",
+                "    retain_success_days: 60",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    catalog = tmp_path / "knowledge" / "requests" / "entries"
+    catalog.mkdir(parents=True, exist_ok=True)
+    (catalog / "REQ-CERT.yml").write_text(
+        "\n".join(
+            [
+                "id: REQ-CERT",
+                "title: Rotate certificate",
+                "triggers:",
+                "  - rotate certificate",
+                "skill: cert-rotation",
+                "lane: operations",
+                "tier: skilled",
+                "mutates: false",
+                "executor: cert.rotate",
+                "promotion_state: stable",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _write_landed_runs(tmp_path: Path, class_id: str, count: int) -> None:
+    runs = tmp_path / "knowledge" / "requests" / "runs"
+    runs.mkdir(parents=True, exist_ok=True)
+    for idx in range(count):
+        second = f"0{idx}" if idx < 10 else str(idx)
+        run_id = f"RUN-20260810-1200{second}-{class_id}"
+        opened = f"2026-08-10T12:00:{second}Z"
+        (runs / f"{run_id}.yml").write_text(
+            "\n".join(
+                [
+                    f"id: {run_id}",
+                    f"class: {class_id}",
+                    "tier: skilled",
+                    "lane: operations",
+                    "actor: agent:test",
+                    "dispatch: {}",
+                    "outcome: landed",
+                    "artifact: {}",
+                    "evidence: {}",
+                    f"opened: '{opened}'",
+                    f"closed: '{opened}'",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+
 def test_initialize_request_returns_capabilities(tmp_path: Path) -> None:
     runtime = MetagitMcpRuntime(root=str(tmp_path))
 
@@ -157,7 +228,7 @@ def test_bootstrap_uses_sampling_when_client_supports_it(tmp_path: Path) -> None
     )
     runtime = MetagitMcpRuntime(root=str(tmp_path))
     runtime._sampling_supported = True
-    runtime._request_client_sampling = lambda context: {  # type: ignore[method-assign]
+    runtime._request_client_sampling = lambda context: {  # noqa: ARG005  # type: ignore[method-assign]
         "content": {
             "type": "text",
             "text": "\n".join(
@@ -245,7 +316,7 @@ def test_tools_call_version_check_returns_structured_payload(
     fake_service.check.return_value = fake_result
     monkeypatch.setattr(
         "metagit.core.mcp.runtime.ReleaseCheckService",
-        lambda *args, **kwargs: fake_service,
+        lambda *_args, **_kwargs: fake_service,
     )
 
     runtime = MetagitMcpRuntime(root=str(tmp_path))
@@ -288,7 +359,7 @@ def test_tools_call_version_upgrade_dry_run_by_default(
     fake_service.upgrade.return_value = fake_result
     monkeypatch.setattr(
         "metagit.core.mcp.runtime.VersionUpgradeService",
-        lambda *args, **kwargs: fake_service,
+        lambda *_args, **_kwargs: fake_service,
     )
 
     runtime = MetagitMcpRuntime(root=str(tmp_path))
@@ -330,6 +401,68 @@ def test_tools_list_includes_repo_search_for_active_workspace(tmp_path: Path) ->
     assert response is not None
     names = [item["name"] for item in response["result"]["tools"]]
     assert "metagit_repo_search" in names
+
+
+def test_tools_list_includes_routing_schemas(tmp_path: Path) -> None:
+    _write_routing_fixture(tmp_path)
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 40, "method": "tools/list", "params": {}}
+    )
+
+    assert response is not None
+    tools = response["result"]["tools"]
+    route_tool = next(item for item in tools if item["name"] == "metagit_route_query")
+    lane_tool = next(item for item in tools if item["name"] == "metagit_lane_eval")
+    assert route_tool["inputSchema"]["required"] == ["ask"]
+    assert route_tool["inputSchema"]["properties"]["limit"]["minimum"] == 1
+    assert lane_tool["inputSchema"]["properties"]["dry_run"]["type"] == "boolean"
+
+
+def test_tools_call_route_query_returns_matches(tmp_path: Path) -> None:
+    _write_routing_fixture(tmp_path)
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 41,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_route_query",
+                "arguments": {"ask": "rotate expired certificate", "limit": 3},
+            },
+        }
+    )
+
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["count"] == 1
+    assert payload["matches"][0]["id"] == "REQ-CERT"
+
+
+def test_tools_call_lane_eval_returns_updated_rows(tmp_path: Path) -> None:
+    _write_routing_fixture(tmp_path)
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    _write_landed_runs(tmp_path, class_id="REQ-CERT", count=5)
+
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 42,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_lane_eval",
+                "arguments": {"id": "REQ-CERT", "dry_run": False},
+            },
+        }
+    )
+
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["updated"][0]["id"] == "REQ-CERT"
+    assert payload["updated"][0]["tier"] == "deterministic"
 
 
 def test_tools_call_repo_search_returns_matches(tmp_path: Path) -> None:
