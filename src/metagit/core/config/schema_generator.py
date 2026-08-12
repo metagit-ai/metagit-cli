@@ -96,8 +96,34 @@ def patch_metagit_config_schema(schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def patch_appconfig_schema(schema: dict[str, Any]) -> dict[str, Any]:
-    """Apply AppConfig schema patches (none today; hook for future coercions)."""
-    return copy.deepcopy(schema)
+    """Apply AppConfig schema patches — wrap root to accept {'config': AppConfig}."""
+    patched = copy.deepcopy(schema)
+    # The saved YAML format is {"config": <AppConfig>}, so root schema must allow a "config" key
+    # Preserve $defs at root level, just wrap the properties in a "config" object
+    defs = patched.get("$defs", {})
+    patched = {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "config": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": patched.get("properties", {}),
+                "required": patched.get("required", []),
+                "title": patched.get("title", "AppConfig"),
+            },
+        },
+        "required": ["config"],
+        "title": "AppConfigWrapper",
+    }
+    if defs:
+        patched["$defs"] = defs
+    # Also allow legacy `default_profile` key in config (normalized away at load time)
+    patched["properties"]["config"]["properties"]["default_profile"] = {
+        "type": "string",
+        "description": "Legacy profile selector (removed on load)",
+    }
+    return patched
 
 
 def _patch_documentation_property(properties: dict[str, Any]) -> None:

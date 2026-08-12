@@ -41,8 +41,14 @@ def resolve_cli_bootstrap(
     if kind == "appconfig":
         return load_config(path), None
     if kind == "manifest":
+        # When given a manifest, try to find a local appconfig in the same directory
+        manifest_path = Path(path).expanduser()
+        manifest_dir = manifest_dir = manifest_path.parent
+        local_appconfig = manifest_dir / "metagit.config.yaml"
+        if local_appconfig.is_file():
+            return load_config(str(local_appconfig)), str(manifest_path)
         cfg = load_config(DEFAULT_CONFIG)
-        return cfg, str(Path(path).expanduser())
+        return cfg, str(manifest_path)
     return (
         ValueError(
             f"Path '{path}' is neither metagit.config.yaml (top-level 'config:') "
