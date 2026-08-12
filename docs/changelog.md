@@ -4,6 +4,15 @@
 
 
 
+## [0.28.3] - 2026-08-12
+
+
+
+### Fixed
+- AppConfig JSON schema generation now wraps root to accept `{"config": AppConfig}` format, matching the actual YAML file structure
+- AppConfig JSON schema now allows legacy `default_profile` key (normalized away at load time)
+- `metagit appconfig validate` now respects CLI `-c` flag context: explicit `--config-path` > CLI `-c` appconfig > CLI `-c` manifest's local `metagit.config.yaml` > internal default
+
 ## [0.28.0] - 2026-08-11
 
 
