@@ -64,7 +64,7 @@ metagit search "<query>" -c .metagit.yml --json
 
 Interactive (human sessions only):
 
-- `metagit nav` / `metagit navigate` — FuzzyFinder project then repo, then open editor
+- `metagit nav` / `metagit navigate` / `metagit select` — FuzzyFinder project then repo, then open editor
 - `metagit workspace select --project <name>`
 
 Agent context switch (preferred):
