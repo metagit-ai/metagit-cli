@@ -465,6 +465,56 @@ def test_tools_call_lane_eval_returns_updated_rows(tmp_path: Path) -> None:
     assert payload["updated"][0]["tier"] == "deterministic"
 
 
+def test_tools_list_includes_capability_tools_when_active(tmp_path: Path) -> None:
+    _write_routing_fixture(tmp_path)
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 43, "method": "tools/list", "params": {}}
+    )
+    assert response is not None
+    names = [item["name"] for item in response["result"]["tools"]]
+    assert "metagit_capability_resolve" in names
+    assert "metagit_capability_compile" in names
+
+
+def test_tools_call_capability_resolve_returns_matches(tmp_path: Path) -> None:
+    _write_routing_fixture(tmp_path)
+    catalog = tmp_path / "knowledge" / "requests" / "entries"
+    (catalog / "REQ-CERT.yml").write_text(
+        "\n".join(
+            [
+                "id: REQ-CERT",
+                "title: Rotate certificate",
+                "triggers:",
+                "  - rotate certificate",
+                "capability:",
+                "  selector: {}",
+                "  workflow:",
+                "    - {name: inspect}",
+                "  expected_output: report",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 44,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_capability_resolve",
+                "arguments": {"ask": "rotate certificate"},
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["count"] == 1
+    assert payload["matches"][0]["capability_id"] == "REQ-CERT"
+
+
 def test_tools_call_repo_search_returns_matches(tmp_path: Path) -> None:
     repo_dir = tmp_path / "platform" / "abacus-app"
     repo_dir.mkdir(parents=True)

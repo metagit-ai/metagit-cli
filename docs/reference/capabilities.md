@@ -1,6 +1,6 @@
 # Agent Capability Compilation (RFC-0019)
 
-<!-- modality:capability -->
+<!-- modality:capability_compilation -->
 
 Metagit compiles its existing **request-class catalog** and **workspace topology** into a
 deterministic, task-scoped **capability envelope** that an external agent orchestrator can

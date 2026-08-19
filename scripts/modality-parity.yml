@@ -418,6 +418,28 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:context_compile"
 
+  - id: capability_compilation
+    description: Compile request-class and topology into a task-scoped capability envelope
+    service: metagit.core.routing.capability_service.CapabilityService
+    reference_doc: docs/reference/capabilities.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/capability.py
+            contains: '@capability_group.command("compile")'
+          - path: src/metagit/cli/main.py
+            contains: capability_group
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_capability_compile
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_capability_compile
+      documentation:
+        markers:
+          - path: docs/reference/capabilities.md
+            contains: "modality:capability"
+
   - id: context_switch
     description: Full agent context switch with pack, prompt, objective, and env exports
     service: metagit.core.context.context_switch_service.ContextSwitchService

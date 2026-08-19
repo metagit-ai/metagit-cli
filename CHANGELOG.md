@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Capability compilation MVP (RFC-0019): request classes may define `capability` blocks and Metagit now provides deterministic `metagit capability {list,resolve,show,compile,doctor}` plus MCP parity tools `metagit_capability_{list,resolve,show,compile}` to emit task-scoped capability envelopes.
 - `metagit select` as a top-level alias of `metagit nav` / `navigate` (FuzzyFinder project then repo; distinct from `metagit project select`).
 - Root `metagit -p/--project` and `--repo` targeting flags, inherited by `nav`, `project`, `workspace`, and `search`.
 

@@ -30,6 +30,7 @@ from metagit.cli.commands.appconfig import appconfig
 from metagit.cli.commands.atlas import atlas_group
 from metagit.cli.commands.branch import branch_group
 from metagit.cli.commands.campaign import campaign
+from metagit.cli.commands.capability import capability_group
 from metagit.cli.commands.claim import claim_group
 from metagit.cli.commands.completion_cmd import completion_group
 from metagit.cli.commands.config import config
@@ -189,6 +190,7 @@ cli.add_command(agent)
 cli.add_command(atlas_group)
 cli.add_command(campaign)
 cli.add_command(route_group)
+cli.add_command(capability_group)
 cli.add_command(run_group)
 cli.add_command(lane_group)
 cli.add_command(branch_group)

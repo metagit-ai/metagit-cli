@@ -428,5 +428,5 @@ tasks:
   gitnexus:analyze:
     desc: Run gitnexus analyze
     cmds:
-      - npx gitnexus analyze --skip-agents-md
+      - npx gitnexus analyze --index-only
       - uv run python scripts/tag_internal_skills.py
