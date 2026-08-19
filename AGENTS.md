@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
-last_updated: 2026-07-14
+last_updated: 2026-08-18
 ---
 
 # Metagit
@@ -55,8 +55,9 @@ metagit prompt workspace --kind session-start --text-only
 | ACL file claims | `metagit claim declare` · `metagit claim check` |
 | Task graph / intent | `metagit task create` · `metagit task expand` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R [--task-id N] --json` |
+| Capability resolve / compile | `metagit capability resolve "<ask>" --project P` · `metagit capability compile --id CAP --project P --repo R --json` |
 | Context switch | `metagit context switch <project> [<repo>]` · `--json` · MCP `metagit_context_switch` |
-| Nav (human) | `metagit nav` / `navigate` [-p PROJECT] [--repo REPO] |
+| Nav (human) | `metagit -p PROJECT --repo REPO nav` / `navigate` / `select` |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
@@ -72,6 +73,7 @@ metagit prompt workspace --kind session-start --text-only
 | Agent scheduler (RFC-0012) | [docs/reference/agent-scheduler.md](docs/reference/agent-scheduler.md) |
 | Agent OS (RFC-0013) | [docs/reference/aos.md](docs/reference/aos.md) |
 | Metagit Atlas (RFC-0014) | [docs/reference/atlas.md](docs/reference/atlas.md) |
+| Agent capabilities (RFC-0019) | [docs/reference/capabilities.md](docs/reference/capabilities.md) |
 | Feature registry (all modalities) | [docs/reference/modality-feature-registry.md](docs/reference/modality-feature-registry.md) |
 
 Full guide: [docs/agents.md](docs/agents.md) · Index: [llms.txt](llms.txt) · Skills: [docs/skills.md](docs/skills.md) · Docs: <https://metagit-ai.github.io/metagit-cli/agents/>
@@ -81,7 +83,7 @@ Full guide: [docs/agents.md](docs/agents.md) · Index: [llms.txt](llms.txt) · S
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **metagit-cli** (12706 symbols, 24802 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **metagit-cli** (15183 symbols, 29127 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? `npx gitnexus analyze` (npm 11 crash → `npm i -g gitnexus`; #1939).
 
@@ -109,5 +111,16 @@ This project is indexed by GitNexus as **metagit-cli** (12706 symbols, 24802 rel
 | `gitnexus://repo/metagit-cli/clusters` | All functional areas |
 | `gitnexus://repo/metagit-cli/processes` | All execution flows |
 | `gitnexus://repo/metagit-cli/process/{name}` | Step-by-step execution trace |
+
+## CLI
+
+| Task | Read this skill file |
+|------|---------------------|
+| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
+| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
+| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
+| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
+| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
+| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->

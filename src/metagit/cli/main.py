@@ -59,6 +59,7 @@ from metagit.cli.commands.web import web
 from metagit.cli.commands.workspace import workspace
 from metagit.cli.commands.worktree import worktree_group
 from metagit.cli.config_path import detect_cli_config_file, resolve_cli_bootstrap
+from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import resolve_agent_mode
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
@@ -74,12 +75,32 @@ CONTEXT_SETTINGS: dict = {
     "--config",
     "-c",
     default="metagit.config.yaml",
-    help="Path to the configuration file",
+    help="App config (metagit.config.yaml) or workspace manifest (.metagit.yml)",
+)
+@click.option(
+    "--project",
+    "-p",
+    default=None,
+    help="Workspace project to target (inherited by subcommands)",
+    shell_complete=complete_projects,
+)
+@click.option(
+    "--repo",
+    default=None,
+    help="Repository name within --project (inherited by subcommands)",
+    shell_complete=complete_repos,
 )
 @click.option("--debug/--no-debug", default=False, help="Enable or disable debug mode")
 @click.option("--verbose/--no-verbose", default=False, help="Enable or disable verbose output")
 @click.pass_context
-def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
+def cli(
+    ctx: click.Context,
+    config: str,
+    project: str | None,
+    repo: str | None,
+    debug: bool,
+    verbose: bool,
+) -> None:
     """
     Metagit CLI: A multi-purpose CLI tool with YAML configuration.
     """
@@ -128,6 +149,8 @@ def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
         ctx.obj = {
             "config_path": config_path,
             "definition_path": definition_path,
+            "target_project": project,
+            "target_repo": repo,
             "config": cfg,
             "agent_mode": resolve_agent_mode(cfg),
             "logger": logger,
@@ -193,6 +216,7 @@ cli.add_command(fmt_cmd, name="format")
 cli.add_command(tui_cmd, name="tui")
 cli.add_command(nav_cmd, name="nav")
 cli.add_command(nav_cmd, name="navigate")
+cli.add_command(nav_cmd, name="select")
 
 
 def main() -> None:

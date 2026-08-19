@@ -131,10 +131,10 @@ metagit config info -c .metagit.yml
 metagit config show -c .metagit.yml
 metagit config validate -c .metagit.yml
 
-metagit workspace list -c .metagit.yml --json
-metagit workspace project list -c .metagit.yml --json
-metagit workspace repo list -c .metagit.yml --json
-metagit workspace repo list -c .metagit.yml --project <name> --json
+metagit workspace list --json
+metagit workspace project list --json
+metagit workspace repo list --json
+metagit workspace repo list --project <name> --json
 
 metagit workspace project add --name <name> --json
 metagit workspace repo add --project <name> --name <repo> --url <url> --json
@@ -155,7 +155,7 @@ metagit search "<query>" -c .metagit.yml --tag tier=1 --project <name>
 ## Project operations
 
 ```bash
-metagit project list --config .metagit.yml --all --json
+metagit project list --json
 metagit project add --name <name> --json
 metagit project remove --name <name> --json
 metagit project rename --name <old> --new-name <new> --dry-run --json
