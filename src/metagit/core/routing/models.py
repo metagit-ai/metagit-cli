@@ -9,6 +9,49 @@ from pydantic import BaseModel, ConfigDict, Field
 
 Tier = Literal["deterministic", "skilled", "novel"]
 Outcome = Literal["landed", "bounced", "noop", "abandoned"]
+ExpectedOutputKind = Literal["pull_request", "merge_request", "patch", "report", "none"]
+
+
+class CapabilitySelector(BaseModel):
+    """Deterministic topology selector for capability-scoped request classes."""
+
+    project_types: list[str] = Field(default_factory=list)
+    domains: list[str] = Field(default_factory=list)
+    tags: dict[str, str] = Field(default_factory=dict)
+    path_globs: list[str] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(extra="forbid")
+
+
+class CapabilityStep(BaseModel):
+    """Advisory workflow step for a capability contract."""
+
+    name: str
+    description: Optional[str] = None
+    command: Optional[str] = None
+    gate: bool = False
+    model_config = ConfigDict(extra="forbid")
+
+
+class CapabilityScope(BaseModel):
+    """Advisory read/write boundary declared by capability config."""
+
+    allowed_paths: list[str] = Field(default_factory=lambda: ["**"])
+    writable_paths: list[str] = Field(default_factory=list)
+    forbidden_paths: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(extra="forbid")
+
+
+class CapabilitySpec(BaseModel):
+    """Capability metadata attached to one request class."""
+
+    selector: CapabilitySelector = Field(default_factory=CapabilitySelector)
+    scope: CapabilityScope = Field(default_factory=CapabilityScope)
+    workflow: list[CapabilityStep] = Field(default_factory=list)
+    expected_output: ExpectedOutputKind = "none"
+    required_tools: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+    model_config = ConfigDict(extra="forbid")
 
 
 class ClassEvidence(BaseModel):
@@ -39,6 +82,7 @@ class RequestClass(BaseModel):
     evidence: Optional[ClassEvidence] = None
     notes: Optional[str] = None
     updated: Optional[str] = None
+    capability: Optional[CapabilitySpec] = None
 
 
 class RunDispatch(BaseModel):
@@ -80,7 +124,12 @@ class Run(BaseModel):
 
 
 __all__ = [
+    "CapabilityScope",
+    "CapabilitySelector",
+    "CapabilitySpec",
+    "CapabilityStep",
     "ClassEvidence",
+    "ExpectedOutputKind",
     "Outcome",
     "RequestClass",
     "Run",

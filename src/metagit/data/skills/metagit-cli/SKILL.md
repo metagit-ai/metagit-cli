@@ -23,10 +23,13 @@ metagit prompt workspace -k session-start --text-only -c .metagit.yml
 
 Repo-root agent docs: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob/main/AGENTS.md) · [llms.txt](https://github.com/metagit-ai/metagit-cli/blob/main/llms.txt) · [docs/agents.md](https://metagit-ai.github.io/metagit-cli/agents/).
 
-Global flags (most commands):
+Global flags (put these **before** the subcommand):
 
-- `metagit -c path/to/metagit.config.yaml` — **appconfig** only (default `metagit.config.yaml`)
-- Workspace manifest: `-c .metagit.yml` on `metagit config …`, `metagit workspace …`, and leaf `config graph suggest|export -c …`
+- `metagit -c FILE` — appconfig (`metagit.config.yaml`) **or** workspace manifest (`.metagit.yml`); auto-detected
+- `metagit -p PROJECT` — workspace project targeting; inherited by `nav`/`select`, `project`, `workspace`, and `search`
+- `metagit --repo NAME` — repository targeting; inherited by `nav`/`select` and `project select`
+- When cwd already has `.metagit.yml`, omit `-c` for catalog commands
+- Leaf `-c` still works on `project list`, `workspace list`, and `workspace project|repo list`
 - `--workspace-root` on graph suggest — checkout root used to **scan** inferred deps (default: appconfig `workspace.path`); not the manifest path
 
 ---
@@ -53,15 +56,17 @@ Use this table first when changing a workspace manifest from the CLI. Prefer **c
 
 | Task | Command |
 |------|---------|
-| List projects | `metagit workspace project list -c .metagit.yml --json` |
-| List repos (all / one project) | `metagit workspace repo list -c .metagit.yml --json` / `… --project <p> --json` |
-| Add project | `metagit workspace project add -c .metagit.yml --name <p> --json` |
-| Remove project | `metagit workspace project remove -c .metagit.yml --name <p> --json` |
-| Rename project (dry-run) | `metagit workspace project rename -c .metagit.yml --name <old> --new-name <new> --dry-run --json` |
-| Add repo | `metagit workspace repo add -c .metagit.yml --project <p> --name <r> (--url <url> | --path <path>) --json` |
-| Remove repo (manifest only) | `metagit workspace repo remove -c .metagit.yml --project <p> --name <r> --json` |
+| List projects | `metagit workspace project list --json` |
+| List repos (all / one project) | `metagit workspace repo list --json` / `metagit -p <p> workspace repo list --json` |
+| Add project | `metagit workspace project add --name <p> --json` |
+| Remove project | `metagit workspace project remove --name <p> --json` |
+| Rename project (dry-run) | `metagit workspace project rename --name <old> --new-name <new> --dry-run --json` |
+| Add repo | `metagit workspace repo add --project <p> --name <r> (--url <url> \| --path <path>) --json` |
+| Remove repo (manifest only) | `metagit workspace repo remove --project <p> --name <r> --json` |
 | Rename / move repo (dry-run) | `metagit workspace repo rename …` / `metagit workspace repo move … --dry-run --json` |
-| Search before adding | `metagit search "<name>" -c .metagit.yml --json` |
+| Search before adding | `metagit search "<name>" --json` |
+
+Prefix `metagit -c path/to/.metagit.yml` **before** the subcommand when cwd is not the umbrella. Do not pass `-c` after `project list` unless listing one command that documents a leaf `-c`.
 
 Active project context (optional): `metagit project repo add --name <r> (--url <url> | --path <path>)` after `metagit project select`.
 
@@ -117,7 +122,7 @@ metagit config providers --show
 ### After every manifest edit
 
 1. `metagit config validate -c .metagit.yml`
-2. `metagit workspace list -c .metagit.yml --json` (sanity-check catalog)
+2. `metagit workspace list --json` (sanity-check catalog; prefix `metagit -c .metagit.yml` when not in the umbrella cwd)
 3. If repos changed on disk: `metagit project sync` or `metagit project sync --hydrate`
 
 ### Graph relationships (suggest, apply, export)
@@ -248,10 +253,10 @@ metagit config info -c .metagit.yml
 metagit config show -c .metagit.yml
 metagit config validate -c .metagit.yml
 
-metagit workspace list -c .metagit.yml --json
-metagit workspace project list -c .metagit.yml --json
-metagit workspace repo list -c .metagit.yml --json
-metagit workspace repo list -c .metagit.yml --project <name> --json
+metagit workspace list --json
+metagit workspace project list --json
+metagit workspace repo list --json
+metagit workspace repo list --project <name> --json
 
 metagit workspace project add --name <name> --json
 metagit workspace repo add --project <name> --name <repo> --url <url> --json
@@ -273,7 +278,7 @@ metagit search "<query>" -c .metagit.yml --tag tier=1 --project <name>
 ## Project operations
 
 ```bash
-metagit project list --config .metagit.yml --all --json
+metagit project list --json
 metagit project add --name <name> --json
 metagit project remove --name <name> --json
 metagit project rename --name <old> --new-name <new> --dry-run --json

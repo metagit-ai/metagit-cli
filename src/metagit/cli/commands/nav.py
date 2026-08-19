@@ -3,21 +3,18 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Optional
 
 import click
 
+from metagit.cli.config_path import bind_cli_manifest, resolve_cli_project, resolve_cli_repo
 from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
-from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.project.manager import ProjectManager, resolve_effective_dedupe
 from metagit.core.project.project_picker import select_project_name
 from metagit.core.utils.common import open_editor
 from metagit.core.workspace.layout_resolver import find_project, list_project_names
 from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_workspace_root
-
-DEFAULT_MANIFEST = ".metagit.yml"
 
 
 @click.command("nav")
@@ -51,22 +48,18 @@ def nav_cmd(
     project_name: Optional[str],
     repo_name: Optional[str],
 ) -> None:
-    """Pick a project, then a repo, and open it in the configured editor."""
+    """Pick a project, then a repo, and open it in the configured editor (aliases: `navigate`, `select`)."""
     logger = ctx.obj["logger"]
     if ctx.obj.get("agent_mode"):
         raise click.UsageError("Interactive navigation is disabled in agent mode")
 
     app_config: AppConfig = ctx.obj["config"]
-    definition_from_ctx = ctx.obj.get("definition_path")
-    effective_manifest = manifest_path
-    if manifest_path == DEFAULT_MANIFEST and definition_from_ctx:
-        effective_manifest = definition_from_ctx
-    effective_manifest = str(Path(effective_manifest).expanduser())
-
-    manager = MetagitConfigManager(effective_manifest)
-    local_config = manager.load_config()
+    local_config = bind_cli_manifest(ctx, manifest_path)
     if isinstance(local_config, Exception):
         raise click.ClickException(str(local_config))
+    effective_manifest = ctx.obj["config_path"]
+    project_name = resolve_cli_project(ctx, project_name)
+    repo_name = resolve_cli_repo(ctx, repo_name)
 
     names = list_project_names(local_config)
     resolved_project = project_name

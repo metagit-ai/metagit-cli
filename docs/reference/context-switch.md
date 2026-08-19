@@ -101,5 +101,5 @@ These are documentation conventions only — not a hard schema break.
 ## Related
 
 - Design: `docs/superpowers/specs/2026-08-03-context-switch-design.md`
-- Human nav shortcut: `metagit nav` / `navigate` (separate feature)
+- Human nav shortcut: `metagit nav` / `navigate` / `select` (separate feature)
 - Lean MCP project context: `docs` / skill guidance for `metagit_project_context_switch`

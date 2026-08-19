@@ -8,6 +8,7 @@ import click
 
 from metagit.cli.commands.project_repo import execute_repo_select
 from metagit.cli.commands.workspace_import import workspace_import
+from metagit.cli.config_path import bind_cli_manifest, resolve_cli_project, resolve_cli_repo
 from metagit.cli.json_output import (
     emit_json,
     exit_on_catalog_mutation,
@@ -15,7 +16,6 @@ from metagit.cli.json_output import (
 )
 from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
-from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
@@ -86,6 +86,7 @@ def _layout_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str, AppConfig]
 @click.group(name="workspace", invoke_without_command=True)
 @click.option(
     "--config",
+    "-c",
     "config_path",
     default=".metagit.yml",
     help="Path to the metagit definition file",
@@ -99,19 +100,23 @@ def workspace(ctx: click.Context, config_path: str) -> None:
         click.echo(ctx.get_help())
         return
 
-    ctx.obj["config_path"] = config_path
     try:
-        config_manager = MetagitConfigManager(config_path)
-        local_config = config_manager.load_config()
+        local_config = bind_cli_manifest(ctx, config_path)
         if isinstance(local_config, Exception):
             raise local_config
     except Exception as e:
         logger.error(f"Failed to load metagit definition file: {e}")
         sys.exit(1)
-    ctx.obj["local_config"] = local_config
 
 
 @workspace.command("list")
+@click.option(
+    "--config",
+    "-c",
+    "manifest_path",
+    default=None,
+    help="Path to the metagit definition file",
+)
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.option(
     "--no-index",
@@ -120,8 +125,12 @@ def workspace(ctx: click.Context, config_path: str) -> None:
     help="Omit per-repo disk status from workspace list JSON",
 )
 @click.pass_context
-def workspace_list(ctx: click.Context, as_json: bool, no_index: bool) -> None:
+def workspace_list(ctx: click.Context, manifest_path: str | None, as_json: bool, no_index: bool) -> None:
     """List workspace manifest summary, projects, and repository index."""
+    if manifest_path:
+        loaded = bind_cli_manifest(ctx, manifest_path, force=True)
+        if isinstance(loaded, Exception):
+            raise click.ClickException(str(loaded))
     local_config, config_path, workspace_root = _catalog_ctx(ctx)
     service = WorkspaceCatalogService()
     result = service.list_workspace(
@@ -148,10 +157,21 @@ def workspace_project(_ctx: click.Context) -> None:
 
 
 @workspace_project.command("list")
+@click.option(
+    "--config",
+    "-c",
+    "manifest_path",
+    default=None,
+    help="Path to the metagit definition file",
+)
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
-def workspace_project_list(ctx: click.Context, as_json: bool) -> None:
+def workspace_project_list(ctx: click.Context, manifest_path: str | None, as_json: bool) -> None:
     """List projects defined in the workspace manifest."""
+    if manifest_path:
+        loaded = bind_cli_manifest(ctx, manifest_path, force=True)
+        if isinstance(loaded, Exception):
+            raise click.ClickException(str(loaded))
     local_config, _, _ = _catalog_ctx(ctx)
     result = WorkspaceCatalogService().list_projects(local_config)
     if as_json:
@@ -280,6 +300,13 @@ def workspace_repo(_ctx: click.Context) -> None:
 
 @workspace_repo.command("list")
 @click.option(
+    "--config",
+    "-c",
+    "manifest_path",
+    default=None,
+    help="Path to the metagit definition file",
+)
+@click.option(
     "--project",
     "-p",
     default=None,
@@ -290,10 +317,16 @@ def workspace_repo(_ctx: click.Context) -> None:
 @click.pass_context
 def workspace_repo_list(
     ctx: click.Context,
+    manifest_path: str | None,
     project: str | None,
     as_json: bool,
 ) -> None:
     """List repositories in the workspace manifest."""
+    if manifest_path:
+        loaded = bind_cli_manifest(ctx, manifest_path, force=True)
+        if isinstance(loaded, Exception):
+            raise click.ClickException(str(loaded))
+    project = resolve_cli_project(ctx, project)
     local_config, _, workspace_root = _catalog_ctx(ctx)
     result = WorkspaceCatalogService().list_repos(
         local_config,
@@ -586,6 +619,7 @@ def workspace_grep_search(
     as_json: bool,
 ) -> None:
     """Search file contents (default when a QUERY argument is provided)."""
+    project = resolve_cli_project(ctx, project)
     local_config, _, workspace_root = _catalog_ctx(ctx)
     query_text = query.strip()
     if not query_text:
@@ -683,10 +717,10 @@ def workspace_select(ctx: click.Context, project: str = None, repo_name: str | N
     local_config: MetagitConfig = ctx.obj["local_config"]
     ctx.obj["project"] = resolve_active_project_name(
         local_config,
-        explicit=project,
+        explicit=resolve_cli_project(ctx, project),
         default_project=app_config.workspace.default_project,
     )
-    execute_repo_select(ctx, repo_name=repo_name)
+    execute_repo_select(ctx, repo_name=resolve_cli_repo(ctx, repo_name))
 
 
 workspace.add_command(workspace_import, name="import")

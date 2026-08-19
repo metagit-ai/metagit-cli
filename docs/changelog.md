@@ -18,6 +18,7 @@
 
 
 ### Added
+- Capability compilation MVP (RFC-0019): request classes may define `capability` blocks and Metagit now provides deterministic `metagit capability {list,resolve,show,compile,doctor}` plus MCP parity tools `metagit_capability_{list,resolve,show,compile}` to emit task-scoped capability envelopes.
 - Routing engine and run ledger foundations under `metagit.core.routing` with deterministic intent matching (`route query`), class catalog storage, run evidence records, and promotion policy evaluation with safety ceiling enforcement for mutating classes.
 - New CLI command groups: `metagit route` (`query`, `list`, `show`), `metagit run` (`open`, `close`, `list`), and `metagit lane eval` for policy-driven tier updates.
 - MCP parity tools: `metagit_route_query` and `metagit_lane_eval` with active-workspace gating and JSON schemas exposed in `tools/list`.

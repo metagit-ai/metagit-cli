@@ -11,6 +11,7 @@ import yaml
 from metagit.cli.commands.project_derived import derived
 from metagit.cli.commands.project_repo import execute_repo_select, repo
 from metagit.cli.commands.project_source import source
+from metagit.cli.config_path import bind_cli_manifest, resolve_cli_project, resolve_cli_repo
 from metagit.cli.json_output import (
     emit_json,
     exit_on_catalog_mutation,
@@ -18,7 +19,6 @@ from metagit.cli.json_output import (
 )
 from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
-from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.manager import ProjectManager, project_manager_from_app
 from metagit.core.project.source_manifest_sync import SourceManifestSyncService
@@ -52,20 +52,18 @@ def project(ctx: click.Context, config: str, project: str = None) -> None:
         click.echo(ctx.get_help())
         return
     app_config: AppConfig = ctx.obj["config"]
-    ctx.obj["config_path"] = config
-    ctx.obj["explicit_project"] = project
+    ctx.obj["command_project"] = project
     try:
-        config_manager: MetagitConfigManager = MetagitConfigManager(config)
-        local_config: MetagitConfig = config_manager.load_config()
-        ctx.obj["local_config"] = local_config
+        local_config = bind_cli_manifest(ctx, config)
         if isinstance(local_config, Exception):
             raise local_config
     except Exception as e:
         logger.error(f"Failed to load metagit definition file: {e}")
         sys.exit(1)
+    ctx.obj["explicit_project"] = resolve_cli_project(ctx, project)
     ctx.obj["project"] = resolve_active_project_name(
         local_config,
-        explicit=project,
+        explicit=ctx.obj["explicit_project"],
         default_project=app_config.workspace.default_project,
     )
 
@@ -77,6 +75,21 @@ project.add_command(derived)
 
 
 @project.command("list")
+@click.option(
+    "--config",
+    "-c",
+    "manifest_path",
+    default=None,
+    help="Path to the metagit definition file",
+)
+@click.option(
+    "--project",
+    "-p",
+    "project_name",
+    default=None,
+    help="Dump this project as YAML (or JSON with --json) instead of the catalog",
+    shell_complete=complete_projects,
+)
 @click.option(
     "--all",
     "list_all",
@@ -95,21 +108,26 @@ project.add_command(derived)
 @click.pass_context
 def project_list(
     ctx: click.Context,
+    manifest_path: Optional[str],
+    project_name: Optional[str],
     list_all: bool,
     show_detail: bool,
     as_json: bool,
 ) -> None:
     """List workspace projects (catalog), or one project with -p/--detail."""
     logger: UnifiedLogger = ctx.obj["logger"]
-    project: str = ctx.obj["project"]
-    local_config: MetagitConfig = ctx.obj["local_config"]
-    config_path: str = ctx.obj["config_path"]
     app_config: AppConfig = ctx.obj["config"]
-    explicit_project = ctx.obj.get("explicit_project")
     _ = list_all  # retained for backward-compatible CLI flag
 
-    # Catalog is the default. Detail/YAML dump only when -p is explicit or --detail.
-    use_detail = bool(explicit_project) or show_detail
+    if manifest_path:
+        loaded = bind_cli_manifest(ctx, manifest_path, force=True)
+        if isinstance(loaded, Exception):
+            raise click.ClickException(str(loaded))
+
+    local_config: MetagitConfig = ctx.obj["local_config"]
+    config_path: str = ctx.obj["config_path"]
+    detail_project = project_name or ctx.obj.get("command_project")
+    use_detail = bool(detail_project) or show_detail
     if not use_detail:
         service = WorkspaceCatalogService()
         workspace_root = resolve_workspace_root(config_path, app_config.workspace.path)
@@ -131,7 +149,7 @@ def project_list(
         return
 
     try:
-        target = explicit_project or project
+        target = detail_project or ctx.obj.get("project")
         if not target:
             logger.error(active_project_resolution_error(local_config))
             ctx.abort()
@@ -286,7 +304,7 @@ def project_rename(
 @click.pass_context
 def project_select(ctx: click.Context, repo_name: Optional[str]) -> None:
     """Shortcut: Uses 'project repo select' to select workspace project repo to work on"""
-    execute_repo_select(ctx, repo_name=repo_name)
+    execute_repo_select(ctx, repo_name=resolve_cli_repo(ctx, repo_name))
 
 
 @project.command("sync")

@@ -4,6 +4,7 @@
 **Date:** 2026-07-31  
 **Series:** [Central State Plane series index](2026-07-31-central-state-plane-series-index.md)  
 **Depends on:** RFC-0015 (plane), RFC-0007–0013 (ACL, task, context compile, scheduler, merge, AOS), optionally RFC-0016 (plane catalog)  
+**Intersects:** RFC-0019 (Agent Capability Compilation) — its `CapabilityEnvelope` is the *selection + operating-mode* leg; this harness is the *claim + lifecycle* leg. A `WorkloadEnvelope` should carry a `capability_ref` rather than re-deriving workflow/scope/instructions. See RFC-0019 §"Relationship to RFC-0017".  
 **Plan:** (pending)
 
 ## Summary

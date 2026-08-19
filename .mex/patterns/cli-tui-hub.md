@@ -8,7 +8,7 @@ triggers:
 edges:
   - target: patterns/add-cli-command.md
     condition: when adding new TUI-launched CLI workflows
-last_updated: 2026-08-03
+last_updated: 2026-08-18
 ---
 
 # CLI TUI Hub
@@ -16,7 +16,7 @@ last_updated: 2026-08-03
 ## Context
 The interactive CLI uses Textual (see `src/metagit/core/utils/fuzzyfinder.py`). The `metagit tui` command lives under `src/metagit/core/tui/` with a thin Click wrapper in `src/metagit/cli/commands/tui.py`.
 
-Dedicated CLI shortcut `metagit nav` / `navigate` (design `docs/superpowers/specs/2026-08-03-metagit-nav-design.md`) intentionally uses FuzzyFinder for project then repo — do not fold that UX into the hub without an explicit design change.
+Dedicated CLI shortcut `metagit nav` / `navigate` / `select` (design `docs/superpowers/specs/2026-08-03-metagit-nav-design.md`) intentionally uses FuzzyFinder for project then repo — do not fold that UX into the hub without an explicit design change.
 
 ## Steps
 1. Prefer the in-TUI **Select project → repository** flow (`navigation.py` + `ProjectSelectScreen` / `RepoSelectScreen`) for umbrella workspaces — no nested FuzzyFinder.
@@ -33,7 +33,7 @@ Dedicated CLI shortcut `metagit nav` / `navigate` (design `docs/superpowers/spec
 - Manifest flags differ by CLI group: `project`/`config` use `-c`; `workspace` uses `--config`; `search` uses trailing `--definition`.
 - The TUI catalog omits context/agent prompt commands; use the CLI directly for those workflows.
 - Legacy fuzzy picker (`run_repo_picker_session`) still suspends the hub and runs FuzzyFinder in a worker thread (`_run_textual_app`). Prefer the in-app project→repo screens for new UX.
-- `metagit nav` / `navigate` intentionally uses FuzzyFinder for project then repo (not in-TUI ListViews). Keep that as a separate CLI surface.
+- `metagit nav` / `navigate` / `select` intentionally uses FuzzyFinder for project then repo (not in-TUI ListViews). Keep that as a separate CLI surface. Top-level `select` aliases `nav`; it is not `metagit project select`.
 - Quit bindings need `priority=True`; wrap `run_tui` against `KeyboardInterrupt`; catch `SuspendNotSupported` in interactive helpers.
 
 ## Verify

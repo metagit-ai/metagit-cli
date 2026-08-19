@@ -7,6 +7,7 @@ from pathlib import Path
 
 import click
 
+from metagit.cli.config_path import resolve_cli_manifest_path, resolve_cli_project
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.project.search_service import ManagedRepoSearchService
 
@@ -28,12 +29,18 @@ def _parse_tag_filters(tag_values: tuple[str, ...]) -> dict[str, str] | None:
 @click.argument("query")
 @click.option(
     "--definition",
+    "-c",
     "definition_path",
     default=".metagit.yml",
     show_default=True,
     help="Path to the Metagit workspace definition file",
 )
-@click.option("--project", default=None, help="Limit to a single workspace project name")
+@click.option(
+    "--project",
+    "-p",
+    default=None,
+    help="Limit to a single workspace project name",
+)
 @click.option("--exact", is_flag=True, default=False, help="Require exact repository name match")
 @click.option(
     "--synced-only",
@@ -83,7 +90,8 @@ def search(
     path_only: bool,
 ) -> None:
     """Search managed repositories declared in `.metagit.yml` (alias: `metagit find`)."""
-    _ = ctx
+    definition_path = resolve_cli_manifest_path(definition_path, ctx)
+    project = resolve_cli_project(ctx, project)
     manager = MetagitConfigManager(definition_path)
     config = manager.load_config()
     if isinstance(config, Exception):

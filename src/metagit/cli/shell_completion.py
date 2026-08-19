@@ -38,16 +38,24 @@ def _definition_path_from_ctx(ctx: click.Context) -> Path:
     params = ctx.params or {}
     for key in _DEFINITION_PARAM_KEYS:
         raw = params.get(key)
-        if isinstance(raw, str) and raw.strip():
+        if isinstance(raw, str) and raw.strip() and raw != "metagit.config.yaml":
             return Path(raw).expanduser()
     parent = ctx.parent
     while parent is not None:
         params = parent.params or {}
         for key in _DEFINITION_PARAM_KEYS:
             raw = params.get(key)
-            if isinstance(raw, str) and raw.strip():
+            if isinstance(raw, str) and raw.strip() and raw != "metagit.config.yaml":
                 return Path(raw).expanduser()
+        obj = parent.obj if isinstance(getattr(parent, "obj", None), dict) else {}
+        raw = obj.get("definition_path")
+        if isinstance(raw, str) and raw.strip():
+            return Path(raw).expanduser()
         parent = parent.parent
+    obj = ctx.obj if isinstance(getattr(ctx, "obj", None), dict) else {}
+    raw = obj.get("definition_path")
+    if isinstance(raw, str) and raw.strip():
+        return Path(raw).expanduser()
     return Path(".metagit.yml")
 
 

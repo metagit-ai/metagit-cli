@@ -32,15 +32,14 @@ The umbrella `.metagit.yml` (workspace definition, often `kind: umbrella`) lives
 
 2. **List configured projects and repo counts**
    ```bash
-   metagit config info --config-path /path/to/.metagit.yml
-   metagit project list --config /path/to/.metagit.yml --project default
+   metagit -c /path/to/.metagit.yml project list --json
    ```
-   Repeat `--project` for each project name returned by `config info`.
+   Use `-p PROJECT` only when you want one project's YAML detail, not the catalog.
 
 3. **Search managed repos by name, URL fragment, or tag**
    ```bash
-   metagit search "<proposed-name-or-url>" --definition /path/to/.metagit.yml
-   metagit search "<name>" --definition /path/to/.metagit.yml --json
+   metagit -c /path/to/.metagit.yml search "<proposed-name-or-url>" --json
+   metagit search "<name>" -c /path/to/.metagit.yml --json
    ```
 
 4. **Inspect on disk** (workspace path from app config, default `./.metagit/`)

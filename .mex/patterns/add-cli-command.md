@@ -31,6 +31,7 @@ Load `context/architecture.md` and `context/conventions.md` first. Confirm wheth
 - Putting substantial logic directly in Click handlers increases duplication and weakens testing boundaries.
 - Forgetting registration in `main.py` makes command exist in code but unavailable in CLI.
 - Command output contracts should remain stable (especially in automation-facing flows).
+- Click group options (`project -p`, `workspace --config`) must sit **between** the group name and the leaf. Agents put flags on the root or after the leaf — declare root `-p`/`-c` and duplicate `-c`/`-p` on high-traffic leaves (`project list`, `workspace list`).
 
 ## Verify
 - [ ] Command appears in `uv run metagit --help` or relevant group help output.

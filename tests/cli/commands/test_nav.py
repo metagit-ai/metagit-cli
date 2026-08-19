@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""CLI tests for metagit nav / navigate."""
+"""CLI tests for metagit nav / navigate / select."""
 
 from pathlib import Path
 
@@ -98,6 +98,28 @@ def test_navigate_alias_works(tmp_path: Path, monkeypatch) -> None:
             "--config",
             str(app_cfg),
             "navigate",
+            "-c",
+            str(metagit_yml),
+            "-p",
+            "edge",
+            "--repo",
+            "gateway",
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0
+
+
+def test_select_alias_works(tmp_path: Path, monkeypatch) -> None:
+    app_cfg, metagit_yml = _write_multi_project_fixture(tmp_path)
+    monkeypatch.setattr("metagit.cli.commands.nav.open_editor", lambda *_a, **_k: None)
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--config",
+            str(app_cfg),
+            "select",
             "-c",
             str(metagit_yml),
             "-p",

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CapabilityEnvelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "capability_id",
+    "title",
+    "project",
+    "repository",
+    "cwd",
+    "instructions",
+    "workflow",
+    "gates",
+    "expected_output",
+    "generated_at",
+    "source"
+  ],
+  "properties": {
+    "ok": {"type": "boolean"},
+    "schema_version": {"type": "string"},
+    "capability_id": {"type": "string"},
+    "title": {"type": "string"},
+    "project": {"type": "string"},
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "repo"],
+      "properties": {
+        "project": {"type": "string"},
+        "repo": {"type": "string"},
+        "path": {"type": ["string", "null"]},
+        "url": {"type": ["string", "null"]},
+        "allowed_paths": {"type": "array", "items": {"type": "string"}},
+        "writable_paths": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "cwd": {"type": "string"},
+    "allowed_paths": {"type": "array", "items": {"type": "string"}},
+    "writable_paths": {"type": "array", "items": {"type": "string"}},
+    "instructions": {"type": "string"},
+    "instruction_layers": {"type": "array", "items": {"type": "object"}},
+    "skills": {"type": "array", "items": {"type": "string"}},
+    "mcp": {"type": "array", "items": {"type": "string"}},
+    "rules": {"type": "array", "items": {"type": "string"}},
+    "required_tools": {"type": "array", "items": {"type": "string"}},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "workflow": {"type": "array", "items": {"type": "object"}},
+    "gates": {"type": "array", "items": {"type": "string"}},
+    "expected_output": {
+      "type": "string",
+      "enum": ["pull_request", "merge_request", "patch", "report", "none"]
+    },
+    "context_artifact_path": {"type": ["string", "null"]},
+    "tier": {"type": "string"},
+    "executor": {"type": ["string", "null"]},
+    "task_id": {"type": ["string", "null"]},
+    "objective_id": {"type": ["string", "null"]},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "generated_at": {"type": "string"},
+    "source": {"type": "string", "const": "metagit"}
+  }
+}

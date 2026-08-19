@@ -67,6 +67,7 @@ from metagit.core.merge.service import MergeOrchestrator
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
+from metagit.core.routing.capability_service import CapabilityService
 from metagit.core.routing.routing_service import RoutingService
 from metagit.core.scheduler.service import SchedulerService
 from metagit.core.semantic.service import SemanticGraphService
@@ -213,6 +214,48 @@ class MetagitMcpRuntime:
                 "properties": {
                     "id": {"type": "string"},
                     "dry_run": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_capability_list": {
+                "type": "object",
+                "properties": {
+                    "project": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_capability_resolve": {
+                "type": "object",
+                "required": ["ask"],
+                "properties": {
+                    "ask": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "limit": {"type": "integer", "minimum": 1},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_capability_show": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                    "id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_capability_compile": {
+                "type": "object",
+                "required": ["id", "project"],
+                "properties": {
+                    "id": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "task_id": {"type": "string"},
+                    "graph_id": {"type": "string"},
+                    "objective_id": {"type": "string"},
+                    "tier": {"type": "integer", "enum": [0, 1, 2]},
+                    "budget": {"type": "integer", "minimum": 1},
+                    "with_context": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -1678,6 +1721,104 @@ class MetagitMcpRuntime:
                 "dry_run": dry_run,
                 "updated": [row.model_dump(mode="json", exclude_none=True) for row in rows],
             }
+
+        if name == "metagit_capability_list":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("capability list requires an active workspace")
+            service = CapabilityService(config, workspace_root=status.root_path)
+            rows = service.list_capabilities(project=arguments.get("project"))
+            return {
+                "ok": True,
+                "count": len(rows),
+                "capabilities": [row.model_dump(mode="json", exclude_none=True) for row in rows],
+            }
+
+        if name == "metagit_capability_resolve":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("capability resolve requires an active workspace")
+            ask = str(arguments.get("ask", "")).strip()
+            if not ask:
+                raise InvalidToolArgumentsError("ask is required")
+            limit_raw = arguments.get("limit", 5)
+            try:
+                limit_val = int(limit_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("limit must be an integer") from exc
+            if limit_val < 1:
+                raise InvalidToolArgumentsError("limit must be at least 1")
+            service = CapabilityService(config, workspace_root=status.root_path)
+            matches = service.resolve(
+                ask,
+                project=arguments.get("project"),
+                repo=arguments.get("repo"),
+                limit=limit_val,
+            )
+            return {
+                "ok": True,
+                "count": len(matches),
+                "matches": [row.model_dump(mode="json") for row in matches],
+            }
+
+        if name == "metagit_capability_show":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("capability show requires an active workspace")
+            capability_id = str(arguments.get("id", "")).strip()
+            if not capability_id:
+                raise InvalidToolArgumentsError("id is required")
+            service = CapabilityService(config, workspace_root=status.root_path)
+            try:
+                payload = service.show_capability(capability_id)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return {
+                "class": payload["class"].model_dump(mode="json", exclude_none=True),
+                "runs": [run.model_dump(mode="json", by_alias=True, exclude_none=True) for run in payload["runs"]],
+                "run_count": payload["run_count"],
+            }
+
+        if name == "metagit_capability_compile":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("capability compile requires an active workspace")
+            capability_id = str(arguments.get("id", "")).strip()
+            project_name = str(arguments.get("project", "")).strip()
+            if not capability_id:
+                raise InvalidToolArgumentsError("id is required")
+            if not project_name:
+                raise InvalidToolArgumentsError("project is required")
+            tier_raw = arguments.get("tier", 1)
+            try:
+                tier_val = int(tier_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("tier must be an integer") from exc
+            if tier_val not in (0, 1, 2):
+                raise InvalidToolArgumentsError("tier must be 0, 1, or 2")
+            budget_raw = arguments.get("budget")
+            budget: int | None = None
+            if budget_raw is not None:
+                try:
+                    budget = int(budget_raw)
+                except (TypeError, ValueError) as exc:
+                    raise InvalidToolArgumentsError("budget must be an integer") from exc
+                if budget < 1:
+                    raise InvalidToolArgumentsError("budget must be >= 1")
+            service = CapabilityService(config, workspace_root=status.root_path)
+            try:
+                envelope = service.compile(
+                    capability_id,
+                    project=project_name,
+                    repo=arguments.get("repo") if isinstance(arguments.get("repo"), str) else None,
+                    task_id=arguments.get("task_id") if isinstance(arguments.get("task_id"), str) else None,
+                    graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
+                    objective_id=(
+                        arguments.get("objective_id") if isinstance(arguments.get("objective_id"), str) else None
+                    ),
+                    tier=cast(Literal[0, 1, 2], tier_val),
+                    budget=budget,
+                    with_context=bool(arguments.get("with_context", True)),
+                )
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return envelope.model_dump(mode="json")
 
         if name == "metagit_upstream_hints":
             blocker = str(arguments.get("blocker", "")).strip()
