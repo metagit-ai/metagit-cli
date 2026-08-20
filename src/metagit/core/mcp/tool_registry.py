@@ -52,6 +52,8 @@ class ToolRegistry:
         "metagit_approval_list",
         "metagit_approval_resolve",
         "metagit_repo_card",
+        "metagit_repo_ci_show",
+        "metagit_repo_ci_detect",
         "metagit_workspace_discover",
         "metagit_workspace_list",
         "metagit_workspace_projects_list",

@@ -68,7 +68,7 @@ def enrich_discovered_repos(
 
     enriched: list[DiscoveredRepo] = []
     for repo in repos:
-        owner, name = _owner_repo_from_full_name(repo.full_name)
+        owner, name = _owner_repo_from_full_name(repo.full_name, spec.provider)
         metadata_result = provider.get_repository_metadata(owner, name)
         if isinstance(metadata_result, Exception):
             logger.warning(f"Metadata enrichment failed for {repo.full_name}: {metadata_result}")
@@ -88,14 +88,21 @@ def enrich_discovered_repos(
     return enriched
 
 
-def _owner_repo_from_full_name(full_name: str) -> tuple[str, str]:
+def _owner_repo_from_full_name(
+    full_name: str,
+    provider: SourceProvider | None = None,
+) -> tuple[str, str]:
     segments = [segment for segment in full_name.split("/") if segment]
     if len(segments) < 2:
         return full_name, full_name
+    if provider == SourceProvider.AZURE_DEVOPS and len(segments) >= 3:
+        return "/".join(segments[:-1]), segments[-1]
     return segments[0], segments[-1]
 
 
 def _provider_display_name(provider: SourceProvider) -> str:
     if provider == SourceProvider.GITHUB:
         return "GitHub"
+    if provider == SourceProvider.AZURE_DEVOPS:
+        return "Azure DevOps"
     return "GitLab"

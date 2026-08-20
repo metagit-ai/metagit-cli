@@ -7,6 +7,7 @@ import logging
 import os
 from typing import Optional
 
+from metagit.core.providers.azure_devops import AzureDevOpsGitProvider
 from metagit.core.providers.base import GitProvider
 from metagit.core.providers.github import GitHubProvider
 from metagit.core.providers.gitlab import GitLabProvider
@@ -89,6 +90,17 @@ class ProviderRegistry:
             except ImportError:
                 pass  # GitLab provider not available
 
+        # Configure Azure DevOps provider
+        if app_config.providers.azure_devops.enabled and app_config.providers.azure_devops.api_token:
+            try:
+                ado_provider = AzureDevOpsGitProvider(
+                    api_token=app_config.providers.azure_devops.api_token,
+                    base_url=app_config.providers.azure_devops.base_url,
+                )
+                self.register(ado_provider)
+            except ImportError:
+                pass
+
     def configure_from_environment(self) -> None:
         """Configure providers from environment variables (legacy method)."""
         # GitHub provider
@@ -106,6 +118,14 @@ class ProviderRegistry:
             try:
                 gitlab_provider = GitLabProvider(api_token=gitlab_token)
                 self.register(gitlab_provider)
+            except ImportError:
+                pass
+
+        ado_token = os.getenv("METAGIT_AZURE_DEVOPS_API_TOKEN") or os.getenv("AZURE_DEVOPS_EXT_PAT")
+        if ado_token:
+            try:
+                ado_provider = AzureDevOpsGitProvider(api_token=ado_token)
+                self.register(ado_provider)
             except ImportError:
                 pass
 

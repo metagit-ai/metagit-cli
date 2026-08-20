@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-08-06
+last_updated: 2026-08-20
 ---
 
 # Session Bootstrap
@@ -27,6 +27,7 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **Azure DevOps source + agent CI topology (2026-08-20):** `SourceProvider.azure_devops` discovery/import; AppConfig `providers.azure_devops`; durable `ProjectPath.ci` (`RepoCiTarget`) with `CiTargetResolver`; CLI `metagit project repo ci show|detect|set`; MCP `metagit_repo_ci_show` / `metagit_repo_ci_detect`; repo cards include `ci` summary. Live ADO pipeline monitoring in the web CI/CD tab remains deferred (Phase 2). Design [docs/superpowers/specs/2026-08-20-azure-devops-ci-topology-design.md](../docs/superpowers/specs/2026-08-20-azure-devops-ci-topology-design.md); reference [docs/reference/ci-targets.md](../docs/reference/ci-targets.md).
 - **Release hygiene hardening (2026-08-10):** semantic release now requires non-empty `CHANGELOG.md` `## Unreleased` notes before creating a new tag, promotes and commits both root and docs changelog copies (`docs/changelog.md`), and ignores changelog-only promotion pushes to avoid noisy reruns. Added `scripts/cleanup_github_releases.py` plus `task releases:cleanup:{preview,apply,apply-with-tags}` for safe GitHub release pruning with semver floor and keep-latest retention controls.
 - **ADHD-friendly objective resume flow (2026-08-08):** `context objective set` supports `--human-notes`, `--left-off`, `--next`, `--blockers`, and `--notes-file`; new `context objective edit` updates single fields quickly; new `context pause` captures in-progress handoff notes; new `context resume [filter]` selects best objective (prefer `in_progress`, newest `updated_at`) with JSON/human output; objective repos normalize to manifest-relative `./...` when inside workspace root and remain absolute when external.
 - **Nav FuzzyFinder quit + empty list root cause (2026-08-06, `fix/nav-fuzzyfinder-quit-and-install`):** empty nav project list was `FuzzyFinderConfig.get_item_opacity` using `self.config.item_opacity` (AttributeError on string items → search wiped results). Also: priority quit bindings; PATH tool reinstalled from local tree; `nav -c` expands `~`.

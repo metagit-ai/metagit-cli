@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import requests
 
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.project.ci_target_resolver import CiTargetResolver
 from metagit.core.project.models import ProjectPath
 from metagit.core.project.source_enrichment import (
     enrich_discovered_repos,
@@ -45,6 +46,8 @@ class SourceSyncService:
                 raw = self._discover_github(spec)
             elif spec.provider == SourceProvider.GITLAB:
                 raw = self._discover_gitlab(spec)
+            elif spec.provider == SourceProvider.AZURE_DEVOPS:
+                raw = self._discover_azure_devops(spec)
             else:
                 return Exception(f"Unsupported provider: {spec.provider}")
 
@@ -260,6 +263,114 @@ class SourceSyncService:
             page += 1
         return discovered
 
+    def _discover_azure_devops(self, spec: SourceSpec) -> Union[List[DiscoveredRepo], Exception]:
+        provider_cfg = self._app_config.providers.azure_devops
+        if not provider_cfg.enabled:
+            return Exception("Azure DevOps provider is disabled in app config")
+        if not provider_cfg.api_token:
+            return Exception("Azure DevOps API token is not configured")
+        organization = (spec.organization or "").strip()
+        if not organization:
+            return Exception("Azure DevOps organization is required")
+
+        session = requests.Session()
+        session.auth = ("", provider_cfg.api_token)
+        session.headers.update({"Accept": "application/json"})
+        base = provider_cfg.base_url.rstrip("/")
+        api_version = "7.1"
+
+        try:
+            if spec.project:
+                projects = [{"name": spec.project}]
+            else:
+                if not spec.recursive:
+                    return Exception(
+                        "Azure DevOps discovery without --project requires --recursive "
+                        "to list repositories across organization projects"
+                    )
+                projects = self._ado_list_projects(session, base, organization, api_version)
+        except Exception as exc:
+            return exc
+
+        discovered: List[DiscoveredRepo] = []
+        for project in projects:
+            project_name = str(project.get("name") or "").strip()
+            if not project_name:
+                continue
+            try:
+                repos = self._ado_list_repos(
+                    session,
+                    base,
+                    organization,
+                    project_name,
+                    api_version,
+                )
+            except Exception as exc:
+                return exc
+            for repo in repos:
+                name = str(repo.get("name") or "").strip()
+                if not name:
+                    continue
+                remote_url = str(repo.get("remoteUrl") or repo.get("webUrl") or "").strip()
+                if not remote_url:
+                    continue
+                is_disabled = bool(repo.get("isDisabled", False))
+                candidate = DiscoveredRepo(
+                    provider=SourceProvider.AZURE_DEVOPS,
+                    namespace=f"{organization}/{project_name}",
+                    full_name=f"{organization}/{project_name}/{name}",
+                    name=name,
+                    clone_url=remote_url,
+                    default_branch=(str(repo.get("defaultBranch") or "").replace("refs/heads/", "") or None),
+                    description=None,
+                    repo_id=str(repo.get("id")) if repo.get("id") is not None else None,
+                    archived=is_disabled,
+                    fork=False,
+                    private=True,
+                    language=None,
+                    topics=[],
+                )
+                discovered.append(candidate)
+        return discovered
+
+    def _ado_list_projects(
+        self,
+        session: requests.Session,
+        base: str,
+        organization: str,
+        api_version: str,
+    ) -> List[dict]:
+        endpoint = f"{base}/{organization}/_apis/projects"
+        projects: List[dict] = []
+        continuation: Optional[str] = None
+        while True:
+            params: Dict[str, object] = {"api-version": api_version, "$top": 100}
+            if continuation:
+                params["continuationToken"] = continuation
+            response = session.get(endpoint, params=params, timeout=30)
+            response.raise_for_status()
+            payload = response.json()
+            projects.extend(list(payload.get("value") or []))
+            continuation = response.headers.get("x-ms-continuationtoken")
+            if not continuation:
+                break
+        return projects
+
+    def _ado_list_repos(
+        self,
+        session: requests.Session,
+        base: str,
+        organization: str,
+        project: str,
+        api_version: str,
+    ) -> List[dict]:
+        project_ref = requests.utils.quote(project, safe="")
+        endpoint = f"{base}/{organization}/{project_ref}/_apis/git/repositories"
+        response = session.get(endpoint, params={"api-version": api_version}, timeout=30)
+        response.raise_for_status()
+        payload = response.json()
+        return list(payload.get("value") or [])
+
     def _to_project_path(
         self,
         spec: SourceSpec,
@@ -267,6 +378,7 @@ class SourceSyncService:
         manifest_name: str,
     ) -> ProjectPath:
         incoming_tags = topics_to_tags(repo.topics, repo.provider.value)
+        ci_target = CiTargetResolver().detect_for_url(repo.clone_url)
         return ProjectPath(
             name=manifest_name,
             description=repo.description,
@@ -278,6 +390,7 @@ class SourceSyncService:
             source_repo_id=repo.repo_id,
             source_id=spec.source_id,
             tags=incoming_tags,
+            ci=ci_target,
         )
 
     def _find_existing_by_repo_id(

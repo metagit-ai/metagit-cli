@@ -40,6 +40,8 @@ def build_source_spec_from_cli(
     org: Optional[str],
     user: Optional[str],
     group: Optional[str],
+    organization: Optional[str],
+    project: Optional[str],
     recursive: bool,
     include_archived: bool,
     include_forks: bool,
@@ -57,6 +59,8 @@ def build_source_spec_from_cli(
         org=org,
         user=user,
         group=group,
+        organization=organization,
+        project=project,
         recursive=recursive,
         include_archived=include_archived,
         include_forks=include_forks,
@@ -100,13 +104,15 @@ def source(ctx: click.Context) -> None:
 @source.command("sync")
 @click.option(
     "--provider",
-    type=click.Choice(["github", "gitlab"]),
+    type=click.Choice(["github", "gitlab", "azure_devops"]),
     required=False,
     help="Source provider (not used with --from-manifest)",
 )
 @click.option("--org", help="GitHub organization to discover repositories from")
 @click.option("--user", help="GitHub user to discover repositories from")
 @click.option("--group", help="GitLab group path to discover repositories from")
+@click.option("--organization", help="Azure DevOps organization")
+@click.option("--ado-project", "ado_project", help="Azure DevOps project filter")
 @click.option(
     "--mode",
     type=click.Choice([mode.value for mode in SourceSyncMode]),
@@ -221,6 +227,8 @@ def source_sync(
     org: Optional[str],
     user: Optional[str],
     group: Optional[str],
+    organization: Optional[str],
+    ado_project: Optional[str],
     mode: str,
     recursive: bool,
     include_archived: bool,
@@ -274,6 +282,8 @@ def source_sync(
                 org=org,
                 user=user,
                 group=group,
+                organization=organization,
+                project=ado_project,
                 recursive=recursive,
                 include_archived=include_archived,
                 include_forks=include_forks,
@@ -303,6 +313,8 @@ def source_sync(
                 org=spec.org,
                 user=spec.user,
                 group=spec.group,
+                organization=spec.organization,
+                project=spec.project,
                 mode=SourceSyncMode(mode),
                 recursive=spec.recursive,
                 ensure=spec.ensure,

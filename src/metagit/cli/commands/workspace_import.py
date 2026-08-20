@@ -21,13 +21,15 @@ from metagit.cli.commands.project_source import source_sync
 )
 @click.option(
     "--provider",
-    type=click.Choice(["github", "gitlab"]),
+    type=click.Choice(["github", "gitlab", "azure_devops"]),
     required=True,
     help="Source provider",
 )
 @click.option("--org", help="GitHub organization")
 @click.option("--user", help="GitHub user")
 @click.option("--group", help="GitLab group path")
+@click.option("--organization", help="Azure DevOps organization")
+@click.option("--ado-project", "ado_project", help="Azure DevOps project filter")
 @click.option(
     "--ignore",
     "ignore_patterns",
@@ -62,12 +64,14 @@ def workspace_import(
     org: Optional[str],
     user: Optional[str],
     group: Optional[str],
+    organization: Optional[str],
+    ado_project: Optional[str],
     ignore_patterns: tuple[str, ...],
     include_patterns: tuple[str, ...],
     sync: bool,
     as_json: bool,
 ) -> None:
-    """Bulk-import repos from a GitHub org/user or GitLab group (additive + ensure)."""
+    """Bulk-import repos from GitHub, GitLab, or Azure DevOps (additive + ensure)."""
     ctx.obj["project"] = project
     ctx.invoke(
         source_sync,
@@ -75,6 +79,8 @@ def workspace_import(
         org=org,
         user=user,
         group=group,
+        organization=organization,
+        ado_project=ado_project,
         mode="additive",
         recursive=True,
         include_archived=False,
@@ -90,4 +96,8 @@ def workspace_import(
         yes=False,
         sync=sync,
         as_json=as_json,
+        from_manifest=False,
+        source_id=None,
+        write_source=False,
+        force=False,
     )

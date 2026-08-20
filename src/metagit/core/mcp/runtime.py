@@ -64,6 +64,7 @@ from metagit.core.mcp.tools.bootstrap_plan_only import (
 from metagit.core.mcp.tools.workspace_status import metagit_workspace_status
 from metagit.core.merge.models import MergeRequest
 from metagit.core.merge.service import MergeOrchestrator
+from metagit.core.project.ci_target_service import CiTargetService
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
 from metagit.core.release.upgrade_service import VersionUpgradeService
@@ -1017,6 +1018,26 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_repo_ci_show": {
+                "type": "object",
+                "required": ["project_name", "repo_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_repo_ci_detect": {
+                "type": "object",
+                "required": ["project_name", "repo_name"],
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "repo_name": {"type": "string"},
+                    "apply": {"type": "boolean"},
+                    "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_workspace_discover": {
                 "type": "object",
                 "properties": {
@@ -1183,10 +1204,15 @@ class MetagitMcpRuntime:
                 "required": ["project_name", "provider"],
                 "properties": {
                     "project_name": {"type": "string"},
-                    "provider": {"type": "string", "enum": ["github", "gitlab"]},
+                    "provider": {
+                        "type": "string",
+                        "enum": ["github", "gitlab", "azure_devops"],
+                    },
                     "org": {"type": "string"},
                     "user": {"type": "string"},
                     "group": {"type": "string"},
+                    "organization": {"type": "string"},
+                    "project": {"type": "string"},
                     "mode": {
                         "type": "string",
                         "enum": ["discover", "additive", "reconcile"],
@@ -2326,6 +2352,33 @@ class MetagitMcpRuntime:
             except ValueError as exc:
                 raise InvalidToolArgumentsError(str(exc)) from exc
             return card.model_dump(mode="json")
+
+        if name in {"metagit_repo_ci_show", "metagit_repo_ci_detect"}:
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("repo ci requires an active workspace")
+            proj_name = str(arguments.get("project_name", "")).strip()
+            rname = str(arguments.get("repo_name", "")).strip()
+            if not proj_name:
+                raise InvalidToolArgumentsError("project_name is required")
+            if not rname:
+                raise InvalidToolArgumentsError("repo_name is required")
+            config_path, _ = self._catalog_paths(status=status, config=config)
+            service = CiTargetService()
+            if name == "metagit_repo_ci_show":
+                return service.show(
+                    config=config,
+                    project_name=proj_name,
+                    repo_name=rname,
+                    config_path=config_path,
+                )
+            return service.detect(
+                config=config,
+                project_name=proj_name,
+                repo_name=rname,
+                config_path=config_path,
+                apply=bool(arguments.get("apply", False)),
+                force=bool(arguments.get("force", False)),
+            )
 
         if name == "metagit_workspace_discover":
             if not config or not status.root_path:

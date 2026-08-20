@@ -42,19 +42,19 @@
           "type": "string"
         },
         "cicd_file_data": {
-          "default": "/home/zloeber/Projects/zachs-assistant/.metagit/metagit-umbrella/metagit-cli/src/metagit/data/cicd-files.json",
+          "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/cicd-files.json",
           "description": "The path to the cicd file data",
           "title": "Cicd File Data",
           "type": "string"
         },
         "file_type_data": {
-          "default": "/home/zloeber/Projects/zachs-assistant/.metagit/metagit-umbrella/metagit-cli/src/metagit/data/file-types.json",
+          "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/file-types.json",
           "description": "The path to the file type data",
           "title": "File Type Data",
           "type": "string"
         },
         "package_manager_data": {
-          "default": "/home/zloeber/Projects/zachs-assistant/.metagit/metagit-umbrella/metagit-cli/src/metagit/data/package-managers.json",
+          "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/package-managers.json",
           "description": "The path to the package manager data",
           "title": "Package Manager Data",
           "type": "string"
@@ -154,6 +154,11 @@
               "api_token": "",
               "base_url": "https://gitlab.com/api/v4",
               "enabled": false
+            },
+            "azure_devops": {
+              "api_token": "",
+              "base_url": "https://dev.azure.com",
+              "enabled": false
             }
           },
           "description": "Git provider plugin configuration"
@@ -180,6 +185,32 @@
   ],
   "title": "AppConfigWrapper",
   "$defs": {
+    "AzureDevOpsProvider": {
+      "additionalProperties": false,
+      "description": "Model for Azure DevOps provider configuration in AppConfig.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Whether Azure DevOps provider is enabled",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "api_token": {
+          "default": "",
+          "description": "Azure DevOps personal access token (PAT)",
+          "title": "Api Token",
+          "type": "string"
+        },
+        "base_url": {
+          "default": "https://dev.azure.com",
+          "description": "Azure DevOps organization base URL (cloud or self-hosted)",
+          "title": "Base Url",
+          "type": "string"
+        }
+      },
+      "title": "AzureDevOpsProvider",
+      "type": "object"
+    },
     "Boundary": {
       "additionalProperties": false,
       "description": "Model for organization boundaries in AppConfig.",
@@ -393,6 +424,10 @@
         "gitlab": {
           "$ref": "#/$defs/GitLabProvider",
           "description": "GitLab provider configuration"
+        },
+        "azure_devops": {
+          "$ref": "#/$defs/AzureDevOpsProvider",
+          "description": "Azure DevOps provider configuration"
         }
       },
       "title": "Providers",

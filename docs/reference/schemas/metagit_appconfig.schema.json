@@ -1,5 +1,216 @@
 {
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agent_mode": {
+          "default": false,
+          "description": "When true, disable interactive UIs (fuzzy finder, prompts, editor). Overridden by METAGIT_AGENT_MODE when set.",
+          "title": "Agent Mode",
+          "type": "boolean"
+        },
+        "description": {
+          "default": "Metagit configuration",
+          "title": "Description",
+          "type": "string"
+        },
+        "editor": {
+          "default": "code",
+          "description": "The editor to use for the CLI",
+          "title": "Editor",
+          "type": "string"
+        },
+        "api_url": {
+          "default": "",
+          "description": "The API URL to use for the CLI",
+          "title": "Api Url",
+          "type": "string"
+        },
+        "api_version": {
+          "default": "",
+          "description": "Reserved for a future remote API contract version (METAGIT_API_VERSION)",
+          "title": "Api Version",
+          "type": "string"
+        },
+        "api_key": {
+          "default": "",
+          "description": "The API key to use for the CLI",
+          "title": "Api Key",
+          "type": "string"
+        },
+        "cicd_file_data": {
+          "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/cicd-files.json",
+          "description": "The path to the cicd file data",
+          "title": "Cicd File Data",
+          "type": "string"
+        },
+        "file_type_data": {
+          "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/file-types.json",
+          "description": "The path to the file type data",
+          "title": "File Type Data",
+          "type": "string"
+        },
+        "package_manager_data": {
+          "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/package-managers.json",
+          "description": "The path to the package manager data",
+          "title": "Package Manager Data",
+          "type": "string"
+        },
+        "llm": {
+          "$ref": "#/$defs/LLM",
+          "default": {
+            "enabled": false,
+            "provider": "openrouter",
+            "provider_model": "gpt-4o-mini",
+            "embedder": "ollama",
+            "embedder_model": "nomic-embed-text",
+            "api_key": ""
+          },
+          "description": "The LLM configuration"
+        },
+        "workspace": {
+          "$ref": "#/$defs/WorkspaceConfig",
+          "default": {
+            "path": "./.metagit",
+            "session_path": ".metagit/sessions",
+            "campaigns_path": "_campaigns",
+            "worktrees_path": ".worktrees",
+            "default_project": null,
+            "dedupe": {
+              "canonical_dir": "_canonical",
+              "enabled": false,
+              "scope": "workspace",
+              "strategy": "symlink"
+            },
+            "ui_show_preview": true,
+            "ui_menu_length": 10,
+            "ui_preview_height": 3,
+            "ui_ignore_hidden": true
+          },
+          "description": "The workspace configuration"
+        },
+        "profiles": {
+          "default": [
+            {
+              "name": "default",
+              "boundaries": [
+                {
+                  "name": "github",
+                  "values": []
+                },
+                {
+                  "name": "jfrog",
+                  "values": []
+                },
+                {
+                  "name": "gitlab",
+                  "values": []
+                },
+                {
+                  "name": "bitbucket",
+                  "values": []
+                },
+                {
+                  "name": "azure_devops",
+                  "values": []
+                },
+                {
+                  "name": "dockerhub",
+                  "values": []
+                },
+                {
+                  "name": "domain",
+                  "values": [
+                    "localhost",
+                    "127.0.0.1",
+                    "0.0.0.0",
+                    "192.168.*",
+                    "10.0.*",
+                    "172.16.*"
+                  ]
+                }
+              ]
+            }
+          ],
+          "description": "The profiles available to this appconfig",
+          "items": {
+            "$ref": "#/$defs/Profile"
+          },
+          "title": "Profiles",
+          "type": "array"
+        },
+        "providers": {
+          "$ref": "#/$defs/Providers",
+          "default": {
+            "github": {
+              "api_token": "",
+              "base_url": "https://api.github.com",
+              "enabled": false
+            },
+            "gitlab": {
+              "api_token": "",
+              "base_url": "https://gitlab.com/api/v4",
+              "enabled": false
+            },
+            "azure_devops": {
+              "api_token": "",
+              "base_url": "https://dev.azure.com",
+              "enabled": false
+            }
+          },
+          "description": "Git provider plugin configuration"
+        },
+        "state": {
+          "$ref": "#/$defs/StateConfig",
+          "description": "Workspace coordination state backend (objectives, handoffs, approvals)"
+        },
+        "merge": {
+          "$ref": "#/$defs/MergeConfig",
+          "description": "Merge orchestrator settings"
+        },
+        "default_profile": {
+          "type": "string",
+          "description": "Legacy profile selector (removed on load)"
+        }
+      },
+      "required": [],
+      "title": "AppConfig"
+    }
+  },
+  "required": [
+    "config"
+  ],
+  "title": "AppConfigWrapper",
   "$defs": {
+    "AzureDevOpsProvider": {
+      "additionalProperties": false,
+      "description": "Model for Azure DevOps provider configuration in AppConfig.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "Whether Azure DevOps provider is enabled",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "api_token": {
+          "default": "",
+          "description": "Azure DevOps personal access token (PAT)",
+          "title": "Api Token",
+          "type": "string"
+        },
+        "base_url": {
+          "default": "https://dev.azure.com",
+          "description": "Azure DevOps organization base URL (cloud or self-hosted)",
+          "title": "Base Url",
+          "type": "string"
+        }
+      },
+      "title": "AzureDevOpsProvider",
+      "type": "object"
+    },
     "Boundary": {
       "additionalProperties": false,
       "description": "Model for organization boundaries in AppConfig.",
@@ -213,6 +424,10 @@
         "gitlab": {
           "$ref": "#/$defs/GitLabProvider",
           "description": "GitLab provider configuration"
+        },
+        "azure_devops": {
+          "$ref": "#/$defs/AzureDevOpsProvider",
+          "description": "Azure DevOps provider configuration"
         }
       },
       "title": "Providers",
@@ -471,171 +686,5 @@
       "title": "WorkspaceDedupeStrategy",
       "type": "string"
     }
-  },
-  "additionalProperties": false,
-  "description": "Application-level settings (not the Metagit package release version \u2014 use `metagit version`).",
-  "properties": {
-    "agent_mode": {
-      "default": false,
-      "description": "When true, disable interactive UIs (fuzzy finder, prompts, editor). Overridden by METAGIT_AGENT_MODE when set.",
-      "title": "Agent Mode",
-      "type": "boolean"
-    },
-    "description": {
-      "default": "Metagit configuration",
-      "title": "Description",
-      "type": "string"
-    },
-    "editor": {
-      "default": "code",
-      "description": "The editor to use for the CLI",
-      "title": "Editor",
-      "type": "string"
-    },
-    "api_url": {
-      "default": "",
-      "description": "The API URL to use for the CLI",
-      "title": "Api Url",
-      "type": "string"
-    },
-    "api_version": {
-      "default": "",
-      "description": "Reserved for a future remote API contract version (METAGIT_API_VERSION)",
-      "title": "Api Version",
-      "type": "string"
-    },
-    "api_key": {
-      "default": "",
-      "description": "The API key to use for the CLI",
-      "title": "Api Key",
-      "type": "string"
-    },
-    "cicd_file_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/cicd-files.json",
-      "description": "The path to the cicd file data",
-      "title": "Cicd File Data",
-      "type": "string"
-    },
-    "file_type_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/file-types.json",
-      "description": "The path to the file type data",
-      "title": "File Type Data",
-      "type": "string"
-    },
-    "package_manager_data": {
-      "default": "/Users/zacharyloeber/Zach-Projects/Personal/active/metagit-cli/src/metagit/data/package-managers.json",
-      "description": "The path to the package manager data",
-      "title": "Package Manager Data",
-      "type": "string"
-    },
-    "llm": {
-      "$ref": "#/$defs/LLM",
-      "default": {
-        "enabled": false,
-        "provider": "openrouter",
-        "provider_model": "gpt-4o-mini",
-        "embedder": "ollama",
-        "embedder_model": "nomic-embed-text",
-        "api_key": ""
-      },
-      "description": "The LLM configuration"
-    },
-    "workspace": {
-      "$ref": "#/$defs/WorkspaceConfig",
-      "default": {
-        "path": "./.metagit",
-        "session_path": ".metagit/sessions",
-        "campaigns_path": "_campaigns",
-        "worktrees_path": ".worktrees",
-        "default_project": null,
-        "dedupe": {
-          "canonical_dir": "_canonical",
-          "enabled": false,
-          "scope": "workspace",
-          "strategy": "symlink"
-        },
-        "ui_show_preview": true,
-        "ui_menu_length": 10,
-        "ui_preview_height": 3,
-        "ui_ignore_hidden": true
-      },
-      "description": "The workspace configuration"
-    },
-    "profiles": {
-      "default": [
-        {
-          "name": "default",
-          "boundaries": [
-            {
-              "name": "github",
-              "values": []
-            },
-            {
-              "name": "jfrog",
-              "values": []
-            },
-            {
-              "name": "gitlab",
-              "values": []
-            },
-            {
-              "name": "bitbucket",
-              "values": []
-            },
-            {
-              "name": "azure_devops",
-              "values": []
-            },
-            {
-              "name": "dockerhub",
-              "values": []
-            },
-            {
-              "name": "domain",
-              "values": [
-                "localhost",
-                "127.0.0.1",
-                "0.0.0.0",
-                "192.168.*",
-                "10.0.*",
-                "172.16.*"
-              ]
-            }
-          ]
-        }
-      ],
-      "description": "The profiles available to this appconfig",
-      "items": {
-        "$ref": "#/$defs/Profile"
-      },
-      "title": "Profiles",
-      "type": "array"
-    },
-    "providers": {
-      "$ref": "#/$defs/Providers",
-      "default": {
-        "github": {
-          "api_token": "",
-          "base_url": "https://api.github.com",
-          "enabled": false
-        },
-        "gitlab": {
-          "api_token": "",
-          "base_url": "https://gitlab.com/api/v4",
-          "enabled": false
-        }
-      },
-      "description": "Git provider plugin configuration"
-    },
-    "state": {
-      "$ref": "#/$defs/StateConfig",
-      "description": "Workspace coordination state backend (objectives, handoffs, approvals)"
-    },
-    "merge": {
-      "$ref": "#/$defs/MergeConfig",
-      "description": "Merge orchestrator settings"
-    }
-  },
-  "title": "AppConfig",
-  "type": "object"
+  }
 }
