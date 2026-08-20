@@ -88,6 +88,25 @@ graph:
   metadata:
     source: metagit-config-example
 ...
+# Routing engine catalog/run paths and promotion policy
+routing:
+  # Directory containing one YAML file per request class
+  catalog: example-value
+...
+  # Directory containing one YAML file per execution run
+  runs: example-value
+...
+  # Prefix used when creating request-class identifiers
+  id_prefix: example-value
+...
+  policy:
+    # Consecutive landed runs needed for promotion
+    promote_after_clean: 0
+    # Outcomes that trigger immediate demotion
+    demote_on:
+      - bounced
+    # Window for retaining landed run detail before optional roll-up
+    retain_success_days: 0
 # License information
 license:
   # License type
@@ -300,6 +319,43 @@ paths:
 ...
       # ISO-8601 timestamp of the last identity refresh from the source
       refreshed_at: '2026-01-01T00:00:00+00:00'
+    # Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)
+    ci:
+      # CI platform identifier
+      provider: github
+      # Repo-relative CI configuration file paths
+      config_paths:
+        - example-value
+...
+      # API or web host (e.g. dev.azure.com or self-hosted ADO)
+      host: example-value
+...
+      # Azure DevOps organization
+      organization: example-value
+...
+      # Azure DevOps project (may differ from git project)
+      project: example-value
+...
+      # Azure DevOps repository name
+      repository: example-value
+...
+      # Optional ADO pipeline/build definition ids for overrides
+      definition_ids:
+        - example-value
+...
+      # GitHub owner/org
+      owner: example-value
+...
+      # GitHub repository name
+      name: example-name
+...
+      # GitLab project path with namespace
+      project_path: example-value
+...
+      # detected from files/remote; declared or overridden by humans/agents
+      status: detected
+      # ISO-8601 timestamp of last detect or explicit set
+      updated_at: '2026-01-01T00:00:00+00:00'
 # Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.
 dependencies:
   -
@@ -381,6 +437,43 @@ dependencies:
 ...
       # ISO-8601 timestamp of the last identity refresh from the source
       refreshed_at: '2026-01-01T00:00:00+00:00'
+    # Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)
+    ci:
+      # CI platform identifier
+      provider: github
+      # Repo-relative CI configuration file paths
+      config_paths:
+        - example-value
+...
+      # API or web host (e.g. dev.azure.com or self-hosted ADO)
+      host: example-value
+...
+      # Azure DevOps organization
+      organization: example-value
+...
+      # Azure DevOps project (may differ from git project)
+      project: example-value
+...
+      # Azure DevOps repository name
+      repository: example-value
+...
+      # Optional ADO pipeline/build definition ids for overrides
+      definition_ids:
+        - example-value
+...
+      # GitHub owner/org
+      owner: example-value
+...
+      # GitHub repository name
+      name: example-name
+...
+      # GitLab project path with namespace
+      project_path: example-value
+...
+      # detected from files/remote; declared or overridden by humans/agents
+      status: detected
+      # ISO-8601 timestamp of last detect or explicit set
+      updated_at: '2026-01-01T00:00:00+00:00'
     # Dependency kind. Distinct from workspace repo entries; use tags on ProjectPath for managed repos.
     kind: docker_image
 # Additional project component paths that may be useful in other projects.
@@ -464,6 +557,43 @@ components:
 ...
       # ISO-8601 timestamp of the last identity refresh from the source
       refreshed_at: '2026-01-01T00:00:00+00:00'
+    # Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)
+    ci:
+      # CI platform identifier
+      provider: github
+      # Repo-relative CI configuration file paths
+      config_paths:
+        - example-value
+...
+      # API or web host (e.g. dev.azure.com or self-hosted ADO)
+      host: example-value
+...
+      # Azure DevOps organization
+      organization: example-value
+...
+      # Azure DevOps project (may differ from git project)
+      project: example-value
+...
+      # Azure DevOps repository name
+      repository: example-value
+...
+      # Optional ADO pipeline/build definition ids for overrides
+      definition_ids:
+        - example-value
+...
+      # GitHub owner/org
+      owner: example-value
+...
+      # GitHub repository name
+      name: example-name
+...
+      # GitLab project path with namespace
+      project_path: example-value
+...
+      # detected from files/remote; declared or overridden by humans/agents
+      status: detected
+      # ISO-8601 timestamp of last detect or explicit set
+      updated_at: '2026-01-01T00:00:00+00:00'
 # Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. Omit for single-repo application manifests; use top-level paths and dependencies instead.
 workspace:
   # Human-readable description of this workspace

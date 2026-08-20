@@ -141,6 +141,7 @@ class RepoCardService:
 
         stack = self._stack_hints(repo_path) if exists else []
         flags = self._health_flags(row=row, inspect_dict=inspected)
+        ci_summary = repo_entry.ci.summary_dict() if repo_entry and repo_entry.ci else None
 
         return RepoCardResult(
             project_name=str(row["project_name"]),
@@ -160,6 +161,7 @@ class RepoCardService:
             agent_instructions_excerpt=excerpt,
             stack_hints=stack,
             health_flags=flags,
+            ci=ci_summary,
         )
 
     def _git_fields_from_inspect(

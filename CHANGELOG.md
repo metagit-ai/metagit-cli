@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Azure DevOps as a declarative repo source (`azure_devops` in `workspace.projects[].sources[]` / `metagit project source sync`) with AppConfig `providers.azure_devops` and `METAGIT_AZURE_DEVOPS_*` / `AZURE_DEVOPS_EXT_PAT` token wiring.
+- Durable agent-facing CI topology on managed repos (`ProjectPath.ci` / `RepoCiTarget`): `metagit project repo ci show|detect|set`, MCP `metagit_repo_ci_show` / `metagit_repo_ci_detect`, and `ci` summaries on tier-1 repo cards. See [docs/reference/ci-targets.md](docs/reference/ci-targets.md).
 
 
 ## [0.28.3] - 2026-08-12

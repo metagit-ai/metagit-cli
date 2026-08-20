@@ -188,11 +188,31 @@ class GitLabProvider(BaseModel):
         extra = "forbid"
 
 
+class AzureDevOpsProvider(BaseModel):
+    """Model for Azure DevOps provider configuration in AppConfig."""
+
+    enabled: bool = Field(default=False, description="Whether Azure DevOps provider is enabled")
+    api_token: str = Field(default="", description="Azure DevOps personal access token (PAT)")
+    base_url: str = Field(
+        default="https://dev.azure.com",
+        description="Azure DevOps organization base URL (cloud or self-hosted)",
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        extra = "forbid"
+
+
 class Providers(BaseModel):
     """Model for Git provider configuration in AppConfig."""
 
     github: GitHubProvider = Field(default_factory=GitHubProvider, description="GitHub provider configuration")
     gitlab: GitLabProvider = Field(default_factory=GitLabProvider, description="GitLab provider configuration")
+    azure_devops: AzureDevOpsProvider = Field(
+        default_factory=AzureDevOpsProvider,
+        description="Azure DevOps provider configuration",
+    )
 
     class Config:
         """Pydantic configuration."""
@@ -463,6 +483,16 @@ class AppConfig(BaseModel):
             config.providers.gitlab.api_token = os.getenv("METAGIT_GITLAB_API_TOKEN")
         if os.getenv("METAGIT_GITLAB_BASE_URL"):
             config.providers.gitlab.base_url = os.getenv("METAGIT_GITLAB_BASE_URL")
+
+        # Azure DevOps provider configuration
+        if os.getenv("METAGIT_AZURE_DEVOPS_ENABLED"):
+            config.providers.azure_devops.enabled = os.getenv("METAGIT_AZURE_DEVOPS_ENABLED", "").lower() == "true"
+        if os.getenv("METAGIT_AZURE_DEVOPS_API_TOKEN"):
+            config.providers.azure_devops.api_token = os.getenv("METAGIT_AZURE_DEVOPS_API_TOKEN", "")
+        elif os.getenv("AZURE_DEVOPS_EXT_PAT"):
+            config.providers.azure_devops.api_token = os.getenv("AZURE_DEVOPS_EXT_PAT", "")
+        if os.getenv("METAGIT_AZURE_DEVOPS_BASE_URL"):
+            config.providers.azure_devops.base_url = os.getenv("METAGIT_AZURE_DEVOPS_BASE_URL", "")
 
         return config
 

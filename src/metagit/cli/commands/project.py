@@ -10,6 +10,7 @@ import yaml
 
 from metagit.cli.commands.project_derived import derived
 from metagit.cli.commands.project_repo import execute_repo_select, repo
+from metagit.cli.commands.project_repo_ci import repo_ci
 from metagit.cli.commands.project_source import source
 from metagit.cli.json_output import (
     emit_json,
@@ -74,6 +75,7 @@ def project(ctx: click.Context, config: str, project: str = None) -> None:
 project.add_command(repo)
 project.add_command(source)
 project.add_command(derived)
+repo.add_command(repo_ci)
 
 
 @project.command("list")

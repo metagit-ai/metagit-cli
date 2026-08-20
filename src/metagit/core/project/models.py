@@ -18,6 +18,7 @@ from pydantic import (
 )
 from pydantic_core import core_schema
 
+from metagit.core.project.ci_models import RepoCiTarget
 from metagit.core.workspace.agent_profile_models import AgentProfile
 
 
@@ -120,6 +121,13 @@ class ProjectPath(BaseModel):
         description=(
             "When set, this entry was copied into a derived project; "
             "identity fields can be refreshed from the named source"
+        ),
+    )
+    ci: Optional[RepoCiTarget] = Field(
+        default=None,
+        description=(
+            "Durable CI topology for agents: platform, config paths, and "
+            "provider locators (e.g. Azure DevOps org/project/repo)"
         ),
     )
 

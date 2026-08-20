@@ -264,6 +264,29 @@
       "title": "CICDPlatform",
       "type": "string"
     },
+    "CiProvider": {
+      "description": "CI platform that owns pipeline execution for a repository.",
+      "enum": [
+        "github",
+        "gitlab",
+        "azure_devops",
+        "other",
+        "none",
+        "unknown"
+      ],
+      "title": "CiProvider",
+      "type": "string"
+    },
+    "CiTargetStatus": {
+      "description": "Lifecycle of a resolved CI target binding.",
+      "enum": [
+        "detected",
+        "declared",
+        "overridden"
+      ],
+      "title": "CiTargetStatus",
+      "type": "string"
+    },
     "Dashboard": {
       "additionalProperties": false,
       "description": "Model for monitoring dashboard.",
@@ -561,6 +584,18 @@
           ],
           "default": null,
           "description": "When set, this entry was copied into a derived project; identity fields can be refreshed from the named source"
+        },
+        "ci": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RepoCiTarget"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)"
         },
         "kind": {
           "$ref": "#/$defs/DependencyKind",
@@ -1557,6 +1592,18 @@
           "default": null,
           "description": "When set, this entry was copied into a derived project; identity fields can be refreshed from the named source"
         },
+        "ci": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RepoCiTarget"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)"
+        },
         "agent_prompt": {
           "anyOf": [
             {
@@ -1627,6 +1674,32 @@
           "default": null,
           "description": "GitLab group path",
           "title": "Group"
+        },
+        "organization": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps organization",
+          "title": "Organization"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps project filter",
+          "title": "Project"
         },
         "mode": {
           "$ref": "#/$defs/SourceSyncMode",
@@ -1735,6 +1808,212 @@
       "title": "ProvisioningTool",
       "type": "string"
     },
+    "RepoCiTarget": {
+      "additionalProperties": false,
+      "description": "Where CI/CD lives for a managed repository (agent-facing topology).",
+      "properties": {
+        "provider": {
+          "$ref": "#/$defs/CiProvider",
+          "description": "CI platform identifier"
+        },
+        "config_paths": {
+          "description": "Repo-relative CI configuration file paths",
+          "items": {
+            "type": "string"
+          },
+          "title": "Config Paths",
+          "type": "array"
+        },
+        "host": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API or web host (e.g. dev.azure.com or self-hosted ADO)",
+          "title": "Host"
+        },
+        "organization": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps organization",
+          "title": "Organization"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps project (may differ from git project)",
+          "title": "Project"
+        },
+        "repository": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps repository name",
+          "title": "Repository"
+        },
+        "definition_ids": {
+          "description": "Optional ADO pipeline/build definition ids for overrides",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "title": "Definition Ids",
+          "type": "array"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub owner/org",
+          "title": "Owner"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub repository name",
+          "title": "Name"
+        },
+        "project_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitLab project path with namespace",
+          "title": "Project Path"
+        },
+        "status": {
+          "$ref": "#/$defs/CiTargetStatus",
+          "default": "detected",
+          "description": "detected from files/remote; declared or overridden by humans/agents"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ISO-8601 timestamp of last detect or explicit set",
+          "title": "Updated At"
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "title": "RepoCiTarget",
+      "type": "object"
+    },
+    "RoutingConfig": {
+      "description": "Routing class catalog and run ledger storage settings.",
+      "properties": {
+        "catalog": {
+          "default": "knowledge/requests/entries",
+          "description": "Directory containing one YAML file per request class",
+          "title": "Catalog",
+          "type": "string"
+        },
+        "runs": {
+          "default": "knowledge/requests/runs",
+          "description": "Directory containing one YAML file per execution run",
+          "title": "Runs",
+          "type": "string"
+        },
+        "id_prefix": {
+          "default": "REQ",
+          "description": "Prefix used when creating request-class identifiers",
+          "title": "Id Prefix",
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "#/$defs/RoutingPolicy"
+        }
+      },
+      "title": "RoutingConfig",
+      "type": "object"
+    },
+    "RoutingPolicy": {
+      "description": "Promotion policy for routing class tier evaluation.",
+      "properties": {
+        "promote_after_clean": {
+          "default": 5,
+          "description": "Consecutive landed runs needed for promotion",
+          "title": "Promote After Clean",
+          "type": "integer"
+        },
+        "demote_on": {
+          "description": "Outcomes that trigger immediate demotion",
+          "items": {
+            "enum": [
+              "bounced",
+              "noop"
+            ],
+            "type": "string"
+          },
+          "title": "Demote On",
+          "type": "array"
+        },
+        "retain_success_days": {
+          "default": 60,
+          "description": "Window for retaining landed run detail before optional roll-up",
+          "title": "Retain Success Days",
+          "type": "integer"
+        }
+      },
+      "title": "RoutingPolicy",
+      "type": "object"
+    },
     "Secret": {
       "additionalProperties": false,
       "description": "Model for secret definitions.",
@@ -1788,7 +2067,8 @@
       "description": "Supported source providers for recursive discovery.",
       "enum": [
         "github",
-        "gitlab"
+        "gitlab",
+        "azure_devops"
       ],
       "title": "SourceProvider",
       "type": "string"
@@ -2240,6 +2520,18 @@
       ],
       "default": null,
       "description": "Manual cross-repo relationships and graph metadata for exports and GitNexus-style dependency maps"
+    },
+    "routing": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RoutingConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Routing engine catalog/run paths and promotion policy"
     },
     "license": {
       "anyOf": [
