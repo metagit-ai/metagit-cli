@@ -40,6 +40,7 @@ metagit prompt workspace --kind session-start --text-only
 |------|---------|
 | Workspace map / repo cards | `metagit context pack --tier 0\|1\|2 --json` |
 | Find managed repo | `metagit search "…" --json` |
+| Repo CI topology | `metagit project repo ci show` / `detect` / `set` (`--json`) |
 | Search repo file contents | `metagit workspace grep "…" --json` |
 | Grep backend (ripgrep) | `metagit workspace grep info --json` |
 | Catalog | `metagit workspace list --json` |

@@ -57,6 +57,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [extend-agents-web-console.md](extend-agents-web-console.md) | Extending the `/agents` SPA route with additional sub-tabs or workflow panels backed by existing agent and ops APIs |
 | [fuzzyfinder-tui-empty-or-stuck.md](fuzzyfinder-tui-empty-or-stuck.md) | Empty FuzzyFinder lists (esp. `metagit nav`) or Ctrl+C/Esc not quitting |
 | [project-cli-resolution.md](project-cli-resolution.md) | Fixing or extending `metagit project list/select` when app-config default ≠ manifest projects |
+| [provider-ci-target-extension.md](provider-ci-target-extension.md) | Extending source sync providers and durable `ProjectPath.ci` topology for agents |
 | [repo-promote-local-to-git.md](repo-promote-local-to-git.md) | Migrating a path-based workspace repo entry to a git-managed clone (`project repo promote`) |
 | [rewrite-campaign-workspace.md](rewrite-campaign-workspace.md) | Reference-implementation rewrite coordinator (source + target repos, campaign, parity registry) |
 | [skills-install-project-scope.md](skills-install-project-scope.md) | Fixing `skills`/`mcp` `--scope project` so installs use the git repo root from nested cwds |

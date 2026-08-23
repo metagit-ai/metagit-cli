@@ -67,6 +67,10 @@ class RepoCardResult(BaseModel):
     agent_instructions_excerpt: Optional[str] = None
     stack_hints: list[str] = Field(default_factory=list)
     health_flags: list[str] = Field(default_factory=list)
+    ci: Optional[dict[str, Any]] = Field(
+        default=None,
+        description="Durable CI topology summary (provider, config_paths, locators)",
+    )
 
 
 class SessionDigestRepoChange(BaseModel):

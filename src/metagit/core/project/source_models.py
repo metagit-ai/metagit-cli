@@ -17,6 +17,7 @@ class SourceProvider(str, Enum):
 
     GITHUB = "github"
     GITLAB = "gitlab"
+    AZURE_DEVOPS = "azure_devops"
 
 
 class SourceSyncMode(str, Enum):
@@ -34,6 +35,11 @@ class SourceSpec(BaseModel):
     org: Optional[str] = Field(None, description="GitHub organization")
     user: Optional[str] = Field(None, description="GitHub user")
     group: Optional[str] = Field(None, description="GitLab group path")
+    organization: Optional[str] = Field(None, description="Azure DevOps organization")
+    project: Optional[str] = Field(
+        None,
+        description="Azure DevOps project filter (omit with recursive to list all projects)",
+    )
     recursive: bool = Field(True, description="Whether to recurse into nested scopes when supported")
     include_archived: bool = Field(False, description="Include archived repositories in discovery")
     include_forks: bool = Field(False, description="Include forked repositories")
@@ -81,13 +87,18 @@ class SourceSpec(BaseModel):
             selectors = [self.org, self.user]
             if sum(1 for value in selectors if value) != 1:
                 raise ValueError("GitHub source requires exactly one of --org or --user")
-            if self.group:
-                raise ValueError("GitHub source cannot use --group")
+            if self.group or self.organization or self.project:
+                raise ValueError("GitHub source cannot use --group, --organization, or --project")
         if self.provider == SourceProvider.GITLAB:
             if not self.group:
                 raise ValueError("GitLab source requires --group")
-            if self.org or self.user:
-                raise ValueError("GitLab source cannot use --org or --user")
+            if self.org or self.user or self.organization or self.project:
+                raise ValueError("GitLab source cannot use --org, --user, --organization, or --project")
+        if self.provider == SourceProvider.AZURE_DEVOPS:
+            if not self.organization:
+                raise ValueError("Azure DevOps source requires --organization")
+            if self.org or self.user or self.group:
+                raise ValueError("Azure DevOps source cannot use --org, --user, or --group")
         return self
 
     @property
@@ -95,6 +106,10 @@ class SourceSpec(BaseModel):
         """Canonical source namespace used for provenance and reconcile boundaries."""
         if self.provider == SourceProvider.GITHUB:
             return self.org if self.org else self.user or ""
+        if self.provider == SourceProvider.AZURE_DEVOPS:
+            if self.project:
+                return f"{self.organization}/{self.project}"
+            return self.organization or ""
         return self.group or ""
 
 
@@ -106,6 +121,8 @@ class ProjectSource(BaseModel):
     org: Optional[str] = Field(None, description="GitHub organization")
     user: Optional[str] = Field(None, description="GitHub user")
     group: Optional[str] = Field(None, description="GitLab group path")
+    organization: Optional[str] = Field(None, description="Azure DevOps organization")
+    project: Optional[str] = Field(None, description="Azure DevOps project filter")
     mode: SourceSyncMode = Field(
         SourceSyncMode.ADDITIVE,
         description="additive or reconcile (discover is CLI-only)",
@@ -145,6 +162,8 @@ class ProjectSource(BaseModel):
             org=self.org,
             user=self.user,
             group=self.group,
+            organization=self.organization,
+            project=self.project,
         )
         return self
 
@@ -155,6 +174,8 @@ class ProjectSource(BaseModel):
             org=self.org,
             user=self.user,
             group=self.group,
+            organization=self.organization,
+            project=self.project,
             recursive=self.recursive,
             include_archived=self.include_archived,
             include_forks=self.include_forks,

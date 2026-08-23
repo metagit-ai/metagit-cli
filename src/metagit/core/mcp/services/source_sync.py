@@ -27,6 +27,8 @@ def build_source_spec_from_arguments(arguments: dict[str, Any]) -> SourceSpec:
         org=_optional_str(arguments.get("org")),
         user=_optional_str(arguments.get("user")),
         group=_optional_str(arguments.get("group")),
+        organization=_optional_str(arguments.get("organization")),
+        project=_optional_str(arguments.get("project")),
         recursive=bool(arguments.get("recursive", True)),
         include_archived=bool(arguments.get("include_archived", False)),
         include_forks=bool(arguments.get("include_forks", False)),

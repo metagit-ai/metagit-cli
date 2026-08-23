@@ -38,6 +38,7 @@ nav:
     - 'Metagit agent templates': 'reference/metagit-agent.md'
     - 'Modality feature registry': 'reference/modality-feature-registry.md'
     - 'Metagit Web UI': 'reference/metagit-web.md'
+    - 'CI targets': 'reference/ci-targets.md'
     - 'Skills': 'skills.md'
 markdown_extensions:
   - mkdocs-click
