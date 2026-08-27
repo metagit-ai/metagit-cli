@@ -67,7 +67,7 @@ RFC-0025 Workspace index
 |----|-------|----------|--------|--------|------|--------|
 | (docs) | Agent OS Quickstart + control-loop narrative | P1 | S | — | — | **Shipped** ([agents-quickstart.md](../../agents-quickstart.md), [examples/agent-aos-loop/](../../../examples/agent-aos-loop/)) |
 | 0017 | Agentic Workload Harness + run-evidence completion | P0 | M | [design](2026-07-31-rfc-0017-agentic-workload-harness-design.md) · [completion](2026-08-27-rfc-0017-run-evidence-completion-design.md) | in-tree | **In progress** — show/replay/export + AOS commit recording shipped on `feat/agent-reliability-series` |
-| 0019 | Failure Recovery & Control-Loop Resilience | P0 | M | pending | pending | Proposed |
+| 0019 | Failure Recovery & Control-Loop Resilience | P0 | M | [design](2026-08-27-rfc-0019-failure-recovery-design.md) | in-tree | **In progress** — recover/heartbeat + recipes on `feat/agent-reliability-series` |
 | 0020 | Discovery & Onboarding Surfaces | P1 | S–M | [design](2026-08-27-rfc-0020-discovery-onboarding-design.md) | pending | Proposed |
 | 0021 | Multi-Agent Scenario Test Harness | P1 | M–L | [design](2026-08-27-rfc-0021-multi-agent-scenarios-design.md) | pending | Proposed |
 | 0022 | Policy Engine for Mutating Classes | P2 | M | pending | pending | Proposed |

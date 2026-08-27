@@ -64,10 +64,75 @@ def aos_doctor(
         return
     for finding in result.findings:
         click.echo(f"{finding.severity}\t{finding.code}\t{finding.message}")
+    for recipe in result.recovery_recipes:
+        click.echo(f"recipe\t{recipe.action}\t{recipe.command}")
     for cmd in result.suggested_commands:
         click.echo(f"suggest\t{cmd}")
     for item in result.fixed:
         click.echo(f"fixed\t{item}")
+
+
+@aos_group.command("recover")
+@click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--agent-id", required=True)
+@click.option("--yes", "confirm", is_flag=True, help="Confirm recovery mutations")
+@click.option("--release-orphan-claims", is_flag=True)
+@click.option("--cancel-stale-merges", is_flag=True)
+@click.option("--json", "as_json", is_flag=True)
+@click.pass_context
+def aos_recover(
+    ctx: click.Context,
+    definition_path: str,
+    agent_id: str,
+    confirm: bool,
+    release_orphan_claims: bool,
+    cancel_stale_merges: bool,
+    as_json: bool,
+) -> None:
+    """Safe agent-scoped recovery (requires --yes)."""
+    service = _service(ctx, definition_path)
+    result = raise_if_error(
+        service.recover(
+            agent_id=agent_id,
+            confirm=confirm,
+            release_orphan_claims=release_orphan_claims,
+            cancel_stale_merges=cancel_stale_merges,
+        )
+    )
+    if as_json:
+        emit_json(result)
+        return
+    for item in result.actions:
+        click.echo(f"action\t{item}")
+    for item in result.skipped:
+        click.echo(f"skipped\t{item}")
+    for item in result.errors:
+        click.echo(f"error\t{item}")
+
+
+@aos_group.command("heartbeat")
+@click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--agent-id", required=True)
+@click.option("--ttl", default="1h", show_default=True)
+@click.option("--json", "as_json", is_flag=True)
+@click.pass_context
+def aos_heartbeat(
+    ctx: click.Context,
+    definition_path: str,
+    agent_id: str,
+    ttl: str,
+    as_json: bool,
+) -> None:
+    """Renew active ACL leases for an agent."""
+    service = _service(ctx, definition_path)
+    result = raise_if_error(service.heartbeat(agent_id=agent_id, ttl=ttl))
+    if as_json:
+        emit_json(result)
+        return
+    for lease_id in result.renewed:
+        click.echo(f"renewed\t{lease_id}")
+    for item in result.errors:
+        click.echo(f"error\t{item}")
 
 
 @aos_group.command("next")

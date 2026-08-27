@@ -729,6 +729,26 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_aos_recover": {
+                "type": "object",
+                "required": ["agent_id", "confirm"],
+                "properties": {
+                    "agent_id": {"type": "string"},
+                    "confirm": {"type": "boolean"},
+                    "release_orphan_claims": {"type": "boolean"},
+                    "cancel_stale_merges": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_aos_heartbeat": {
+                "type": "object",
+                "required": ["agent_id"],
+                "properties": {
+                    "agent_id": {"type": "string"},
+                    "ttl": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_coord_status": {
                 "type": "object",
                 "properties": {},
@@ -750,6 +770,26 @@ class MetagitMcpRuntime:
                     "agent_id": {"type": "string"},
                     "graph_id": {"type": "string"},
                     "limit": {"type": "integer"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_coord_recover": {
+                "type": "object",
+                "required": ["agent_id", "confirm"],
+                "properties": {
+                    "agent_id": {"type": "string"},
+                    "confirm": {"type": "boolean"},
+                    "release_orphan_claims": {"type": "boolean"},
+                    "cancel_stale_merges": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_coord_heartbeat": {
+                "type": "object",
+                "required": ["agent_id"],
+                "properties": {
+                    "agent_id": {"type": "string"},
+                    "ttl": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -3296,6 +3336,24 @@ class MetagitMcpRuntime:
                     limit=limit,
                 )
             )
+        if canonical == "metagit_aos_recover":
+            agent_id = str(arguments.get("agent_id", "")).strip()
+            if not agent_id:
+                raise InvalidToolArgumentsError("agent_id is required")
+            return _unwrap(
+                service.recover(
+                    agent_id=agent_id,
+                    confirm=bool(arguments.get("confirm")),
+                    release_orphan_claims=bool(arguments.get("release_orphan_claims")),
+                    cancel_stale_merges=bool(arguments.get("cancel_stale_merges")),
+                )
+            )
+        if canonical == "metagit_aos_heartbeat":
+            agent_id = str(arguments.get("agent_id", "")).strip()
+            if not agent_id:
+                raise InvalidToolArgumentsError("agent_id is required")
+            ttl = str(arguments.get("ttl") or "1h")
+            return _unwrap(service.heartbeat(agent_id=agent_id, ttl=ttl))
         raise ValueError(f"Unsupported aos tool: {name}")
 
     def _call_task_tool(
