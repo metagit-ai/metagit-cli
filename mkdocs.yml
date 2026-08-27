@@ -36,6 +36,7 @@ nav:
     - 'Agent scheduler': 'reference/agent-scheduler.md'
     - 'Agent Operating System': 'reference/aos.md'
     - 'Run ledger': 'reference/run-ledger.md'
+    - 'Workspace discovery': 'reference/workspace-discovery.md'
     - 'Metagit Atlas': 'reference/atlas.md'
     - 'Metagit agent templates': 'reference/metagit-agent.md'
     - 'Modality feature registry': 'reference/modality-feature-registry.md'

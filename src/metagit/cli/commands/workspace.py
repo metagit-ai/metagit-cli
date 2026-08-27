@@ -3,6 +3,7 @@ Workspace subcommand
 """
 
 import sys
+from pathlib import Path
 
 import click
 
@@ -22,6 +23,7 @@ from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.dedupe_resolver import resolve_dedupe_for_layout
+from metagit.core.workspace.discovery_service import WorkspaceDiscoveryService
 from metagit.core.workspace.layout_resolver import resolve_active_project_name
 from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace.root_resolver import resolve_workspace_root
@@ -139,6 +141,111 @@ def workspace_list(ctx: click.Context, as_json: bool, no_index: bool) -> None:
     click.echo(f"Projects: {summary.get('project_count', 0)} | Repos: {summary.get('repo_count', 0)}")
     for project in (result.data or {}).get("projects", []):
         click.echo(f"  - {project.get('name')} ({project.get('repo_count', 0)} repos)")
+
+
+@workspace.command("health")
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.option(
+    "--project",
+    "-p",
+    default=None,
+    help="Limit health check to one project",
+    shell_complete=complete_projects,
+)
+@click.option("--check-git-status/--no-git-status", default=True, show_default=True)
+@click.option("--check-stale-branches/--no-stale-branches", default=True, show_default=True)
+@click.option("--check-gitnexus/--no-gitnexus", default=True, show_default=True)
+@click.option("--check-dependencies/--no-dependencies", default=True, show_default=True)
+@click.pass_context
+def workspace_health(
+    ctx: click.Context,
+    as_json: bool,
+    project: str | None,
+    check_git_status: bool,
+    check_stale_branches: bool,
+    check_gitnexus: bool,
+    check_dependencies: bool,
+) -> None:
+    """Workspace maintenance health (parity with MCP metagit_workspace_health_check)."""
+    local_config, config_path, workspace_root, app_config = _layout_ctx(ctx)
+    dedupe = resolve_dedupe_for_layout(app_config.workspace.dedupe, local_config, project)
+    definition_root = str(Path(config_path).expanduser().resolve().parent)
+    service = WorkspaceDiscoveryService()
+    result = service.health(
+        config=local_config,
+        workspace_root=workspace_root,
+        check_git_status=check_git_status,
+        check_dependencies=check_dependencies,
+        check_stale_branches=check_stale_branches,
+        check_gitnexus=check_gitnexus,
+        project_name=project,
+        dedupe=dedupe,
+        definition_root=definition_root,
+    )
+    if as_json:
+        emit_json(result)
+        return
+    click.echo(f"ok={result.ok} recommendations={len(result.recommendations)} root={result.workspace_root}")
+    for item in result.recommendations[:5]:
+        loc = ""
+        if item.project_name and item.repo_name:
+            loc = f" {item.project_name}/{item.repo_name}"
+        click.echo(f"{item.severity}\t{item.action}{loc}\t{item.message}")
+
+
+@workspace.command("summary")
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.option(
+    "--project",
+    "-p",
+    default=None,
+    help="Limit summary to one project",
+    shell_complete=complete_projects,
+)
+@click.option(
+    "--include-cards",
+    is_flag=True,
+    default=False,
+    help="Attach lean per-repo cards (default off — token lean)",
+)
+@click.option(
+    "--include-coordination/--no-coordination",
+    default=True,
+    show_default=True,
+    help="Include lightweight AOS/ACL/task hints when available",
+)
+@click.pass_context
+def workspace_summary(
+    ctx: click.Context,
+    as_json: bool,
+    project: str | None,
+    include_cards: bool,
+    include_coordination: bool,
+) -> None:
+    """Discovery readiness score for agent session start (RFC-0020)."""
+    local_config, config_path, workspace_root, app_config = _layout_ctx(ctx)
+    dedupe = resolve_dedupe_for_layout(app_config.workspace.dedupe, local_config, project)
+    definition_root = str(Path(config_path).expanduser().resolve().parent)
+    service = WorkspaceDiscoveryService()
+    result = service.summary(
+        config=local_config,
+        workspace_root=workspace_root,
+        project_name=project,
+        include_cards=include_cards,
+        include_coordination=include_coordination,
+        dedupe=dedupe,
+        session_root=definition_root,
+        definition_root=definition_root,
+    )
+    if as_json:
+        emit_json(result)
+        return
+    click.echo(
+        f"readiness={result.readiness.score} grade={result.readiness.grade} "
+        f"gate={result.gate.state} repos={result.map.repos_present}/{result.map.repos_total}"
+    )
+    for blocker in result.readiness.blockers[:5]:
+        click.echo(f"{blocker.severity}\t{blocker.code}\t{blocker.message}")
 
 
 @workspace.group("project")

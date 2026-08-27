@@ -40,6 +40,17 @@ metagit prompt workspace --kind session-start --text-only
 
 Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 
+## Discovery & readiness
+
+Before escalating packs, check workspace readiness:
+
+```bash
+metagit workspace summary --json
+metagit workspace health --json
+```
+
+`summary` returns `readiness.score` (0–100), dimension breakdown, and blockers. Exit 0 even when the score is low (report-only). Details: [workspace-discovery.md](reference/workspace-discovery.md).
+
 ## Core CLI (agent mode)
 
 | Goal | Command |
@@ -48,6 +59,8 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Search file contents (workspace) | `metagit workspace grep "<query>" --json` |
 | Ripgrep / grep backend status | `metagit workspace grep info --json` |
 | Workspace catalog | `metagit workspace list --json` |
+| Workspace health | `metagit workspace health --json` |
+| Workspace readiness summary | `metagit workspace summary --json` |
 | Validate manifest | `metagit config validate` |
 | Safe sync (fetch-first) | `metagit project sync` |
 | Scoped repo snapshot | `metagit context repomix --profile bugfix-local --project P --repo R` |
@@ -84,6 +97,8 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 <!-- modality:agent_scheduler -->
 <!-- modality:aos_status -->
 <!-- modality:run_ledger -->
+<!-- modality:workspace_health -->
+<!-- modality:workspace_summary -->
 <!-- modality:atlas_local -->
 <!-- modality:derived_projects -->
 <!-- modality:skills_surface -->

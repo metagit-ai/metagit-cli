@@ -622,6 +622,56 @@ features:
           - path: src/metagit/data/skills/metagit-aos/SKILL.md
             contains: "modality:run_ledger"
 
+  - id: workspace_health
+    description: Workspace maintenance health check with CLI/MCP parity
+    service: metagit.core.mcp.services.workspace_health.WorkspaceHealthService
+    reference_doc: docs/reference/workspace-discovery.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/workspace.py
+            contains: '@workspace.command("health")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_workspace_health_check
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_workspace_health_check
+      documentation:
+        markers:
+          - path: docs/reference/workspace-discovery.md
+            contains: "modality:workspace_health"
+          - path: docs/agents.md
+            contains: "modality:workspace_health"
+      skills:
+        markers:
+          - path: skills/metagit-cli/SKILL.md
+            contains: "modality:workspace_health"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:workspace_health"
+
+  - id: workspace_summary
+    description: Workspace discovery readiness score for agent session start
+    service: metagit.core.workspace.discovery_service.WorkspaceDiscoveryService
+    reference_doc: docs/reference/workspace-discovery.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/workspace.py
+            contains: '@workspace.command("summary")'
+      documentation:
+        markers:
+          - path: docs/reference/workspace-discovery.md
+            contains: "modality:workspace_summary"
+          - path: docs/agents.md
+            contains: "modality:workspace_summary"
+      skills:
+        markers:
+          - path: skills/metagit-cli/SKILL.md
+            contains: "modality:workspace_summary"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:workspace_summary"
+
   - id: derived_projects
     description: Derived surgical workspace projects with frozen membership and refreshable identity
     service: metagit.core.workspace.derived_project_service.DerivedProjectService

@@ -472,6 +472,20 @@ Doc: `docs/reference/aos.md`. MCP: `metagit_aos_status|doctor|next` (+ `metagit_
 
 ---
 
+## Workspace discovery & readiness (RFC-0020)
+
+<!-- modality:workspace_health -->
+<!-- modality:workspace_summary -->
+
+| Task | Command |
+|------|---------|
+| Maintenance health | `metagit workspace health --json` |
+| Readiness summary | `metagit workspace summary --json` |
+
+Doc: `docs/reference/workspace-discovery.md`. MCP health: `metagit_workspace_health_check` (summary MCP deferred).
+
+---
+
 ## Derived projects + skills surface
 
 <!-- modality:derived_projects -->
