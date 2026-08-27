@@ -99,6 +99,7 @@ metagit workspace health --json
 <!-- modality:run_ledger -->
 <!-- modality:workspace_health -->
 <!-- modality:workspace_summary -->
+<!-- modality:mutation_policy -->
 <!-- modality:atlas_local -->
 <!-- modality:derived_projects -->
 <!-- modality:skills_surface -->

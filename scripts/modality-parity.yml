@@ -622,6 +622,30 @@ features:
           - path: src/metagit/data/skills/metagit-aos/SKILL.md
             contains: "modality:run_ledger"
 
+  - id: mutation_policy
+    description: Report-only evaluation of mutating action classes under agent-mode ceilings
+    service: metagit.core.policy.engine.evaluate_action
+    reference_doc: docs/reference/mutation-policy.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/policy.py
+            contains: '@policy_group.command("eval")'
+          - path: src/metagit/cli/main.py
+            contains: policy_group
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_policy_eval
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_policy_eval
+      documentation:
+        markers:
+          - path: docs/reference/mutation-policy.md
+            contains: "modality:mutation_policy"
+          - path: docs/agents.md
+            contains: "modality:mutation_policy"
+
   - id: workspace_health
     description: Workspace maintenance health check with CLI/MCP parity
     service: metagit.core.mcp.services.workspace_health.WorkspaceHealthService

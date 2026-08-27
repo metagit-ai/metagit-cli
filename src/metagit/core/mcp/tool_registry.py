@@ -26,6 +26,7 @@ class ToolRegistry:
         "metagit_run_list",
         "metagit_run_show",
         "metagit_run_replay",
+        "metagit_policy_eval",
         "metagit_repo_search",
         "metagit_upstream_hints",
         "metagit_repo_inspect",

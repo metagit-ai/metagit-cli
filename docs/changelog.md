@@ -8,6 +8,7 @@
 - AOS recovery: `metagit aos recover|heartbeat` and doctor `recovery_recipes[]`. See [reference/aos.md](reference/aos.md).
 - Workspace discovery: `metagit workspace health|summary --json`. See [reference/workspace-discovery.md](reference/workspace-discovery.md).
 - Multi-agent scenario harness under `tests/scenarios/`.
+- Mutation policy MVP: `metagit policy eval` / MCP `metagit_policy_eval`. See [reference/mutation-policy.md](reference/mutation-policy.md).
 - Workspace discovery (RFC-0020 MVP): `metagit workspace health --json` and `metagit workspace summary --json` with composite readiness score. See [reference/workspace-discovery.md](reference/workspace-discovery.md).
 
 ### Changed

@@ -64,6 +64,7 @@ from metagit.core.mcp.tools.bootstrap_plan_only import (
 from metagit.core.mcp.tools.workspace_status import metagit_workspace_status
 from metagit.core.merge.models import MergeRequest
 from metagit.core.merge.service import MergeOrchestrator
+from metagit.core.policy.engine import evaluate_action
 from metagit.core.project.ci_target_service import CiTargetService
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
@@ -245,6 +246,27 @@ class MetagitMcpRuntime:
                 "properties": {
                     "run_id": {"type": "string"},
                     "redact": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_policy_eval": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "merge_integrate",
+                            "claim_declare",
+                            "claim_release",
+                            "catalog_edit",
+                            "remote_state_write",
+                            "acl_bind",
+                            "aos_recover",
+                            "run_open",
+                        ],
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -1822,6 +1844,16 @@ class MetagitMcpRuntime:
                 return service.replay(run_id, redact=redact)
             except ValueError as exc:
                 raise InvalidToolArgumentsError(str(exc)) from exc
+
+        if name == "metagit_policy_eval":
+            action = str(arguments.get("action", "")).strip()
+            if not action:
+                raise InvalidToolArgumentsError("action is required")
+            try:
+                decision = evaluate_action(action)  # type: ignore[arg-type]
+            except Exception as exc:  # noqa: BLE001
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return decision.model_dump(mode="json")
 
         if name == "metagit_upstream_hints":
             blocker = str(arguments.get("blocker", "")).strip()
