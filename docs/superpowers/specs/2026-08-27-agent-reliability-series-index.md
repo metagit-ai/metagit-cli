@@ -70,7 +70,7 @@ RFC-0025 Workspace index
 | 0019 | Failure Recovery & Control-Loop Resilience | P0 | M | [design](2026-08-27-rfc-0019-failure-recovery-design.md) | in-tree | **Shipped MVP** (recover/heartbeat + recipes) |
 | 0020 | Discovery & Onboarding Surfaces | P1 | S–M | [design](2026-08-27-rfc-0020-discovery-onboarding-design.md) | in-tree | **Shipped MVP** (`workspace health|summary`) |
 | 0021 | Multi-Agent Scenario Test Harness | P1 | M–L | [design](2026-08-27-rfc-0021-multi-agent-scenarios-design.md) | in-tree | **Shipped MVP** (`tests/scenarios/`) |
-| 0022 | Policy Engine for Mutating Classes | P2 | M | [design](2026-08-27-rfc-0022-policy-engine-design.md) | pending | Proposed |
+| 0022 | Policy Engine for Mutating Classes | P2 | M | [design](2026-08-27-rfc-0022-policy-engine-design.md) | in-tree | **Shipped MVP** (`policy eval` report-only; enforce at mutation points follow-up) |
 | — | Secrets & Redaction Hardening | P2 | S | [design](2026-08-27-secrets-redaction-hardening-design.md) | pending | Proposed |
 | 0023 | Workspace Federation & Org-Scale Identity | P2 | L | [design](2026-08-27-rfc-0023-federation-design.md) | pending | Proposed |
 | 0024 | Plugin / Detector / Skill Extension Points | P2 | M–L | [design](2026-08-27-rfc-0024-plugins-design.md) | pending | Proposed |
