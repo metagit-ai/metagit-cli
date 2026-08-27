@@ -114,7 +114,8 @@ metagit task ready --json
 
 ## Minimal example workspace
 
-See [examples/agent-aos-loop/](https://github.com/metagit-ai/metagit-cli/blob/main/examples/agent-aos-loop/) — a tiny umbrella manifest whose `agent_instructions` encode this loop.
+See repository path `examples/agent-aos-loop/` — a tiny umbrella manifest whose
+`agent_instructions` encode this loop.
 
 ```bash
 cd examples/agent-aos-loop
