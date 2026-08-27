@@ -24,6 +24,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | Pattern | Use when |
 |---------|----------|
 | [acl-rfc-series.md](acl-rfc-series.md) | Navigating or extending RFC-0008–0013 build specs (designs/plans under docs/superpowers) |
+| [agent-reliability-series.md](agent-reliability-series.md) | Navigating or extending RFC-0019+ agent reliability / AOS hardening (do not reuse 0016–0018) |
 | [central-state-plane-series.md](central-state-plane-series.md) | Designing or implementing RFC-0015–0018 central state plane / org catalog / harness / ontology |
 | [agent-coordination-acl.md](agent-coordination-acl.md) | Implementing or extending RFC-0007 ACL branch/lease/worktree/claim primitives |
 | [agent-scheduler.md](agent-scheduler.md) | Implementing or extending RFC-0012 schedule scoring, policy, CLI/MCP, and events |

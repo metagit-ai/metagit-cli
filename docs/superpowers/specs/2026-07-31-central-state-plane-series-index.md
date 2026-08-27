@@ -2,6 +2,7 @@
 
 **Status:** Living index  
 **Date:** 2026-07-31  
+**last_updated:** 2026-08-27  
 **Vision:** Metagit as an org control plane — shared central state for project footprint, multi-repo agent coordination, lean agent harnessing, and pluggable knowledge — without requiring a git repository as the sole core of truth.
 
 ## Why this series exists
@@ -15,14 +16,17 @@ ACL, task graph, scheduler, merge, and semantic stores remain **local filesystem
 
 This series evolves that into a **pluggable central state plane** so organizations can run multi-agent, multi-host workloads against DynamoDB, MongoDB, or an ops HTTP front-end, while keeping `local` as the zero-config default for single-machine use.
 
-## Relationship to ACL series (0007–0014)
+## Relationship to ACL series (0007–0014) and agent reliability (0019+)
 
 | Series | Owns |
 |--------|------|
 | [ACL RFC series 0007–0013](2026-07-09-acl-rfc-series-index.md) + [Atlas 0014](2026-07-14-rfc-0014-atlas-design.md) | Agent coordination engines, composition, repo-local semantics |
 | **This series 0015–0018** | Where that state lives at org scale; catalog without git-as-sole-truth; lean harness; ontology adapters |
+| [Agent reliability 0019+](2026-08-27-agent-reliability-series-index.md) | Crash recovery, discovery, multi-agent scenarios, mutation policy, federation polish, plugins, index scale — **does not reuse 0016–0018** |
 
 **Git authority unchanged:** central state never replaces Git as source of truth for *code*. It becomes authoritative for *org footprint metadata and agent coordination documents* when configured.
+
+**Numbering lock:** Run-ledger / agent-evidence completion folds into **RFC-0017** (plus shipped `metagit.core.routing`); do not invent a second RFC-0016.
 
 ## Dependency graph
 

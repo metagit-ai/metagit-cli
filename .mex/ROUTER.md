@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-08-20
+last_updated: 2026-08-27
 ---
 
 # Session Bootstrap
@@ -27,6 +27,7 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **Agent reliability series index (2026-08-27):** Living roadmap for post-AOS hardening — [docs/superpowers/specs/2026-08-27-agent-reliability-series-index.md](../docs/superpowers/specs/2026-08-27-agent-reliability-series-index.md). **Numbering lock:** do not reuse RFC-0016–0018 (plane series). Run evidence folds into shipped routing + RFC-0017; new RFCs start at **0019** (recovery), then 0020–0025. Next execution: Agent OS quickstart docs PR, then RFC-0017 run-evidence completion. Pattern `.mex/patterns/agent-reliability-series.md`.
 - **Azure DevOps source + agent CI topology (2026-08-20):** `SourceProvider.azure_devops` discovery/import; AppConfig `providers.azure_devops`; durable `ProjectPath.ci` (`RepoCiTarget`) with `CiTargetResolver`; CLI `metagit project repo ci show|detect|set`; MCP `metagit_repo_ci_show` / `metagit_repo_ci_detect`; repo cards include `ci` summary. Live ADO pipeline monitoring in the web CI/CD tab remains deferred (Phase 2). Design [docs/superpowers/specs/2026-08-20-azure-devops-ci-topology-design.md](../docs/superpowers/specs/2026-08-20-azure-devops-ci-topology-design.md); reference [docs/reference/ci-targets.md](../docs/reference/ci-targets.md).
 - **Release hygiene hardening (2026-08-10):** semantic release now requires non-empty `CHANGELOG.md` `## Unreleased` notes before creating a new tag, promotes and commits both root and docs changelog copies (`docs/changelog.md`), and ignores changelog-only promotion pushes to avoid noisy reruns. Added `scripts/cleanup_github_releases.py` plus `task releases:cleanup:{preview,apply,apply-with-tags}` for safe GitHub release pruning with semver floor and keep-latest retention controls.
 - **ADHD-friendly objective resume flow (2026-08-08):** `context objective set` supports `--human-notes`, `--left-off`, `--next`, `--blockers`, and `--notes-file`; new `context objective edit` updates single fields quickly; new `context pause` captures in-progress handoff notes; new `context resume [filter]` selects best objective (prefer `in_progress`, newest `updated_at`) with JSON/human output; objective repos normalize to manifest-relative `./...` when inside workspace root and remain absolute when external.
@@ -114,7 +115,8 @@ Then read this file fully before doing anything else in this session.
 - **Web Config Studio unsaved edits:** `SchemaTreeService._navigate_parent(..., mutate=True)` materializes null list/object parents before REMOVE/APPEND; React `SchemaTree` sends cumulative `pendingOps` on each PATCH so preview removes work before disk save.
 
 **Not yet built:**
-- **RFC-0016–0018 implementation** (Org Catalog Backend, Agentic Workload Harness, Pluggable Ontology Layer) — designs proposed; plans pending. RFC-0015 central state plane shipped on `feat/rfc-0015-central-state-plane` (merge pending).
+- **Agent reliability RFC-0019–0025** — recovery, discovery, scenario harness, policy, federation, plugins, index scale; index [2026-08-27-agent-reliability-series-index.md](../docs/superpowers/specs/2026-08-27-agent-reliability-series-index.md). Quickstart docs PR is the first shippable slice.
+- **RFC-0016–0018 implementation** (Org Catalog Backend, Agentic Workload Harness, Pluggable Ontology Layer) — designs proposed; plans pending. RFC-0015 central state plane shipped on `feat/rfc-0015-central-state-plane` (merge pending). Run-evidence completion is part of **0017**, not a new 0016.
 - **`task repomix:profile` automation:** bundled profiles + CLI `metagit context repomix` ship in code; repo Taskfile wrappers may remain future scope (see design note in `docs/superpowers/specs/2026-05-21-context-packs-phase2-design.md`).
 - **Metagit Web hardened/exposed deployments:** intentional v1 localhost-only framing; authentication and safe non-local binds are future scope.
 - Full production-grade MCP lifecycle extras (e.g., richer notifications, broader method surface, advanced capability negotiation details).
