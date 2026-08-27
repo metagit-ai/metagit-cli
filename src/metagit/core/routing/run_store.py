@@ -6,6 +6,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import os
+import secrets
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -47,7 +48,8 @@ def _run_id(class_id: str, opened_iso: str) -> str:
     stamp = opened_iso.replace("-", "").replace(":", "")
     date_part = stamp[0:8]
     time_part = stamp[9:15]
-    return f"RUN-{date_part}-{time_part}-{class_id}"
+    suffix = secrets.token_hex(3)
+    return f"RUN-{date_part}-{time_part}-{class_id}-{suffix}"
 
 
 def open_run_for(

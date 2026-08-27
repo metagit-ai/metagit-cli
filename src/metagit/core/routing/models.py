@@ -48,11 +48,25 @@ class RunDispatch(BaseModel):
     doctrine_chars: Optional[int] = None
 
 
+class ControlLoopStep(BaseModel):
+    """One ordered evidence step in an agent control loop."""
+
+    name: str
+    at: str
+    status: Optional[str] = None
+    detail: dict[str, object] = Field(default_factory=dict)
+
+
 class RunEvidence(BaseModel):
     gates_run: list[str] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
     steering_turns: Optional[int] = None
     digest: Optional[str] = None
+    intent: Optional[str] = None
+    token_estimate: Optional[int] = None
+    cost_estimate_usd: Optional[float] = None
+    redacted: bool = False
+    steps: list[ControlLoopStep] = Field(default_factory=list)
 
 
 class RunArtifact(BaseModel):
@@ -81,6 +95,7 @@ class Run(BaseModel):
 
 __all__ = [
     "ClassEvidence",
+    "ControlLoopStep",
     "Outcome",
     "RequestClass",
     "Run",

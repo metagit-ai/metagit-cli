@@ -592,6 +592,36 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:aos_status"
 
+  - id: run_ledger
+    description: Routing run evidence ledger with show/replay/export and AOS commit recording
+    service: metagit.core.routing.routing_service.RoutingService
+    reference_doc: docs/reference/run-ledger.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/run.py
+            contains: '@run_group.command("replay")'
+          - path: src/metagit/cli/main.py
+            contains: run_group
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_run_replay
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_run_replay
+      documentation:
+        markers:
+          - path: docs/reference/run-ledger.md
+            contains: "modality:run_ledger"
+          - path: docs/agents.md
+            contains: "modality:run_ledger"
+      skills:
+        markers:
+          - path: skills/metagit-aos/SKILL.md
+            contains: "modality:run_ledger"
+          - path: src/metagit/data/skills/metagit-aos/SKILL.md
+            contains: "modality:run_ledger"
+
   - id: derived_projects
     description: Derived surgical workspace projects with frozen membership and refreshable identity
     service: metagit.core.workspace.derived_project_service.DerivedProjectService

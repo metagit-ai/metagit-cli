@@ -10,6 +10,7 @@ description: >-
 # Metagit Agent Operating System (AOS)
 
 <!-- modality:aos_status -->
+<!-- modality:run_ledger -->
 
 Use when you need a **composed** view of coordination state, or a preview of
 what should run next across ACL + task graph + optional 0009–0012.
@@ -18,6 +19,7 @@ what should run next across ACL + task graph + optional 0009–0012.
 [docs/agents-quickstart.md](../../../../docs/agents-quickstart.md)
 
 Full reference: [docs/reference/aos.md](../../../../docs/reference/aos.md)
+Run ledger: [docs/reference/run-ledger.md](../../../../docs/reference/run-ledger.md)
 
 Minimal practice workspace: [examples/agent-aos-loop/](../../../../examples/agent-aos-loop/)
 

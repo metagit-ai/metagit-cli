@@ -9,13 +9,22 @@ from typing import Callable, Optional
 
 from metagit.core.config.models import MetagitConfig, RoutingConfig
 from metagit.core.routing.class_store import ClassStore
-from metagit.core.routing.models import Outcome, RequestClass, Run, RunDispatch, Tier
+from metagit.core.routing.models import (
+    ControlLoopStep,
+    Outcome,
+    RequestClass,
+    Run,
+    RunDispatch,
+    Tier,
+)
 from metagit.core.routing.promotion import evaluate
+from metagit.core.routing.redaction import redact_run
 from metagit.core.routing.router import MatchResult, rank_classes
 from metagit.core.routing.run_store import RunStore, open_run_for
 from metagit.core.state.retry import with_state_retry
 
 _MISSING_ROUTING_MSG = "no routing.catalog configured - add a routing: block to .metagit.yml"
+_AOS_NEXT_CLASS_ID = "REQ-AOS-NEXT"
 
 
 def _utc_now_iso(now_fn: Callable[[], datetime] | None = None) -> str:
@@ -157,6 +166,153 @@ class RoutingService:
             rows = [row for row in rows if row.outcome is None]
         rows.sort(key=lambda row: row.id)
         return rows
+
+    def show_run(self, run_id: str, *, redact: bool = True) -> Run:
+        run, _ = self.run_store.load(run_id)
+        if run is None:
+            raise ValueError(f"run not found: {run_id}")
+        return redact_run(run) if redact else run
+
+    def append_step(
+        self,
+        *,
+        run_id: str,
+        name: str,
+        status: Optional[str] = None,
+        detail: Optional[dict[str, object]] = None,
+        intent: Optional[str] = None,
+        token_estimate: Optional[int] = None,
+        cost_estimate_usd: Optional[float] = None,
+    ) -> Run:
+        def _append() -> Run:
+            run, token = self.run_store.load(run_id)
+            if run is None:
+                raise ValueError(f"run not found: {run_id}")
+            updated = run.model_copy(deep=True)
+            step = ControlLoopStep(
+                name=name,
+                at=_utc_now_iso(self._now_fn),
+                status=status,
+                detail=dict(detail or {}),
+            )
+            updated.evidence.steps.append(step)
+            if intent is not None:
+                updated.evidence.intent = intent
+            if token_estimate is not None:
+                updated.evidence.token_estimate = token_estimate
+            if cost_estimate_usd is not None:
+                updated.evidence.cost_estimate_usd = cost_estimate_usd
+            self.run_store.save(updated, expected=token)
+            return updated
+
+        return with_state_retry(_append)
+
+    def replay(self, run_id: str, *, redact: bool = True) -> dict[str, object]:
+        run = self.show_run(run_id, redact=redact)
+        steps = [
+            {
+                "index": idx,
+                "name": step.name,
+                "at": step.at,
+                "status": step.status,
+                "detail": step.detail,
+            }
+            for idx, step in enumerate(run.evidence.steps)
+        ]
+        if not steps:
+            steps = [
+                {
+                    "index": 0,
+                    "name": "open",
+                    "at": run.opened,
+                    "status": "recorded",
+                    "detail": {"class": run.cls, "actor": run.actor, "tier": run.tier},
+                }
+            ]
+            if run.closed is not None:
+                steps.append(
+                    {
+                        "index": 1,
+                        "name": "close",
+                        "at": run.closed,
+                        "status": run.outcome or "closed",
+                        "detail": {"outcome": run.outcome},
+                    }
+                )
+        return {
+            "run_id": run.id,
+            "class": run.cls,
+            "actor": run.actor,
+            "outcome": run.outcome,
+            "opened": run.opened,
+            "closed": run.closed,
+            "dry_run": True,
+            "steps": steps,
+        }
+
+    def export_runs(
+        self,
+        *,
+        class_id: Optional[str] = None,
+        outcome: Optional[Outcome] = None,
+        open_only: bool = False,
+        redact: bool = True,
+    ) -> list[dict[str, object]]:
+        rows = self.list_runs(class_id=class_id, outcome=outcome, open_only=open_only)
+        payloads: list[dict[str, object]] = []
+        for row in rows:
+            payload_run = redact_run(row) if redact else row
+            payloads.append(payload_run.model_dump(mode="json", by_alias=True, exclude_none=True))
+        return payloads
+
+    def ensure_aos_next_class(self) -> RequestClass:
+        existing, _token = self.class_store.load(_AOS_NEXT_CLASS_ID)
+        if existing is not None:
+            return existing
+        row = RequestClass(
+            id=_AOS_NEXT_CLASS_ID,
+            title="AOS next control-loop decision",
+            triggers=["aos next", "coord next"],
+            skill="metagit-aos",
+            lane="coordination",
+            artifact="schedule decision",
+            gates=[],
+            tier="deterministic",
+            mutates=False,
+            executor="aos.next",
+            promotion_state="stable",
+            notes="System class for aos next --commit run evidence",
+        )
+
+        def _save() -> RequestClass:
+            self.class_store.save(row, expected=None)
+            return row
+
+        return with_state_retry(_save)
+
+    def record_aos_next(
+        self,
+        *,
+        actor: str,
+        decision: Optional[dict[str, object]] = None,
+        session_id: Optional[str] = None,
+    ) -> Run:
+        self.ensure_aos_next_class()
+        run = self.open_run(
+            class_id=_AOS_NEXT_CLASS_ID,
+            actor=actor,
+            session_id=session_id,
+        )
+        detail: dict[str, object] = {}
+        if decision is not None:
+            detail["decision"] = decision
+        return self.append_step(
+            run_id=run.id,
+            name="aos_next",
+            status="committed",
+            detail=detail,
+            intent="aos next --commit",
+        )
 
     def evaluate(self, *, class_id: Optional[str] = None, dry_run: bool = False) -> list[RequestClass]:
         rows = [self._load_class_or_fail(class_id)] if class_id is not None else self.class_store.list()

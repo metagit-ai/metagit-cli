@@ -66,10 +66,10 @@ RFC-0025 Workspace index
 | ID | Title | Priority | Effort | Design | Plan | Status |
 |----|-------|----------|--------|--------|------|--------|
 | (docs) | Agent OS Quickstart + control-loop narrative | P1 | S | — | — | **Shipped** ([agents-quickstart.md](../../agents-quickstart.md), [examples/agent-aos-loop/](../../../examples/agent-aos-loop/)) |
-| 0017 | Agentic Workload Harness + run-evidence completion | P0 | M | [design](2026-07-31-rfc-0017-agentic-workload-harness-design.md) | pending | Proposed — extend routing ledger + plane `harness.runs` |
+| 0017 | Agentic Workload Harness + run-evidence completion | P0 | M | [design](2026-07-31-rfc-0017-agentic-workload-harness-design.md) · [completion](2026-08-27-rfc-0017-run-evidence-completion-design.md) | in-tree | **In progress** — show/replay/export + AOS commit recording shipped on `feat/agent-reliability-series` |
 | 0019 | Failure Recovery & Control-Loop Resilience | P0 | M | pending | pending | Proposed |
-| 0020 | Discovery & Onboarding Surfaces | P1 | S–M | pending | pending | Proposed |
-| 0021 | Multi-Agent Scenario Test Harness | P1 | M–L | pending | pending | Proposed |
+| 0020 | Discovery & Onboarding Surfaces | P1 | S–M | [design](2026-08-27-rfc-0020-discovery-onboarding-design.md) | pending | Proposed |
+| 0021 | Multi-Agent Scenario Test Harness | P1 | M–L | [design](2026-08-27-rfc-0021-multi-agent-scenarios-design.md) | pending | Proposed |
 | 0022 | Policy Engine for Mutating Classes | P2 | M | pending | pending | Proposed |
 | — | Secrets & Redaction Hardening | P2 | S | — | — | Incremental PR (no RFC) |
 | 0023 | Workspace Federation & Org-Scale Identity | P2 | L | pending | pending | Proposed |
@@ -128,15 +128,19 @@ RFC-0025 Workspace index
 
 ### RFC-0020: Discovery & Onboarding Surfaces
 
+**Design:** [2026-08-27-rfc-0020-discovery-onboarding-design.md](2026-08-27-rfc-0020-discovery-onboarding-design.md)
+
 **Proposed:** `metagit workspace health` / `summary --json` readiness score; optional `metagit init --agent-optimized`; more reference manifests + Hermes/Cursor examples.
 
 **Acceptance:** Structured JSON usable by agents; init path documented; ≥1 additional example workspace committed.
 
 ### RFC-0021: Multi-Agent Scenario Test Harness
 
-**Proposed:** `tests/scenarios/` multi-agent processes/threads against temp workspace (+ optional in-memory DocumentStore). Scenarios: lease contention, claim overlap, concurrent `aos next`, crash recovery, remote-state CAS conflicts. CI (nightly if slow).
+**Design:** [2026-08-27-rfc-0021-multi-agent-scenarios-design.md](2026-08-27-rfc-0021-multi-agent-scenarios-design.md)
 
-**Acceptance:** ≥5 deterministic scenarios in CI; harness docs; clear failure diagnostics.
+**Proposed:** `tests/scenarios/` multi-agent threads (optional subprocess for crash) against temp workspace (+ optional `InMemoryDocumentStore`). Five core scenarios: lease contention, claim overlap, concurrent `aos next`, crash recovery (doctor/`--fix`; full recover when RFC-0019 lands), remote-state CAS conflicts. PR CI for fast path; nightly for HTTP stub + subprocess variants.
+
+**Acceptance:** ≥5 deterministic scenarios in CI; harness docs; structured failure diagnostics (timeline + snapshot + suggested doctor commands).
 
 ### RFC-0022: Policy Engine for Mutating Classes
 

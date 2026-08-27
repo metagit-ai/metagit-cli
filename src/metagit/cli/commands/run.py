@@ -180,3 +180,112 @@ def run_list(
     for row in rows:
         status = row.outcome or "open"
         click.echo(f"{row.id}\tclass={row.cls}\tstatus={status}\ttier={row.tier}")
+
+
+@run_group.command("show")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+    help="Path to the workspace .metagit.yml definition file",
+)
+@click.argument("run_id")
+@click.option("--no-redact", "no_redact", is_flag=True, help="Skip secret redaction")
+@click.option("--json", "as_json", is_flag=True)
+def run_show(definition_path: str, run_id: str, no_redact: bool, as_json: bool) -> None:
+    """Show one run record (redacted by default)."""
+    service = _load_service(definition_path)
+    try:
+        row = service.show_run(run_id, redact=not no_redact)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    if as_json:
+        emit_json(row.model_dump(mode="json", by_alias=True, exclude_none=True))
+        return
+    status = row.outcome or "open"
+    click.echo(f"{row.id}\tclass={row.cls}\tstatus={status}\tsteps={len(row.evidence.steps)}")
+
+
+@run_group.command("replay")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+    help="Path to the workspace .metagit.yml definition file",
+)
+@click.argument("run_id")
+@click.option(
+    "--dry-run",
+    "dry_run",
+    is_flag=True,
+    default=True,
+    help="Reconstruct control-loop steps without mutations (default)",
+)
+@click.option("--no-redact", "no_redact", is_flag=True)
+@click.option("--json", "as_json", is_flag=True)
+def run_replay(
+    definition_path: str,
+    run_id: str,
+    dry_run: bool,
+    no_redact: bool,
+    as_json: bool,
+) -> None:
+    """Replay control-loop steps for a run (report-only)."""
+    if not dry_run:
+        raise click.ClickException("only --dry-run replay is supported")
+    service = _load_service(definition_path)
+    try:
+        payload = service.replay(run_id, redact=not no_redact)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    if as_json:
+        emit_json(payload)
+        return
+    click.echo(f"{payload['run_id']}\tsteps={len(payload['steps'])}")  # type: ignore[arg-type]
+    for step in payload["steps"]:  # type: ignore[union-attr]
+        click.echo(f"{step['index']}\t{step['name']}\t{step['at']}\t{step.get('status') or ''}")
+
+
+@run_group.command("export")
+@click.option(
+    "--definition",
+    "-c",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+    help="Path to the workspace .metagit.yml definition file",
+)
+@click.option("--class", "class_id", default=None)
+@click.option(
+    "--outcome",
+    default=None,
+    type=click.Choice(["landed", "bounced", "noop", "abandoned"], case_sensitive=True),
+)
+@click.option("--open", "open_only", is_flag=True)
+@click.option("--no-redact", "no_redact", is_flag=True)
+@click.option("--json", "as_json", is_flag=True, default=True)
+def run_export(
+    definition_path: str,
+    class_id: str | None,
+    outcome: str | None,
+    open_only: bool,
+    no_redact: bool,
+    as_json: bool,
+) -> None:
+    """Export run records as JSON (redacted by default)."""
+    service = _load_service(definition_path)
+    rows = service.export_runs(
+        class_id=class_id,
+        outcome=outcome,
+        open_only=open_only,
+        redact=not no_redact,
+    )
+    if as_json:
+        emit_json({"runs": rows})
+        return
+    for row in rows:
+        click.echo(str(row.get("id")))

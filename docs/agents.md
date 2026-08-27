@@ -70,6 +70,7 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
 | Agent OS (composition) | `metagit aos status` · `metagit aos doctor` · `metagit aos next` (`coord` alias) |
+| Run ledger | `metagit run list|show|replay|export` |
 | Local Atlas | `metagit atlas init` · `metagit atlas generate` · `metagit atlas validate` · `metagit atlas query` |
 | Derived surgical project | `metagit project derived create -n NAME --from P/R` · `refresh` · `include` · `exclude` |
 | Skills surface (inventory) | `metagit skills surface --json` |
@@ -82,6 +83,7 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 <!-- modality:merge_orchestrator -->
 <!-- modality:agent_scheduler -->
 <!-- modality:aos_status -->
+<!-- modality:run_ledger -->
 <!-- modality:atlas_local -->
 <!-- modality:derived_projects -->
 <!-- modality:skills_surface -->

@@ -52,6 +52,7 @@ class AosNextResult(BaseModel):
     hints_applied: bool = False
     scheduler_available: bool = False
     reasons: list[str] = Field(default_factory=list)
+    run_id: Optional[str] = None
 
 
 __all__ = [

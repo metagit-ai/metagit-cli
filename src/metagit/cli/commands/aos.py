@@ -3,12 +3,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 import click
 
 from metagit.cli.commands.acl_common import emit_json, raise_if_error, resolve_acl_roots
 from metagit.core.aos.service import AosService
+from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.routing.routing_service import RoutingService
 
 
 @click.group(name="aos")
@@ -94,6 +97,14 @@ def aos_next(
             graph_id=graph_id,
         )
     )
+    if do_commit and result.committed:
+        run_id = _maybe_record_aos_run(
+            definition_path,
+            actor=agent_id or "aos",
+            decision=result.decision,
+        )
+        if run_id is not None:
+            result = result.model_copy(update={"run_id": run_id})
     if as_json:
         emit_json(result)
         return
@@ -101,8 +112,31 @@ def aos_next(
     click.echo(
         f"committed={result.committed} hints_applied={result.hints_applied} "
         f"scheduler={result.scheduler_available} node={node or '-'}"
+        + (f" run_id={result.run_id}" if result.run_id else "")
     )
     if result.compile_command:
         click.echo(f"compile\t{result.compile_command}")
     for cmd in result.acl_commands:
         click.echo(f"acl\t{cmd}")
+
+
+def _maybe_record_aos_run(
+    definition_path: str,
+    *,
+    actor: str,
+    decision: Optional[dict],
+) -> Optional[str]:
+    """Best-effort run ledger write when routing is configured."""
+    manager = MetagitConfigManager(definition_path)
+    config = manager.load_config()
+    if isinstance(config, Exception):
+        return None
+    if config.routing is None:
+        return None
+    workspace_root = str(Path(definition_path).expanduser().resolve().parent)
+    try:
+        routing = RoutingService(config, workspace_root=workspace_root)
+        run = routing.record_aos_next(actor=actor, decision=decision)
+    except Exception:  # noqa: BLE001 — ledger must not fail aos next
+        return None
+    return run.id

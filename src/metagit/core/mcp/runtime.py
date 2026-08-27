@@ -217,6 +217,37 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_run_list": {
+                "type": "object",
+                "properties": {
+                    "class_id": {"type": "string"},
+                    "outcome": {
+                        "type": "string",
+                        "enum": ["landed", "bounced", "noop", "abandoned"],
+                    },
+                    "open_only": {"type": "boolean"},
+                    "redact": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_run_show": {
+                "type": "object",
+                "required": ["run_id"],
+                "properties": {
+                    "run_id": {"type": "string"},
+                    "redact": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_run_replay": {
+                "type": "object",
+                "required": ["run_id"],
+                "properties": {
+                    "run_id": {"type": "string"},
+                    "redact": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_workspace_sync": {
                 "type": "object",
                 "properties": {
@@ -1704,6 +1735,53 @@ class MetagitMcpRuntime:
                 "dry_run": dry_run,
                 "updated": [row.model_dump(mode="json", exclude_none=True) for row in rows],
             }
+
+        if name == "metagit_run_list":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("run list requires an active workspace")
+            class_id = str(arguments.get("class_id", "")).strip() or None
+            outcome_raw = arguments.get("outcome")
+            outcome = str(outcome_raw).strip() if outcome_raw else None
+            open_only = bool(arguments.get("open_only", False))
+            redact = bool(arguments.get("redact", True))
+            try:
+                service = RoutingService(config, workspace_root=status.root_path)
+                rows = service.export_runs(
+                    class_id=class_id,
+                    outcome=outcome,  # type: ignore[arg-type]
+                    open_only=open_only,
+                    redact=redact,
+                )
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return {"runs": rows, "count": len(rows)}
+
+        if name == "metagit_run_show":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("run show requires an active workspace")
+            run_id = str(arguments.get("run_id", "")).strip()
+            if not run_id:
+                raise InvalidToolArgumentsError("run_id is required")
+            redact = bool(arguments.get("redact", True))
+            try:
+                service = RoutingService(config, workspace_root=status.root_path)
+                row = service.show_run(run_id, redact=redact)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return row.model_dump(mode="json", by_alias=True, exclude_none=True)
+
+        if name == "metagit_run_replay":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("run replay requires an active workspace")
+            run_id = str(arguments.get("run_id", "")).strip()
+            if not run_id:
+                raise InvalidToolArgumentsError("run_id is required")
+            redact = bool(arguments.get("redact", True))
+            try:
+                service = RoutingService(config, workspace_root=status.root_path)
+                return service.replay(run_id, redact=redact)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
 
         if name == "metagit_upstream_hints":
             blocker = str(arguments.get("blocker", "")).strip()
