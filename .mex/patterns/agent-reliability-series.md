@@ -22,4 +22,5 @@ Working on post-AOS agent reliability: failure recovery, discovery/health surfac
 - Series index status table matches reality.
 - No new design claims RFC numbers 0016–0018 for reliability work.
 - Cross-links from central-state-plane and ACL indexes remain valid.
+- Multi-agent scenarios: `uv run pytest tests/scenarios -m "not nightly" -v` (see `tests/scenarios/README.md`).
 - `task qa:prepush` green after doc/code changes; `task gitnexus:analyze` last.
