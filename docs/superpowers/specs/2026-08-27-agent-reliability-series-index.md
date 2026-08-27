@@ -65,7 +65,7 @@ RFC-0025 Workspace index
 
 | ID | Title | Priority | Effort | Design | Plan | Status |
 |----|-------|----------|--------|--------|------|--------|
-| (docs) | Agent OS Quickstart + control-loop narrative | P1 | S | — | — | **Next** (do first) |
+| (docs) | Agent OS Quickstart + control-loop narrative | P1 | S | — | — | **Shipped** ([agents-quickstart.md](../../agents-quickstart.md), [examples/agent-aos-loop/](../../../examples/agent-aos-loop/)) |
 | 0017 | Agentic Workload Harness + run-evidence completion | P0 | M | [design](2026-07-31-rfc-0017-agentic-workload-harness-design.md) | pending | Proposed — extend routing ledger + plane `harness.runs` |
 | 0019 | Failure Recovery & Control-Loop Resilience | P0 | M | pending | pending | Proposed |
 | 0020 | Discovery & Onboarding Surfaces | P1 | S–M | pending | pending | Proposed |
@@ -161,7 +161,7 @@ Optional on-disk index under `.metagit/index/`; ripgrep remains grep backend; be
 ## Suggested execution order
 
 1. **Immediate**
-   - Agent OS Quickstart narrative PR.
+   - ~~Agent OS Quickstart narrative PR.~~ **Done** — `docs/agents-quickstart.md`.
    - Start RFC-0017 run-evidence completion (schema + local writer gaps; report-only).
 2. **Next**
    - RFC-0019 doctor/recover.
