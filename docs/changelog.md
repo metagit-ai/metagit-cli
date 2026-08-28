@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.29.1] - 2026-08-28
+
+
+
 ### Added
 - Agent OS day-1 quickstart: [agents-quickstart.md](agents-quickstart.md), example workspace `examples/agent-aos-loop/`, and session-start / `metagit-aos` skill pointers to the canonical control loop.
 - Run ledger read surface: `metagit run show|replay|export`, MCP `metagit_run_*`, and AOS commit `run_id` recording. See [reference/run-ledger.md](reference/run-ledger.md).
@@ -13,7 +19,6 @@
 
 ### Changed
 - Bump uv override `pip` to `>=26.2.1` (PYSEC-2026-3721).
-
 
 ## [0.29.0] - 2026-08-23
 
