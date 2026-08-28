@@ -1,13 +1,15 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
-last_updated: 2026-07-14
+last_updated: 2026-08-27
 ---
 
 # Metagit
 
 ## What This Is
 Metagit gives you situational awareness across Git repositories. It helps multi-repo projects feel manageable, discoverable, and cohesive. It captures cross-repository relationships and project knowledge in easy to understand version controlled manifests.
+
+**Day-1 Agent OS loop:** [docs/agents-quickstart.md](docs/agents-quickstart.md) — install → context pack → `aos next` → compile/ACL → complete.
 
 ## After Every Task
 After meaningful work, run GROW:
@@ -26,6 +28,8 @@ For full project context, patterns, and task guidance — everything is there.
 For agents instructed to **use Metagit** (not necessarily to contribute to this repository).
 
 **Install:** `uv tool install metagit-cli` · set `METAGIT_AGENT_MODE=true` · PyPI name **`metagit-cli`**.
+
+**Quickstart:** [docs/agents-quickstart.md](docs/agents-quickstart.md) · example [examples/agent-aos-loop/](examples/agent-aos-loop/)
 
 **Session start** (from repo with `.metagit.yml`):
 

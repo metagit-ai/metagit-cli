@@ -1,0 +1,40 @@
+name: agent-aos-loop-example
+description: |
+  Minimal umbrella for practicing the Agent OS day-1 control loop
+  (context pack → aos next → compile → ACL → complete).
+kind: umbrella
+agent_instructions: |
+  Day-1 Agent OS control loop (read docs/agents-quickstart.md first):
+
+  1. export METAGIT_AGENT_MODE=true
+  2. metagit context pack --tier 0|1|2 --json -c .metagit.yml
+  3. metagit prompt workspace --kind session-start --text-only -c .metagit.yml
+  4. metagit aos status --json && metagit aos doctor --json
+  5. metagit aos next --json   # preview; then --commit when recording
+  6. metagit context compile --project <P> --repo <R> [--task-id <N>] --json
+  7. ACL: branch allocate / lease acquire / worktree create / claim declare
+     (or: metagit aos next --apply-hints --agent-id <id> --json)
+  8. Do the work in the isolated checkout
+  9. metagit task complete --node-id <N> --json
+  10. metagit merge enqueue when ready to integrate
+
+  Never launch models from AOS. Prefer preview before --commit.
+  Doctor --fix requires --yes and only performs safe ACL GC.
+  Pass --definition .metagit.yml (or -c where supported) when not at the manifest root.
+
+workspace:
+  description: Toy portfolio for AOS loop practice (replace sample remotes).
+  projects:
+    - name: demo
+      description: Single sample project for aos next / task graph practice.
+      repos:
+        - name: sample-service
+          description: Placeholder git remote — replace before project sync.
+          url: https://github.com/example-org/sample-service.git
+          sync: false
+          tags:
+            role: example
+            loop: aos
+          agent_instructions: |
+            Practice repo only. Do not sync until the URL points at a real remote
+            or switch this entry to a local path:.

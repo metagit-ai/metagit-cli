@@ -6,6 +6,7 @@ theme:
 nav:
   - 'index.md'
   - 'For AI agents': 'agents.md'
+  - 'Agent OS quickstart': 'agents-quickstart.md'
   - 'Installation': 'install.md'
   - 'Terminology': 'terminology.md'
   - 'Application Logic': 'app.logic.md'

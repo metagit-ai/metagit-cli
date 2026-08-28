@@ -78,6 +78,9 @@ aos next [--commit]
   → merge enqueue
 ```
 
+Day-1 narrative with copy/paste commands:
+[Agent OS quickstart](../agents-quickstart.md).
+
 See also: [agent-coordination.md](agent-coordination.md),
 [agent-scheduler.md](agent-scheduler.md),
 [task-graph.md](task-graph.md).

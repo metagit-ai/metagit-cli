@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+- Agent OS day-1 quickstart: [agents-quickstart.md](agents-quickstart.md), example workspace `examples/agent-aos-loop/`, and session-start / `metagit-aos` skill pointers to the canonical control loop.
+
+### Changed
+- Bump uv override `pip` to `>=26.2.1` (PYSEC-2026-3721).
 
 
 ## [0.29.0] - 2026-08-23

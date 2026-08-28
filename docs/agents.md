@@ -2,6 +2,8 @@
 
 Compact guide for agents told to install and use **Metagit** across Git repositories. Prefer these commands over reading full repo trees.
 
+> **Day-1 control loop:** start with [agents-quickstart.md](agents-quickstart.md) (install → context pack → `aos next` → work → complete).
+
 > PyPI package: **`metagit-cli`** (not `metagit`).
 
 ## Install

@@ -55,6 +55,7 @@ Other targets: `opencode`, `claude_code`, `cursor`, `github_copilot`, `windsurf`
 | `metagit-workspace-scope` | Session start; workspace boundaries; Hermes bootstrap wiring |
 | `metagit-control-center` | Ongoing multi-repo coordination |
 | `metagit-agent-coordination` | Isolate concurrent agents: ACL branches, leases, worktrees, file claims, merge conflict hints, schedule-next dispatch |
+| `metagit-aos` | Compose ACL/task/scheduler/merge via `aos|coord status|doctor|next`; day-1 loop in [agents-quickstart.md](agents-quickstart.md) |
 | `metagit-workspace-sync` | Guarded fetch/pull/clone |
 | `metagit-config-refresh` | `.metagit.yml` missing or stale |
 | `metagit-bootstrap` | Generate or refine config with discovery/MCP or CLI-only fallbacks |
