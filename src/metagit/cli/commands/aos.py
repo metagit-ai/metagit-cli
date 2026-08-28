@@ -3,12 +3,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 import click
 
 from metagit.cli.commands.acl_common import emit_json, raise_if_error, resolve_acl_roots
 from metagit.core.aos.service import AosService
+from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.routing.routing_service import RoutingService
 
 
 @click.group(name="aos")
@@ -61,10 +64,75 @@ def aos_doctor(
         return
     for finding in result.findings:
         click.echo(f"{finding.severity}\t{finding.code}\t{finding.message}")
+    for recipe in result.recovery_recipes:
+        click.echo(f"recipe\t{recipe.action}\t{recipe.command}")
     for cmd in result.suggested_commands:
         click.echo(f"suggest\t{cmd}")
     for item in result.fixed:
         click.echo(f"fixed\t{item}")
+
+
+@aos_group.command("recover")
+@click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--agent-id", required=True)
+@click.option("--yes", "confirm", is_flag=True, help="Confirm recovery mutations")
+@click.option("--release-orphan-claims", is_flag=True)
+@click.option("--cancel-stale-merges", is_flag=True)
+@click.option("--json", "as_json", is_flag=True)
+@click.pass_context
+def aos_recover(
+    ctx: click.Context,
+    definition_path: str,
+    agent_id: str,
+    confirm: bool,
+    release_orphan_claims: bool,
+    cancel_stale_merges: bool,
+    as_json: bool,
+) -> None:
+    """Safe agent-scoped recovery (requires --yes)."""
+    service = _service(ctx, definition_path)
+    result = raise_if_error(
+        service.recover(
+            agent_id=agent_id,
+            confirm=confirm,
+            release_orphan_claims=release_orphan_claims,
+            cancel_stale_merges=cancel_stale_merges,
+        )
+    )
+    if as_json:
+        emit_json(result)
+        return
+    for item in result.actions:
+        click.echo(f"action\t{item}")
+    for item in result.skipped:
+        click.echo(f"skipped\t{item}")
+    for item in result.errors:
+        click.echo(f"error\t{item}")
+
+
+@aos_group.command("heartbeat")
+@click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--agent-id", required=True)
+@click.option("--ttl", default="1h", show_default=True)
+@click.option("--json", "as_json", is_flag=True)
+@click.pass_context
+def aos_heartbeat(
+    ctx: click.Context,
+    definition_path: str,
+    agent_id: str,
+    ttl: str,
+    as_json: bool,
+) -> None:
+    """Renew active ACL leases for an agent."""
+    service = _service(ctx, definition_path)
+    result = raise_if_error(service.heartbeat(agent_id=agent_id, ttl=ttl))
+    if as_json:
+        emit_json(result)
+        return
+    for lease_id in result.renewed:
+        click.echo(f"renewed\t{lease_id}")
+    for item in result.errors:
+        click.echo(f"error\t{item}")
 
 
 @aos_group.command("next")
@@ -94,6 +162,14 @@ def aos_next(
             graph_id=graph_id,
         )
     )
+    if do_commit and result.committed:
+        run_id = _maybe_record_aos_run(
+            definition_path,
+            actor=agent_id or "aos",
+            decision=result.decision,
+        )
+        if run_id is not None:
+            result = result.model_copy(update={"run_id": run_id})
     if as_json:
         emit_json(result)
         return
@@ -101,8 +177,31 @@ def aos_next(
     click.echo(
         f"committed={result.committed} hints_applied={result.hints_applied} "
         f"scheduler={result.scheduler_available} node={node or '-'}"
+        + (f" run_id={result.run_id}" if result.run_id else "")
     )
     if result.compile_command:
         click.echo(f"compile\t{result.compile_command}")
     for cmd in result.acl_commands:
         click.echo(f"acl\t{cmd}")
+
+
+def _maybe_record_aos_run(
+    definition_path: str,
+    *,
+    actor: str,
+    decision: Optional[dict],
+) -> Optional[str]:
+    """Best-effort run ledger write when routing is configured."""
+    manager = MetagitConfigManager(definition_path)
+    config = manager.load_config()
+    if isinstance(config, Exception):
+        return None
+    if config.routing is None:
+        return None
+    workspace_root = str(Path(definition_path).expanduser().resolve().parent)
+    try:
+        routing = RoutingService(config, workspace_root=workspace_root)
+        run = routing.record_aos_next(actor=actor, decision=decision)
+    except Exception:  # noqa: BLE001 — ledger must not fail aos next
+        return None
+    return run.id

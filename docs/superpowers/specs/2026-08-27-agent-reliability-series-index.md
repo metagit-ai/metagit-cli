@@ -66,15 +66,15 @@ RFC-0025 Workspace index
 | ID | Title | Priority | Effort | Design | Plan | Status |
 |----|-------|----------|--------|--------|------|--------|
 | (docs) | Agent OS Quickstart + control-loop narrative | P1 | S | — | — | **Shipped** ([agents-quickstart.md](../../agents-quickstart.md), [examples/agent-aos-loop/](../../../examples/agent-aos-loop/)) |
-| 0017 | Agentic Workload Harness + run-evidence completion | P0 | M | [design](2026-07-31-rfc-0017-agentic-workload-harness-design.md) | pending | Proposed — extend routing ledger + plane `harness.runs` |
-| 0019 | Failure Recovery & Control-Loop Resilience | P0 | M | pending | pending | Proposed |
-| 0020 | Discovery & Onboarding Surfaces | P1 | S–M | pending | pending | Proposed |
-| 0021 | Multi-Agent Scenario Test Harness | P1 | M–L | pending | pending | Proposed |
-| 0022 | Policy Engine for Mutating Classes | P2 | M | pending | pending | Proposed |
-| — | Secrets & Redaction Hardening | P2 | S | — | — | Incremental PR (no RFC) |
-| 0023 | Workspace Federation & Org-Scale Identity | P2 | L | pending | pending | Proposed |
-| 0024 | Plugin / Detector / Skill Extension Points | P2 | M–L | pending | pending | Proposed |
-| 0025 | Workspace Index & Grep Scaling | P3 | M | pending | pending | Proposed |
+| 0017 | Agentic Workload Harness + run-evidence completion | P0 | M | [design](2026-07-31-rfc-0017-agentic-workload-harness-design.md) · [completion](2026-08-27-rfc-0017-run-evidence-completion-design.md) | in-tree | **Shipped MVP** on `feat/agent-reliability-series` |
+| 0019 | Failure Recovery & Control-Loop Resilience | P0 | M | [design](2026-08-27-rfc-0019-failure-recovery-design.md) | in-tree | **Shipped MVP** (recover/heartbeat + recipes) |
+| 0020 | Discovery & Onboarding Surfaces | P1 | S–M | [design](2026-08-27-rfc-0020-discovery-onboarding-design.md) | in-tree | **Shipped MVP** (`workspace health|summary`) |
+| 0021 | Multi-Agent Scenario Test Harness | P1 | M–L | [design](2026-08-27-rfc-0021-multi-agent-scenarios-design.md) | in-tree | **Shipped MVP** (`tests/scenarios/`) |
+| 0022 | Policy Engine for Mutating Classes | P2 | M | [design](2026-08-27-rfc-0022-policy-engine-design.md) | in-tree | **Shipped MVP** (`policy eval` report-only; enforce at mutation points follow-up) |
+| — | Secrets & Redaction Hardening | P2 | S | [design](2026-08-27-secrets-redaction-hardening-design.md) | pending | Proposed |
+| 0023 | Workspace Federation & Org-Scale Identity | P2 | L | [design](2026-08-27-rfc-0023-federation-design.md) | pending | Proposed |
+| 0024 | Plugin / Detector / Skill Extension Points | P2 | M–L | [design](2026-08-27-rfc-0024-plugins-design.md) | pending | Proposed |
+| 0025 | Workspace Index & Grep Scaling | P3 | M | [design](2026-08-27-rfc-0025-workspace-index-design.md) | pending | Proposed |
 
 ## Work package summaries
 
@@ -128,33 +128,49 @@ RFC-0025 Workspace index
 
 ### RFC-0020: Discovery & Onboarding Surfaces
 
+**Design:** [2026-08-27-rfc-0020-discovery-onboarding-design.md](2026-08-27-rfc-0020-discovery-onboarding-design.md)
+
 **Proposed:** `metagit workspace health` / `summary --json` readiness score; optional `metagit init --agent-optimized`; more reference manifests + Hermes/Cursor examples.
 
 **Acceptance:** Structured JSON usable by agents; init path documented; ≥1 additional example workspace committed.
 
 ### RFC-0021: Multi-Agent Scenario Test Harness
 
-**Proposed:** `tests/scenarios/` multi-agent processes/threads against temp workspace (+ optional in-memory DocumentStore). Scenarios: lease contention, claim overlap, concurrent `aos next`, crash recovery, remote-state CAS conflicts. CI (nightly if slow).
+**Design:** [2026-08-27-rfc-0021-multi-agent-scenarios-design.md](2026-08-27-rfc-0021-multi-agent-scenarios-design.md)
 
-**Acceptance:** ≥5 deterministic scenarios in CI; harness docs; clear failure diagnostics.
+**Shipped MVP:** `tests/scenarios/` harness + README with five core scenarios (lease contention, claim overlap, concurrent `aos next`, crash/doctor GC, CAS conflict) plus optional run-ledger concurrent writers. Full `aos recover` assertion remains deferred to RFC-0019 wiring; HTTP stub CAS is `@pytest.mark.nightly`.
+
+**Proposed (remaining):** PR CI wiring in prepush gate; nightly HTTP/subprocess variants; ≥10 consecutive flake-free CI runs.
+
+**Acceptance:** ≥5 deterministic scenarios in CI; harness docs; structured failure diagnostics (timeline + snapshot + suggested doctor commands).
 
 ### RFC-0022: Policy Engine for Mutating Classes
+
+**Design:** [2026-08-27-rfc-0022-policy-engine-design.md](2026-08-27-rfc-0022-policy-engine-design.md)
 
 **Proposed:** Declarative `policy` (or extend routing promotion policy) evaluated before ACL bind, merge integrate, catalog mutation, remote state writes. CLI `metagit policy eval --action … --json`. Default-deny only for high-risk classes when `METAGIT_AGENT_MODE=true` after happy-path tests stay green. Audit into run ledger.
 
 ### Secrets & Redaction (incremental PR)
 
-Expand gitleaks / secrets analysis; redaction middleware for context packs, run ledger, MCP resources; document safe token-handling patterns.
+**Design:** [2026-08-27-secrets-redaction-hardening-design.md](2026-08-27-secrets-redaction-hardening-design.md)
+
+Expand gitleaks / secrets analysis; centralize `SecretRedactor` from run ledger `redaction.py`; extend to context packs, MCP resources, config preview; document safe token-handling patterns.
 
 ### RFC-0023: Workspace Federation & Org-Scale Identity
+
+**Design:** [2026-08-27-rfc-0023-federation-design.md](2026-08-27-rfc-0023-federation-design.md)
 
 Formalize org + workspace IDs; federated read-only catalog; `metagit workspace link` / `federation status`. Target scale: **dozens** of workspaces first. Coordinate with plane RFC-0016.
 
 ### RFC-0024: Plugin / Detector / Skill Extension Points
 
-Stable protocols for custom detectors, context-pack contributors, skill packaging; optional entry-point discovery; example external package under `examples/`.
+**Design:** [2026-08-27-rfc-0024-plugins-design.md](2026-08-27-rfc-0024-plugins-design.md)
+
+Stable protocols for custom detectors, context-pack contributors, skill packaging; optional entry-point discovery; example external package under `examples/metagit-plugin-demo/`.
 
 ### RFC-0025: Workspace Index & Grep Scaling
+
+**Design:** [2026-08-27-rfc-0025-workspace-index-design.md](2026-08-27-rfc-0025-workspace-index-design.md)
 
 Optional on-disk index under `.metagit/index/`; ripgrep remains grep backend; benchmarks for 50/200-repo fixtures; corrupt index safely ignored.
 

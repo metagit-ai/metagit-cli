@@ -43,6 +43,7 @@ from metagit.cli.commands.lease import lease_group
 from metagit.cli.commands.mcp import mcp
 from metagit.cli.commands.merge_cmd import merge_group
 from metagit.cli.commands.nav import nav_cmd
+from metagit.cli.commands.policy import policy_group
 from metagit.cli.commands.project import project
 from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
@@ -168,6 +169,7 @@ cli.add_command(campaign)
 cli.add_command(route_group)
 cli.add_command(run_group)
 cli.add_command(lane_group)
+cli.add_command(policy_group)
 cli.add_command(branch_group)
 cli.add_command(lease_group)
 cli.add_command(worktree_group)

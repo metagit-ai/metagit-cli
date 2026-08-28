@@ -19,10 +19,12 @@ Primary group `aos`; alias group `coord` (identical behavior).
 ```bash
 metagit aos status [--json]
 metagit aos doctor [--json] [--fix] [--yes]
+metagit aos recover --agent-id … --yes [--release-orphan-claims] [--cancel-stale-merges] [--json]
+metagit aos heartbeat --agent-id … [--ttl 1h] [--json]
 metagit aos next [--json] [--commit] [--apply-hints] [--agent-id …] [--graph-id …]
 
 # aliases
-metagit coord status|doctor|next …
+metagit coord status|doctor|recover|heartbeat|next …
 ```
 
 ### status
@@ -32,7 +34,7 @@ summary counts. Missing optional RFCs degrade to `available: false`.
 
 ### doctor
 
-Report-only by default (`findings[]`, `suggested_commands[]`).
+Report-only by default (`findings[]`, `suggested_commands[]`, `recovery_recipes[]`).
 
 `--fix` requires `--yes`. Allowed mutations are safe ACL GC only:
 
@@ -40,6 +42,20 @@ Report-only by default (`findings[]`, `suggested_commands[]`).
 2. `WorktreeService.gc()`
 
 Never releases claims, cancels merges, or mutates tasks.
+
+### recover
+
+Agent-scoped crash recovery. Requires `--agent-id` and `--yes`.
+
+Default actions: lease expire side effects, worktree GC, reset stuck `running`
+task nodes to `ready`. Claim release and merge cancel require explicit flags
+(`--release-orphan-claims`, `--cancel-stale-merges`) and are never implied by
+`--yes` alone.
+
+### heartbeat
+
+Renew all **active** ACL leases owned by `--agent-id`. Does not acquire new
+leases or create worktrees.
 
 ### next
 
@@ -63,6 +79,8 @@ ACTIVE-gated. Alias tools share handlers with primary tools.
 | `metagit_aos_status` | `metagit_coord_status` |
 | `metagit_aos_doctor` | `metagit_coord_doctor` |
 | `metagit_aos_next` | `metagit_coord_next` |
+| `metagit_aos_recover` | `metagit_coord_recover` |
+| `metagit_aos_heartbeat` | `metagit_coord_heartbeat` |
 
 Doctor: `fix` + `confirm` mirrors CLI `--fix --yes`.
 Next: `commit`, `apply_hints`, `agent_id`, `graph_id`, `limit`.

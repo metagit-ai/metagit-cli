@@ -69,9 +69,12 @@ Token-tight: `--tier 0` instead of 2.
 ### 2. Health
 
 ```bash
+metagit workspace summary --json
 metagit aos status --json
 metagit aos doctor --json
 ```
+
+Prefer `workspace summary` for a composite readiness score (gate, clones, maintenance, agent surfaces). Use `aos doctor` for coordination-specific findings.
 
 ### 3. Next work (preview first)
 

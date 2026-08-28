@@ -64,6 +64,7 @@ from metagit.core.mcp.tools.bootstrap_plan_only import (
 from metagit.core.mcp.tools.workspace_status import metagit_workspace_status
 from metagit.core.merge.models import MergeRequest
 from metagit.core.merge.service import MergeOrchestrator
+from metagit.core.policy.engine import evaluate_action
 from metagit.core.project.ci_target_service import CiTargetService
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.release.release_check_service import ReleaseCheckService
@@ -214,6 +215,58 @@ class MetagitMcpRuntime:
                 "properties": {
                     "id": {"type": "string"},
                     "dry_run": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_run_list": {
+                "type": "object",
+                "properties": {
+                    "class_id": {"type": "string"},
+                    "outcome": {
+                        "type": "string",
+                        "enum": ["landed", "bounced", "noop", "abandoned"],
+                    },
+                    "open_only": {"type": "boolean"},
+                    "redact": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_run_show": {
+                "type": "object",
+                "required": ["run_id"],
+                "properties": {
+                    "run_id": {"type": "string"},
+                    "redact": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_run_replay": {
+                "type": "object",
+                "required": ["run_id"],
+                "properties": {
+                    "run_id": {"type": "string"},
+                    "redact": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_policy_eval": {
+                "type": "object",
+                "required": ["action"],
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "merge_integrate",
+                            "claim_declare",
+                            "claim_release",
+                            "catalog_edit",
+                            "remote_state_write",
+                            "acl_bind",
+                            "aos_recover",
+                            "run_open",
+                        ],
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -698,6 +751,26 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_aos_recover": {
+                "type": "object",
+                "required": ["agent_id", "confirm"],
+                "properties": {
+                    "agent_id": {"type": "string"},
+                    "confirm": {"type": "boolean"},
+                    "release_orphan_claims": {"type": "boolean"},
+                    "cancel_stale_merges": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_aos_heartbeat": {
+                "type": "object",
+                "required": ["agent_id"],
+                "properties": {
+                    "agent_id": {"type": "string"},
+                    "ttl": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_coord_status": {
                 "type": "object",
                 "properties": {},
@@ -719,6 +792,26 @@ class MetagitMcpRuntime:
                     "agent_id": {"type": "string"},
                     "graph_id": {"type": "string"},
                     "limit": {"type": "integer"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_coord_recover": {
+                "type": "object",
+                "required": ["agent_id", "confirm"],
+                "properties": {
+                    "agent_id": {"type": "string"},
+                    "confirm": {"type": "boolean"},
+                    "release_orphan_claims": {"type": "boolean"},
+                    "cancel_stale_merges": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_coord_heartbeat": {
+                "type": "object",
+                "required": ["agent_id"],
+                "properties": {
+                    "agent_id": {"type": "string"},
+                    "ttl": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -1704,6 +1797,63 @@ class MetagitMcpRuntime:
                 "dry_run": dry_run,
                 "updated": [row.model_dump(mode="json", exclude_none=True) for row in rows],
             }
+
+        if name == "metagit_run_list":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("run list requires an active workspace")
+            class_id = str(arguments.get("class_id", "")).strip() or None
+            outcome_raw = arguments.get("outcome")
+            outcome = str(outcome_raw).strip() if outcome_raw else None
+            open_only = bool(arguments.get("open_only", False))
+            redact = bool(arguments.get("redact", True))
+            try:
+                service = RoutingService(config, workspace_root=status.root_path)
+                rows = service.export_runs(
+                    class_id=class_id,
+                    outcome=outcome,  # type: ignore[arg-type]
+                    open_only=open_only,
+                    redact=redact,
+                )
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return {"runs": rows, "count": len(rows)}
+
+        if name == "metagit_run_show":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("run show requires an active workspace")
+            run_id = str(arguments.get("run_id", "")).strip()
+            if not run_id:
+                raise InvalidToolArgumentsError("run_id is required")
+            redact = bool(arguments.get("redact", True))
+            try:
+                service = RoutingService(config, workspace_root=status.root_path)
+                row = service.show_run(run_id, redact=redact)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return row.model_dump(mode="json", by_alias=True, exclude_none=True)
+
+        if name == "metagit_run_replay":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("run replay requires an active workspace")
+            run_id = str(arguments.get("run_id", "")).strip()
+            if not run_id:
+                raise InvalidToolArgumentsError("run_id is required")
+            redact = bool(arguments.get("redact", True))
+            try:
+                service = RoutingService(config, workspace_root=status.root_path)
+                return service.replay(run_id, redact=redact)
+            except ValueError as exc:
+                raise InvalidToolArgumentsError(str(exc)) from exc
+
+        if name == "metagit_policy_eval":
+            action = str(arguments.get("action", "")).strip()
+            if not action:
+                raise InvalidToolArgumentsError("action is required")
+            try:
+                decision = evaluate_action(action)  # type: ignore[arg-type]
+            except Exception as exc:  # noqa: BLE001
+                raise InvalidToolArgumentsError(str(exc)) from exc
+            return decision.model_dump(mode="json")
 
         if name == "metagit_upstream_hints":
             blocker = str(arguments.get("blocker", "")).strip()
@@ -3218,6 +3368,24 @@ class MetagitMcpRuntime:
                     limit=limit,
                 )
             )
+        if canonical == "metagit_aos_recover":
+            agent_id = str(arguments.get("agent_id", "")).strip()
+            if not agent_id:
+                raise InvalidToolArgumentsError("agent_id is required")
+            return _unwrap(
+                service.recover(
+                    agent_id=agent_id,
+                    confirm=bool(arguments.get("confirm")),
+                    release_orphan_claims=bool(arguments.get("release_orphan_claims")),
+                    cancel_stale_merges=bool(arguments.get("cancel_stale_merges")),
+                )
+            )
+        if canonical == "metagit_aos_heartbeat":
+            agent_id = str(arguments.get("agent_id", "")).strip()
+            if not agent_id:
+                raise InvalidToolArgumentsError("agent_id is required")
+            ttl = str(arguments.get("ttl") or "1h")
+            return _unwrap(service.heartbeat(agent_id=agent_id, ttl=ttl))
         raise ValueError(f"Unsupported aos tool: {name}")
 
     def _call_task_tool(

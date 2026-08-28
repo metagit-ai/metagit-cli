@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 26
+- **Features tracked:** 30
 
 When you add or change a backend feature:
 
@@ -44,6 +44,10 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `merge_orchestrator` | Local merge queue, validation gate, and integration orchestration | yes | yes | — | yes | yes | [merge-orchestrator.md](merge-orchestrator.md) |
 | `agent_scheduler` | Score ready task nodes and emit schedule decisions with dispatch hints | yes | yes | — | yes | yes | [agent-scheduler.md](agent-scheduler.md) |
 | `aos_status` | Composition façade aggregating ACL, task graph, and optional 0009-0012 subsystems | yes | yes | — | yes | yes | [aos.md](aos.md) |
+| `run_ledger` | Routing run evidence ledger with show/replay/export and AOS commit recording | yes | yes | — | yes | yes | [run-ledger.md](run-ledger.md) |
+| `mutation_policy` | Report-only evaluation of mutating action classes under agent-mode ceilings | yes | yes | — | yes | — | [mutation-policy.md](mutation-policy.md) |
+| `workspace_health` | Workspace maintenance health check with CLI/MCP parity | yes | yes | — | yes | yes | [workspace-discovery.md](workspace-discovery.md) |
+| `workspace_summary` | Workspace discovery readiness score for agent session start | yes | — | — | yes | yes | [workspace-discovery.md](workspace-discovery.md) |
 | `derived_projects` | Derived surgical workspace projects with frozen membership and refreshable identity | yes | yes | — | yes | yes | [derived-projects.md](derived-projects.md) |
 | `skills_surface` | Layered on-disk and declared skill inventory across workspace/project/repo | yes | yes | — | yes | yes | [skills-surface.md](skills-surface.md) |
 <!-- registry:table:end -->

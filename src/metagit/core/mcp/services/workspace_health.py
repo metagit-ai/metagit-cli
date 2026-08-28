@@ -49,10 +49,16 @@ class WorkspaceHealthService:
         branch_head_critical_days: float = 365.0,
         integration_stale_days: float = 90.0,
         dedupe: WorkspaceDedupeConfig | None = None,
+        definition_root: Optional[str] = None,
     ) -> WorkspaceHealthResult:
         """Run selected health checks across workspace repositories."""
-        gate_status = self._gate.evaluate(root_path=workspace_root)
-        rows = self._index.build_index(config=config, workspace_root=workspace_root)
+        gate_root = definition_root or workspace_root
+        gate_status = self._gate.evaluate(root_path=gate_root)
+        rows = self._index.build_index(
+            config=config,
+            workspace_root=workspace_root,
+            definition_root=gate_root,
+        )
         if project_name:
             rows = [row for row in rows if row["project_name"] == project_name]
 

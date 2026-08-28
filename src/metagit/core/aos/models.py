@@ -31,6 +31,19 @@ class AosFinding(BaseModel):
     code: str
     message: str
     subsystem: str
+    affected_ids: list[str] = Field(default_factory=list)
+
+
+class AosRecoveryRecipe(BaseModel):
+    """Actionable recovery recipe attached to doctor output."""
+
+    code: str
+    action: str
+    description: str
+    command: str
+    safe_default: bool = True
+    requires_flag: Optional[str] = None
+    subsystem: str
 
 
 class AosDoctorResult(AosStatusResult):
@@ -39,6 +52,26 @@ class AosDoctorResult(AosStatusResult):
     findings: list[AosFinding] = Field(default_factory=list)
     suggested_commands: list[str] = Field(default_factory=list)
     fixed: list[str] = Field(default_factory=list)
+    recovery_recipes: list[AosRecoveryRecipe] = Field(default_factory=list)
+
+
+class AosRecoverResult(BaseModel):
+    """Outcome of a gated aos recover invocation."""
+
+    generated_at: str
+    agent_id: str
+    actions: list[str] = Field(default_factory=list)
+    skipped: list[str] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+
+
+class AosHeartbeatResult(BaseModel):
+    """Outcome of lease renewal heartbeat."""
+
+    generated_at: str
+    agent_id: str
+    renewed: list[str] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
 
 
 class AosNextResult(BaseModel):
@@ -52,12 +85,16 @@ class AosNextResult(BaseModel):
     hints_applied: bool = False
     scheduler_available: bool = False
     reasons: list[str] = Field(default_factory=list)
+    run_id: Optional[str] = None
 
 
 __all__ = [
     "AosDoctorResult",
     "AosFinding",
+    "AosHeartbeatResult",
     "AosNextResult",
+    "AosRecoverResult",
+    "AosRecoveryRecipe",
     "AosStatusResult",
     "AosSubsystemSection",
     "FindingSeverity",

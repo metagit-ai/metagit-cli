@@ -7,14 +7,18 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from metagit.core.aos.collectors import DefaultSubsystemCollector
+from metagit.core.aos.events import AosEventStore
 from metagit.core.aos.models import (
     AosDoctorResult,
     AosFinding,
+    AosHeartbeatResult,
     AosNextResult,
+    AosRecoverResult,
     AosStatusResult,
     AosSubsystemSection,
 )
 from metagit.core.aos.protocols import SubsystemCollector
+from metagit.core.aos.recovery import build_recovery_recipes, enrich_findings
 from metagit.core.workspace.context_models import utc_now_iso
 
 
@@ -62,6 +66,11 @@ class AosService:
         if isinstance(snap, Exception):
             return snap
         findings, suggestions = self._analyze(snap.subsystems)
+        findings.extend(enrich_findings(snap.subsystems))
+        recipes = build_recovery_recipes(findings)
+        for recipe in recipes:
+            if recipe.command not in suggestions:
+                suggestions.append(recipe.command)
         fixed: list[str] = []
         if fix and confirm:
             result = self._fix_fn(self) if self._fix_fn is not None else self._default_fix()
@@ -72,13 +81,145 @@ class AosService:
             if not isinstance(refreshed, Exception):
                 snap = refreshed
                 findings, suggestions = self._analyze(snap.subsystems)
+                findings.extend(enrich_findings(snap.subsystems))
+                recipes = build_recovery_recipes(findings)
+                for recipe in recipes:
+                    if recipe.command not in suggestions:
+                        suggestions.append(recipe.command)
         return AosDoctorResult(
             generated_at=self._now(),
             subsystems=snap.subsystems,
             findings=findings,
             suggested_commands=suggestions,
             fixed=fixed,
+            recovery_recipes=recipes,
         )
+
+    def recover(
+        self,
+        *,
+        agent_id: str,
+        confirm: bool = False,
+        release_orphan_claims: bool = False,
+        cancel_stale_merges: bool = False,
+    ) -> AosRecoverResult | Exception:
+        if not confirm:
+            return ValueError("recover requires --yes (confirm=true)")
+        if not agent_id.strip():
+            return ValueError("recover requires --agent-id")
+        actions: list[str] = []
+        skipped: list[str] = []
+        errors: list[str] = []
+
+        fix = self._default_fix()
+        if isinstance(fix, Exception):
+            return fix
+        actions.extend(fix)
+
+        reset = self._reset_stuck_tasks(agent_id=agent_id)
+        if isinstance(reset, Exception):
+            errors.append(str(reset))
+        else:
+            actions.extend(reset)
+
+        if release_orphan_claims:
+            released = self._release_orphan_claims(agent_id=agent_id)
+            if isinstance(released, Exception):
+                errors.append(str(released))
+            else:
+                actions.extend(released)
+        else:
+            skipped.append("release_orphan_claims_requires_flag")
+
+        if cancel_stale_merges:
+            skipped.append("cancel_stale_merges_not_implemented")
+        else:
+            skipped.append("cancel_stale_merges_requires_flag")
+
+        AosEventStore(self._session_root).append(
+            "aos.recover",
+            {
+                "agent_id": agent_id,
+                "actions": actions,
+                "skipped": skipped,
+                "errors": errors,
+            },
+        )
+        return AosRecoverResult(
+            generated_at=self._now(),
+            agent_id=agent_id,
+            actions=actions,
+            skipped=skipped,
+            errors=errors,
+        )
+
+    def heartbeat(self, *, agent_id: str, ttl: str = "1h") -> AosHeartbeatResult | Exception:
+        if not agent_id.strip():
+            return ValueError("heartbeat requires --agent-id")
+        renewed: list[str] = []
+        errors: list[str] = []
+        try:
+            from metagit.core.coordination.lease_service import LeaseService
+        except Exception as exc:  # noqa: BLE001
+            return exc
+        service = LeaseService(self._session_root)
+        listed = service.list(agent_id=agent_id)
+        if isinstance(listed, Exception):
+            return listed
+        for row in listed.leases:
+            if row.status != "active":
+                continue
+            result = service.renew(lease_id=row.lease_id, agent_id=agent_id, ttl=ttl)
+            if isinstance(result, Exception):
+                errors.append(f"{row.lease_id}:{result}")
+            else:
+                renewed.append(row.lease_id)
+        AosEventStore(self._session_root).append(
+            "aos.heartbeat",
+            {"agent_id": agent_id, "renewed": renewed, "errors": errors},
+        )
+        return AosHeartbeatResult(
+            generated_at=self._now(),
+            agent_id=agent_id,
+            renewed=renewed,
+            errors=errors,
+        )
+
+    def _reset_stuck_tasks(self, *, agent_id: str) -> list[str] | Exception:
+        try:
+            from metagit.core.taskgraph.service import TaskGraphService
+        except Exception as exc:  # noqa: BLE001
+            return [f"taskgraph_unavailable:{exc}"]
+        service = TaskGraphService(self._session_root)
+        nodes = service.list_nodes(status="running")
+        if isinstance(nodes, Exception):
+            return nodes
+        actions: list[str] = []
+        for node in nodes:
+            if node.agent_id and node.agent_id != agent_id:
+                continue
+            result = service._set_status(node.node_id, "ready", graph_id=node.graph_id)
+            if isinstance(result, Exception):
+                return result
+            actions.append(f"task_reset_ready:{node.node_id}")
+        return actions
+
+    def _release_orphan_claims(self, *, agent_id: str) -> list[str] | Exception:
+        try:
+            from metagit.core.coordination.claim_service import ClaimService
+        except Exception as exc:  # noqa: BLE001
+            return [f"claims_unavailable:{exc}"]
+        service = ClaimService(self._session_root)
+        listed = service.list(agent_id=agent_id, status="active")
+        if isinstance(listed, Exception):
+            return listed
+        actions: list[str] = []
+        for claim in listed.claims:
+            result = service.release(claim_id=claim.claim_id, agent_id=agent_id)
+            if isinstance(result, Exception):
+                return result
+            actions.append(f"claim_released:{claim.claim_id}")
+        return actions
 
     def next(
         self,

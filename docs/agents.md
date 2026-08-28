@@ -40,6 +40,17 @@ metagit prompt workspace --kind session-start --text-only
 
 Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 
+## Discovery & readiness
+
+Before escalating packs, check workspace readiness:
+
+```bash
+metagit workspace summary --json
+metagit workspace health --json
+```
+
+`summary` returns `readiness.score` (0–100), dimension breakdown, and blockers. Exit 0 even when the score is low (report-only). Details: [workspace-discovery.md](reference/workspace-discovery.md).
+
 ## Core CLI (agent mode)
 
 | Goal | Command |
@@ -48,6 +59,8 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Search file contents (workspace) | `metagit workspace grep "<query>" --json` |
 | Ripgrep / grep backend status | `metagit workspace grep info --json` |
 | Workspace catalog | `metagit workspace list --json` |
+| Workspace health | `metagit workspace health --json` |
+| Workspace readiness summary | `metagit workspace summary --json` |
 | Validate manifest | `metagit config validate` |
 | Safe sync (fetch-first) | `metagit project sync` |
 | Scoped repo snapshot | `metagit context repomix --profile bugfix-local --project P --repo R` |
@@ -70,6 +83,7 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
 | Agent OS (composition) | `metagit aos status` · `metagit aos doctor` · `metagit aos next` (`coord` alias) |
+| Run ledger | `metagit run list|show|replay|export` |
 | Local Atlas | `metagit atlas init` · `metagit atlas generate` · `metagit atlas validate` · `metagit atlas query` |
 | Derived surgical project | `metagit project derived create -n NAME --from P/R` · `refresh` · `include` · `exclude` |
 | Skills surface (inventory) | `metagit skills surface --json` |
@@ -82,6 +96,10 @@ Escalate tiers only when needed. Use `--project` / `--repo` to narrow tier 1/2.
 <!-- modality:merge_orchestrator -->
 <!-- modality:agent_scheduler -->
 <!-- modality:aos_status -->
+<!-- modality:run_ledger -->
+<!-- modality:workspace_health -->
+<!-- modality:workspace_summary -->
+<!-- modality:mutation_policy -->
 <!-- modality:atlas_local -->
 <!-- modality:derived_projects -->
 <!-- modality:skills_surface -->
