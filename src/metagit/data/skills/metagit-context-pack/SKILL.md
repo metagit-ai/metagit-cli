@@ -43,14 +43,14 @@ Escalate tiers only when needed. Narrow tier 1/2 with `--project` and/or `--repo
 ### Primary session command
 
 ```bash
-metagit context pack --tier 2 --json -c .metagit.yml
+metagit -c .metagit.yml context pack --tier 2 --json
 ```
 
 Pair with operational prompts (paste `--text-only` output into agent context):
 
 ```bash
-metagit prompt workspace -k session-start --text-only -c .metagit.yml
-metagit prompt workspace -k context-pack --text-only -c .metagit.yml   # tier escalation guide
+metagit -c .metagit.yml prompt workspace -k session-start --text-only
+metagit -c .metagit.yml prompt workspace -k context-pack --text-only   # tier escalation guide
 ```
 
 ### Escalation rules
@@ -75,9 +75,9 @@ metagit context pack --tier 2 --json --project portfolio
 Prefer one command instead of manually chaining pack + session-start + objective:
 
 ```bash
-eval "$(metagit context switch portfolio api-gateway)"
-metagit context switch portfolio --json
-metagit prompt workspace -k context-switch --text-only
+eval "$(metagit -c .metagit.yml context switch portfolio api-gateway)"
+metagit -c .metagit.yml context switch portfolio --json
+metagit -c .metagit.yml prompt workspace -k context-switch --text-only
 ```
 
 MCP: `metagit_context_switch`. Lean switch without pack/objective: `metagit_project_context_switch`.
@@ -103,7 +103,7 @@ metagit context objective edit --id obj-123 --field human_notes --value "waiting
 When you already know the target repo:
 
 ```bash
-metagit context repo-card --project P --repo R --json -c .metagit.yml
+metagit -c .metagit.yml context repo-card --project P --repo R --json
 ```
 
 Card fields include: `status`, `health_flags` (`missing_clone`, `dirty`, `behind_remote`, `stale_head_30d`), `stack_hints`, resolved `agent_instructions` excerpts.
@@ -113,8 +113,8 @@ Card fields include: `status`, `health_flags` (`missing_clone`, `dirty`, `behind
 Bundled profiles: `bugfix-local`, `config-edit`, `cross-repo-impact`.
 
 ```bash
-metagit context repomix --profile bugfix-local --project P --repo R -c .metagit.yml
-metagit context repomix --profile config-edit --project P --repo R --output /tmp/pack.txt
+metagit -c .metagit.yml context repomix --profile bugfix-local --project P --repo R
+metagit -c .metagit.yml context repomix --profile config-edit --project P --repo R --output /tmp/pack.txt
 ```
 
 Use profiles instead of raw `repomix` on an entire tree. Pick profile by task:
@@ -130,14 +130,14 @@ Use profiles instead of raw `repomix` on an entire tree. Pick profile by task:
 Persisted under `.metagit/sessions/objectives.json`.
 
 ```bash
-metagit context objective list --json -c .metagit.yml
-metagit context objective get --id obj-123 --json
+metagit -c .metagit.yml context objective list --json
+metagit -c .metagit.yml context objective get --id obj-123 --json
 
 echo '{"id":"obj-123","status":"in_progress","title":"Fix API timeout","repos":["portfolio/api"]}' \
-  | metagit context objective set -c .metagit.yml
+  | metagit -c .metagit.yml context objective set
 
-metagit context objective complete --id obj-123 -c .metagit.yml
-metagit context objective cancel --id obj-123 -c .metagit.yml
+metagit -c .metagit.yml context objective complete --id obj-123
+metagit -c .metagit.yml context objective cancel --id obj-123
 ```
 
 Tier-2 digest surfaces `active_objective_id` when one objective is in progress.
@@ -147,12 +147,12 @@ Tier-2 digest surfaces `active_objective_id` when one objective is in progress.
 Queue under `.metagit/approvals/pending.json`.
 
 ```bash
-metagit context approval request --action repo_sync --requested-by hermes --payload '{"project":"P","repo":"R"}' -c .metagit.yml
-metagit context approval list --json -c .metagit.yml
-metagit context approval list --status all --json
+metagit -c .metagit.yml context approval request --action repo_sync --requested-by hermes --payload '{"project":"P","repo":"R"}'
+metagit -c .metagit.yml context approval list --json
+metagit -c .metagit.yml context approval list --status all --json
 
-metagit context approval approve --id apr-001 --note "ok for staging" -c .metagit.yml
-metagit context approval deny --id apr-002 --note "needs review" -c .metagit.yml
+metagit -c .metagit.yml context approval approve --id apr-001 --note "ok for staging"
+metagit -c .metagit.yml context approval deny --id apr-002 --note "needs review"
 ```
 
 Agents: list pending approvals before mutating ops; never self-approve without operator policy.
@@ -174,8 +174,8 @@ Wire metagit into Hermes (or any orchestrator) so every objective begins with bo
 
 ```bash
 export METAGIT_AGENT_MODE=true
-PACK_JSON="$(metagit context pack --tier 2 --json -c .metagit.yml)"
-PROMPT_TEXT="$(metagit prompt workspace -k session-start --text-only -c .metagit.yml)"
+PACK_JSON="$(metagit -c .metagit.yml context pack --tier 2 --json)"
+PROMPT_TEXT="$(metagit -c .metagit.yml prompt workspace -k session-start --text-only)"
 ```
 
 ### How to inject output
@@ -239,8 +239,8 @@ When multiple agents share a workspace root via Syncthing:
 ### Stale sync detection
 
 ```bash
-metagit context pack --tier 2 --json    # check digest.manifest_changed
-metagit config validate -c .metagit.yml
+metagit -c .metagit.yml context pack --tier 2 --json    # check digest.manifest_changed
+metagit -c .metagit.yml config validate
 ```
 
 ## MCP equivalents (when MCP gate is ACTIVE)
