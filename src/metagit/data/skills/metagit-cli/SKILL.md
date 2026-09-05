@@ -17,8 +17,8 @@ export METAGIT_AGENT_MODE=true
 **Session start** (from umbrella repo with `.metagit.yml`):
 
 ```bash
-metagit context pack --tier 2 --json
-metagit prompt workspace -k session-start --text-only -c .metagit.yml
+metagit -c .metagit.yml context pack --tier 2 --json
+metagit -c .metagit.yml prompt workspace -k session-start --text-only
 ```
 
 Repo-root agent docs: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob/main/AGENTS.md) · [llms.txt](https://github.com/metagit-ai/metagit-cli/blob/main/llms.txt) · [docs/agents.md](https://metagit-ai.github.io/metagit-cli/agents/).
@@ -244,9 +244,9 @@ workspace:
 
 ```bash
 metagit appconfig show --format json
-metagit config info -c .metagit.yml
-metagit config show -c .metagit.yml
-metagit config validate -c .metagit.yml
+metagit -c .metagit.yml config info
+metagit -c .metagit.yml config show
+metagit -c .metagit.yml config validate
 
 metagit workspace list -c .metagit.yml --json
 metagit workspace project list -c .metagit.yml --json
@@ -344,9 +344,9 @@ metagit project repo select
 See **Manifest editing fast map** above for day-to-day manifest work. Additional commands:
 
 ```bash
-metagit config info -c .metagit.yml
-metagit config example
-metagit config schema
+metagit -c .metagit.yml config info
+metagit -c .metagit.yml config example
+metagit -c .metagit.yml config schema
 metagit appconfig validate
 metagit appconfig get --name config.workspace.path
 metagit appconfig tree --json

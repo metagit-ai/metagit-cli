@@ -34,8 +34,8 @@ For agents instructed to **use Metagit** (not necessarily to contribute to this 
 **Session start** (from repo with `.metagit.yml`):
 
 ```bash
-metagit context pack --tier 2 --json
-metagit prompt workspace --kind session-start --text-only
+metagit -c .metagit.yml context pack --tier 2 --json
+metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 ```
 
 **Skills:** `metagit skills install --scope user` · **MCP:** `metagit mcp install --scope user`
