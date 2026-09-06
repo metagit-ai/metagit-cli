@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Graph relationship endpoints accept optional `component` (RFC-0028). `config validate` requires project+repo and a catalogued identity; resolver ids are `component:{project}/{repo}/{name}` without consulting index rows.
 - Component list/show/resolve (RFC-0027): `metagit component list|show|resolve`, MCP `metagit_component_list|show|resolve`, and GET `/v3/ops/components` plus GET `/v3/ops/components/resolve`. `--config-path/-c` is on each CLI subcommand. Resolve `matched: false` is a normal MCP/web result; show-not-found and `ValueError` are MCP `-32602` / HTTP 400.
 
 ### Fixed

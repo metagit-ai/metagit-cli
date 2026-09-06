@@ -11,6 +11,8 @@ edges:
     condition: when writing or reviewing component models
   - target: "component-resolution.md"
     condition: when resolving a path or looking up a component by id/name (RFC-0027)
+  - target: "component-graph.md"
+    condition: when declaring graph.relationships endpoints with component (RFC-0028)
   - target: "add-cli-command.md"
     condition: when adding metagit component CLI in RFC-0027
 last_updated: 2026-09-06

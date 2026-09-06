@@ -1189,6 +1189,19 @@
           "default": null,
           "description": "Optional file or directory path within the repo",
           "title": "Path"
+        },
+        "component": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional catalogued component name within the repo",
+          "title": "Component"
         }
       },
       "title": "GraphEndpoint",

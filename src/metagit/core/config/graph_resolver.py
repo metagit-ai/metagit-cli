@@ -17,10 +17,17 @@ def resolve_graph_endpoint_id(
     project_names: set[str],
 ) -> Optional[str]:
     """
-    Map a graph endpoint to a dependency node id (project:… or repo:…/…).
+    Map a graph endpoint to a dependency node id (project:…, repo:…/…, or component:…).
 
-    Requires project when repo is set. Repo-only matches the first indexed row.
+    When ``component`` is set, requires project and repo and does not consult index
+    rows. Otherwise requires project when repo is set. Repo-only matches the first
+    indexed row.
     """
+    component = endpoint.component.strip() if endpoint.component else ""
+    if component:
+        if not endpoint.project or not endpoint.repo:
+            return None
+        return f"component:{endpoint.project}/{endpoint.repo}/{component}"
     if endpoint.project and endpoint.project not in project_names:
         return None
     if endpoint.repo:

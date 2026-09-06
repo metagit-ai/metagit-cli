@@ -54,6 +54,9 @@ graph:
         # Optional file or directory path within the repo
         path: example-value
 ...
+        # Optional catalogued component name within the repo
+        component: example-value
+...
       # Relationship target
       to:
         # Workspace project name
@@ -64,6 +67,9 @@ graph:
 ...
         # Optional file or directory path within the repo
         path: example-value
+...
+        # Optional catalogued component name within the repo
+        component: example-value
 ...
       # Relationship type (depends_on, documents, consumes, owns, related, …)
       type: example-value
