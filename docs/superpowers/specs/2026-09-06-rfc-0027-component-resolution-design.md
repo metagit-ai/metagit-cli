@@ -83,10 +83,11 @@ ComponentResolver
 ### `resolve`
 
 1. If `definition_root` is provided, try filesystem mapping:
-   - Expand the query (`Path(path).expanduser()`). If it is absolute or exists relative to cwd **or** relative to `definition_root`, compute an absolute path.
+   - Expand the query (`Path(path).expanduser()`). If it is **absolute**, or exists **relative to `definition_root`**, compute an absolute path. Do **not** probe process cwd (MCP/web cwd is arbitrary).
    - For each catalog row’s repo, compute `repo_root` (workspace: `definition_root / repo.path`; application adapter rows: `definition_root`).
-   - If the absolute path is the repo root or a descendant, set `rel` to the POSIX path relative to `repo_root` (`.` if equal). Restrict candidate rows to that `(project, repo)` and continue at step 3 with `rel`.
+   - If the absolute path is the repo root or a descendant, set `rel` to the POSIX path relative to `repo_root` (`.` if equal).
    - If several repos contain the path, prefer the longest `repo_root` prefix.
+   - **Intersect** the mapped `(project, repo)` with any caller `project`/`repo` filters. On disagreement, return `None` (no match). On agreement, restrict candidates to that checkout and continue at step 3 with `rel`.
    - If no repo contains it, fall through to repo-relative handling.
 2. Normalize the query with `normalize_repo_relative_path`. On `ValueError`, return it.
 3. Candidate rows: catalog list filtered by optional `project`/`repo` (and by filesystem-mapped repo when step 1 succeeded).
@@ -95,8 +96,8 @@ ComponentResolver
    - query equals path, or
    - query starts with `path + "/"`.
 5. Among matches, pick the maximum path length (`0` for `.`, otherwise number of `/` segments).
-6. If project+repo were specified (or filesystem mapped to one repo): 0 matches → `None`; 1+ → winner.
-7. If project/repo were **not** specified: collect one winner per `(project, repo)` that has a match. 0 → `None`; 1 → that row; 2+ → `ValueError` asking for `--project`/`--repo`.
+6. Fully scoped (both `project` and `repo` set, or mapping that survived intersection): 0 matches → `None`; 1+ → winner.
+7. Partial or no `project`/`repo`: collect one winner per `(project, repo)` that has a match. 0 → `None`; 1 → that row; 2+ → `ValueError` asking for `--project`/`--repo`. A lone `--project` or `--repo` is **not** fully scoped.
 
 Repos with no components never match.
 

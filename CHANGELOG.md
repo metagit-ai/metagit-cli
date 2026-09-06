@@ -7,6 +7,7 @@
 
 ### Fixed
 - Changelog promotion rewrites repo-root links such as `examples/` to GitHub URLs in `docs/changelog.md` so lychee and MkDocs do not resolve them under `docs/`.
+- Component resolve intersects filesystem mapping with explicit project/repo filters and ignores process cwd when a definition root is set.
 
 ## [0.30.0] - 2026-09-06
 

@@ -45,9 +45,7 @@ def test_direct_path_match() -> None:
 
 
 def test_nested_file_match() -> None:
-    row = ComponentResolver().resolve(
-        _native(), "apps/web/src/login.tsx", project="platform", repo="core"
-    )
+    row = ComponentResolver().resolve(_native(), "apps/web/src/login.tsx", project="platform", repo="core")
     assert not isinstance(row, Exception)
     assert row is not None
     assert row.name == "web"
@@ -66,9 +64,7 @@ def test_overlapping_paths_select_longest() -> None:
 
 
 def test_unmatched_path_returns_none() -> None:
-    row = ComponentResolver().resolve(
-        _native(), "docs/readme.md", project="platform", repo="core"
-    )
+    row = ComponentResolver().resolve(_native(), "docs/readme.md", project="platform", repo="core")
     assert row is None
 
 
@@ -235,6 +231,32 @@ def test_whole_repo_dot_loses_to_nested() -> None:
     assert root.name == "root"
 
 
+def _two_repos() -> MetagitConfig:
+    return MetagitConfig(
+        name="acme",
+        kind="umbrella",
+        workspace=Workspace(
+            projects=[
+                WorkspaceProject(
+                    name="platform",
+                    repos=[
+                        ProjectPath(
+                            name="core",
+                            path="./a",
+                            components=[Component(name="web", path="apps/web")],
+                        ),
+                        ProjectPath(
+                            name="edge",
+                            path="./b",
+                            components=[Component(name="site", path="apps/web")],
+                        ),
+                    ],
+                )
+            ]
+        ),
+    )
+
+
 def test_filesystem_mapping(tmp_path: Path) -> None:
     repo = tmp_path / "platform"
     target = repo / "apps" / "web" / "src"
@@ -249,6 +271,60 @@ def test_filesystem_mapping(tmp_path: Path) -> None:
     assert not isinstance(row, Exception)
     assert row is not None
     assert row.name == "web"
+
+
+def test_filesystem_mapping_disagrees_with_explicit_repo(tmp_path: Path) -> None:
+    core = tmp_path / "a"
+    edge = tmp_path / "b"
+    for root in (core, edge):
+        (root / "apps" / "web").mkdir(parents=True)
+        (root / "apps" / "web" / "x.ts").write_text("x\n", encoding="utf-8")
+    result = ComponentResolver().resolve(
+        _two_repos(),
+        str(core / "apps" / "web" / "x.ts"),
+        project="platform",
+        repo="edge",
+        definition_root=tmp_path,
+    )
+    assert result is None
+
+
+def test_filesystem_mapping_agrees_with_explicit_repo(tmp_path: Path) -> None:
+    core = tmp_path / "a"
+    edge = tmp_path / "b"
+    for root in (core, edge):
+        (root / "apps" / "web").mkdir(parents=True)
+        (root / "apps" / "web" / "x.ts").write_text("x\n", encoding="utf-8")
+    row = ComponentResolver().resolve(
+        _two_repos(),
+        str(edge / "apps" / "web" / "x.ts"),
+        project="platform",
+        repo="edge",
+        definition_root=tmp_path,
+    )
+    assert not isinstance(row, Exception)
+    assert row is not None
+    assert row.repo == "edge"
+    assert row.name == "site"
+
+
+def test_definition_root_preferred_over_cwd(tmp_path: Path, monkeypatch) -> None:
+    core = tmp_path / "a"
+    edge = tmp_path / "b"
+    for root in (core, edge):
+        (root / "apps" / "web").mkdir(parents=True)
+        (root / "apps" / "web" / "x.ts").write_text("x\n", encoding="utf-8")
+    monkeypatch.chdir(core)
+    row = ComponentResolver().resolve(
+        _two_repos(),
+        "apps/web/x.ts",
+        project="platform",
+        repo="edge",
+        definition_root=tmp_path,
+    )
+    assert not isinstance(row, Exception)
+    assert row is not None
+    assert row.repo == "edge"
 
 
 def test_payload_shape() -> None:

@@ -98,13 +98,17 @@ class ComponentResolver:
         mapped = None
         if definition_root is not None:
             mapped = self._map_filesystem_path(config, path, definition_root=Path(definition_root))
-            if isinstance(mapped, Exception):
-                return mapped
         query_raw = path
         scoped_project = project
         scoped_repo = repo
         if mapped is not None:
-            scoped_project, scoped_repo, query_raw = mapped
+            mapped_project, mapped_repo, query_raw = mapped
+            if project and project != mapped_project:
+                return None
+            if repo and repo != mapped_repo:
+                return None
+            scoped_project = project or mapped_project
+            scoped_repo = repo or mapped_repo
         normalized = normalize_repo_relative_path(query_raw)
         if isinstance(normalized, Exception):
             return normalized
@@ -135,21 +139,15 @@ class ComponentResolver:
         path: str,
         *,
         definition_root: Path,
-    ) -> tuple[str, str, str] | None | ValueError:
+    ) -> tuple[str, str, str] | None:
         candidate = Path(path).expanduser()
-        abs_candidates: list[Path] = []
         if candidate.is_absolute():
-            abs_candidates.append(candidate)
+            target = candidate.resolve()
         else:
-            cwd_try = Path.cwd() / candidate
             root_try = definition_root / candidate
-            if cwd_try.exists():
-                abs_candidates.append(cwd_try.resolve())
-            if root_try.exists():
-                abs_candidates.append(root_try.resolve())
-        if not abs_candidates:
-            return None
-        target = abs_candidates[0]
+            if not root_try.exists():
+                return None
+            target = root_try.resolve()
         best: tuple[int, str, str, str] | None = None
         rows = self._catalog.list(config)
         seen: set[tuple[str, str]] = set()

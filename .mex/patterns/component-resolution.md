@@ -47,7 +47,8 @@ Web: GET `/v3/ops/components` and GET `/v3/ops/components/resolve` in `OpsWebHan
 - Do not import `catalog` or `resolve` from `metagit.core.component.__init__` (circular: `config.models` → `ProjectPath` → package `__init__` → catalog → `MetagitConfig`).
 - Store `(_path_rank(normalized), row)` while iterating; do not re-normalize in `max`.
 - Whole-repo `.` matches everything in that repo but loses to a longer prefix.
-- Fully scoped only when both `project` and `repo` are set (or filesystem mapping returns both). A lone `--project` or `--repo` stays ambiguous: 0 winners → `None`, 1 → that row, 2+ → `ValueError`.
+- Fully scoped only when both `project` and `repo` are set (or filesystem mapping returns both **and** agrees with any caller filters). A lone `--project` or `--repo` stays ambiguous: 0 winners → `None`, 1 → that row, 2+ → `ValueError`.
+- Filesystem mapping must not overwrite caller `project`/`repo`. Disagreement → no match (`None`). Do not probe process cwd when `definition_root` is set (MCP/web cwd is not a user input).
 - Application `paths[]` adapter identity is `{config.name}/{config.name}/{entry.name}`.
 - Repos with no `components` never match; list is empty.
 - CLI tests must use subprocess + `sys.executable -m metagit.cli.main` (UnifiedLogger enqueue can race under CliRunner).
