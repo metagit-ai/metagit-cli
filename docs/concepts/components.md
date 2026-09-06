@@ -65,15 +65,32 @@ A repository with no `components` key is valid and catalogs as empty.
 
 Nested paths (`apps/web` and `apps/web/packages/auth`) are allowed.
 
+## Lookup and resolve
+
+<!-- modality:component_resolve -->
+
+```bash
+metagit component list [-c .metagit.yml] [--project P] [--repo R] [--json]
+metagit component show <name-or-id> [-c .metagit.yml] [--project P] [--repo R] [--json]
+metagit component resolve <path> [-c .metagit.yml] [--project P] [--repo R] [--json]
+```
+
+MCP (ACTIVE workspace): `metagit_component_list`, `metagit_component_show`, `metagit_component_resolve`.
+
+Web (read-only): `GET /v3/ops/components?project=&repo=`, `GET /v3/ops/components/resolve?path=&project=&repo=`.
+
+`resolve` longest-matches a repo-relative or filesystem path to the most specific catalogued component. A miss is `matched: false` (not an exception). Ambiguous names or cross-repo paths are errors — pass `--project` and `--repo`, or a full `project/repo/component` id.
+
+`--config-path/-c` is on each CLI subcommand so `component list -c FILE` works.
+
 ## Not in this release
 
 These land in later RFC-0026 series slices:
 
-- `metagit component list|show|resolve|detect|init|graph`
+- `metagit component detect|init|graph`
 - `context compile --component`
 - graph `from.component` / `to.component`
 - component-level claims/ownership
 - derived working sets from component graphs
-- MCP component tools
 
 See the RFC-0026 Component Context Graph series under `docs/superpowers/specs/` for the remaining slices.

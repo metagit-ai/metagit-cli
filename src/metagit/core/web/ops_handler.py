@@ -15,6 +15,7 @@ from pydantic import ValidationError
 
 from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
@@ -118,6 +119,14 @@ class OpsWebHandler:
         """Dispatch JSON ops routes; return True when handled."""
         parsed_path = path if path.startswith("/") else f"/{path}"
         headers = request_headers or {}
+
+        if method == "GET" and parsed_path == "/v3/ops/components/resolve":
+            self._get_components_resolve(query, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/components":
+            self._get_components(query, respond)
+            return True
 
         if method == "GET" and parsed_path == "/v3/ops/graph":
             self._get_graph(query, respond)
@@ -815,6 +824,60 @@ class OpsWebHandler:
             limit=limit,
         )
         respond(200, view.model_dump(mode="json"))
+
+    def _get_components(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        project = (params.get("project") or [""])[0].strip() or None
+        repo = (params.get("repo") or [""])[0].strip() or None
+        rows = ComponentResolver().list(config, project=project, repo=repo)
+        respond(200, {"components": [resolved_component_payload(row) for row in rows]})
+
+    def _get_components_resolve(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        path = (params.get("path") or [""])[0].strip()
+        if not path:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": "path is required",
+                    },
+                },
+            )
+            return
+        project = (params.get("project") or [""])[0].strip() or None
+        repo = (params.get("repo") or [""])[0].strip() or None
+        result = ComponentResolver().resolve(
+            config,
+            path,
+            project=project,
+            repo=repo,
+            definition_root=resolve_definition_root(self._config_path),
+        )
+        if isinstance(result, ValueError):
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": str(result),
+                    },
+                },
+            )
+            return
+        if result is None:
+            respond(200, {"matched": False, "path": path})
+            return
+        respond(200, {"matched": True, **resolved_component_payload(result), "path": path})
 
     def _post_prune_preview(self, body: bytes, respond: JsonResponder) -> None:
         payload = self._parse_body(body, respond, required=True)

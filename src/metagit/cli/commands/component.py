@@ -149,7 +149,7 @@ def component_resolve(
     repo: str | None,
     as_json: bool,
 ) -> None:
-    """Resolve a path to the longest-matching catalogued component."""
+    """Run component resolve for a path to the longest-matching catalogued component."""
     config, definition_root = _resolver_context(ctx, config_path)
     result = ComponentResolver().resolve(
         config,

@@ -29,7 +29,7 @@ RFC numbers **0016–0025 are reserved** (central state plane + agent reliabilit
 | RFC | Title | Status |
 |-----|-------|--------|
 | 0026 | Component model (schema, identity, catalog, validation) | Implemented |
-| 0027 | Component resolution + CLI (`list` / `show` / `resolve`) | This slice |
+| 0027 | Component resolution + CLI (`list` / `show` / `resolve`) | Implemented |
 | 0028 | Graph integration (`GraphEndpoint.component`, traversal) | Not started |
 | 0029 | Context compiler (`--component`, depth, inherited profile) | Not started |
 | 0030 | Component ownership / claims | Not started |
@@ -47,7 +47,7 @@ Do not reuse 0016–0025. If a later slice is dropped, retire the number in this
 - **`ProjectPath` stays the git-repo type.** Do not subclass `ProjectPath` as `Component` (git-only fields and YAML key order).
 - **Existing top-level `components[]` that are `ref`-only** remain dependency-like (cross-project refs). They are **not** catalog members.
 - **`local_workspace_project`** continues to treat `paths` + `dependencies` as synthetic repos. Do not break that.
-- **Modality:** RFC-0026 is schema + `config validate` (Config Studio tree comes from schema). CLI `metagit component *`, MCP tools, and web ops wait for later slices.
+- **Modality:** RFC-0026 is schema + `config validate` (Config Studio tree comes from schema). RFC-0027 ships `metagit component list|show|resolve`, MCP `metagit_component_*`, and GET `/v3/ops/components` as modality `component_resolve`. Graph, compile, detect, and ownership wait for later slices.
 - **No LLM** required for discovery or context ranking.
 - **Public docs:** ship operator docs with each slice; do not add `docs/reference/rfc-002N*` stubs.
 
@@ -68,7 +68,7 @@ RFC-0030 Ownership (after 0026 identity; may parallel 0027)
 | RFC | Title | Design | Plan | Status |
 |-----|-------|--------|------|--------|
 | 0026 | Component model | [design](2026-09-06-rfc-0026-component-model-design.md) | [plan](../plans/2026-09-06-rfc-0026-component-model.md) | **Implemented** |
-| 0027 | Resolution + CLI | [design](2026-09-06-rfc-0027-component-resolution-design.md) | [plan](../plans/2026-09-06-rfc-0027-component-resolution.md) | Implementing |
+| 0027 | Resolution + CLI | [design](2026-09-06-rfc-0027-component-resolution-design.md) | [plan](../plans/2026-09-06-rfc-0027-component-resolution.md) | **Implemented** |
 | 0028 | Graph integration | pending | pending | Not started |
 | 0029 | Context compiler | pending | pending | Not started |
 | 0030 | Ownership / claims | pending | pending | Not started |

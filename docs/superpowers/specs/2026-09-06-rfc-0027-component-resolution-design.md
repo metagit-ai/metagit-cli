@@ -1,6 +1,6 @@
 # RFC-0027: Component Resolution + CLI — Design
 
-**Status:** Approved for implementation
+**Status:** Implemented
 **Date:** 2026-09-06
 **Series:** [Component Context Graph index](2026-09-06-rfc-0026-component-context-graph-index.md)
 **Depends on:** [RFC-0026 Component model](2026-09-06-rfc-0026-component-model-design.md)

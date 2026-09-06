@@ -770,3 +770,27 @@ features:
           - path: docs/agents.md
             contains: "modality:component_model"
 
+  - id: component_resolve
+    description: Component catalog list/show and path-to-component resolve
+    service: metagit.core.component.resolve.ComponentResolver
+    reference_doc: docs/concepts/components.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/component.py
+            contains: "component resolve"
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_component_resolve
+      web:
+        markers:
+          - path: src/metagit/core/web/ops_handler.py
+            contains: /v3/ops/components
+      documentation:
+        markers:
+          - path: docs/concepts/components.md
+            contains: "modality:component_resolve"
+          - path: docs/agents.md
+            contains: "modality:component_resolve"
+
