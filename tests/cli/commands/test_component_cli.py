@@ -55,7 +55,9 @@ def test_component_resolve_json_matches_web() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result.stdout)
     assert payload["matched"] is True
+    assert payload["path"] == "apps/web/src/login.tsx"
     assert payload["name"] == "web"
+    assert payload["spec"]["path"] == "apps/web"
 
 
 def test_component_resolve_json_miss_exits_nonzero() -> None:

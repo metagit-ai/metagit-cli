@@ -167,7 +167,7 @@ def component_resolve(
         else:
             click.echo(f"no component matched: {path}", err=True)
         raise SystemExit(1)
-    payload = {"matched": True, "path": path, **resolved_component_payload(result)}
+    payload = {"matched": True, **resolved_component_payload(result), "path": path}
     if as_json:
         emit_json(payload)
         return
