@@ -62,15 +62,29 @@ class AgentProfileService:
         *,
         project_name: str,
         repo_name: str,
+        component_name: str | None = None,
     ) -> Optional[EffectiveAgentProfile]:
-        """Return the merged profile for one manifest repo entry."""
+        """Return the merged profile for one manifest repo, optionally a component."""
         project = find_project(self._config, project_name)
         if project is None:
             return None
         repo = find_repo(project, repo_name)
         if repo is None:
             return None
-        return self._merge_for_repo(project=project, repo=repo)
+        if component_name is None:
+            return self._merge_for_repo(project=project, repo=repo)
+        component = next(
+            (item for item in repo.components if item.name == component_name),
+            None,
+        )
+        if component is None:
+            return None
+        return self._merge_for_repo(
+            project=project,
+            repo=repo,
+            component_profile=component.agent_profile,
+            component_name=component_name,
+        )
 
     def list_validation_issues(self) -> list[AgentProfileValidationIssue]:
         """Validate every declared agent_profile reference against bundled catalogs."""
@@ -282,6 +296,8 @@ class AgentProfileService:
         *,
         project: WorkspaceProject,
         repo: ProjectPath,
+        component_profile: Optional[AgentProfile] = None,
+        component_name: str | None = None,
     ) -> Optional[EffectiveAgentProfile]:
         layers: list[AgentProfileLayer] = []
         merged: Optional[AgentProfile] = None
@@ -295,6 +311,9 @@ class AgentProfileService:
         if repo.agent_profile is not None:
             layers.append(AgentProfileLayer(scope="repo", profile=repo.agent_profile))
             merged = _merge_profiles(merged, repo.agent_profile)
+        if component_profile is not None:
+            layers.append(AgentProfileLayer(scope="component", profile=component_profile))
+            merged = _merge_profiles(merged, component_profile)
         if merged is None:
             tier = repo.tags.get("agent_tier") or project.tags.get("agent_tier")
             if not tier:
@@ -304,6 +323,7 @@ class AgentProfileService:
         return EffectiveAgentProfile(
             project_name=project.name,
             repo_name=repo.name,
+            component_name=component_name,
             tier=tier,
             skills=list(merged.skills),
             mcp=list(merged.mcp),

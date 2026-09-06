@@ -47,7 +47,7 @@ class AgentProfile(BaseModel):
 class AgentProfileLayer(BaseModel):
     """One resolved profile layer before merge."""
 
-    scope: Literal["workspace", "project", "repo"]
+    scope: Literal["workspace", "project", "repo", "component"]
     profile: AgentProfile
 
 
@@ -56,6 +56,7 @@ class EffectiveAgentProfile(BaseModel):
 
     project_name: str
     repo_name: str
+    component_name: str | None = None
     tier: Optional[str] = None
     skills: list[str] = Field(default_factory=list)
     mcp: list[str] = Field(default_factory=list)

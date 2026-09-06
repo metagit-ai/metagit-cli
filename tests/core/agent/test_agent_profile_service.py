@@ -5,10 +5,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from metagit.core.workspace.agent_profile_models import AgentProfile
 from metagit.core.agent.profile_service import AgentProfileService
+from metagit.core.component.models import Component
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
+from metagit.core.workspace.agent_profile_models import AgentProfile
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -77,3 +78,82 @@ def test_profile_validation_unknown_skill() -> None:
     issues = service.list_validation_issues()
     assert issues
     assert "unknown skill" in issues[0].message
+
+
+def test_effective_profile_component_skills_append_when_inherit() -> None:
+    config = _sample_config()
+    repo = config.workspace.projects[0].repos[0]
+    repo.agent_profile = AgentProfile(
+        tier="full",
+        skills=["metagit-workspace-scope"],
+        inherit=True,
+    )
+    repo.components = [
+        Component(
+            name="web",
+            path="apps/web",
+            agent_profile=AgentProfile(
+                skills=["metagit-workspace-grep"],
+                inherit=True,
+            ),
+        ),
+    ]
+    service = AgentProfileService(config=config, definition_root=Path("."))
+    effective = service.effective_profile(
+        project_name="demo",
+        repo_name="alpha",
+        component_name="web",
+    )
+    assert effective is not None
+    assert effective.component_name == "web"
+    assert "metagit-cli" in effective.skills
+    assert "metagit-context-pack" in effective.skills
+    assert "metagit-workspace-scope" in effective.skills
+    assert "metagit-workspace-grep" in effective.skills
+    assert any(layer.scope == "component" for layer in effective.layers)
+
+
+def test_effective_profile_component_inherit_false_replaces_parent_skills() -> None:
+    config = _sample_config()
+    repo = config.workspace.projects[0].repos[0]
+    repo.agent_profile = AgentProfile(
+        tier="full",
+        skills=["metagit-workspace-scope"],
+        inherit=True,
+    )
+    repo.components = [
+        Component(
+            name="web",
+            path="apps/web",
+            agent_profile=AgentProfile(
+                inherit=False,
+                skills=["metagit-aos"],
+            ),
+        ),
+    ]
+    service = AgentProfileService(config=config, definition_root=Path("."))
+    effective = service.effective_profile(
+        project_name="demo",
+        repo_name="alpha",
+        component_name="web",
+    )
+    assert effective is not None
+    assert effective.component_name == "web"
+    assert effective.skills == ["metagit-aos"]
+    assert effective.mcp == []
+    assert any(layer.scope == "component" for layer in effective.layers)
+
+
+def test_effective_profile_unknown_component_returns_none() -> None:
+    config = _sample_config()
+    repo = config.workspace.projects[0].repos[0]
+    repo.components = [
+        Component(name="web", path="apps/web"),
+    ]
+    service = AgentProfileService(config=config, definition_root=Path("."))
+    effective = service.effective_profile(
+        project_name="demo",
+        repo_name="alpha",
+        component_name="missing",
+    )
+    assert effective is None
