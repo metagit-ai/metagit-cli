@@ -16,6 +16,7 @@ from metagit.core.component.resolve import ComponentResolver, resolved_component
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
 from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.compiler import ContextCompiler
 from metagit.core.context.context_pack_service import ContextPackService
@@ -940,11 +941,12 @@ class MetagitMcpRuntime:
             },
             "metagit_claim_declare": {
                 "type": "object",
-                "required": ["repository", "agent_id", "patterns"],
+                "required": ["repository", "agent_id"],
                 "properties": {
                     "repository": {"type": "string"},
                     "agent_id": {"type": "string"},
                     "patterns": {"type": "array", "items": {"type": "string"}},
+                    "component": {"type": "string"},
                     "task_id": {"type": "string"},
                     "strict": {"type": "boolean"},
                 },
@@ -952,10 +954,11 @@ class MetagitMcpRuntime:
             },
             "metagit_claim_check": {
                 "type": "object",
-                "required": ["repository", "patterns"],
+                "required": ["repository"],
                 "properties": {
                     "repository": {"type": "string"},
                     "patterns": {"type": "array", "items": {"type": "string"}},
+                    "component": {"type": "string"},
                     "agent_id": {"type": "string"},
                 },
                 "additionalProperties": False,
@@ -3200,15 +3203,15 @@ class MetagitMcpRuntime:
             )
         if name == "metagit_claim_declare":
             service = ClaimService(root)
-            patterns_raw = arguments.get("patterns")
-            if not isinstance(patterns_raw, list) or not patterns_raw:
-                raise InvalidToolArgumentsError("patterns is required")
+            patterns, component, config = self._claim_patterns_and_config(arguments, definition)
             result = service.declare(
                 repository=_require("repository"),
                 agent_id=_require("agent_id"),
-                patterns=[str(item) for item in patterns_raw],
+                patterns=patterns,
                 task_id=arguments.get("task_id") if isinstance(arguments.get("task_id"), str) else None,
                 allow_conflicts=not bool(arguments.get("strict", False)),
+                component=component,
+                config=config,
             )
             if isinstance(result, ClaimCheckResult):
                 payload = result.model_dump(mode="json")
@@ -3217,14 +3220,14 @@ class MetagitMcpRuntime:
             return _unwrap(result)
         if name == "metagit_claim_check":
             service = ClaimService(root)
-            patterns_raw = arguments.get("patterns")
-            if not isinstance(patterns_raw, list) or not patterns_raw:
-                raise InvalidToolArgumentsError("patterns is required")
+            patterns, component, config = self._claim_patterns_and_config(arguments, definition)
             return _unwrap(
                 service.check(
                     repository=_require("repository"),
-                    patterns=[str(item) for item in patterns_raw],
+                    patterns=patterns,
                     agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                    component=component,
+                    config=config,
                 ),
             )
         if name == "metagit_claim_list":
@@ -3246,6 +3249,29 @@ class MetagitMcpRuntime:
                 ),
             )
         raise ValueError(f"Unsupported ACL tool: {name}")
+
+    def _claim_patterns_and_config(
+        self,
+        arguments: dict[str, Any],
+        definition: str,
+    ) -> tuple[list[str], str | None, MetagitConfig | None]:
+        patterns_raw = arguments.get("patterns")
+        if patterns_raw is None:
+            patterns_raw = []
+        if not isinstance(patterns_raw, list):
+            raise InvalidToolArgumentsError("patterns must be an array")
+        component_raw = arguments.get("component")
+        component = component_raw.strip() if isinstance(component_raw, str) and component_raw.strip() else None
+        if not component and not patterns_raw:
+            raise InvalidToolArgumentsError("patterns is required")
+        config = None
+        if component:
+            manager = MetagitConfigManager(config_path=Path(definition))
+            loaded = manager.load_config()
+            if isinstance(loaded, Exception):
+                raise InvalidToolArgumentsError(str(loaded))
+            config = loaded
+        return [str(item) for item in patterns_raw], component, config
 
     def _call_merge_tool(
         self,
