@@ -384,6 +384,7 @@ metagit branch allocate --repository project/repo --agent-id agent-1 --task-id 4
 metagit lease acquire --repository project/repo --agent-id agent-1 --task-id 412 --allocate --json
 metagit worktree create --repository project/repo --agent-id agent-1 --task-id 412 --branch agent/412 --json
 metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'src/*' --json
+metagit claim declare --repository platform/core --agent-id agent-1 --component web --json
 metagit worktree manifest agent-1
 ```
 

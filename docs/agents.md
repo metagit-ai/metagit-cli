@@ -304,6 +304,7 @@ metagit branch allocate --repository project/repo --agent-id agent-1 --task-id 4
 metagit lease acquire --repository project/repo --agent-id agent-1 --task-id 412 --allocate
 metagit worktree create --repository project/repo --agent-id agent-1 --task-id 412 --branch agent/412
 metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'src/*'
+metagit claim declare --repository platform/core --agent-id agent-1 --component web
 metagit context events --json   # includes source=acl lifecycle events
 ```
 

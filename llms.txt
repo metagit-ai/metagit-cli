@@ -48,7 +48,7 @@ metagit prompt workspace --kind session-start --text-only
 | Task graph / intent | `metagit task create` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R --json` |
 | Validate components | `metagit config validate` (nested `repos[].components[]`) |
-| ACL worktree / claim | `metagit worktree create` · `metagit claim declare` |
+| ACL worktree / claim | `metagit worktree create` · `metagit claim declare` (`--component` optional) |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |

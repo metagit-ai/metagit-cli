@@ -34,6 +34,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [pythonpath-import-guard.md](pythonpath-import-guard.md) | Fixing or preserving the metagit `__init__` sys.path guard against hostile PYTHONPATH |
 | [cli-tui-hub.md](cli-tui-hub.md) | Adding `metagit tui`, configuration wizard flows, or `--repo` direct-open on select |
 | [component-agent-profile.md](component-agent-profile.md) | Merging `agent_profile` workspace → project → repo → component (RFC-0029) |
+| [component-claims.md](component-claims.md) | Optional `--component` on `claim declare|check` (RFC-0030) |
 | [component-compile.md](component-compile.md) | Optional `--component` / `--depth` on `context compile` (RFC-0029) |
 | [component-model.md](component-model.md) | Declaring, cataloging, or validating `repos[].components[]` (RFC-0026) |
 | [component-graph.md](component-graph.md) | GraphEndpoint.component, ComponentGraphService.neighborhood, and CLI/MCP/web/Cypher graph surfaces (RFC-0028) |

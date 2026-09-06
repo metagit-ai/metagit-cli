@@ -107,12 +107,24 @@ metagit context compile --project P --repo R [--component NAME] [--depth N] --js
 
 MCP (ACTIVE workspace): `metagit_context_compile` optional `component` and `depth` (default 0, cap 5). Unknown component and a three-segment id that disagrees with `--project`/`--repo` are errors. The compiled pack stays project/repo scoped; `component` / `component_graph` / `effective_profile` are extra sections.
 
+## Claims
+
+<!-- modality:acl_claim -->
+
+Catalogued components can be claimed without a whole-repo glob. `--component` stores the component **name**; `repository` stays `project/repo`. Empty `--pattern` expands to `{path}/**` (or `**` when the component path is `.`). Explicit patterns are stored as given. Overlap is still keyed by repository + patterns, so `web` vs `api` do not conflict when their paths do not overlap.
+
+```bash
+metagit claim declare --repository platform/core --agent-id agent-1 --component web
+metagit claim check --repository platform/core --component api
+```
+
+MCP (ACTIVE workspace): `metagit_claim_declare` / `metagit_claim_check` accept optional `component`. Patterns may be empty when `component` is set.
+
 ## Not in this release
 
 These land in later RFC-0026 series slices:
 
 - `metagit component detect|init`
-- component-level claims/ownership
 - derived working sets from component graphs
 
 See the RFC-0026 Component Context Graph series under `docs/superpowers/specs/` for the remaining slices.
