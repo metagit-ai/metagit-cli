@@ -155,6 +155,18 @@ def test_component_graph_returns_nodes_and_edges(tmp_path: Path) -> None:
     assert "platform/core/api" in neighbor_ids
 
 
+def test_component_graph_not_found_is_invalid_arguments(tmp_path: Path) -> None:
+    runtime = _seed(tmp_path)
+    response = _call(
+        runtime,
+        "metagit_component_graph",
+        {"component": "missing-nope"},
+        931,
+    )
+    assert response["error"]["code"] == -32602
+    assert response["error"]["data"]["kind"] == "invalid_arguments"
+
+
 def test_component_show_not_found_is_invalid_arguments(tmp_path: Path) -> None:
     runtime = _seed(tmp_path)
     response = _call(

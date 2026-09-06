@@ -144,6 +144,17 @@ def test_ops_components_graph_includes_api(tmp_path: Path) -> None:
     _stop_server(server, thread)
 
 
+def test_ops_components_graph_negative_depth_is_400(tmp_path: Path) -> None:
+  server, thread, base = _start_server(tmp_path)
+  try:
+    qs = urlencode({"component": "platform/core/web", "depth": "-1"})
+    status, payload = _get_json(f"{base}/v3/ops/components/graph?{qs}")
+    assert status == 400
+    assert payload.get("ok") is False
+  finally:
+    _stop_server(server, thread)
+
+
 def test_ops_components_graph_missing_component_is_400(tmp_path: Path) -> None:
   server, thread, base = _start_server(tmp_path)
   try:

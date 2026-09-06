@@ -97,6 +97,36 @@ def test_component_graph_unknown_identity_exits_1() -> None:
     assert "component not found" in result.stderr
 
 
+def test_component_graph_negative_depth_exits_nonzero() -> None:
+    result = _run(
+        "component",
+        "graph",
+        "platform/core/web",
+        "-c",
+        str(NATIVE),
+        "--depth",
+        "-1",
+        "--json",
+    )
+    assert result.returncode != 0
+    assert "depth must be >= 0" in result.stderr
+
+
+def test_component_graph_invalid_direction_exits_nonzero() -> None:
+    result = _run(
+        "component",
+        "graph",
+        "platform/core/web",
+        "-c",
+        str(NATIVE),
+        "--direction",
+        "nope",
+        "--json",
+    )
+    assert result.returncode != 0
+    assert "Invalid value" in result.stderr or "nope" in result.stderr
+
+
 def test_component_list_empty_catalog_json() -> None:
     result = _run("component", "list", "-c", str(NONE), "--json")
     assert result.returncode == 0, result.stdout + result.stderr
