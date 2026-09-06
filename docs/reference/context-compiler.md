@@ -11,9 +11,17 @@ pipeline.
 
 ```bash
 metagit context compile --project P --repo R \
+  [--component NAME] [--depth N] \
   [--task-id NODE] [--graph-id G] [--objective-id ID] \
   [--tier 0|1|2] [--budget N] [--profile bugfix-local] [--json]
 ```
+
+`--project` and `--repo` stay required. `--component` is optional (bare name or
+`project/repo/component` that agrees with the resolved project/repo). `--depth`
+defaults to `0` (origin only, cap 5) and is ignored when `--component` is
+omitted. Unknown components and disagreed three-segment ids are errors, not a
+repo-wide fallback. The pack stays project/repo scoped; the extra sections are
+`component`, `component_graph`, and optional `effective_profile`.
 
 Writes a `CompiledContext` JSON artifact under:
 
@@ -26,7 +34,8 @@ When a task node is provided, stamps `compiled_context_path` and
 ## MCP
 
 `metagit_context_compile` — required `project_name`, `repo_name`; optional
-`tier`, `budget`, `profile`, `task_id`, `graph_id`, `objective_id`.
+`component`, `depth`, `tier`, `budget`, `profile`, `task_id`, `graph_id`,
+`objective_id`.
 
 ## Events
 

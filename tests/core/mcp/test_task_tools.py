@@ -148,3 +148,17 @@ def test_tools_call_context_compile(tmp_path: Path) -> None:
     assert payload["ok"] is True
     assert payload["inputs"]["project"] == "alpha"
     assert Path(payload["artifact_path"]).is_file()
+
+
+def test_context_compile_schema_includes_component_and_depth(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(_WORKSPACE_YML + "\n", encoding="utf-8")
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 512, "method": "tools/list", "params": {}}
+    )
+    assert response is not None
+    tools = {item["name"]: item for item in response["result"]["tools"]}
+    schema = tools["metagit_context_compile"]["inputSchema"]
+    assert schema["properties"]["component"]["type"] == "string"
+    assert schema["properties"]["depth"]["type"] == "integer"
+    assert schema["properties"]["depth"]["minimum"] == 0

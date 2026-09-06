@@ -502,6 +502,8 @@ class MetagitMcpRuntime:
                     "task_id": {"type": "string"},
                     "graph_id": {"type": "string"},
                     "objective_id": {"type": "string"},
+                    "component": {"type": "string"},
+                    "depth": {"type": "integer", "minimum": 0},
                 },
                 "additionalProperties": False,
             },
@@ -2144,6 +2146,15 @@ class MetagitMcpRuntime:
                     raise InvalidToolArgumentsError("budget must be an integer") from exc
                 if budget < 1:
                     raise InvalidToolArgumentsError("budget must be >= 1")
+            depth_raw = arguments.get("depth", 0)
+            try:
+                depth = int(depth_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("depth must be an integer") from exc
+            if depth < 0:
+                raise InvalidToolArgumentsError("depth must be >= 0")
+            component_raw = arguments.get("component")
+            component = component_raw.strip() if isinstance(component_raw, str) and component_raw.strip() else None
             config_path = str(Path(status.root_path) / ".metagit.yml")
             definition_root = status.root_path
             app_config = AppConfig.load()
@@ -2166,6 +2177,8 @@ class MetagitMcpRuntime:
                 task_id=arguments.get("task_id") if isinstance(arguments.get("task_id"), str) else None,
                 graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
                 objective_id=arguments.get("objective_id") if isinstance(arguments.get("objective_id"), str) else None,
+                component=component,
+                depth=depth,
             )
             if isinstance(compiled, Exception):
                 raise InvalidToolArgumentsError(str(compiled)) from compiled

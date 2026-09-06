@@ -6,8 +6,12 @@ from __future__ import annotations
 import json
 import uuid
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
+from metagit.core.agent.profile_service import AgentProfileService
+from metagit.core.component.graph import ComponentGraphService
+from metagit.core.component.identity import parse_component_id
+from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.context_pack_service import ContextPackService
 from metagit.core.context.models import CompiledContext, CompiledContextInputs
@@ -57,6 +61,8 @@ class ContextCompiler:
         task_id: str | None = None,
         graph_id: str | None = None,
         objective_id: str | None = None,
+        component: str | None = None,
+        depth: int = 0,
         update_task: bool = True,
     ) -> CompiledContext | Exception:
         """Build pack, write artifact, optionally stamp task node metadata."""
@@ -73,6 +79,18 @@ class ContextCompiler:
             if isinstance(resolved, Exception):
                 return resolved
             project_name, repo_name, node_graph_id, node_id, obj_id, effective_budget = resolved
+
+            scoped = self._resolve_component_scope(
+                config=config,
+                definition_root=definition_root,
+                project_name=project_name,
+                repo_name=repo_name,
+                component=component,
+                depth=depth,
+            )
+            if isinstance(scoped, Exception):
+                return scoped
+            component_identity, recorded_depth, component_payload, component_graph, effective_profile = scoped
 
             pack = self._pack.pack(
                 config=config,
@@ -115,6 +133,8 @@ class ContextCompiler:
                     task_id=node_id,
                     graph_id=node_graph_id,
                     objective_id=obj_id,
+                    component=component_identity,
+                    depth=recorded_depth,
                 ),
                 pack=pack,
                 estimated_tokens=pack.token_estimate or estimate_tokens_from_obj(pack),
@@ -123,6 +143,9 @@ class ContextCompiler:
                 dropped_sections=list(pack.dropped_sections),
                 suggested_repomix_command=suggested,
                 created_at=now,
+                component=component_payload,
+                component_graph=component_graph,
+                effective_profile=effective_profile,
             )
 
             artifact.parent.mkdir(parents=True, exist_ok=True)
@@ -209,6 +232,68 @@ class ContextCompiler:
         if not project_name or not repo_name:
             return ValueError("project and repo are required (or resolve from task node)")
         return project_name, repo_name, node_graph_id, node_id, obj_id, effective_budget
+
+    def _resolve_component_scope(
+        self,
+        *,
+        config: MetagitConfig,
+        definition_root: str,
+        project_name: str,
+        repo_name: str,
+        component: str | None,
+        depth: int,
+    ) -> (
+        tuple[
+            str | None,
+            int,
+            dict[str, Any] | None,
+            dict[str, Any] | None,
+            dict[str, Any] | None,
+        ]
+        | Exception
+    ):
+        identity = component.strip() if component else ""
+        if not identity:
+            return None, 0, None, None, None
+        parsed = parse_component_id(identity)
+        if not isinstance(parsed, Exception) and (parsed.project != project_name or parsed.repo != repo_name):
+            return ValueError(f"component id {identity!r} does not match project={project_name!r} repo={repo_name!r}")
+        row = ComponentResolver().get(
+            config,
+            identity,
+            project=project_name,
+            repo=repo_name,
+        )
+        if isinstance(row, Exception):
+            return row
+        if row is None:
+            return ValueError(f"unknown component: {identity}")
+        neighborhood = ComponentGraphService().neighborhood(
+            config,
+            identity,
+            project=project_name,
+            repo=repo_name,
+            depth=depth,
+        )
+        if isinstance(neighborhood, Exception):
+            return neighborhood
+        if neighborhood is None:
+            return ValueError(f"unknown component: {identity}")
+        profile = AgentProfileService(
+            config=config,
+            definition_root=Path(definition_root),
+        ).effective_profile(
+            project_name=project_name,
+            repo_name=repo_name,
+            component_name=row.name,
+        )
+        return (
+            identity,
+            depth,
+            resolved_component_payload(row),
+            neighborhood,
+            profile.model_dump(mode="json") if profile is not None else None,
+        )
 
     def _stamp_task_node(
         self,

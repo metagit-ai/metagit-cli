@@ -97,12 +97,21 @@ Web: `GET /v3/ops/components/graph?component=&project=&repo=&depth=&direction=`.
 
 Neighborhood combines durable `graph.relationships` (`origin: declared`) with same-catalog `Component.depends_on`. Depth defaults to 1 (cap 5). Cypher export emits `kind=component` nodes for `from.component` / `to.component` endpoints, plus a `contains` edge from the parent repo when structure export is on.
 
+## Context compile
+
+<!-- modality:context_compile -->
+
+```bash
+metagit context compile --project P --repo R [--component NAME] [--depth N] --json
+```
+
+MCP (ACTIVE workspace): `metagit_context_compile` optional `component` and `depth` (default 0, cap 5). Unknown component and a three-segment id that disagrees with `--project`/`--repo` are errors. The compiled pack stays project/repo scoped; `component` / `component_graph` / `effective_profile` are extra sections.
+
 ## Not in this release
 
 These land in later RFC-0026 series slices:
 
 - `metagit component detect|init`
-- `context compile --component`
 - component-level claims/ownership
 - derived working sets from component graphs
 

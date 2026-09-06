@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- `metagit context compile --component` / `--depth` (RFC-0029): optional component neighborhood on compiled context (`component`, `component_graph`, `effective_profile`). MCP `metagit_context_compile` accepts the same optional fields. Unknown components and disagreed three-segment ids fail instead of falling back to the repo.
 - Component-scoped `agent_profile` merge (RFC-0029): `effective_profile(..., component_name=)` walks workspace → project → repo → component. Unknown component names return no profile instead of falling back to the repo merge.
 - Component graph surfaces (RFC-0028): `metagit component graph`, MCP `metagit_component_graph`, and GET `/v3/ops/components/graph`. Cypher export emits `kind=component` nodes for `from.component` / `to.component` endpoints, plus a repo `contains` edge when structure export is on. Modality `component_graph`.
 - `ComponentGraphService.neighborhood` walks catalogued component graphs from durable `graph.relationships` (`origin: declared`) and `Component.depends_on` (`origin: depends_on`). Depth-limited BFS (`out|in|both`, cap 5); path-only declared endpoints resolve via `ComponentResolver`; `declared` wins on duplicate from/to/type.
