@@ -356,6 +356,76 @@ paths:
       status: detected
       # ISO-8601 timestamp of last detect or explicit set
       updated_at: '2026-01-01T00:00:00+00:00'
+    # Optional semantic components declared inside this repository
+    components:
+      -
+        # Stable component name within the repository
+        name: example-name
+...
+        # Repository-relative filesystem path
+        path: example-value
+...
+        # Short description of the component
+        description: Example text for documentation; replace before production use.
+        # Architectural kind (open string). Recommended: application, service, library, package, infrastructure, worker, cli, plugin, documentation, data, tool, unknown
+        kind: example-value
+...
+        # Programming language
+        language: python
+        # Language version
+        language_version: 3.12
+        # Package manager
+        package_manager: uv
+        # Frameworks used by the component
+        frameworks:
+          - example-value
+...
+        # Optional executable commands (install, lint, test, build, …)
+        commands:
+        # Local component names or qualified ComponentRef objects
+        depends_on:
+          - example-value
+...
+        # Artifact names this component produces
+        produces:
+          - example-value
+...
+        # Environment or target names
+        deploys_to:
+          - example-value
+...
+        # Capability tags (not agent_profile.skills install ids)
+        skills:
+          - example-value
+...
+        # Flat metadata tags
+        tags:
+          example: documentation
+        # Optional instructions for agents working in this component
+        agent_instructions: Example text for documentation; replace before production use.
+        # Structured agent posture for this component
+        agent_profile:
+          # Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset
+          tier: example-value
+...
+          # Bundled skill ids to install for agents working in this scope
+          skills:
+            - example-value
+...
+          # MCP server ids to configure (references only, never inline payloads)
+          mcp:
+            - example-value
+...
+          # Rule ids to materialize into vendor rule directories
+          rules:
+            - example-value
+...
+          # Vendor runtimes this profile targets (empty = all supported vendors)
+          vendors:
+            - example-value
+...
+          # When true, merge with parent scope profile; when false, use verbatim
+          inherit: false
 # Additional project dependencies not found in the paths or components lists. These include docker images, helm charts, or terraform modules.
 dependencies:
   -
@@ -474,6 +544,76 @@ dependencies:
       status: detected
       # ISO-8601 timestamp of last detect or explicit set
       updated_at: '2026-01-01T00:00:00+00:00'
+    # Optional semantic components declared inside this repository
+    components:
+      -
+        # Stable component name within the repository
+        name: example-name
+...
+        # Repository-relative filesystem path
+        path: example-value
+...
+        # Short description of the component
+        description: Example text for documentation; replace before production use.
+        # Architectural kind (open string). Recommended: application, service, library, package, infrastructure, worker, cli, plugin, documentation, data, tool, unknown
+        kind: example-value
+...
+        # Programming language
+        language: python
+        # Language version
+        language_version: 3.12
+        # Package manager
+        package_manager: uv
+        # Frameworks used by the component
+        frameworks:
+          - example-value
+...
+        # Optional executable commands (install, lint, test, build, …)
+        commands:
+        # Local component names or qualified ComponentRef objects
+        depends_on:
+          - example-value
+...
+        # Artifact names this component produces
+        produces:
+          - example-value
+...
+        # Environment or target names
+        deploys_to:
+          - example-value
+...
+        # Capability tags (not agent_profile.skills install ids)
+        skills:
+          - example-value
+...
+        # Flat metadata tags
+        tags:
+          example: documentation
+        # Optional instructions for agents working in this component
+        agent_instructions: Example text for documentation; replace before production use.
+        # Structured agent posture for this component
+        agent_profile:
+          # Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset
+          tier: example-value
+...
+          # Bundled skill ids to install for agents working in this scope
+          skills:
+            - example-value
+...
+          # MCP server ids to configure (references only, never inline payloads)
+          mcp:
+            - example-value
+...
+          # Rule ids to materialize into vendor rule directories
+          rules:
+            - example-value
+...
+          # Vendor runtimes this profile targets (empty = all supported vendors)
+          vendors:
+            - example-value
+...
+          # When true, merge with parent scope profile; when false, use verbatim
+          inherit: false
     # Dependency kind. Distinct from workspace repo entries; use tags on ProjectPath for managed repos.
     kind: docker_image
 # Additional project component paths that may be useful in other projects.
@@ -594,6 +734,76 @@ components:
       status: detected
       # ISO-8601 timestamp of last detect or explicit set
       updated_at: '2026-01-01T00:00:00+00:00'
+    # Optional semantic components declared inside this repository
+    components:
+      -
+        # Stable component name within the repository
+        name: example-name
+...
+        # Repository-relative filesystem path
+        path: example-value
+...
+        # Short description of the component
+        description: Example text for documentation; replace before production use.
+        # Architectural kind (open string). Recommended: application, service, library, package, infrastructure, worker, cli, plugin, documentation, data, tool, unknown
+        kind: example-value
+...
+        # Programming language
+        language: python
+        # Language version
+        language_version: 3.12
+        # Package manager
+        package_manager: uv
+        # Frameworks used by the component
+        frameworks:
+          - example-value
+...
+        # Optional executable commands (install, lint, test, build, …)
+        commands:
+        # Local component names or qualified ComponentRef objects
+        depends_on:
+          - example-value
+...
+        # Artifact names this component produces
+        produces:
+          - example-value
+...
+        # Environment or target names
+        deploys_to:
+          - example-value
+...
+        # Capability tags (not agent_profile.skills install ids)
+        skills:
+          - example-value
+...
+        # Flat metadata tags
+        tags:
+          example: documentation
+        # Optional instructions for agents working in this component
+        agent_instructions: Example text for documentation; replace before production use.
+        # Structured agent posture for this component
+        agent_profile:
+          # Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset
+          tier: example-value
+...
+          # Bundled skill ids to install for agents working in this scope
+          skills:
+            - example-value
+...
+          # MCP server ids to configure (references only, never inline payloads)
+          mcp:
+            - example-value
+...
+          # Rule ids to materialize into vendor rule directories
+          rules:
+            - example-value
+...
+          # Vendor runtimes this profile targets (empty = all supported vendors)
+          vendors:
+            - example-value
+...
+          # When true, merge with parent scope profile; when false, use verbatim
+          inherit: false
 # Workspaces are a collection of projects that are related to each other. They are used to group projects together for a specific purpose. These are manually defined by the user. Omit for single-repo application manifests; use top-level paths and dependencies instead.
 workspace:
   # Human-readable description of this workspace

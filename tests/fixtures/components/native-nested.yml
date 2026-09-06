@@ -1,0 +1,17 @@
+name: fixture-native
+kind: umbrella
+workspace:
+  projects:
+    - name: platform
+      repos:
+        - name: core
+          path: ./platform
+          components:
+            - name: web
+              path: apps/web
+              kind: application
+              depends_on:
+                - api
+            - name: api
+              path: apps/api
+              kind: service

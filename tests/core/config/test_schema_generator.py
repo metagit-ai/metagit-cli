@@ -133,3 +133,34 @@ workspace:
 def test_generated_schema_is_json_serializable() -> None:
     schema = generate_json_schema(MetagitConfig)
     json.dumps(schema)
+
+
+def test_schema_accepts_nested_repo_components() -> None:
+    schema = generate_json_schema(MetagitConfig)
+    assert "Component" in schema.get("$defs", {})
+    instance = {
+        "name": "acme",
+        "kind": "umbrella",
+        "workspace": {
+            "projects": [
+                {
+                    "name": "platform",
+                    "repos": [
+                        {
+                            "name": "core",
+                            "path": "./platform",
+                            "components": [
+                                {
+                                    "name": "web",
+                                    "path": "apps/web",
+                                    "kind": "application",
+                                    "depends_on": ["api"],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+    jsonschema.validate(instance, schema)

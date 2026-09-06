@@ -61,6 +61,7 @@ _AGENT_PROMPT_DEFS = (
     "Workspace",
     "WorkspaceProject",
     "ProjectPath",
+    "Component",
 )
 
 

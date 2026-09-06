@@ -30,3 +30,30 @@ def test_generated_payload_validates_when_overrides_used() -> None:
   assert config.name == payload["name"]
   assert config.workspace is not None
   assert any(project.name == "local" for project in config.workspace.projects)
+
+
+def test_sampled_component_commands_is_a_dict() -> None:
+  from metagit.core.component.models import Component
+
+  payload = ConfigExampleGenerator()._sample_model(Component)
+  assert isinstance(payload["commands"], dict)
+  MetagitConfig.model_validate(
+    {
+      "name": "demo",
+      "kind": "umbrella",
+      "workspace": {
+        "projects": [
+          {
+            "name": "p",
+            "repos": [
+              {
+                "name": "r",
+                "path": "./r",
+                "components": [payload],
+              }
+            ],
+          }
+        ]
+      },
+    }
+  )

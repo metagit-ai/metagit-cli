@@ -754,3 +754,19 @@ features:
           - path: src/metagit/data/skills/metagit-context-pack/SKILL.md
             contains: "modality:skills_surface"
 
+  - id: component_model
+    description: First-class repository components (schema, catalog, config validate)
+    service: metagit.core.component.catalog.ComponentCatalog
+    reference_doc: docs/concepts/components.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/config.py
+            contains: validate_components
+      documentation:
+        markers:
+          - path: docs/concepts/components.md
+            contains: "modality:component_model"
+          - path: docs/agents.md
+            contains: "modality:component_model"
+

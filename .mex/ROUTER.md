@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-08-27
+last_updated: 2026-09-06
 ---
 
 # Session Bootstrap
@@ -27,6 +27,7 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **Component model RFC-0026 (2026-09-06):** Optional `workspace.projects[].repos[].components[]` with stable `project/repo/component` identity; catalog adapter maps application `paths[]` and path-bearing top-level `components[]`; `metagit config validate` runs structural checks. Design [docs/superpowers/specs/2026-09-06-rfc-0026-component-model-design.md](../docs/superpowers/specs/2026-09-06-rfc-0026-component-model-design.md); series index [docs/superpowers/specs/2026-09-06-rfc-0026-component-context-graph-index.md](../docs/superpowers/specs/2026-09-06-rfc-0026-component-context-graph-index.md); operator guide [docs/concepts/components.md](../docs/concepts/components.md). Later slices (resolve CLI, graph, compile, ownership, detect, derived sets) are not started.
 - **Agent reliability series (2026-08-27, PR [#89](https://github.com/metagit-ai/metagit-cli/pull/89)):** Index [2026-08-27-agent-reliability-series-index.md](../docs/superpowers/specs/2026-08-27-agent-reliability-series-index.md). **Numbering lock:** do not reuse RFC-0016–0018. **MVPs shipped on `feat/agent-reliability-series`:** quickstart; run ledger (0017); aos recover/heartbeat (0019); workspace health/summary (0020); `tests/scenarios/` (0021); `policy eval` report-only (0022). **Designs only (next):** [secrets redaction](../docs/superpowers/specs/2026-08-27-secrets-redaction-hardening-design.md), [0023 federation](../docs/superpowers/specs/2026-08-27-rfc-0023-federation-design.md), [0024 plugins](../docs/superpowers/specs/2026-08-27-rfc-0024-plugins-design.md), [0025 workspace index](../docs/superpowers/specs/2026-08-27-rfc-0025-workspace-index-design.md); also policy enforcement at mutation points and `init --agent-optimized`. Pattern `.mex/patterns/agent-reliability-series.md`.
 - **Azure DevOps source + agent CI topology (2026-08-20):** `SourceProvider.azure_devops` discovery/import; AppConfig `providers.azure_devops`; durable `ProjectPath.ci` (`RepoCiTarget`) with `CiTargetResolver`; CLI `metagit project repo ci show|detect|set`; MCP `metagit_repo_ci_show` / `metagit_repo_ci_detect`; repo cards include `ci` summary. Live ADO pipeline monitoring in the web CI/CD tab remains deferred (Phase 2). Design [docs/superpowers/specs/2026-08-20-azure-devops-ci-topology-design.md](../docs/superpowers/specs/2026-08-20-azure-devops-ci-topology-design.md); reference [docs/reference/ci-targets.md](../docs/reference/ci-targets.md).
 - **Release hygiene hardening (2026-08-10):** semantic release now requires non-empty `CHANGELOG.md` `## Unreleased` notes before creating a new tag, promotes and commits both root and docs changelog copies (`docs/changelog.md`), and ignores changelog-only promotion pushes to avoid noisy reruns. Added `scripts/cleanup_github_releases.py` plus `task releases:cleanup:{preview,apply,apply-with-tags}` for safe GitHub release pruning with semver floor and keep-latest retention controls.

@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 30
+- **Features tracked:** 31
 
 When you add or change a backend feature:
 
@@ -50,6 +50,7 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `workspace_summary` | Workspace discovery readiness score for agent session start | yes | — | — | yes | yes | [workspace-discovery.md](workspace-discovery.md) |
 | `derived_projects` | Derived surgical workspace projects with frozen membership and refreshable identity | yes | yes | — | yes | yes | [derived-projects.md](derived-projects.md) |
 | `skills_surface` | Layered on-disk and declared skill inventory across workspace/project/repo | yes | yes | — | yes | yes | [skills-surface.md](skills-surface.md) |
+| `component_model` | First-class repository components (schema, catalog, config validate) | yes | — | — | yes | — | [components.md](../concepts/components.md) |
 <!-- registry:table:end -->
 
 ## Surface legend

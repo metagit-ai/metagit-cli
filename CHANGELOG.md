@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+- Optional repository **components** in `.metagit.yml` (`repos[].components[]`): first-class semantic units with stable `project/repo/component` identity, catalog mapping of application `paths[]`, and validation via `metagit config validate`. See [docs/concepts/components.md](docs/concepts/components.md).
+
+### Changed
+- Bump `gitpython` to `>=3.1.59` (PYSEC-2026-3785–3788).
+- Bump `mkdocs-material` to `>=9.7.7` (CVE-2026-73295).
 
 
 ## [0.29.1] - 2026-08-28

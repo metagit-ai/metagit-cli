@@ -16,6 +16,7 @@ nav:
   - 'Changelog': 'changelog.md'
   - 'Features':
     - 'Repository Detection': 'repository_detection.md'
+    - 'Components': 'concepts/components.md'
     - 'Hermes & org IaC guide': 'hermes-iac-workspace-guide.md'
     - 'Hermes orchestrator workspace': 'hermes-orchestrator-workspace.md'
     - 'Reference rewrite workspace': 'metagit-rewrite-workspace.md'
