@@ -4,18 +4,29 @@
 
 
 
+## [0.30.0] - 2026-09-06
+
+
+
+### Added
+- Optional repository **components** in `.metagit.yml` (`repos[].components[]`): first-class semantic units with stable `project/repo/component` identity, catalog mapping of application `paths[]`, and validation via `metagit config validate`. See [docs/concepts/components.md](concepts/components.md).
+
+### Changed
+- Bump `gitpython` to `>=3.1.59` (PYSEC-2026-3785–3788).
+- Bump `mkdocs-material` to `>=9.7.7` (CVE-2026-73295).
+
 ## [0.29.1] - 2026-08-28
 
 
 
 ### Added
-- Agent OS day-1 quickstart: [agents-quickstart.md](agents-quickstart.md), example workspace `examples/agent-aos-loop/`, and session-start / `metagit-aos` skill pointers to the canonical control loop.
-- Run ledger read surface: `metagit run show|replay|export`, MCP `metagit_run_*`, and AOS commit `run_id` recording. See [reference/run-ledger.md](reference/run-ledger.md).
-- AOS recovery: `metagit aos recover|heartbeat` and doctor `recovery_recipes[]`. See [reference/aos.md](reference/aos.md).
-- Workspace discovery: `metagit workspace health|summary --json`. See [reference/workspace-discovery.md](reference/workspace-discovery.md).
-- Multi-agent scenario harness under `tests/scenarios/`.
-- Mutation policy MVP: `metagit policy eval` / MCP `metagit_policy_eval`. See [reference/mutation-policy.md](reference/mutation-policy.md).
-- Workspace discovery (RFC-0020 MVP): `metagit workspace health --json` and `metagit workspace summary --json` with composite readiness score. See [reference/workspace-discovery.md](reference/workspace-discovery.md).
+- Agent OS day-1 quickstart: [docs/agents-quickstart.md](agents-quickstart.md), example workspace [examples/agent-aos-loop/](examples/agent-aos-loop/), and session-start / `metagit-aos` skill pointers to the canonical control loop.
+- Run ledger read surface: `metagit run show|replay|export`, MCP `metagit_run_*`, control-loop steps on `RunEvidence`, and best-effort `run_id` recording from `aos next --commit` when routing is configured. See [docs/reference/run-ledger.md](reference/run-ledger.md).
+- AOS recovery: `metagit aos recover|heartbeat`, doctor `recovery_recipes[]`, MCP `metagit_aos_recover` / `metagit_aos_heartbeat`. See [docs/reference/aos.md](reference/aos.md).
+- Workspace discovery: `metagit workspace health|summary --json` readiness rollup (RFC-0020). See [docs/reference/workspace-discovery.md](reference/workspace-discovery.md).
+- Multi-agent scenario harness under `tests/scenarios/` (RFC-0021).
+- Mutation policy MVP: `metagit policy eval --action … --json` and MCP `metagit_policy_eval` (RFC-0022). See [docs/reference/mutation-policy.md](reference/mutation-policy.md).
+- Workspace discovery (RFC-0020 MVP): `metagit workspace health --json` and `metagit workspace summary --json` with composite readiness score. See [docs/reference/workspace-discovery.md](reference/workspace-discovery.md).
 
 ### Changed
 - Bump uv override `pip` to `>=26.2.1` (PYSEC-2026-3721).
