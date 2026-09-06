@@ -36,6 +36,9 @@ JSON Schema for editors and CI:
 metagit config validate --config-path .metagit.yml
 ```
 
+Workspace repos may declare nested `components[]` (name + repository-relative path). Application manifests map existing `paths[]` into the same catalog. See [Components](../concepts/components.md).
+
+
 ## Schema-backed editing (CLI)
 
 The same operation model as the web Config Studio is available on the CLI:

@@ -1,0 +1,8 @@
+name: fixture-none
+kind: umbrella
+workspace:
+  projects:
+    - name: platform
+      repos:
+        - name: core
+          path: ./platform

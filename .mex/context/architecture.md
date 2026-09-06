@@ -16,7 +16,7 @@ edges:
     condition: when implementing changes across CLI, core services, and tests
   - target: context/mcp-runtime.md
     condition: when task scope includes MCP tools, resources, stdio runtime, or sampling
-last_updated: 2026-05-12
+last_updated: 2026-09-06
 ---
 
 # Architecture
@@ -32,7 +32,7 @@ Testing flow is pytest-driven from `tests/` with focused unit tests per core mod
 
 ## Key Components
 - **CLI command layer (`src/metagit/cli/commands/*.py`)** — routes user actions (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search`/`find`, `api`), depends on Click context + core managers.
-- **Config subsystem (`metagit.core.config.*`)** — loads/creates/saves `.metagit.yml` and validates schema via Pydantic models; foundational for workspace and MCP gating behavior.
+- **Config subsystem (`metagit.core.config.*`)** — loads/creates/saves `.metagit.yml` and validates schema via Pydantic models; foundational for workspace and MCP gating behavior. Optional repository **components** (`metagit.core.component`) are nested under `ProjectPath.components` and checked by `config validate`.
 - **Detection subsystem (`metagit.core.detect.*`)** — infers repository metadata (language/framework/dependencies) and feeds generated config/context output.
 - **Record subsystem (`metagit.core.record.*`)** — manages normalized records and conversions; used for storage/search flows beyond raw config files.
 - **MCP runtime (`metagit.core.mcp.*`)** — stdio JSON-RPC server for tools/resources with state-aware gating, workspace path search/index, managed-repo search (`metagit_repo_search`), upstream hints, repo ops, and bootstrap sampling flow.

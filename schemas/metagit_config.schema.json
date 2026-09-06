@@ -287,6 +287,259 @@
       "title": "CiTargetStatus",
       "type": "string"
     },
+    "Component": {
+      "additionalProperties": false,
+      "description": "Semantic unit inside a repository (or application manifest path).",
+      "properties": {
+        "name": {
+          "description": "Stable component name within the repository",
+          "title": "Name",
+          "type": "string"
+        },
+        "path": {
+          "description": "Repository-relative filesystem path",
+          "title": "Path",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description of the component",
+          "title": "Description"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Architectural kind (open string). Recommended: application, service, library, package, infrastructure, worker, cli, plugin, documentation, data, tool, unknown",
+          "title": "Kind"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Programming language",
+          "title": "Language"
+        },
+        "language_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Language version",
+          "title": "Language Version"
+        },
+        "package_manager": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Package manager",
+          "title": "Package Manager"
+        },
+        "frameworks": {
+          "description": "Frameworks used by the component",
+          "items": {
+            "type": "string"
+          },
+          "title": "Frameworks",
+          "type": "array"
+        },
+        "commands": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/ComponentCommand"
+              }
+            ]
+          },
+          "description": "Optional executable commands (install, lint, test, build, \u2026)",
+          "title": "Commands",
+          "type": "object"
+        },
+        "depends_on": {
+          "description": "Local component names or qualified ComponentRef objects",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/ComponentRef"
+              }
+            ]
+          },
+          "title": "Depends On",
+          "type": "array"
+        },
+        "produces": {
+          "description": "Artifact names this component produces",
+          "items": {
+            "type": "string"
+          },
+          "title": "Produces",
+          "type": "array"
+        },
+        "deploys_to": {
+          "description": "Environment or target names",
+          "items": {
+            "type": "string"
+          },
+          "title": "Deploys To",
+          "type": "array"
+        },
+        "skills": {
+          "description": "Capability tags (not agent_profile.skills install ids)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Skills",
+          "type": "array"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags",
+          "title": "Tags",
+          "type": "object"
+        },
+        "agent_instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional instructions for agents working in this component",
+          "title": "Agent Instructions"
+        },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured agent posture for this component"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+          "title": "Agent Prompt"
+        }
+      },
+      "required": [
+        "name",
+        "path"
+      ],
+      "title": "Component",
+      "type": "object"
+    },
+    "ComponentCommand": {
+      "additionalProperties": false,
+      "description": "Named executable command declared on a component.",
+      "properties": {
+        "command": {
+          "description": "Shell command to run",
+          "title": "Command",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "title": "ComponentCommand",
+      "type": "object"
+    },
+    "ComponentRef": {
+      "additionalProperties": false,
+      "description": "Qualified component dependency reference.",
+      "properties": {
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Workspace project name",
+          "title": "Project"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repository name",
+          "title": "Repo"
+        },
+        "component": {
+          "description": "Component name",
+          "title": "Component",
+          "type": "string"
+        }
+      },
+      "required": [
+        "component"
+      ],
+      "title": "ComponentRef",
+      "type": "object"
+    },
     "Dashboard": {
       "additionalProperties": false,
       "description": "Model for monitoring dashboard.",
@@ -596,6 +849,14 @@
           ],
           "default": null,
           "description": "Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)"
+        },
+        "components": {
+          "description": "Optional semantic components declared inside this repository",
+          "items": {
+            "$ref": "#/$defs/Component"
+          },
+          "title": "Components",
+          "type": "array"
         },
         "kind": {
           "$ref": "#/$defs/DependencyKind",
@@ -1603,6 +1864,14 @@
           ],
           "default": null,
           "description": "Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)"
+        },
+        "components": {
+          "description": "Optional semantic components declared inside this repository",
+          "items": {
+            "$ref": "#/$defs/Component"
+          },
+          "title": "Components",
+          "type": "array"
         },
         "agent_prompt": {
           "anyOf": [

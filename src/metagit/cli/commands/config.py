@@ -18,6 +18,7 @@ from metagit.cli.config_patch_ops import (
 from metagit.cli.json_output import emit_json
 from metagit.core.agent.profile_service import AgentProfileService
 from metagit.core.appconfig import AppConfig
+from metagit.core.config.component_validation import validate_components
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import (
     GraphRelationshipSuggestService,
@@ -175,6 +176,7 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None) ->
             definition_root=definition_root,
         ).list_validation_issues()
         graph_issues = validate_graph_relationships(result)
+        component_issues = validate_components(result, definition_root=definition_root)
     except Exception as e:
         logger.error(f"Failed to load metagit configuration file: {e}")
         logger.debug(f"Error: {e}")
@@ -183,11 +185,13 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None) ->
 
     if profile_issues:
         for issue in profile_issues:
-            location = issue.repo or issue.project or issue.scope
+            location = issue.component or issue.repo or issue.project or issue.scope
             logger.error(f"agent_profile ({location}): {issue.message}")
     for issue in graph_issues:
         logger.error(issue)
-    if profile_issues or graph_issues:
+    for issue in component_issues:
+        logger.error(issue)
+    if profile_issues or graph_issues or component_issues:
         ctx.abort()
     logger.success(f"Configuration file {target_path} is valid")
 

@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
-last_updated: 2026-08-27
+last_updated: 2026-09-06
 ---
 
 # Metagit
@@ -60,6 +60,7 @@ metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 | ACL file claims | `metagit claim declare` · `metagit claim check` |
 | Task graph / intent | `metagit task create` · `metagit task expand` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R [--task-id N] --json` |
+| Components (RFC-0026) | Nested `repos[].components[]`; `metagit config validate` · [docs/concepts/components.md](docs/concepts/components.md) |
 | Context switch | `metagit context switch <project> [<repo>]` · `--json` · MCP `metagit_context_switch` |
 | Nav (human) | `metagit nav` / `navigate` [-p PROJECT] [--repo REPO] |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |

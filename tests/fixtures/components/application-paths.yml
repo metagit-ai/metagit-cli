@@ -1,0 +1,6 @@
+name: fixture-app
+kind: cli
+paths:
+  - name: web
+    path: apps/web
+    language: typescript

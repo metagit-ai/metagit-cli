@@ -18,7 +18,7 @@ dependencies = [
     "pydantic>=2.11.4",
     "requests>=2.33.0",
     "click>=8.1.7",
-    "gitpython>=3.1.58",
+    "gitpython>=3.1.59",
     "rich>=14.0.0",
     "pyyaml>=6.0.2",
     "ruamel.yaml>=0.18.10",
@@ -58,7 +58,7 @@ test = [
     "mongomock>=4.3.0",
 ]
 dev = ["ruff", "black", "isort", "mypy"]
-docs = ["mkdocs", "mkdocs-material", "mkdocstrings", "mkdocs-click", "mdtoc", "mkdocs-mermaid2-plugin"]
+docs = ["mkdocs", "mkdocs-material>=9.7.7", "mkdocstrings", "mkdocs-click", "mdtoc", "mkdocs-mermaid2-plugin"]
 lint = ["ruff", "black", "isort", "mypy"]
 format = ["black", "isort"]
 typecheck = ["mypy"]
@@ -94,6 +94,8 @@ indent-style = "space"
 [tool.uv]
 override-dependencies = [
     "pip>=26.2.1",
+    "gitpython>=3.1.59",
+    "mkdocs-material>=9.7.7",
     "aiohttp>=3.14.3",
     "msgpack>=1.2.1",
     "cryptography>=48.0.1",

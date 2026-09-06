@@ -18,6 +18,7 @@ from pydantic import (
 )
 from pydantic_core import core_schema
 
+from metagit.core.component.models import Component
 from metagit.core.project.ci_models import RepoCiTarget
 from metagit.core.workspace.agent_profile_models import AgentProfile
 
@@ -129,6 +130,10 @@ class ProjectPath(BaseModel):
             "Durable CI topology for agents: platform, config paths, and "
             "provider locators (e.g. Azure DevOps org/project/repo)"
         ),
+    )
+    components: list[Component] = Field(
+        default_factory=list,
+        description="Optional semantic components declared inside this repository",
     )
 
     @field_validator("language_version", mode="before")

@@ -194,6 +194,13 @@ class ConfigExampleGenerator:
             sampled = self._sample_annotation(inner, field_name)
             return [sampled] if sampled is not None else []
 
+        if origin is dict:
+            if field_name in {"tags"}:
+                return {"example": "documentation"}
+            if field_name in {"metadata"}:
+                return {"source": "metagit-config-example"}
+            return {}
+
         nested = self._nested_model_for_annotation(annotation)
         if nested is not None:
             return self._sample_model(nested)

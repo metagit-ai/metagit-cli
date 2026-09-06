@@ -70,6 +70,7 @@ class AgentProfileValidationIssue(BaseModel):
     scope: str
     project: Optional[str] = None
     repo: Optional[str] = None
+    component: Optional[str] = None
     field: str
     value: str
     message: str

@@ -13,6 +13,7 @@ from metagit.core.agent.profile_catalog import (
     bundled_rules_root,
     validate_profile_references,
 )
+from metagit.core.component.catalog import ComponentCatalog
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.project.models import ProjectPath
@@ -74,31 +75,42 @@ class AgentProfileService:
     def list_validation_issues(self) -> list[AgentProfileValidationIssue]:
         """Validate every declared agent_profile reference against bundled catalogs."""
         issues: list[AgentProfileValidationIssue] = []
-        if not self._config.workspace:
-            return issues
-        workspace_profile = self._config.workspace.agent_profile
-        if workspace_profile is not None:
-            issues.extend(self._validate_one(workspace_profile, scope="workspace"))
-        for project in self._config.workspace.projects:
-            if project.agent_profile is not None:
-                issues.extend(
-                    self._validate_one(
-                        project.agent_profile,
-                        scope="project",
-                        project=project.name,
-                    ),
-                )
-            for repo in project.repos:
-                if repo.agent_profile is None:
-                    continue
-                issues.extend(
-                    self._validate_one(
-                        repo.agent_profile,
-                        scope="repo",
-                        project=project.name,
-                        repo=repo.name,
-                    ),
-                )
+        if self._config.workspace:
+            workspace_profile = self._config.workspace.agent_profile
+            if workspace_profile is not None:
+                issues.extend(self._validate_one(workspace_profile, scope="workspace"))
+            for project in self._config.workspace.projects:
+                if project.agent_profile is not None:
+                    issues.extend(
+                        self._validate_one(
+                            project.agent_profile,
+                            scope="project",
+                            project=project.name,
+                        ),
+                    )
+                for repo in project.repos:
+                    if repo.agent_profile is None:
+                        continue
+                    issues.extend(
+                        self._validate_one(
+                            repo.agent_profile,
+                            scope="repo",
+                            project=project.name,
+                            repo=repo.name,
+                        ),
+                    )
+        for row in ComponentCatalog().list(self._config):
+            if row.spec.agent_profile is None:
+                continue
+            issues.extend(
+                self._validate_one(
+                    row.spec.agent_profile,
+                    scope="component",
+                    project=row.project,
+                    repo=row.repo,
+                    component=row.name,
+                ),
+            )
         return issues
 
     def select_targets(
@@ -307,6 +319,7 @@ class AgentProfileService:
         scope: str,
         project: Optional[str] = None,
         repo: Optional[str] = None,
+        component: Optional[str] = None,
     ) -> list[AgentProfileValidationIssue]:
         issues: list[AgentProfileValidationIssue] = []
         for vendor in profile.vendors:
@@ -316,6 +329,7 @@ class AgentProfileService:
                         scope=scope,
                         project=project,
                         repo=repo,
+                        component=component,
                         field="vendors",
                         value=vendor,
                         message=f"unknown vendor {vendor!r}",
@@ -336,6 +350,7 @@ class AgentProfileService:
                     scope=scope,
                     project=project,
                     repo=repo,
+                    component=component,
                     field=field,
                     value="",
                     message=message,
