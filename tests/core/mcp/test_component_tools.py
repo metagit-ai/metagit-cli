@@ -203,3 +203,32 @@ def test_component_tools_require_active_workspace(tmp_path: Path) -> None:
     response = _call(runtime, "metagit_component_list", {}, 929)
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["kind"] == "invalid_arguments"
+
+
+def test_claim_schemas_accept_optional_component(tmp_path: Path) -> None:
+    runtime = _seed(tmp_path)
+    response = runtime._handle_request(
+        {"jsonrpc": "2.0", "id": 930, "method": "tools/list", "params": {}}
+    )
+    assert response is not None
+    tools = {item["name"]: item for item in response["result"]["tools"]}
+    declare_schema = tools["metagit_claim_declare"]["inputSchema"]
+    check_schema = tools["metagit_claim_check"]["inputSchema"]
+    assert "component" in declare_schema["properties"]
+    assert "component" in check_schema["properties"]
+    assert "patterns" not in declare_schema.get("required", [])
+    assert "patterns" not in check_schema.get("required", [])
+
+
+def test_claim_declare_component_web_without_patterns(tmp_path: Path) -> None:
+    runtime = _seed(tmp_path)
+    response = _call(
+        runtime,
+        "metagit_claim_declare",
+        {"repository": "platform/core", "agent_id": "agent-1", "component": "web"},
+        931,
+    )
+    payload = _payload(response)
+    assert isinstance(payload, dict)
+    assert payload["component"] == "web"
+    assert payload["patterns"] == ["apps/web/**"]
