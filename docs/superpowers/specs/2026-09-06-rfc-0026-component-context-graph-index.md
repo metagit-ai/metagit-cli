@@ -30,11 +30,11 @@ RFC numbers **0016–0025 are reserved** (central state plane + agent reliabilit
 |-----|-------|--------|
 | 0026 | Component model (schema, identity, catalog, validation) | Implemented |
 | 0027 | Component resolution + CLI (`list` / `show` / `resolve`) | Implemented |
-| 0028 | Graph integration (`GraphEndpoint.component`, traversal) | Not started |
-| 0029 | Context compiler (`--component`, depth, inherited profile) | Not started |
-| 0030 | Component ownership / claims | Not started |
-| 0031 | Component discovery (`component detect` / `init`) | Not started |
-| 0032 | Derived working sets from component graphs | Not started |
+| 0028 | Graph integration (`GraphEndpoint.component`, traversal) | In progress |
+| 0029 | Context compiler (`--component`, depth, inherited profile) | In progress |
+| 0030 | Component ownership / claims | In progress |
+| 0031 | Component discovery (`component detect` / `init`) | In progress |
+| 0032 | Derived working sets from component graphs | In progress |
 
 Do not reuse 0016–0025. If a later slice is dropped, retire the number in this index rather than recycling it.
 
@@ -69,11 +69,11 @@ RFC-0030 Ownership (after 0026 identity; may parallel 0027)
 |-----|-------|--------|------|--------|
 | 0026 | Component model | [design](2026-09-06-rfc-0026-component-model-design.md) | [plan](../plans/2026-09-06-rfc-0026-component-model.md) | **Implemented** |
 | 0027 | Resolution + CLI | [design](2026-09-06-rfc-0027-component-resolution-design.md) | [plan](../plans/2026-09-06-rfc-0027-component-resolution.md) | **Implemented** |
-| 0028 | Graph integration | pending | pending | Not started |
-| 0029 | Context compiler | pending | pending | Not started |
-| 0030 | Ownership / claims | pending | pending | Not started |
-| 0031 | Discovery | pending | pending | Not started |
-| 0032 | Derived working sets | pending | pending | Not started |
+| 0028 | Graph integration | [design](2026-09-06-rfc-0028-component-graph-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
+| 0029 | Context compiler | [design](2026-09-06-rfc-0029-component-compile-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
+| 0030 | Ownership / claims | [design](2026-09-06-rfc-0030-component-ownership-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
+| 0031 | Discovery | [design](2026-09-06-rfc-0031-component-discovery-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
+| 0032 | Derived working sets | [design](2026-09-06-rfc-0032-derived-components-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
 
 ## Architectural north star
 
