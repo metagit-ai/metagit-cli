@@ -11,6 +11,7 @@ from typing import Any, Literal, Optional, cast
 
 from metagit.core.agent.service import AgentService
 from metagit.core.appconfig import AppConfig
+from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
 from metagit.core.config.manager import MetagitConfigManager
@@ -1128,6 +1129,34 @@ class MetagitMcpRuntime:
                     "repo_name": {"type": "string"},
                     "apply": {"type": "boolean"},
                     "force": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_list": {
+                "type": "object",
+                "properties": {
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_show": {
+                "type": "object",
+                "required": ["component"],
+                "properties": {
+                    "component": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_resolve": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -2503,6 +2532,9 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError(str(exc)) from exc
             return card.model_dump(mode="json")
 
+        if name.startswith("metagit_component_"):
+            return self._call_component_tool(name, arguments, status, config)
+
         if name in {"metagit_repo_ci_show", "metagit_repo_ci_detect"}:
             if not config or not status.root_path:
                 raise InvalidToolArgumentsError("repo ci requires an active workspace")
@@ -3321,6 +3353,51 @@ class MetagitMcpRuntime:
                 )
             )
         raise ValueError(f"Unsupported schedule tool: {name}")
+
+    def _call_component_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+        config: Any,
+    ) -> dict[str, Any]:
+        if not config or not status.root_path:
+            raise InvalidToolArgumentsError("component tools require an active workspace")
+        project_raw = arguments.get("project")
+        repo_raw = arguments.get("repo")
+        project = str(project_raw).strip() if isinstance(project_raw, str) and project_raw.strip() else None
+        repo = str(repo_raw).strip() if isinstance(repo_raw, str) and repo_raw.strip() else None
+        resolver = ComponentResolver()
+        if name == "metagit_component_list":
+            rows = resolver.list(config, project=project, repo=repo)
+            return {"components": [resolved_component_payload(row) for row in rows]}
+        if name == "metagit_component_show":
+            identity = str(arguments.get("component", "")).strip()
+            if not identity:
+                raise InvalidToolArgumentsError("component is required")
+            result = resolver.get(config, identity, project=project, repo=repo)
+            if isinstance(result, ValueError):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if result is None:
+                raise InvalidToolArgumentsError(f"component not found: {identity}")
+            return resolved_component_payload(result)
+        if name == "metagit_component_resolve":
+            query = str(arguments.get("path", "")).strip()
+            if not query:
+                raise InvalidToolArgumentsError("path is required")
+            result = resolver.resolve(
+                config,
+                query,
+                project=project,
+                repo=repo,
+                definition_root=status.root_path,
+            )
+            if isinstance(result, ValueError):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if result is None:
+                return {"matched": False, "path": query}
+            return {"matched": True, **resolved_component_payload(result), "path": query}
+        raise ValueError(f"Unsupported component tool: {name}")
 
     def _call_aos_tool(
         self,

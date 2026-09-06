@@ -4,6 +4,7 @@
 
 ### Added
 - `metagit component list|show|resolve` CLI over `ComponentResolver` (RFC-0027). `--config-path/-c` is on each subcommand so `component list -c FILE` works.
+- MCP `metagit_component_list|show|resolve` ACTIVE tools over the same resolver. Resolve `matched: false` is a normal result; show-not-found and `ValueError` are `-32602`.
 
 ## [0.30.0] - 2026-09-06
 
