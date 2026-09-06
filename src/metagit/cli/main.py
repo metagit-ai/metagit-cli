@@ -32,6 +32,7 @@ from metagit.cli.commands.branch import branch_group
 from metagit.cli.commands.campaign import campaign
 from metagit.cli.commands.claim import claim_group
 from metagit.cli.commands.completion_cmd import completion_group
+from metagit.cli.commands.component import component_group
 from metagit.cli.commands.config import config
 from metagit.cli.commands.context import context
 from metagit.cli.commands.detect import detect
@@ -161,6 +162,7 @@ cli.add_command(appconfig)
 cli.add_command(project)
 cli.add_command(workspace)
 cli.add_command(config)
+cli.add_command(component_group)
 cli.add_command(record)
 cli.add_command(skills)
 cli.add_command(agent)

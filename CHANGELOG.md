@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Added
+- `metagit component list|show|resolve` CLI over `ComponentResolver` (RFC-0027). `--config-path/-c` is on each subcommand so `component list -c FILE` works.
 
 ## [0.30.0] - 2026-09-06
 
