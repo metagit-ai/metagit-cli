@@ -5,6 +5,9 @@
 ### Added
 - Component list/show/resolve (RFC-0027): `metagit component list|show|resolve`, MCP `metagit_component_list|show|resolve`, and GET `/v3/ops/components` plus GET `/v3/ops/components/resolve`. `--config-path/-c` is on each CLI subcommand. Resolve `matched: false` is a normal MCP/web result; show-not-found and `ValueError` are MCP `-32602` / HTTP 400.
 
+### Fixed
+- Changelog promotion rewrites repo-root links such as `examples/` to GitHub URLs in `docs/changelog.md` so lychee and MkDocs do not resolve them under `docs/`.
+
 ## [0.30.0] - 2026-09-06
 
 

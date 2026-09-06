@@ -8,7 +8,7 @@ triggers:
 edges:
   - target: update-release-workflow.md
     condition: when changing semantic-release automation
-last_updated: 2026-06-07
+last_updated: 2026-09-06
 ---
 
 # Changelog and Release Notes
@@ -16,7 +16,7 @@ last_updated: 2026-06-07
 ## Context
 
 - Canonical file: root `CHANGELOG.md` (`## Unreleased` during development).
-- Docs site mirrors it via `scripts/sync_docs_changelog.py` → `docs/changelog.md` (gitignored, built in CI).
+- Docs site mirrors it via `scripts/sync_docs_changelog.py` → `docs/changelog.md` (committed; semantic-release promotes both).
 - GitHub Releases use the promoted changelog section, not raw `git log`.
 
 ## Steps
@@ -30,6 +30,7 @@ last_updated: 2026-06-07
 - `SKIP_CHANGELOG_CHECK=1` bypasses the gate locally only; CI always enforces it.
 - Empty `Unreleased` falls back to grouped conventional commits at release time.
 - Do not use Copilot/LLM steps for release notes — deterministic scripts avoid AI credit spend and drift.
+- Tag/main Test runs lychee on `docs/**/*.md`. `_docs_site_changelog` must rewrite repo-root paths (`examples/`, `scripts/`, …) to GitHub URLs. Relative `examples/foo` in `docs/changelog.md` resolves as `docs/examples/foo` and fails (0.30.0 tag Test).
 
 ## Verify
 

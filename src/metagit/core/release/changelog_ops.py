@@ -11,6 +11,15 @@ from pathlib import Path
 
 CHANGELOG_PATH = Path("CHANGELOG.md")
 DOCS_CHANGELOG_PATH = Path("docs/changelog.md")
+_GITHUB_REPO = "https://github.com/metagit-ai/metagit-cli"
+_OUTSIDE_DOCS_PREFIXES = (
+    "examples/",
+    "scripts/",
+    "src/",
+    "schemas/",
+    "web/",
+    "tests/",
+)
 
 _UNRELEASED_HEADER = "## Unreleased"
 _VERSION_HEADER_RE = re.compile(r"^## \[(?P<version>[^\]]+)\]", re.MULTILINE)
@@ -56,12 +65,27 @@ def write_changelog(content: str, path: Path = CHANGELOG_PATH) -> None:
 
 
 def _docs_site_changelog(content: str) -> str:
-    """Rewrite repo-root doc links for MkDocs (docs/ is the site root)."""
-    return re.sub(
+    """Rewrite repo-root links for MkDocs (docs/ is the site root).
+
+    ``docs/foo.md`` becomes a site-relative ``foo.md``. Other repo-root
+    paths (``examples/``, ``scripts/``, …) become GitHub URLs so lychee and
+    MkDocs ``--strict`` do not resolve them under ``docs/``.
+    """
+    rewritten = re.sub(
         r"\]\((?:\./)?docs/([^)]+)\)",
         r"](\1)",
         content,
     )
+    return re.sub(r"\]\(([^)]+)\)", _rewrite_outside_docs_link, rewritten)
+
+
+def _rewrite_outside_docs_link(match: re.Match[str]) -> str:
+    url = match.group(1)
+    path = url.removeprefix("./")
+    if not any(path.startswith(prefix) for prefix in _OUTSIDE_DOCS_PREFIXES):
+        return match.group(0)
+    kind = "tree" if path.endswith("/") else "blob"
+    return f"]({_GITHUB_REPO}/{kind}/main/{path})"
 
 
 def sync_docs_changelog(

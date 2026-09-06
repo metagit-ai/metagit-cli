@@ -105,3 +105,28 @@ def test_sync_docs_changelog_rewrites_doc_links(tmp_path: Path) -> None:
     rendered = target.read_text(encoding="utf-8")
     assert "](agents.md)" in rendered
     assert "](hermes-iac-workspace-guide.md)" in rendered
+
+
+def test_sync_docs_changelog_rewrites_examples_to_github(tmp_path: Path) -> None:
+    """Repo-root paths must not stay relative (lychee resolves them under docs/)."""
+    root = tmp_path / "CHANGELOG.md"
+    root.write_text(
+        "\n".join(
+            [
+                "# Changelog",
+                "",
+                "- example [loop](examples/agent-aos-loop/)",
+                "- script [gate](scripts/prepush-gate.zsh)",
+                "- keep [agents](docs/agents.md)",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    target = tmp_path / "docs" / "changelog.md"
+    sync_docs_changelog(source=root, target=target)
+    rendered = target.read_text(encoding="utf-8")
+    assert "](https://github.com/metagit-ai/metagit-cli/tree/main/examples/agent-aos-loop/)" in rendered
+    assert "](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/prepush-gate.zsh)" in rendered
+    assert "](agents.md)" in rendered
+    assert "](examples/agent-aos-loop/)" not in rendered
