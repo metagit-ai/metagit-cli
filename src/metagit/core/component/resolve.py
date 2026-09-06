@@ -121,7 +121,7 @@ class ComponentResolver:
         for matches in grouped.values():
             _, best = max(matches, key=lambda item: item[0])
             winners.append(best)
-        if scoped_project or scoped_repo:
+        if scoped_project and scoped_repo:
             return winners[0] if winners else None
         if not winners:
             return None

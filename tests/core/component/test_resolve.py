@@ -165,6 +165,34 @@ def test_unscoped_relative_path_two_repos_is_ambiguous() -> None:
     assert isinstance(result, ValueError)
 
 
+def test_project_only_relative_path_two_repos_is_ambiguous() -> None:
+    config = MetagitConfig(
+        name="acme",
+        kind="umbrella",
+        workspace=Workspace(
+            projects=[
+                WorkspaceProject(
+                    name="platform",
+                    repos=[
+                        ProjectPath(
+                            name="core",
+                            path="./a",
+                            components=[Component(name="web", path="apps/web")],
+                        ),
+                        ProjectPath(
+                            name="edge",
+                            path="./b",
+                            components=[Component(name="site", path="apps/web")],
+                        ),
+                    ],
+                )
+            ]
+        ),
+    )
+    result = ComponentResolver().resolve(config, "apps/web/src/x.ts", project="platform")
+    assert isinstance(result, ValueError)
+
+
 def test_application_paths_resolve() -> None:
     config = MetagitConfig(
         name="metagit-cli",
