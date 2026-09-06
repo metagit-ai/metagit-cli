@@ -82,6 +82,7 @@ Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality
 - **Context Compiler (RFC-0009):** budgeted pack artifacts via `metagit context compile` — see [context-compiler.md](docs/reference/context-compiler.md).
 - **Component model (RFC-0026):** optional `repos[].components[]` with `project/repo/component` identity; `metagit config validate` — see [components.md](docs/concepts/components.md).
 - **Component resolve (RFC-0027):** `metagit component list|show|resolve`, MCP `metagit_component_list|show|resolve`, GET `/v3/ops/components` and GET `/v3/ops/components/resolve` — see [components.md](docs/concepts/components.md).
+- **Component graph (RFC-0028):** `metagit component graph`, MCP `metagit_component_graph`, GET `/v3/ops/components/graph`; Cypher export emits `kind=component` nodes — see [components.md](docs/concepts/components.md).
 - **Semantic Ownership (RFC-0010):** concept ownership via `metagit semantic declare|query|owners|conflicts|ingest|seed`; advisory claim `concept_hints`; GitNexus import deferred — see [semantic-ownership.md](docs/reference/semantic-ownership.md).
 - **Merge Orchestrator (RFC-0011):** local queue, conflict records, opt-in validators, CLI/MCP `metagit merge` / `metagit_merge_*` tools — see [merge-orchestrator.md](docs/reference/merge-orchestrator.md).
 - **Agent Scheduler (RFC-0012):** score ready task nodes and emit dispatch hints via `metagit schedule` / `metagit_schedule_*` — see [agent-scheduler.md](docs/reference/agent-scheduler.md).

@@ -64,6 +64,7 @@ metagit workspace health --json
 | Validate manifest | `metagit config validate` |
 | Component model | Nested `repos[].components[]`; see [concepts/components.md](concepts/components.md) |
 | Component list/show/resolve | `metagit component list|show|resolve` |
+| Component graph | `metagit component graph <identity> --json` |
 | Safe sync (fetch-first) | `metagit project sync` |
 | Scoped repo snapshot | `metagit context repomix --profile bugfix-local --project P --repo R` |
 | Record objective | `echo '{"id":"…","status":"in_progress","title":"…","repos":[]}' \| metagit context objective set` |
@@ -107,6 +108,7 @@ metagit workspace health --json
 <!-- modality:skills_surface -->
 <!-- modality:component_model -->
 <!-- modality:component_resolve -->
+<!-- modality:component_graph -->
 
 Set `--definition path/to/.metagit.yml` when not in the manifest repo root.
 

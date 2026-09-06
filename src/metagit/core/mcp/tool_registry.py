@@ -61,6 +61,7 @@ class ToolRegistry:
         "metagit_component_list",
         "metagit_component_show",
         "metagit_component_resolve",
+        "metagit_component_graph",
         "metagit_workspace_discover",
         "metagit_workspace_list",
         "metagit_workspace_projects_list",

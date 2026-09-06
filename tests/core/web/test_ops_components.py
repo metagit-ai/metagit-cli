@@ -25,13 +25,15 @@ workspace:
             - name: web
               path: apps/web
               kind: application
+              depends_on:
+                - api
             - name: api
               path: apps/api
               kind: service
 """
 
 
-def _start_server(tmp_path: Path) -> tuple[threading.Thread, str]:
+def _start_server(tmp_path: Path):
   (tmp_path / ".metagit.yml").write_text(_MANIFEST.lstrip() + "\n", encoding="utf-8")
   (tmp_path / "metagit.config.yaml").write_text(
     "\n".join(
@@ -53,7 +55,13 @@ def _start_server(tmp_path: Path) -> tuple[threading.Thread, str]:
   thread = threading.Thread(target=server.serve_forever, daemon=True)
   thread.start()
   port = server.server_address[1]
-  return thread, f"http://127.0.0.1:{port}"
+  return server, thread, f"http://127.0.0.1:{port}"
+
+
+def _stop_server(server, thread: threading.Thread) -> None:
+  server.shutdown()
+  server.server_close()
+  thread.join(timeout=2)
 
 
 def _get_json(url: str) -> tuple[int, dict]:
@@ -66,18 +74,18 @@ def _get_json(url: str) -> tuple[int, dict]:
 
 
 def test_ops_components_lists_web_id(tmp_path: Path) -> None:
-  thread, base = _start_server(tmp_path)
+  server, thread, base = _start_server(tmp_path)
   try:
     status, payload = _get_json(f"{base}/v3/ops/components")
     assert status == 200
     ids = {row["id"] for row in payload["components"]}
     assert "platform/core/web" in ids
   finally:
-    thread.join(timeout=0.1)
+    _stop_server(server, thread)
 
 
 def test_ops_components_resolve_matches_web(tmp_path: Path) -> None:
-  thread, base = _start_server(tmp_path)
+  server, thread, base = _start_server(tmp_path)
   try:
     query = "apps/web/src/x.tsx"
     qs = urlencode({"path": query, "project": "platform", "repo": "core"})
@@ -88,21 +96,21 @@ def test_ops_components_resolve_matches_web(tmp_path: Path) -> None:
     assert payload["name"] == "web"
     assert payload["spec"]["path"] == "apps/web"
   finally:
-    thread.join(timeout=0.1)
+    _stop_server(server, thread)
 
 
 def test_ops_components_resolve_missing_path_is_400(tmp_path: Path) -> None:
-  thread, base = _start_server(tmp_path)
+  server, thread, base = _start_server(tmp_path)
   try:
     status, payload = _get_json(f"{base}/v3/ops/components/resolve")
     assert status == 400
     assert payload.get("ok") is False
   finally:
-    thread.join(timeout=0.1)
+    _stop_server(server, thread)
 
 
 def test_ops_components_resolve_unmatched_is_200(tmp_path: Path) -> None:
-  thread, base = _start_server(tmp_path)
+  server, thread, base = _start_server(tmp_path)
   try:
     query = "docs/nope.md"
     qs = urlencode({"path": query, "project": "platform", "repo": "core"})
@@ -110,15 +118,48 @@ def test_ops_components_resolve_unmatched_is_200(tmp_path: Path) -> None:
     assert status == 200
     assert payload == {"matched": False, "path": query}
   finally:
-    thread.join(timeout=0.1)
+    _stop_server(server, thread)
 
 
 def test_ops_components_resolve_invalid_path_is_400(tmp_path: Path) -> None:
-  thread, base = _start_server(tmp_path)
+  server, thread, base = _start_server(tmp_path)
   try:
     qs = urlencode({"path": "../secret", "project": "platform", "repo": "core"})
     status, payload = _get_json(f"{base}/v3/ops/components/resolve?{qs}")
     assert status == 400
     assert payload.get("ok") is False
   finally:
-    thread.join(timeout=0.1)
+    _stop_server(server, thread)
+
+
+def test_ops_components_graph_includes_api(tmp_path: Path) -> None:
+  server, thread, base = _start_server(tmp_path)
+  try:
+    qs = urlencode({"component": "platform/core/web"})
+    status, payload = _get_json(f"{base}/v3/ops/components/graph?{qs}")
+    assert status == 200
+    neighbor_ids = {row["id"] for row in payload["nodes"]}
+    assert "platform/core/api" in neighbor_ids
+  finally:
+    _stop_server(server, thread)
+
+
+def test_ops_components_graph_missing_component_is_400(tmp_path: Path) -> None:
+  server, thread, base = _start_server(tmp_path)
+  try:
+    status, payload = _get_json(f"{base}/v3/ops/components/graph")
+    assert status == 400
+    assert payload.get("ok") is False
+  finally:
+    _stop_server(server, thread)
+
+
+def test_ops_components_graph_unknown_is_404(tmp_path: Path) -> None:
+  server, thread, base = _start_server(tmp_path)
+  try:
+    qs = urlencode({"component": "platform/core/missing"})
+    status, payload = _get_json(f"{base}/v3/ops/components/graph?{qs}")
+    assert status == 404
+    assert payload.get("ok") is False
+  finally:
+    _stop_server(server, thread)

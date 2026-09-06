@@ -44,6 +44,7 @@ last_updated: 2026-09-06
 - Resource publisher for config/repo-status/ops-log resources.
 - Bootstrap sampling service with fallback and optional client sampling flow.
 - RFC-0027 component tools: ACTIVE `metagit_component_list|show|resolve` call `ComponentResolver` with `status.root_path` as `definition_root`. Resolve `matched: false` is a normal result; show-not-found and `ValueError` are `-32602`.
+- RFC-0028: ACTIVE `metagit_component_graph` calls `ComponentGraphService.neighborhood`. Not-found and `ValueError` are `-32602`.
 
 ## Protocol Notes
 - Supported methods: `initialize`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `prompts/list`, `prompts/get`, `ping`.

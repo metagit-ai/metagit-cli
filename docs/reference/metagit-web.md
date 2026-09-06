@@ -228,14 +228,15 @@ Use the **Repositories | Explorer | Search | Graph** toggle on the workspace too
 - **Search** — ripgrep across repository file contents.
 - **Graph** — SVG diagram of workspace relationships: manual edges from `.metagit.yml` `graph.relationships`, optional inferred cross-project dependencies, and project → repo structure edges. Checkboxes control inferred and structure layers.
 
-Component catalog (RFC-0027, API only — no SPA page):
+Component catalog and graph (RFC-0027/0028, API only — no SPA page):
 
 ```bash
 curl -sS 'http://127.0.0.1:8787/v3/ops/components?project=platform&repo=core'
 curl -sS 'http://127.0.0.1:8787/v3/ops/components/resolve?path=apps/web/src/x.tsx&project=platform&repo=core'
+curl -sS 'http://127.0.0.1:8787/v3/ops/components/graph?component=platform/core/web&depth=1&direction=out'
 ```
 
-`GET /v3/ops/components` returns `{components:[…]}`. Resolve is 200 even when `matched` is false; missing or invalid `path` is 400.
+`GET /v3/ops/components` returns `{components:[…]}`. Resolve is 200 even when `matched` is false; missing or invalid `path` is 400. Graph is 200 with `{origin,depth,direction,nodes,edges}`; missing `component` is 400; unknown identity is 404.
 
 Graph data is loaded from `GET /v3/ops/graph`:
 

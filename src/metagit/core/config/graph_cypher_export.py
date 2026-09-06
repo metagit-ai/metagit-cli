@@ -8,6 +8,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from metagit.core.component.catalog import ComponentCatalog
 from metagit.core.config.graph_resolver import resolve_graph_endpoint_id
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
@@ -17,11 +18,12 @@ class GraphCypherNode(BaseModel):
     """Workspace graph node for export."""
 
     id: str
-    kind: Literal["workspace", "project", "repo", "documentation"]
+    kind: Literal["workspace", "project", "repo", "documentation", "component"]
     label: str
     workspace: Optional[str] = None
     project: Optional[str] = None
     repo: Optional[str] = None
+    component: Optional[str] = None
     path: Optional[str] = None
     properties: dict[str, Any] = Field(default_factory=dict)
 
@@ -77,7 +79,7 @@ class GraphCypherExportService:
     _schema_statements: tuple[str, ...] = (
         "CREATE NODE TABLE IF NOT EXISTS MetagitEntity ("
         "id STRING, kind STRING, label STRING, workspace STRING, "
-        "project STRING, repo STRING, path STRING, properties STRING, "
+        "project STRING, repo STRING, component STRING, path STRING, properties STRING, "
         "PRIMARY KEY (id)"
         ");",
         "CREATE REL TABLE IF NOT EXISTS MetagitLink ("
@@ -128,6 +130,7 @@ class GraphCypherExportService:
             nodes=nodes,
             edges=edges,
             warnings=warnings,
+            include_structure=include_structure,
         )
         if manual_only and manual_added == 0:
             warnings.append("manual_only=true but graph.relationships is empty")
@@ -257,9 +260,11 @@ class GraphCypherExportService:
         nodes: dict[str, GraphCypherNode],
         edges: list[GraphCypherEdge],
         warnings: list[str],
+        include_structure: bool = False,
     ) -> int:
         if config.graph is None or not config.graph.relationships:
             return 0
+        catalog_paths = {(row.project, row.repo, row.name): row.spec.path for row in ComponentCatalog().list(config)}
         added = 0
         for rel in config.graph.relationships:
             from_id = resolve_graph_endpoint_id(
@@ -275,8 +280,24 @@ class GraphCypherExportService:
             if not from_id or not to_id:
                 warnings.append(f"skipped relationship {rel.id or rel.type}: unresolved endpoint")
                 continue
-            self._ensure_endpoint_nodes(from_id, nodes, project_names, rows)
-            self._ensure_endpoint_nodes(to_id, nodes, project_names, rows)
+            self._ensure_endpoint_nodes(
+                from_id,
+                nodes,
+                project_names,
+                rows,
+                catalog_paths=catalog_paths,
+                edges=edges,
+                include_structure=include_structure,
+            )
+            self._ensure_endpoint_nodes(
+                to_id,
+                nodes,
+                project_names,
+                rows,
+                catalog_paths=catalog_paths,
+                edges=edges,
+                include_structure=include_structure,
+            )
             rel_id = rel.id or f"manual:{from_id}->{to_id}:{rel.type}"
             edges.append(
                 GraphCypherEdge(
@@ -302,6 +323,10 @@ class GraphCypherExportService:
         nodes: dict[str, GraphCypherNode],
         project_names: set[str],
         rows: list[dict[str, Any]],
+        *,
+        catalog_paths: dict[tuple[str, str, str], str] | None = None,
+        edges: list[GraphCypherEdge] | None = None,
+        include_structure: bool = False,
     ) -> None:
         if node_id in nodes:
             return
@@ -314,6 +339,47 @@ class GraphCypherExportService:
                     label=project,
                     project=project,
                 )
+            return
+        if node_id.startswith("component:"):
+            body = node_id.split(":", 1)[1]
+            parts = body.split("/", 2)
+            if len(parts) != 3:
+                return
+            project, repo, name = parts
+            path_lookup = catalog_paths or {}
+            catalog_path = path_lookup.get((project, repo, name))
+            nodes[node_id] = GraphCypherNode(
+                id=node_id,
+                kind="component",
+                label=name,
+                project=project,
+                repo=repo,
+                component=name,
+                path=catalog_path,
+            )
+            if include_structure and edges is not None:
+                repo_id = f"repo:{project}/{repo}"
+                self._ensure_endpoint_nodes(
+                    repo_id,
+                    nodes,
+                    project_names,
+                    rows,
+                    catalog_paths=catalog_paths,
+                    edges=edges,
+                    include_structure=False,
+                )
+                edge_id = f"structure:{repo_id}->{node_id}"
+                if not any(item.id == edge_id for item in edges):
+                    edges.append(
+                        GraphCypherEdge(
+                            id=edge_id,
+                            from_id=repo_id,
+                            to_id=node_id,
+                            type="contains",
+                            source="structure",
+                            label="contains",
+                        )
+                    )
             return
         if node_id.startswith("repo:"):
             body = node_id.split(":", 1)[1]
@@ -354,6 +420,7 @@ class GraphCypherExportService:
             f"n.workspace = {_literal_string(node.workspace or '')}, "
             f"n.project = {_literal_string(node.project or '')}, "
             f"n.repo = {_literal_string(node.repo or '')}, "
+            f"n.component = {_literal_string(node.component or '')}, "
             f"n.path = {_literal_string(node.path or '')}, "
             f"n.properties = {_literal_json(props)};"
         )

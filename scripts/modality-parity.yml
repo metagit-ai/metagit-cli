@@ -794,3 +794,27 @@ features:
           - path: docs/agents.md
             contains: "modality:component_resolve"
 
+  - id: component_graph
+    description: Component neighborhood graph walk
+    service: metagit.core.component.graph.ComponentGraphService
+    reference_doc: docs/concepts/components.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/component.py
+            contains: "component graph"
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_component_graph
+      web:
+        markers:
+          - path: src/metagit/core/web/ops_handler.py
+            contains: /v3/ops/components/graph
+      documentation:
+        markers:
+          - path: docs/concepts/components.md
+            contains: "modality:component_graph"
+          - path: docs/agents.md
+            contains: "modality:component_graph"
+

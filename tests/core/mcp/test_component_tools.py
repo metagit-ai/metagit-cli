@@ -15,6 +15,7 @@ _COMPONENT_TOOLS = (
     "metagit_component_list",
     "metagit_component_show",
     "metagit_component_resolve",
+    "metagit_component_graph",
 )
 
 
@@ -69,6 +70,15 @@ def test_component_schemas_require_expected_fields(tmp_path: Path) -> None:
     assert set(show_schema["properties"]) == {"component", "project", "repo"}
     assert resolve_schema["required"] == ["path"]
     assert set(resolve_schema["properties"]) == {"path", "project", "repo"}
+    graph_schema = tools["metagit_component_graph"]["inputSchema"]
+    assert graph_schema["required"] == ["component"]
+    assert set(graph_schema["properties"]) == {
+        "component",
+        "project",
+        "repo",
+        "depth",
+        "direction",
+    }
 
 
 def test_component_list_includes_nested_web(tmp_path: Path) -> None:
@@ -126,6 +136,23 @@ def test_component_resolve_miss_is_success(tmp_path: Path) -> None:
     assert isinstance(payload, dict)
     assert payload["matched"] is False
     assert payload["path"] == query
+
+
+def test_component_graph_returns_nodes_and_edges(tmp_path: Path) -> None:
+    runtime = _seed(tmp_path)
+    response = _call(
+        runtime,
+        "metagit_component_graph",
+        {"component": "platform/core/web"},
+        930,
+    )
+    payload = _payload(response)
+    assert isinstance(payload, dict)
+    assert payload["origin"]["id"] == "platform/core/web"
+    assert payload["nodes"]
+    assert payload["edges"]
+    neighbor_ids = {row["id"] for row in payload["nodes"]}
+    assert "platform/core/api" in neighbor_ids
 
 
 def test_component_show_not_found_is_invalid_arguments(tmp_path: Path) -> None:

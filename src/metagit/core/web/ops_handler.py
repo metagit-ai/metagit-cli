@@ -15,6 +15,7 @@ from pydantic import ValidationError
 
 from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.component.graph import ComponentGraphService
 from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
@@ -119,6 +120,10 @@ class OpsWebHandler:
         """Dispatch JSON ops routes; return True when handled."""
         parsed_path = path if path.startswith("/") else f"/{path}"
         headers = request_headers or {}
+
+        if method == "GET" and parsed_path == "/v3/ops/components/graph":
+            self._get_components_graph(query, respond)
+            return True
 
         if method == "GET" and parsed_path == "/v3/ops/components/resolve":
             self._get_components_resolve(query, respond)
@@ -878,6 +883,76 @@ class OpsWebHandler:
             respond(200, {"matched": False, "path": path})
             return
         respond(200, {"matched": True, **resolved_component_payload(result), "path": path})
+
+    def _get_components_graph(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        identity = (params.get("component") or [""])[0].strip()
+        if not identity:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": "component is required",
+                    },
+                },
+            )
+            return
+        project = (params.get("project") or [""])[0].strip() or None
+        repo = (params.get("repo") or [""])[0].strip() or None
+        depth_raw = (params.get("depth") or ["1"])[0].strip() or "1"
+        try:
+            depth = int(depth_raw)
+        except ValueError:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": "depth must be an integer",
+                    },
+                },
+            )
+            return
+        direction = (params.get("direction") or ["out"])[0].strip() or "out"
+        result = ComponentGraphService().neighborhood(
+            config,
+            identity,
+            project=project,
+            repo=repo,
+            depth=depth,
+            direction=direction,  # type: ignore[arg-type]
+        )
+        if isinstance(result, ValueError):
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": str(result),
+                    },
+                },
+            )
+            return
+        if result is None:
+            respond(
+                404,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "not_found",
+                        "message": f"component not found: {identity}",
+                    },
+                },
+            )
+            return
+        respond(200, result)
 
     def _post_prune_preview(self, body: bytes, respond: JsonResponder) -> None:
         payload = self._parse_body(body, respond, required=True)

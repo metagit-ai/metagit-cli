@@ -11,6 +11,7 @@ from typing import Any, Literal, Optional, cast
 
 from metagit.core.agent.service import AgentService
 from metagit.core.appconfig import AppConfig
+from metagit.core.component.graph import ComponentGraphService
 from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
@@ -1157,6 +1158,21 @@ class MetagitMcpRuntime:
                     "path": {"type": "string"},
                     "project": {"type": "string"},
                     "repo": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_graph": {
+                "type": "object",
+                "required": ["component"],
+                "properties": {
+                    "component": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "depth": {"type": "integer"},
+                    "direction": {
+                        "type": "string",
+                        "enum": ["out", "in", "both"],
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -3397,6 +3413,34 @@ class MetagitMcpRuntime:
             if result is None:
                 return {"matched": False, "path": query}
             return {"matched": True, **resolved_component_payload(result), "path": query}
+        if name == "metagit_component_graph":
+            identity = str(arguments.get("component", "")).strip()
+            if not identity:
+                raise InvalidToolArgumentsError("component is required")
+            depth_raw = arguments.get("depth", 1)
+            if depth_raw is None:
+                depth = 1
+            elif isinstance(depth_raw, bool) or not isinstance(depth_raw, int):
+                raise InvalidToolArgumentsError("depth must be an integer")
+            else:
+                depth = depth_raw
+            direction_raw = arguments.get("direction", "out")
+            direction = (
+                str(direction_raw).strip() if isinstance(direction_raw, str) and direction_raw.strip() else "out"
+            )
+            result = ComponentGraphService().neighborhood(
+                config,
+                identity,
+                project=project,
+                repo=repo,
+                depth=depth,
+                direction=direction,  # type: ignore[arg-type]
+            )
+            if isinstance(result, ValueError):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if result is None:
+                raise InvalidToolArgumentsError(f"component not found: {identity}")
+            return result
         raise ValueError(f"Unsupported component tool: {name}")
 
     def _call_aos_tool(

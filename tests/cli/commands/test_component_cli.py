@@ -78,6 +78,25 @@ def test_component_resolve_json_miss_exits_nonzero() -> None:
     assert payload["matched"] is False
 
 
+def test_component_graph_json_includes_api_neighbor() -> None:
+    result = _run("component", "graph", "platform/core/web", "-c", str(NATIVE), "--json")
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["origin"]["id"] == "platform/core/web"
+    neighbor_ids = {row["id"] for row in payload["nodes"]}
+    assert "platform/core/api" in neighbor_ids
+    assert any(
+        edge["to"] == "platform/core/api" and edge["type"] == "depends_on"
+        for edge in payload["edges"]
+    )
+
+
+def test_component_graph_unknown_identity_exits_1() -> None:
+    result = _run("component", "graph", "platform/core/missing", "-c", str(NATIVE))
+    assert result.returncode == 1
+    assert "component not found" in result.stderr
+
+
 def test_component_list_empty_catalog_json() -> None:
     result = _run("component", "list", "-c", str(NONE), "--json")
     assert result.returncode == 0, result.stdout + result.stderr

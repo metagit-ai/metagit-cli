@@ -60,7 +60,7 @@ metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 | ACL file claims | `metagit claim declare` · `metagit claim check` |
 | Task graph / intent | `metagit task create` · `metagit task expand` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R [--task-id N] --json` |
-| Components (RFC-0026/0027) | Nested `repos[].components[]`; `metagit component list|show|resolve`; `metagit config validate` · [docs/concepts/components.md](docs/concepts/components.md) |
+| Components (RFC-0026/0027/0028) | Nested `repos[].components[]`; `metagit component list|show|resolve|graph`; MCP `metagit_component_*`; `metagit config validate` · [docs/concepts/components.md](docs/concepts/components.md) |
 | Context switch | `metagit context switch <project> [<repo>]` · `--json` · MCP `metagit_context_switch` |
 | Nav (human) | `metagit nav` / `navigate` [-p PROJECT] [--repo REPO] |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |

@@ -83,13 +83,26 @@ Web (read-only): `GET /v3/ops/components?project=&repo=`, `GET /v3/ops/component
 
 `--config-path/-c` is on each CLI subcommand so `component list -c FILE` works.
 
+## Neighborhood graph
+
+<!-- modality:component_graph -->
+
+```bash
+metagit component graph <identity> [-c .metagit.yml] [--project P] [--repo R] [--depth 1] [--direction out|in|both] [--json]
+```
+
+MCP (ACTIVE workspace): `metagit_component_graph` (required `component`; optional `project`, `repo`, `depth`, `direction`).
+
+Web: `GET /v3/ops/components/graph?component=&project=&repo=&depth=&direction=`. Missing `component` or invalid depth/direction is 400; unknown identity is 404.
+
+Neighborhood combines durable `graph.relationships` (`origin: declared`) with same-catalog `Component.depends_on`. Depth defaults to 1 (cap 5). Cypher export emits `kind=component` nodes for `from.component` / `to.component` endpoints, plus a `contains` edge from the parent repo when structure export is on.
+
 ## Not in this release
 
 These land in later RFC-0026 series slices:
 
-- `metagit component detect|init|graph`
+- `metagit component detect|init`
 - `context compile --component`
-- graph `from.component` / `to.component`
 - component-level claims/ownership
 - derived working sets from component graphs
 

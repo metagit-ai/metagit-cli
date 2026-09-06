@@ -1,6 +1,6 @@
 ---
 name: component-graph
-description: GraphEndpoint.component, catalog validation, component: ids, and ComponentGraphService.neighborhood (RFC-0028).
+description: GraphEndpoint.component, ComponentGraphService.neighborhood, and CLI/MCP/web/Cypher graph surfaces (RFC-0028).
 triggers:
   - "RFC-0028"
   - "GraphEndpoint.component"
@@ -32,9 +32,13 @@ Endpoint model: `src/metagit/core/config/graph_models.py` (`GraphEndpoint.compon
 Validation: `src/metagit/core/config/graph_validation.py`.
 Resolver: `src/metagit/core/config/graph_resolver.py`.
 Neighborhood: `src/metagit/core/component/graph.py` (`ComponentGraphService`).
-Tests: `tests/core/config/test_graph_validation.py`, `tests/core/config/test_graph_resolver.py`, `tests/core/component/test_graph.py`.
+Cypher: `src/metagit/core/config/graph_cypher_export.py` (`GraphCypherNode.kind` includes `component`).
+CLI: `src/metagit/cli/commands/component.py` (`component graph`).
+MCP: `metagit_component_graph` in `runtime.py` / `tool_registry.py`.
+Web: `GET /v3/ops/components/graph` (register before `/v3/ops/components`).
+Tests: `tests/core/config/test_graph_validation.py`, `tests/core/config/test_graph_resolver.py`, `tests/core/component/test_graph.py`, `tests/core/config/test_graph_cypher_export.py`, `tests/cli/commands/test_component_cli.py`, `tests/core/mcp/test_component_tools.py`, `tests/core/web/test_ops_components.py`.
 
-CLI, MCP, web, and Cypher kind=`component` are later RFC-0028 tasks. Do not import `catalog`, `resolve`, or `graph` from `metagit.core.component.__init__`.
+Do not import `catalog`, `resolve`, or `graph` from `metagit.core.component.__init__`.
 
 ## Steps
 
@@ -49,6 +53,11 @@ CLI, MCP, web, and Cypher kind=`component` are later RFC-0028 tasks. Do not impo
 9. Declared endpoint with `component` uses `get`. Path without component uses `ComponentResolver.resolve(..., project=, repo=)` only when both are set. Repo-only / unresolved path edges are excluded.
 10. `depends_on` bare string is the same project/repo name. `ComponentRef` uses its fields, defaulting missing project/repo to the source row.
 11. Walk is BFS. `direction` `out|in|both`. `depth` default 1; `0` origin only; cap 5; negative `ValueError`. Nodes: origin first, then BFS, then stable id sort within a depth. Unknown identity → `None`. Ambiguous bare name → `ValueError` from `get`.
+12. CLI `component graph IDENTITY` uses subprocess tests (not CliRunner). JSON via `emit_json`. Human: origin id, then `from --type--> to`. None → exit 1 `component not found`; ValueError → ClickException. Docstring must include `component graph`.
+13. MCP ACTIVE `metagit_component_graph`: required `component`; optional project/repo/depth/direction. None and ValueError → InvalidToolArgumentsError (`-32602`). Extend `_call_component_tool`.
+14. Web `GET /v3/ops/components/graph` before `/v3/ops/components`. Missing component / ValueError → 400; None → 404. Shut down test servers with `server.shutdown()` / `server.server_close()`.
+15. Cypher: `GraphCypherNode.kind` includes `"component"`. Manual `component:` endpoints emit nodes (id, kind, project, repo, component name, catalog path). `include_structure` adds `contains` from `repo:{p}/{r}`.
+16. Modality id `component_graph` mirrors `component_resolve` in `scripts/modality-parity.yml`.
 
 ## Gotchas
 
@@ -60,11 +69,11 @@ CLI, MCP, web, and Cypher kind=`component` are later RFC-0028 tasks. Do not impo
 
 ## Verify
 
-- [ ] `uv run pytest tests/core/config/test_graph_validation.py tests/core/config/test_graph_resolver.py tests/core/component/test_graph.py`
-- [ ] `task generate:schema` after model field changes
+- [ ] `uv run pytest tests/core/config/test_graph_validation.py tests/core/config/test_graph_resolver.py tests/core/component/test_graph.py tests/core/config/test_graph_cypher_export.py tests/cli/commands/test_component_cli.py tests/core/mcp/test_component_tools.py tests/core/web/test_ops_components.py`
+- [ ] `uv run python scripts/generate_modality_registry.py` after modality YAML changes
 - [ ] `task qa:prepush`
 
 ## Update Scaffold
 
 - [ ] `.mex/ROUTER.md` project state
-- [ ] `docs/concepts/components.md` when operator-facing graph CLI ships
+- [ ] `docs/concepts/components.md` with `<!-- modality:component_graph -->`
