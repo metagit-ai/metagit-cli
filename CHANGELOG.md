@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.31.0] - 2026-09-07
+
+
+
 ### Added
 - Derived working sets from component selections (RFC-0032): `metagit project derived create --from` accepts `project/repo` or `project/repo/component`. Repo-wide create/include copies the full `components[]` list; three-segment copies that one component and records `derived.sources[].components`. `--include-dependencies` (create only) adds outbound `depends_on` neighbors via `ComponentGraphService.neighborhood`. MCP `metagit_project_derived_create` accepts optional `include_dependencies` plus `project` / `repo` / `component` strings. No `metagit context derive` command.
 - Component detect/init (RFC-0031): `metagit component detect` and `metagit component init PATH` scan filesystem markers (or draft one path) and write `repos[].components[]` only with `--apply`. MCP ACTIVE `metagit_component_detect` / `metagit_component_init`; web `GET /v3/ops/components/detect` and `POST /v3/ops/components/init`. Catalogued paths are marked `already_catalogued` and skipped on apply. Modality `component_detect`.
