@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from metagit.core.component.detect import ComponentDetector
+from metagit.core.component.detect import ComponentApplyResult, ComponentDetector
 from metagit.core.config.manager import MetagitConfigManager
 
 
@@ -125,7 +125,9 @@ def test_catalogued_path_marked_and_omitted_from_apply(tmp_path: Path) -> None:
         payload["candidates"],
         config_path=str(manifest),
     )
-    assert not isinstance(saved, Exception), saved
+    assert isinstance(saved, ComponentApplyResult)
+    assert saved.applied is True
+    assert any("already catalogued" in reason for reason in saved.skipped)
     after = manifest.read_text(encoding="utf-8")
     reloaded = _load(tmp_path)
     repo_entry = reloaded.workspace.projects[0].repos[0]
@@ -171,7 +173,8 @@ def test_init_apply_writes_components(tmp_path: Path) -> None:
         ],
         config_path=str(tmp_path / ".metagit.yml"),
     )
-    assert not isinstance(saved, Exception), saved
+    assert isinstance(saved, ComponentApplyResult)
+    assert saved.applied is True
     reloaded = _load(tmp_path)
     specs = reloaded.workspace.projects[0].repos[0].components
     assert len(specs) == 1
@@ -254,6 +257,94 @@ def test_cli_init_apply_writes_components(tmp_path: Path) -> None:
     reloaded = _load(tmp_path)
     specs = reloaded.workspace.projects[0].repos[0].components
     assert [item.name for item in specs] == ["web"]
+
+
+def test_detect_charts_web_chart_yaml_is_infrastructure_candidate(tmp_path: Path) -> None:
+    repo = _write_umbrella(tmp_path)
+    chart_dir = repo / "charts" / "web"
+    chart_dir.mkdir(parents=True)
+    (chart_dir / "Chart.yaml").write_text("name: web\n", encoding="utf-8")
+
+    payload = _detect(tmp_path)
+    names = _by_name(payload)
+    assert "web" in names
+    assert names["web"]["path"] == "charts/web"
+    assert names["web"]["kind"] == "infrastructure"
+    assert names["web"]["confidence"] == "high"
+    assert "Chart.yaml" in names["web"]["markers"]
+
+
+def test_init_apply_same_path_is_not_silent_success(tmp_path: Path) -> None:
+    repo = _write_umbrella(tmp_path)
+    (repo / "apps" / "web").mkdir(parents=True)
+    (repo / "apps" / "web" / "package.json").write_text("{}\n", encoding="utf-8")
+    detector = ComponentDetector()
+    config = _load(tmp_path)
+    created = detector.init_component(
+        config,
+        "apps/web",
+        kind="application",
+        project="platform",
+        repo="core",
+    )
+    assert not isinstance(created, Exception)
+    candidate = {
+        "name": created.name,
+        "path": created.path,
+        "kind": created.kind,
+        "language": created.language,
+        "project": "platform",
+        "repo": "core",
+        "already_catalogued": False,
+    }
+    first = detector.apply_candidates(
+        config,
+        [candidate],
+        config_path=str(tmp_path / ".metagit.yml"),
+    )
+    assert isinstance(first, ComponentApplyResult)
+    assert first.applied is True
+    reloaded = _load(tmp_path)
+    second = detector.apply_candidates(
+        reloaded,
+        [{**candidate, "already_catalogued": False}],
+        config_path=str(tmp_path / ".metagit.yml"),
+    )
+    assert isinstance(second, ValueError)
+    assert "already catalogued" in str(second)
+    names = [item.name for item in reloaded.workspace.projects[0].repos[0].components]
+    assert names.count("web") == 1
+
+
+def test_init_apply_application_kind_manifest_errors(tmp_path: Path) -> None:
+    (tmp_path / "apps" / "web").mkdir(parents=True)
+    (tmp_path / "apps" / "web" / "package.json").write_text("{}\n", encoding="utf-8")
+    (tmp_path / ".metagit.yml").write_text(
+        "name: myapp\nkind: application\n",
+        encoding="utf-8",
+    )
+    detector = ComponentDetector()
+    config = _load(tmp_path)
+    created = detector.init_component(config, "apps/web", kind="application")
+    assert not isinstance(created, Exception)
+    saved = detector.apply_candidates(
+        config,
+        [
+            {
+                "name": created.name,
+                "path": created.path,
+                "kind": created.kind,
+                "language": created.language,
+                "project": config.name,
+                "repo": config.name,
+                "already_catalogued": False,
+            }
+        ],
+        config_path=str(tmp_path / ".metagit.yml"),
+    )
+    assert isinstance(saved, ValueError)
+    assert "application-kind" in str(saved)
+    assert "no workspace repos" in str(saved)
 
 
 def test_cli_empty_repo_exits_zero(tmp_path: Path) -> None:

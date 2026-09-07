@@ -13,6 +13,7 @@
 - Component list/show/resolve (RFC-0027): `metagit component list|show|resolve`, MCP `metagit_component_list|show|resolve`, and GET `/v3/ops/components` plus GET `/v3/ops/components/resolve`. `--config-path/-c` is on each CLI subcommand. Resolve `matched: false` is a normal MCP/web result; show-not-found and `ValueError` are MCP `-32602` / HTTP 400.
 
 ### Fixed
+- Component apply no longer reports success when every candidate was skipped. `apply_candidates` returns `ValueError` if nothing was written (already catalogued, application-kind manifest, no workspace repo). CLI/MCP/web set `applied` only after a real save. Nested `helm/<name>/Chart.yaml` and `charts/<name>/Chart.yaml` are detected as infrastructure.
 - Changelog promotion rewrites repo-root links such as `examples/` to GitHub URLs in `docs/changelog.md` so lychee and MkDocs do not resolve them under `docs/`.
 - Component resolve intersects filesystem mapping with explicit project/repo filters and ignores process cwd when a definition root is set.
 

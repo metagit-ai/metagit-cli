@@ -37,11 +37,11 @@ Web: GET `/v3/ops/components/detect` registered before `/v3/ops/components`; POS
 
 1. Put scan/apply/init logic only in `ComponentDetector`. CLI/MCP/web stay thin adapters.
 2. Scan root is `definition_root / repo.path` for workspace repos, or `definition_root` once for application manifests.
-3. Candidate dirs: immediate children of `apps/`, `packages/`, `services/`, `libs/`, `internal/` with a marker; `infra/`, `terraform/`, `helm/`, `charts/` when they contain `.tf`, `Chart.yaml`, or `helmfile.yaml`.
+3. Candidate dirs: immediate children of `apps/`, `packages/`, `services/`, `libs/`, `internal/` with a marker; `infra/`, `terraform/`, `helm/`, `charts/` when they contain `.tf`, `Chart.yaml`, or `helmfile.yaml`. Also scan one level of `helm/<name>/Chart.yaml` and `charts/<name>/Chart.yaml` (name=`<name>`, path=`helm/<name>` or `charts/<name>`, kind=infrastructure). Keep `charts/Chart.yaml` as a candidate for `charts/` itself.
 4. High markers: `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `build.gradle`, `*.csproj`, `uv.lock` beside `pyproject.toml`. Medium: convention dir with only `Dockerfile` / `Taskfile.yml` / `Makefile`.
 5. Kind hints: `apps/` → application; `packages/` → package; `services/` → service; `libs|internal` → library; infra dirs → infrastructure. Language: `package.json` → typescript unless a better marker exists; `pyproject.toml` → python; `go.mod` → go; `Cargo.toml` → rust.
 6. Skip `.git`, `node_modules`, `dist`, `build`, `.venv`, `__pycache__`, `.tox`, `vendor`, and nested marker dirs under an already-chosen candidate.
-7. `already_catalogued` is true when a catalog row has the same normalized path in that project/repo. `--apply` / `apply: true` skips those and any add that would fail `validate_components`. Collect valid adds, then `MetagitConfigManager.save_config` once.
+7. `already_catalogued` is true when a catalog row has the same normalized path in that project/repo. `--apply` / `apply: true` skips those and any add that would fail `validate_components`. Collect valid adds, then `MetagitConfigManager.save_config` once. `apply_candidates` returns `ComponentApplyResult` (applied=True, skipped reasons) when at least one component was written, or `ValueError` when zero were written (duplicate path, no workspace repo, application-kind manifest). Adapters set `applied` from the result, never from the request flag.
 8. Detect without apply is read-only. `init PATH` drafts one `Component` (name defaults to basename). Umbrellas need `--project` and `--repo` unless there is a unique repo mapping.
 
 ## Gotchas
@@ -61,7 +61,7 @@ Web: GET `/v3/ops/components/detect` registered before `/v3/ops/components`; POS
 
 - ImportError on `metagit.core.component.detect` usually means the module is missing or imported via package `__init__`.
 - Empty candidates with a real monorepo: confirm the scan root is the repo checkout (`definition_root / repo.path`), not the umbrella manifest directory.
-- Apply wrote nothing: path already catalogued, `validate_components` rejected the add, or `--apply` was omitted.
+- Apply wrote nothing: path already catalogued, `validate_components` rejected the add, application-kind manifest (no workspace repos), or `--apply` was omitted. Zero writes on `--apply` is a `ValueError`, not silent success.
 
 ## Update Scaffold
 

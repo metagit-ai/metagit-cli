@@ -8,7 +8,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "components"
 NATIVE = FIXTURES / "native-nested.yml"
 NONE = FIXTURES / "no-components.yml"
@@ -85,10 +84,7 @@ def test_component_graph_json_includes_api_neighbor() -> None:
     assert payload["origin"]["id"] == "platform/core/web"
     neighbor_ids = {row["id"] for row in payload["nodes"]}
     assert "platform/core/api" in neighbor_ids
-    assert any(
-        edge["to"] == "platform/core/api" and edge["type"] == "depends_on"
-        for edge in payload["edges"]
-    )
+    assert any(edge["to"] == "platform/core/api" and edge["type"] == "depends_on" for edge in payload["edges"])
 
 
 def test_component_graph_unknown_identity_exits_1() -> None:
@@ -125,6 +121,80 @@ def test_component_graph_invalid_direction_exits_nonzero() -> None:
     )
     assert result.returncode != 0
     assert "Invalid value" in result.stderr or "nope" in result.stderr
+
+
+def _write_init_umbrella(tmp_path: Path) -> Path:
+    repo = tmp_path / "repo"
+    (repo / "apps" / "web").mkdir(parents=True)
+    (repo / "apps" / "web" / "package.json").write_text("{}\n", encoding="utf-8")
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: umbrella",
+                "workspace:",
+                "  projects:",
+                "    - name: platform",
+                "      repos:",
+                "        - name: core",
+                "          path: ./repo",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return tmp_path / ".metagit.yml"
+
+
+def test_cli_init_apply_same_path_is_not_silent_success(tmp_path: Path) -> None:
+    manifest = _write_init_umbrella(tmp_path)
+    args = (
+        "component",
+        "init",
+        "apps/web",
+        "--project",
+        "platform",
+        "--repo",
+        "core",
+        "--kind",
+        "application",
+        "--apply",
+        "--json",
+        "-c",
+        str(manifest),
+    )
+    first = _run(*args)
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert json.loads(first.stdout)["applied"] is True
+    second = _run(*args)
+    assert second.returncode != 0
+    combined = second.stdout + second.stderr
+    assert "already catalogued" in combined
+    if second.stdout.strip():
+        payload = json.loads(second.stdout)
+        assert payload.get("applied") is not True
+
+
+def test_cli_init_apply_application_kind_manifest_errors(tmp_path: Path) -> None:
+    (tmp_path / "apps" / "web").mkdir(parents=True)
+    (tmp_path / "apps" / "web" / "package.json").write_text("{}\n", encoding="utf-8")
+    manifest = tmp_path / ".metagit.yml"
+    manifest.write_text("name: myapp\nkind: application\n", encoding="utf-8")
+    result = _run(
+        "component",
+        "init",
+        "apps/web",
+        "--apply",
+        "--json",
+        "-c",
+        str(manifest),
+    )
+    assert result.returncode != 0
+    combined = result.stdout + result.stderr
+    assert "application-kind" in combined or "no workspace repos" in combined
+    if result.stdout.strip():
+        payload = json.loads(result.stdout)
+        assert payload.get("applied") is not True
 
 
 def test_component_list_empty_catalog_json() -> None:

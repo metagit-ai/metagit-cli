@@ -917,8 +917,9 @@ class OpsWebHandler:
             )
             return
         project_name, repo_name = target
-        applied = bool(payload.get("apply", False))
-        if applied:
+        applied = False
+        skipped: list[str] = []
+        if bool(payload.get("apply", False)):
             saved = detector.apply_candidates(
                 config,
                 [
@@ -946,18 +947,20 @@ class OpsWebHandler:
                     },
                 )
                 return
-        respond(
-            200,
-            {
-                "name": created.name,
-                "path": created.path,
-                "kind": created.kind,
-                "language": created.language,
-                "project": project_name,
-                "repo": repo_name,
-                "applied": applied,
-            },
-        )
+            applied = saved.applied
+            skipped = list(saved.skipped)
+        response_body: dict[str, Any] = {
+            "name": created.name,
+            "path": created.path,
+            "kind": created.kind,
+            "language": created.language,
+            "project": project_name,
+            "repo": repo_name,
+            "applied": applied,
+        }
+        if skipped:
+            response_body["skipped"] = skipped
+        respond(200, response_body)
 
     def _get_components(self, query: str, respond: JsonResponder) -> None:
         config = self._load_metagit(respond)

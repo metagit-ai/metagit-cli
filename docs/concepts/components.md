@@ -133,7 +133,7 @@ MCP (ACTIVE workspace): `metagit_component_detect` (optional `project`, `repo`, 
 
 Web: `GET /v3/ops/components/detect?project=&repo=` (read-only) and `POST /v3/ops/components/init` with a JSON body. Detect without `--apply` / `apply: true` never writes the manifest.
 
-Detection is filesystem-marker only (no LLM). High-confidence markers include `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `build.gradle`, and `*.csproj`. Kind hints follow `apps/` → application, `packages/` → package, `services/` → service, `libs/` or `internal/` → library, and `infra/` / `terraform/` / `helm/` / `charts/` → infrastructure. Already catalogued paths are marked `already_catalogued` and skipped on apply.
+Detection is filesystem-marker only (no LLM). High-confidence markers include `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `build.gradle`, and `*.csproj`. Kind hints follow `apps/` → application, `packages/` → package, `services/` → service, `libs/` or `internal/` → library, and `infra/` / `terraform/` / `helm/` / `charts/` → infrastructure. Nested `helm/<name>/Chart.yaml` and `charts/<name>/Chart.yaml` are also infrastructure candidates. Already catalogued paths are marked `already_catalogued`. `--apply` / `apply: true` sets `applied` only when at least one new component was written; a second init of the same path or apply on an application-kind manifest (no workspace repos) is an error, not silent success.
 
 `init` drafts one component (name defaults to the path basename). Umbrellas need `--project` and `--repo` unless the workspace has a single repo.
 

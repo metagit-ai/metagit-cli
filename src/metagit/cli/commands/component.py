@@ -258,6 +258,8 @@ def component_detect(
         repo=repo,
         definition_root=definition_root,
     )
+    applied = False
+    skipped: list[str] = []
     if apply:
         saved = detector.apply_candidates(
             config,
@@ -266,6 +268,11 @@ def component_detect(
         )
         if isinstance(saved, Exception):
             raise click.ClickException(str(saved))
+        applied = saved.applied
+        skipped = list(saved.skipped)
+    payload["applied"] = applied
+    if skipped:
+        payload["skipped"] = skipped
     if as_json:
         emit_json(payload)
         return
@@ -323,6 +330,8 @@ def component_init(
     if isinstance(target, ValueError):
         raise click.ClickException(str(target))
     project_name, repo_name = target
+    applied = False
+    skipped: list[str] = []
     if apply:
         saved = detector.apply_candidates(
             config,
@@ -341,6 +350,8 @@ def component_init(
         )
         if isinstance(saved, Exception):
             raise click.ClickException(str(saved))
+        applied = saved.applied
+        skipped = list(saved.skipped)
     payload = {
         "name": created.name,
         "path": created.path,
@@ -348,8 +359,10 @@ def component_init(
         "language": created.language,
         "project": project_name,
         "repo": repo_name,
-        "applied": apply,
+        "applied": applied,
     }
+    if skipped:
+        payload["skipped"] = skipped
     if as_json:
         emit_json(payload)
         return

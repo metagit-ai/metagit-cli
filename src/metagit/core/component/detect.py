@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel, ConfigDict, Field
+
 from metagit.core.component.catalog import ComponentCatalog
 from metagit.core.component.models import Component
 from metagit.core.component.paths import normalize_repo_relative_path
@@ -15,6 +17,8 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.workspace.layout_resolver import find_project, find_repo
 from metagit.core.workspace.root_resolver import resolve_definition_root
+
+_HELM_CHART_DIRS = frozenset({"helm", "charts"})
 
 _SKIP_DIRS = frozenset(
     {
@@ -56,6 +60,16 @@ _MEDIUM_FILES = frozenset({"Dockerfile", "Taskfile.yml", "Makefile"})
 _INFRA_FILES = frozenset({"Chart.yaml", "helmfile.yaml"})
 
 
+class ComponentApplyResult(BaseModel):
+    """Outcome of writing candidate components into a workspace manifest."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    config: MetagitConfig
+    skipped: list[str] = Field(default_factory=list)
+    applied: bool = False
+
+
 class ComponentDetector:
     """Scan checkouts for component candidates and write drafts on apply."""
 
@@ -95,19 +109,35 @@ class ComponentDetector:
         candidates: list[dict[str, Any]],
         *,
         config_path: str,
-    ) -> MetagitConfig | Exception:
+    ) -> ComponentApplyResult | Exception:
         """Append valid new candidates to repos[].components[] and save once."""
+        if config.workspace is None:
+            return ValueError("cannot apply components: application-kind manifest has no workspace repos to attach to")
         root = resolve_definition_root(config_path)
+        catalogued = self._catalogued_paths(config)
+        skipped: list[str] = []
         added = 0
         for candidate in candidates:
-            if candidate.get("already_catalogued"):
+            project = candidate.get("project")
+            repo = candidate.get("repo")
+            raw_path = str(candidate.get("path") or "")
+            normalized = normalize_repo_relative_path(raw_path)
+            path = normalized if not isinstance(normalized, Exception) else raw_path
+            label = path or str(candidate.get("name") or "candidate")
+            already = bool(candidate.get("already_catalogued"))
+            if (
+                isinstance(project, str)
+                and isinstance(repo, str)
+                and not isinstance(normalized, Exception)
+                and (project, repo, normalized) in catalogued
+            ):
+                already = True
+            if already:
+                skipped.append(f"{label}: already catalogued")
                 continue
-            repo_entry = self._workspace_repo(
-                config,
-                project=candidate.get("project"),
-                repo=candidate.get("repo"),
-            )
+            repo_entry = self._workspace_repo(config, project=project, repo=repo)
             if repo_entry is None:
+                skipped.append(f"{label}: no workspace repo")
                 continue
             try:
                 component = Component(
@@ -117,21 +147,25 @@ class ComponentDetector:
                     language=candidate.get("language"),
                 )
             except Exception as exc:
-                _ = exc
+                skipped.append(f"{label}: {exc}")
                 continue
             repo_entry.components.append(component)
             issues = validate_components(config, definition_root=root)
             if issues:
                 repo_entry.components.pop()
+                skipped.append(f"{label}: {issues[0]}")
                 continue
             added += 1
+            if isinstance(project, str) and isinstance(repo, str) and not isinstance(normalized, Exception):
+                catalogued.add((project, repo, normalized))
         if added == 0:
-            return config
+            reasons = "; ".join(skipped) if skipped else "no candidates to write"
+            return ValueError(f"no components applied: {reasons}")
         manager = MetagitConfigManager(config_path=config_path)
         saved = manager.save_config(config)
         if isinstance(saved, Exception):
             return saved
-        return config
+        return ComponentApplyResult(config=config, skipped=skipped, applied=True)
 
     def init_component(
         self,
@@ -205,15 +239,11 @@ class ComponentDetector:
                     if row is not None:
                         found.append(row)
             if current_path.name in _INFRA_DIRS and current_path != checkout:
-                row = _infra_candidate(current_path, checkout)
-                if row is not None:
-                    found.append(row)
+                found.extend(_infra_dir_candidates(current_path, checkout))
         for infra_name in sorted(_INFRA_DIRS):
             infra_dir = checkout / infra_name
             if infra_dir.is_dir():
-                row = _infra_candidate(infra_dir, checkout)
-                if row is not None:
-                    found.append(row)
+                found.extend(_infra_dir_candidates(infra_dir, checkout))
         return _drop_nested(found)
 
     def _catalogued_paths(self, config: MetagitConfig) -> set[tuple[str, str, str]]:
@@ -285,6 +315,44 @@ def _convention_candidate(child: Path, checkout: Path, kind: str) -> dict[str, A
         "confidence": confidence,
         "markers": markers,
     }
+
+
+def _infra_dir_candidates(directory: Path, checkout: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    parent = _infra_candidate(directory, checkout)
+    if parent is not None:
+        rows.append(parent)
+    if directory.name in _HELM_CHART_DIRS:
+        rows.extend(_helm_chart_children(directory, checkout))
+    return rows
+
+
+def _helm_chart_children(directory: Path, checkout: Path) -> list[dict[str, Any]]:
+    children: list[dict[str, Any]] = []
+    try:
+        entries = sorted(directory.iterdir())
+    except OSError:
+        return []
+    for child in entries:
+        if not child.is_dir() or not (child / "Chart.yaml").is_file():
+            continue
+        name = child.name
+        if not name or "/" in name:
+            continue
+        relative = _relative_posix(child, checkout)
+        if relative is None:
+            continue
+        children.append(
+            {
+                "name": name,
+                "path": relative,
+                "kind": "infrastructure",
+                "language": None,
+                "confidence": "high",
+                "markers": ["Chart.yaml"],
+            }
+        )
+    return children
 
 
 def _infra_candidate(directory: Path, checkout: Path) -> dict[str, Any] | None:
@@ -372,12 +440,23 @@ def _relative_posix(path: Path, checkout: Path) -> str | None:
     return normalized
 
 
+def _keep_helm_chart_child(path: str, parent: str) -> bool:
+    parent_name = parent.rsplit("/", 1)[-1]
+    return (
+        parent_name in _HELM_CHART_DIRS and path.startswith(parent + "/") and path.count("/") == parent.count("/") + 1
+    )
+
+
 def _drop_nested(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
     kept: list[dict[str, Any]] = []
     chosen: list[str] = []
     for row in sorted(candidates, key=lambda item: (item["path"].count("/"), item["path"])):
         path = row["path"]
-        if any(path == parent or path.startswith(parent + "/") for parent in chosen):
+        parent_hit = next(
+            (parent for parent in chosen if path == parent or path.startswith(parent + "/")),
+            None,
+        )
+        if parent_hit is not None and not _keep_helm_chart_child(path, parent_hit):
             continue
         kept.append(row)
         chosen.append(path)

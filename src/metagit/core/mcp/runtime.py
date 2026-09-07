@@ -3511,6 +3511,8 @@ class MetagitMcpRuntime:
                 repo=repo,
                 definition_root=status.root_path,
             )
+            applied = False
+            skipped: list[str] = []
             if bool(arguments.get("apply", False)):
                 config_path, _ = self._catalog_paths(status=status, config=config)
                 saved = detector.apply_candidates(
@@ -3520,6 +3522,11 @@ class MetagitMcpRuntime:
                 )
                 if isinstance(saved, Exception):
                     raise InvalidToolArgumentsError(str(saved)) from saved
+                applied = saved.applied
+                skipped = list(saved.skipped)
+            payload["applied"] = applied
+            if skipped:
+                payload["skipped"] = skipped
             return payload
         if name == "metagit_component_init":
             query = str(arguments.get("path", "")).strip()
@@ -3544,8 +3551,9 @@ class MetagitMcpRuntime:
             if isinstance(target, ValueError):
                 raise InvalidToolArgumentsError(str(target)) from target
             project_name, repo_name = target
-            applied = bool(arguments.get("apply", False))
-            if applied:
+            applied = False
+            skipped: list[str] = []
+            if bool(arguments.get("apply", False)):
                 config_path, _ = self._catalog_paths(status=status, config=config)
                 saved = detector.apply_candidates(
                     config,
@@ -3564,7 +3572,9 @@ class MetagitMcpRuntime:
                 )
                 if isinstance(saved, Exception):
                     raise InvalidToolArgumentsError(str(saved)) from saved
-            return {
+                applied = saved.applied
+                skipped = list(saved.skipped)
+            payload = {
                 "name": created.name,
                 "path": created.path,
                 "kind": created.kind,
@@ -3573,6 +3583,9 @@ class MetagitMcpRuntime:
                 "repo": repo_name,
                 "applied": applied,
             }
+            if skipped:
+                payload["skipped"] = skipped
+            return payload
         raise ValueError(f"Unsupported component tool: {name}")
 
     def _call_aos_tool(
