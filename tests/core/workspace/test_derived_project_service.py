@@ -166,6 +166,13 @@ def _platform_core_config() -> MetagitConfig:
                 Component(name="api", path="apps/api", kind="service"),
               ],
             ),
+            ProjectPath(
+              name="aux",
+              url="https://github.com/example/aux.git",
+              components=[
+                Component(name="web", path="apps/web", kind="application"),
+              ],
+            ),
           ],
         ),
       ]
@@ -227,6 +234,46 @@ def test_create_include_dependencies_copies_same_repo_neighbors(tmp_path: Path) 
   assert project.derived is not None
   scope = next(item for item in project.derived.sources if item.project == "platform")
   assert scope.components == ["api", "web"]
+
+
+def test_same_component_filter_keeps_per_repo_allow_lists(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  service = DerivedProjectService()
+  created = service.create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core/web", "platform/aux/web"],
+  )
+  assert created.ok is True
+
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  assert project.derived is not None
+  scopes = project.derived.sources
+  assert len(scopes) == 2
+  assert all(len(scope.repos) == 1 for scope in scopes)
+  core_scope = next(scope for scope in scopes if scope.repos == ["core"])
+  aux_scope = next(scope for scope in scopes if scope.repos == ["aux"])
+  assert core_scope.components == ["web"]
+  assert aux_scope.components == ["web"]
+
+  included = service.include(
+    config,
+    config_path,
+    project_name="surgical",
+    selection="platform/core/api",
+  )
+  assert included.ok is True
+  assert included.operation == "include"
+  core_scope = next(scope for scope in project.derived.sources if scope.repos == ["core"])
+  aux_scope = next(scope for scope in project.derived.sources if scope.repos == ["aux"])
+  assert core_scope.components == ["api", "web"]
+  assert aux_scope.components == ["web"]
+  core = next(repo for repo in project.repos if repo.name == "core")
+  aux = next(repo for repo in project.repos if repo.name == "aux")
+  assert [comp.name for comp in core.components] == ["web", "api"]
+  assert [comp.name for comp in aux.components] == ["web"]
 
 
 def test_include_second_component_merges_into_existing_derived_repo(tmp_path: Path) -> None:

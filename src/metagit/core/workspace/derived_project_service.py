@@ -698,9 +698,16 @@ class DerivedProjectService:
         for scope in project.derived.sources:
             if scope.project != source_project:
                 continue
-            if source_repo in scope.repos:
-                scope.components = []
+            if source_repo not in scope.repos:
+                continue
+            if len(scope.repos) > 1:
+                scope.repos = [name for name in scope.repos if name != source_repo]
+                project.derived.sources.append(
+                    DerivedSourceScope(project=source_project, repos=[source_repo], components=[])
+                )
                 return
+            scope.components = []
+            return
         project.derived.sources.append(DerivedSourceScope(project=source_project, repos=[source_repo], components=[]))
 
     def _sources_from_wanted(
@@ -714,23 +721,22 @@ class DerivedProjectService:
         sources: list[DerivedSourceScope] = []
         for project_name in sorted(grouped):
             items = grouped[project_name]
-            filters = {frozenset(names) if names is not None else None for _, names in items}
-            if len(filters) == 1:
-                names = items[0][1]
+            whole_repos = sorted(repo for repo, names in items if not names)
+            filtered = sorted((repo, names) for repo, names in items if names)
+            if whole_repos:
                 sources.append(
                     DerivedSourceScope(
                         project=project_name,
-                        repos=sorted(repo for repo, _ in items),
-                        components=sorted(names) if names else [],
+                        repos=whole_repos,
+                        components=[],
                     )
                 )
-                continue
-            for repo_name, names in sorted(items):
+            for repo_name, names in filtered:
                 sources.append(
                     DerivedSourceScope(
                         project=project_name,
                         repos=[repo_name],
-                        components=sorted(names) if names else [],
+                        components=sorted(names),
                     )
                 )
         return sources
@@ -750,6 +756,22 @@ class DerivedProjectService:
             if scope.project != source_project:
                 continue
             if source_repo in scope.repos:
+                if allow and len(scope.repos) > 1:
+                    inherited = list(scope.components)
+                    scope.repos = [name for name in scope.repos if name != source_repo]
+                    merged = list(inherited)
+                    for name in allow:
+                        if name not in merged:
+                            merged.append(name)
+                    merged.sort()
+                    project.derived.sources.append(
+                        DerivedSourceScope(
+                            project=source_project,
+                            repos=[source_repo],
+                            components=merged,
+                        )
+                    )
+                    return
                 for name in allow:
                     if name not in scope.components:
                         scope.components.append(name)

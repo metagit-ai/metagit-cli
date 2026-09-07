@@ -26,5 +26,6 @@ An agent needs a named subset of umbrella repos to sync and work on, and/or need
 - `parse_selection` is two or three `/` segments only (`project/repo` or `project/repo/component`). Four segments are `CatalogError`.
 - Repo-wide create copies full `components[]`. Three-segment copies that one component and sets `DerivedSourceScope.components`.
 - Include of another component on an existing derived repo merges into `repos[].components` and `derived.sources[].components` (not a silent `noop`). Two-segment include on an existing repo widens to the full source list (empty allow-list).
+- `DerivedSourceScope.components` is the allow-list from that source repo. Same-project component selections emit one scope per repo; include/widen split a repo out of a multi-repo scope instead of appending to or clearing a shared list.
 - Skills suggest → `agent_profile` is phase 2; do not vendor CC BY-NC skill registries.
 - Do not add `metagit context derive`.
