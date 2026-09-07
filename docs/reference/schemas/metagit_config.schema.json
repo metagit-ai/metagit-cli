@@ -1013,6 +1013,14 @@
           },
           "title": "Repos",
           "type": "array"
+        },
+        "components": {
+          "description": "Optional allow-list of source component names from that repo; empty means the whole source repo",
+          "items": {
+            "type": "string"
+          },
+          "title": "Components",
+          "type": "array"
         }
       },
       "required": [

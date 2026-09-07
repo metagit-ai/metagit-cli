@@ -705,6 +705,8 @@ features:
         markers:
           - path: src/metagit/cli/commands/project_derived.py
             contains: '@derived.command("create")'
+          - path: src/metagit/cli/commands/project_derived.py
+            contains: include-dependencies
           - path: src/metagit/cli/commands/project.py
             contains: project.add_command(derived)
       mcp:
@@ -713,6 +715,8 @@ features:
             contains: metagit_project_derived_create
           - path: src/metagit/core/mcp/runtime.py
             contains: metagit_project_derived_create
+          - path: src/metagit/core/mcp/runtime.py
+            contains: include_dependencies
       documentation:
         markers:
           - path: docs/reference/derived-projects.md

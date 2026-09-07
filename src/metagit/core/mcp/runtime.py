@@ -1324,6 +1324,10 @@ class MetagitMcpRuntime:
                     "description": {"type": "string"},
                     "agent_instructions": {"type": "string"},
                     "enable_dedupe": {"type": "boolean"},
+                    "include_dependencies": {"type": "boolean"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "component": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -2826,15 +2830,25 @@ class MetagitMcpRuntime:
             config_path, _ = self._catalog_paths(status=status, config=config)
             selections = arguments.get("selections")
             if not isinstance(selections, list):
-                raise InvalidToolArgumentsError("selections must be an array of project/repo strings")
+                raise InvalidToolArgumentsError(
+                    "selections must be an array of project/repo or project/repo/component strings"
+                )
+            selected = [str(item) for item in selections]
+            project = str(arguments.get("project", "")).strip()
+            repo = str(arguments.get("repo", "")).strip()
+            component = str(arguments.get("component", "")).strip()
+            if project and repo:
+                extra = f"{project}/{repo}/{component}" if component else f"{project}/{repo}"
+                selected.append(extra)
             return self._derived_projects.create(
                 config=config,
                 config_path=config_path,
                 name=str(arguments.get("name", "")).strip(),
-                selections=[str(item) for item in selections],
+                selections=selected,
                 description=arguments.get("description"),
                 agent_instructions=arguments.get("agent_instructions"),
                 enable_dedupe=bool(arguments.get("enable_dedupe", True)),
+                include_dependencies=bool(arguments.get("include_dependencies", False)),
             ).model_dump(mode="json")
 
         if name == "metagit_project_derived_refresh":

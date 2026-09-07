@@ -5,9 +5,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from metagit.core.component.models import Component
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
-from metagit.core.workspace.derived_project_service import DerivedProjectService
+from metagit.core.workspace.catalog_models import CatalogError
+from metagit.core.workspace.derived_project_service import (
+  DerivedProjectService,
+  parse_selection,
+)
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -138,3 +143,101 @@ def test_create_rejects_duplicate_identity_without_dedupe(tmp_path: Path) -> Non
   assert result.ok is False
   assert result.error is not None
   assert result.error.kind == "duplicate_identity"
+
+
+def _platform_core_config() -> MetagitConfig:
+  return MetagitConfig(
+    name="umbrella",
+    workspace=Workspace(
+      projects=[
+        WorkspaceProject(
+          name="platform",
+          repos=[
+            ProjectPath(
+              name="core",
+              url="https://github.com/example/core.git",
+              components=[
+                Component(
+                  name="web",
+                  path="apps/web",
+                  kind="application",
+                  depends_on=["api"],
+                ),
+                Component(name="api", path="apps/api", kind="service"),
+              ],
+            ),
+          ],
+        ),
+      ]
+    ),
+  )
+
+
+def test_create_repo_wide_copies_all_components(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  created = DerivedProjectService().create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core"],
+  )
+  assert created.ok is True
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  core = next(repo for repo in project.repos if repo.name == "core")
+  assert [comp.name for comp in core.components] == ["web", "api"]
+  assert project.derived is not None
+  scope = next(item for item in project.derived.sources if item.project == "platform")
+  assert scope.repos == ["core"]
+  assert scope.components == []
+
+
+def test_create_three_segment_copies_only_named_component(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  created = DerivedProjectService().create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core/web"],
+  )
+  assert created.ok is True
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  core = next(repo for repo in project.repos if repo.name == "core")
+  assert [comp.name for comp in core.components] == ["web"]
+  assert project.derived is not None
+  scope = next(item for item in project.derived.sources if item.project == "platform")
+  assert scope.components == ["web"]
+
+
+def test_create_include_dependencies_copies_same_repo_neighbors(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  created = DerivedProjectService().create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core/web"],
+    include_dependencies=True,
+  )
+  assert created.ok is True
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  core = next(repo for repo in project.repos if repo.name == "core")
+  assert [comp.name for comp in core.components] == ["web", "api"]
+  assert project.derived is not None
+  scope = next(item for item in project.derived.sources if item.project == "platform")
+  assert scope.components == ["api", "web"]
+
+
+def test_parse_selection_two_segment_is_repo_wide() -> None:
+  parsed = parse_selection("platform/core")
+  assert not isinstance(parsed, CatalogError)
+  assert parsed.project == "platform"
+  assert parsed.repo == "core"
+  assert parsed.component is None
+
+
+def test_parse_selection_rejects_four_segments() -> None:
+  parsed = parse_selection("a/b/c/d")
+  assert isinstance(parsed, CatalogError)
+  assert parsed.kind == "invalid_selection"

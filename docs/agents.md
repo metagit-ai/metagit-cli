@@ -89,7 +89,7 @@ metagit workspace health --json
 | Agent OS (composition) | `metagit aos status` · `metagit aos doctor` · `metagit aos next` (`coord` alias) |
 | Run ledger | `metagit run list|show|replay|export` |
 | Local Atlas | `metagit atlas init` · `metagit atlas generate` · `metagit atlas validate` · `metagit atlas query` |
-| Derived surgical project | `metagit project derived create -n NAME --from P/R` · `refresh` · `include` · `exclude` |
+| Derived surgical project | `metagit project derived create -n NAME --from P/R` or `P/R/C` [`--include-dependencies`] · `refresh` · `include` · `exclude` |
 | Skills surface (inventory) | `metagit skills surface --json` |
 
 <!-- modality:agent_profile_apply -->

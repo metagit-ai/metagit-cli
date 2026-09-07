@@ -45,13 +45,19 @@ def derived() -> None:
     "selections",
     multiple=True,
     required=True,
-    help="Source selection as project/repo (repeatable)",
+    help="Source selection as project/repo or project/repo/component (repeatable)",
 )
 @click.option("--description", default=None, help="Optional project description")
 @click.option(
     "--agent-instructions",
     default=None,
     help="Optional agent instructions for the derived project",
+)
+@click.option(
+    "--include-dependencies",
+    is_flag=True,
+    default=False,
+    help="Also copy outbound depends_on neighbors of component selections",
 )
 @click.option(
     "--no-dedupe",
@@ -67,10 +73,11 @@ def derived_create(
     selections: tuple[str, ...],
     description: Optional[str],
     agent_instructions: Optional[str],
+    include_dependencies: bool,
     no_dedupe: bool,
     as_json: bool,
 ) -> None:
-    """Create a derived project from frozen project/repo selections."""
+    """Create a derived project from frozen project/repo or project/repo/component selections."""
     local_config: MetagitConfig = ctx.obj["local_config"]
     config_path: str = ctx.obj["config_path"]
     result = DerivedProjectService().create(
@@ -81,6 +88,7 @@ def derived_create(
         description=description,
         agent_instructions=agent_instructions,
         enable_dedupe=not no_dedupe,
+        include_dependencies=include_dependencies,
     )
     _exit_on_derived(result, as_json=as_json)
 
@@ -140,7 +148,7 @@ def derived_refresh(
     "--from",
     "selection",
     required=True,
-    help="Source selection as project/repo",
+    help="Source selection as project/repo or project/repo/component",
 )
 @click.option("--force", is_flag=True, default=False, help="Allow include on protected projects")
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")

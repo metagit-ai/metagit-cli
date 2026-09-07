@@ -106,6 +106,8 @@ When the umbrella already has the repos you need, create a **derived** project i
 metagit project derived create -n surgical \
   --from portfolio/api --from local/notes \
   --description "Agent working set" --json
+metagit project derived create -n web-set \
+  --from platform/core/web --include-dependencies --json
 metagit project -p surgical sync
 metagit skills surface -p surgical --json
 ```

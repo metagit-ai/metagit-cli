@@ -6,6 +6,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
+from pydantic import BaseModel, ConfigDict, Field
+
+from metagit.core.component.graph import ComponentGraphService
+from metagit.core.component.models import Component
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import DerivedFromRef, ProjectPath
@@ -56,6 +60,20 @@ def _merge_tags(source_tags: dict[str, str], local_tags: dict[str, str]) -> dict
     return merged
 
 
+def _copy_components(
+    source: ProjectPath,
+    component_names: Optional[list[str]] = None,
+) -> list[Component]:
+    """Deep-copy source components, optionally filtered to an allow-list."""
+    wanted = None if component_names is None else set(component_names)
+    copied: list[Component] = []
+    for item in source.components:
+        if wanted is not None and item.name not in wanted:
+            continue
+        copied.append(item.model_copy(deep=True))
+    return copied
+
+
 def _copy_identity_from_source(
     source: ProjectPath,
     *,
@@ -65,6 +83,7 @@ def _copy_identity_from_source(
     agent_instructions: Optional[str] = None,
     agent_profile: Optional[object] = None,
     protected: Optional[bool] = None,
+    component_names: Optional[list[str]] = None,
 ) -> ProjectPath:
     """Build a derived ProjectPath from a source entry."""
     payload: dict[str, object] = {"name": name}
@@ -72,6 +91,7 @@ def _copy_identity_from_source(
         payload[field] = getattr(source, field)
     payload["tags"] = _merge_tags(dict(source.tags), dict(local_tags or {}))
     payload["derived_from"] = derived_from
+    payload["components"] = _copy_components(source, component_names)
     if agent_instructions is not None:
         payload["agent_instructions"] = agent_instructions
     elif source.agent_instructions is not None:
@@ -84,12 +104,17 @@ def _copy_identity_from_source(
     return ProjectPath.model_validate(payload)
 
 
-def _refresh_identity(target: ProjectPath, source: ProjectPath) -> ProjectPath:
+def _refresh_identity(
+    target: ProjectPath,
+    source: ProjectPath,
+    component_names: Optional[list[str]] = None,
+) -> ProjectPath:
     """Re-pull identity fields from source while preserving local membership/posture."""
     data = target.model_dump(mode="python")
     for field in _IDENTITY_FIELDS:
         data[field] = getattr(source, field)
     data["tags"] = _merge_tags(dict(source.tags), dict(target.tags))
+    data["components"] = _copy_components(source, component_names)
     derived = target.derived_from
     if derived is None:
         raise ValueError(f"repo '{target.name}' is missing derived_from provenance")
@@ -106,23 +131,97 @@ def _refresh_identity(target: ProjectPath, source: ProjectPath) -> ProjectPath:
     return ProjectPath.model_validate(data)
 
 
-def parse_selection(selection: str) -> tuple[str, str] | CatalogError:
-    """Parse ``project/repo`` selection strings."""
+class DerivedSelection(BaseModel):
+    """Parsed ``project/repo`` or ``project/repo/component`` selection."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    project: str = Field(..., description="Source workspace project name")
+    repo: str = Field(..., description="Source repository name")
+    component: Optional[str] = Field(None, description="Optional component name")
+
+
+def parse_selection(selection: str) -> DerivedSelection | CatalogError:
+    """Parse ``project/repo`` or ``project/repo/component`` selection strings."""
     trimmed = selection.strip()
-    if "/" not in trimmed:
+    parts = [part.strip() for part in trimmed.split("/")]
+    if len(parts) not in {2, 3} or not all(parts):
         return CatalogError(
             kind="invalid_selection",
-            message=f"selection '{selection}' must be project/repo",
+            message=f"selection '{selection}' must be project/repo or project/repo/component",
         )
-    project_name, repo_name = trimmed.split("/", 1)
-    project_name = project_name.strip()
-    repo_name = repo_name.strip()
-    if not project_name or not repo_name:
+    if len(parts) == 2:
+        return DerivedSelection(project=parts[0], repo=parts[1], component=None)
+    return DerivedSelection(project=parts[0], repo=parts[1], component=parts[2])
+
+
+def _record_wanted(
+    wanted: dict[tuple[str, str], set[str] | None],
+    selection: DerivedSelection,
+) -> None:
+    """Merge a selection into repo-keyed component allow-lists (None = whole repo)."""
+    key = (selection.project, selection.repo)
+    if selection.component is None:
+        wanted[key] = None
+        return
+    if key in wanted and wanted[key] is None:
+        return
+    names = wanted.setdefault(key, set())
+    if names is not None:
+        names.add(selection.component)
+
+
+def _neighbor_selections(
+    config: MetagitConfig,
+    selection: DerivedSelection,
+) -> list[DerivedSelection] | CatalogError:
+    """Return outbound ``depends_on`` neighbors for a component selection."""
+    if selection.component is None:
+        return []
+    identity = f"{selection.project}/{selection.repo}/{selection.component}"
+    result = ComponentGraphService().neighborhood(
+        config,
+        identity,
+        depth=1,
+        direction="out",
+        types=["depends_on"],
+    )
+    if isinstance(result, Exception):
+        return CatalogError(kind="dependency_lookup_failed", message=str(result))
+    if result is None:
         return CatalogError(
-            kind="invalid_selection",
-            message=f"selection '{selection}' must be project/repo",
+            kind="source_not_found",
+            message=f"component '{identity}' not found",
         )
-    return project_name, repo_name
+    origin_id = str(result["origin"].get("id", ""))
+    neighbors: list[DerivedSelection] = []
+    for node in result["nodes"]:
+        if str(node.get("id", "")) == origin_id:
+            continue
+        project = str(node.get("project", "")).strip()
+        repo = str(node.get("repo", "")).strip()
+        name = str(node.get("name", "")).strip()
+        if not project or not repo or not name:
+            continue
+        neighbors.append(DerivedSelection(project=project, repo=repo, component=name))
+    return neighbors
+
+
+def _scope_component_names(
+    project: WorkspaceProject,
+    source_project: str,
+    source_repo: str,
+) -> list[str] | None:
+    """Return the derived allow-list for a source repo, or None for the whole repo."""
+    if project.derived is None:
+        return None
+    for scope in project.derived.sources:
+        if scope.project != source_project:
+            continue
+        if scope.repos and source_repo not in scope.repos:
+            continue
+        return list(scope.components) if scope.components else None
+    return None
 
 
 class DerivedProjectService:
@@ -139,8 +238,9 @@ class DerivedProjectService:
         agent_instructions: Optional[str] = None,
         enable_dedupe: bool = True,
         force: bool = False,
+        include_dependencies: bool = False,
     ) -> DerivedMutationResult:
-        """Create a derived project from ``project/repo`` selections."""
+        """Create a derived project from ``project/repo`` or ``project/repo/component`` selections."""
         _ = force
         trimmed = name.strip()
         if not trimmed:
@@ -169,13 +269,34 @@ class DerivedProjectService:
                 project_name=trimmed,
             )
 
-        copied: list[ProjectPath] = []
-        source_scopes: dict[str, set[str]] = {}
+        parsed_selections: list[DerivedSelection] = []
         for raw in selections:
             parsed = parse_selection(raw)
             if isinstance(parsed, CatalogError):
                 return self._error("create", parsed.kind, parsed.message, project_name=trimmed)
-            source_project_name, source_repo_name = parsed
+            parsed_selections.append(parsed)
+
+        if include_dependencies:
+            extras: list[DerivedSelection] = []
+            for parsed in parsed_selections:
+                if parsed.component is None:
+                    continue
+                neighbors = _neighbor_selections(config, parsed)
+                if isinstance(neighbors, CatalogError):
+                    return self._error("create", neighbors.kind, neighbors.message, project_name=trimmed)
+                extras.extend(neighbors)
+            parsed_selections.extend(extras)
+
+        wanted: dict[tuple[str, str], set[str] | None] = {}
+        ordered_keys: list[tuple[str, str]] = []
+        for parsed in parsed_selections:
+            key = (parsed.project, parsed.repo)
+            if key not in ordered_keys:
+                ordered_keys.append(key)
+            _record_wanted(wanted, parsed)
+
+        copied: list[ProjectPath] = []
+        for source_project_name, source_repo_name in ordered_keys:
             source_project = find_project(config, source_project_name)
             if source_project is None:
                 return self._error(
@@ -192,6 +313,18 @@ class DerivedProjectService:
                     f"source repo '{source_project_name}/{source_repo_name}' not found",
                     project_name=trimmed,
                 )
+            component_names = wanted[(source_project_name, source_repo_name)]
+            if component_names is not None:
+                missing = sorted(
+                    name for name in component_names if not any(item.name == name for item in source_repo.components)
+                )
+                if missing:
+                    return self._error(
+                        "create",
+                        "source_not_found",
+                        (f"source component '{source_project_name}/{source_repo_name}/{missing[0]}' not found"),
+                        project_name=trimmed,
+                    )
             if any(item.name == source_repo_name for item in copied):
                 return self._error(
                     "create",
@@ -207,9 +340,9 @@ class DerivedProjectService:
                     repo=source_repo_name,
                     refreshed_at=_utc_now_iso(),
                 ),
+                component_names=None if component_names is None else sorted(component_names),
             )
             copied.append(derived_repo)
-            source_scopes.setdefault(source_project_name, set()).add(source_repo_name)
 
         derived_project = WorkspaceProject(
             name=trimmed,
@@ -218,10 +351,7 @@ class DerivedProjectService:
             dedupe=ProjectDedupeOverride(enabled=True) if enable_dedupe else None,
             derived=DerivedProjectConfig(
                 enabled=True,
-                sources=[
-                    DerivedSourceScope(project=proj, repos=sorted(repos))
-                    for proj, repos in sorted(source_scopes.items())
-                ],
+                sources=self._sources_from_wanted(wanted),
             ),
             repos=copied,
         )
@@ -324,7 +454,8 @@ class DerivedProjectService:
                     ),
                     project_name=project_name,
                 )
-            updated.append(_refresh_identity(repo, source_repo))
+            allow = _scope_component_names(project, repo.derived_from.project, repo.derived_from.repo)
+            updated.append(_refresh_identity(repo, source_repo, allow))
             refreshed.append(repo.name)
 
         if wanted is not None:
@@ -390,7 +521,7 @@ class DerivedProjectService:
         parsed = parse_selection(selection)
         if isinstance(parsed, CatalogError):
             return self._error("include", parsed.kind, parsed.message, project_name=project_name)
-        source_project_name, source_repo_name = parsed
+        source_project_name, source_repo_name = parsed.project, parsed.repo
         if any(repo.name == source_repo_name for repo in project.repos):
             return DerivedMutationResult(
                 ok=True,
@@ -415,6 +546,14 @@ class DerivedProjectService:
                 f"source repo '{source_project_name}/{source_repo_name}' not found",
                 project_name=project_name,
             )
+        if parsed.component is not None and not any(item.name == parsed.component for item in source_repo.components):
+            return self._error(
+                "include",
+                "source_not_found",
+                f"source component '{source_project_name}/{source_repo_name}/{parsed.component}' not found",
+                project_name=project_name,
+            )
+        component_names = None if parsed.component is None else [parsed.component]
         derived_repo = _copy_identity_from_source(
             source_repo,
             name=source_repo_name,
@@ -423,9 +562,15 @@ class DerivedProjectService:
                 repo=source_repo_name,
                 refreshed_at=_utc_now_iso(),
             ),
+            component_names=component_names,
         )
         project.repos.append(derived_repo)
-        self._upsert_source_scope(project, source_project_name, source_repo_name)
+        self._upsert_source_scope(
+            project,
+            source_project_name,
+            source_repo_name,
+            components=component_names or [],
+        )
         save_err = self._save(config=config, config_path=config_path)
         if save_err:
             return self._error(
@@ -505,22 +650,65 @@ class DerivedProjectService:
             config_path=config_path,
         )
 
+    def _sources_from_wanted(
+        self,
+        wanted: dict[tuple[str, str], set[str] | None],
+    ) -> list[DerivedSourceScope]:
+        """Build derived.sources from repo-keyed component allow-lists."""
+        grouped: dict[str, list[tuple[str, set[str] | None]]] = {}
+        for (project_name, repo_name), names in wanted.items():
+            grouped.setdefault(project_name, []).append((repo_name, names))
+        sources: list[DerivedSourceScope] = []
+        for project_name in sorted(grouped):
+            items = grouped[project_name]
+            filters = {frozenset(names) if names is not None else None for _, names in items}
+            if len(filters) == 1:
+                names = items[0][1]
+                sources.append(
+                    DerivedSourceScope(
+                        project=project_name,
+                        repos=sorted(repo for repo, _ in items),
+                        components=sorted(names) if names else [],
+                    )
+                )
+                continue
+            for repo_name, names in sorted(items):
+                sources.append(
+                    DerivedSourceScope(
+                        project=project_name,
+                        repos=[repo_name],
+                        components=sorted(names) if names else [],
+                    )
+                )
+        return sources
+
     def _upsert_source_scope(
         self,
         project: WorkspaceProject,
         source_project: str,
         source_repo: str,
+        components: Optional[list[str]] = None,
     ) -> None:
         """Record include intent on derived.sources."""
         if project.derived is None:
             project.derived = DerivedProjectConfig(enabled=True, sources=[])
+        allow = list(components or [])
         for scope in project.derived.sources:
-            if scope.project == source_project:
-                if source_repo not in scope.repos:
-                    scope.repos.append(source_repo)
-                    scope.repos.sort()
+            if scope.project != source_project:
+                continue
+            if source_repo in scope.repos:
+                for name in allow:
+                    if name not in scope.components:
+                        scope.components.append(name)
+                scope.components.sort()
                 return
-        project.derived.sources.append(DerivedSourceScope(project=source_project, repos=[source_repo]))
+            if not allow and not scope.components:
+                scope.repos.append(source_repo)
+                scope.repos.sort()
+                return
+        project.derived.sources.append(
+            DerivedSourceScope(project=source_project, repos=[source_repo], components=allow)
+        )
 
     def _remove_source_scope_repo(
         self,
@@ -538,7 +726,13 @@ class DerivedProjectService:
                 continue
             repos = [name for name in scope.repos if name != source_repo]
             if repos:
-                remaining.append(DerivedSourceScope(project=source_project, repos=repos))
+                remaining.append(
+                    DerivedSourceScope(
+                        project=source_project,
+                        repos=repos,
+                        components=list(scope.components),
+                    )
+                )
         project.derived.sources = remaining
 
     def _save(self, *, config: MetagitConfig, config_path: str) -> Exception | None:
