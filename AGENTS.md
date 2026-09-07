@@ -59,8 +59,8 @@ metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 | ACL isolate agent checkout | `metagit branch allocate` · `metagit lease acquire --allocate` · `metagit worktree create` |
 | ACL file claims | `metagit claim declare` · `metagit claim check` (`--component` optional) |
 | Task graph / intent | `metagit task create` · `metagit task expand` · `metagit task ready` · `metagit task complete` |
-| Context compile | `metagit context compile --project P --repo R [--task-id N] --json` |
-| Components (RFC-0026–0031) | Nested `repos[].components[]`; `metagit component list|show|resolve|graph|detect|init`; `metagit claim declare --component`; MCP `metagit_component_*` / `metagit_claim_*`; `metagit config validate` · [docs/concepts/components.md](docs/concepts/components.md) |
+| Context compile | `metagit context compile --project P --repo R [--component NAME] [--depth N] --json` |
+| Components (RFC-0026–0032) | Nested `repos[].components[]`; `metagit component list|show|resolve|graph|detect|init`; `metagit claim declare --component`; `metagit project derived create --from P/R/C`; MCP `metagit_component_*` / `metagit_claim_*`; `metagit config validate` · [docs/concepts/components.md](docs/concepts/components.md) |
 | Context switch | `metagit context switch <project> [<repo>]` · `--json` · MCP `metagit_context_switch` |
 | Nav (human) | `metagit nav` / `navigate` [-p PROJECT] [--repo REPO] |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |

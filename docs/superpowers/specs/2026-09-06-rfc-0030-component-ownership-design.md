@@ -1,6 +1,6 @@
 # RFC-0030: Component Ownership / Claims — Design
 
-**Status:** Approved for implementation
+**Status:** Implemented
 **Date:** 2026-09-06
 **Series:** [Component Context Graph index](2026-09-06-rfc-0026-component-context-graph-index.md)
 **Depends on:** [RFC-0026](2026-09-06-rfc-0026-component-model-design.md), [RFC-0027](2026-09-06-rfc-0027-component-resolution-design.md)

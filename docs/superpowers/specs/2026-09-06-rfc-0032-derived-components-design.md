@@ -1,6 +1,6 @@
 # RFC-0032: Derived Working Sets from Components — Design
 
-**Status:** Approved for implementation
+**Status:** Implemented
 **Date:** 2026-09-06
 **Series:** [Component Context Graph index](2026-09-06-rfc-0026-component-context-graph-index.md)
 **Depends on:** [RFC-0028](2026-09-06-rfc-0028-component-graph-design.md), [RFC-0029](2026-09-06-rfc-0029-component-compile-design.md)

@@ -137,10 +137,15 @@ Detection is filesystem-marker only (no LLM). High-confidence markers include `p
 
 `init` drafts one component (name defaults to the path basename). Umbrellas need `--project` and `--repo` unless the workspace has a single repo.
 
-## Not in this release
+## Derived working sets
 
-These land in later RFC-0026 series slices:
+<!-- modality:derived_projects -->
 
-- derived working sets from component graphs
+`metagit project derived create|include` accepts `project/repo` or `project/repo/component`. Repo-wide selections copy the full `components[]` list. Three-segment selections copy that one component. Create `--include-dependencies` adds outbound `depends_on` neighbors (depth 1). Include of a second component on an already-derived repo merges it; a two-segment include widens to the full source list.
 
-See the RFC-0026 Component Context Graph series under `docs/superpowers/specs/` for the remaining slices.
+```bash
+metagit project derived create -n surgical --from platform/core/web --include-dependencies
+metagit project derived include -n surgical --from platform/core/api
+```
+
+There is no `metagit context derive` command.

@@ -66,6 +66,7 @@ metagit workspace health --json
 | Component list/show/resolve | `metagit component list|show|resolve` |
 | Component graph | `metagit component graph <identity> --json` |
 | Component detect/init | `metagit component detect --json` / `metagit component init PATH --apply --json` |
+| Derived from component | `metagit project derived create -n N --from P/R/C --include-dependencies` |
 | Safe sync (fetch-first) | `metagit project sync` |
 | Scoped repo snapshot | `metagit context repomix --profile bugfix-local --project P --repo R` |
 | Record objective | `echo '{"id":"…","status":"in_progress","title":"…","repos":[]}' \| metagit context objective set` |
