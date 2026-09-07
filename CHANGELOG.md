@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- Component detect/init (RFC-0031): `metagit component detect` and `metagit component init PATH` scan filesystem markers (or draft one path) and write `repos[].components[]` only with `--apply`. MCP ACTIVE `metagit_component_detect` / `metagit_component_init`; web `GET /v3/ops/components/detect` and `POST /v3/ops/components/init`. Catalogued paths are marked `already_catalogued` and skipped on apply. Modality `component_detect`.
 - Component claims (RFC-0030): `metagit claim declare|check --component` and MCP `metagit_claim_declare` / `metagit_claim_check` accept an optional catalogued component name. Empty patterns expand to the component path (`apps/web/**`, or `**` for `.`). Overlap stays repository + glob; claims without `--component` still require patterns.
 - `metagit context compile --component` / `--depth` (RFC-0029): optional component neighborhood on compiled context (`component`, `component_graph`, `effective_profile`). MCP `metagit_context_compile` accepts the same optional fields. Unknown components and disagreed three-segment ids fail instead of falling back to the repo.
 - Component-scoped `agent_profile` merge (RFC-0029): `effective_profile(..., component_name=)` walks workspace → project → repo → component. Unknown component names return no profile instead of falling back to the repo merge.

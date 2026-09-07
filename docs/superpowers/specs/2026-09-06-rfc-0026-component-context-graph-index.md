@@ -33,7 +33,7 @@ RFC numbers **0016–0025 are reserved** (central state plane + agent reliabilit
 | 0028 | Graph integration (`GraphEndpoint.component`, traversal) | In progress |
 | 0029 | Context compiler (`--component`, depth, inherited profile) | In progress |
 | 0030 | Component ownership / claims | Implemented |
-| 0031 | Component discovery (`component detect` / `init`) | In progress |
+| 0031 | Component discovery (`component detect` / `init`) | Implemented |
 | 0032 | Derived working sets from component graphs | In progress |
 
 Do not reuse 0016–0025. If a later slice is dropped, retire the number in this index rather than recycling it.
@@ -47,7 +47,7 @@ Do not reuse 0016–0025. If a later slice is dropped, retire the number in this
 - **`ProjectPath` stays the git-repo type.** Do not subclass `ProjectPath` as `Component` (git-only fields and YAML key order).
 - **Existing top-level `components[]` that are `ref`-only** remain dependency-like (cross-project refs). They are **not** catalog members.
 - **`local_workspace_project`** continues to treat `paths` + `dependencies` as synthetic repos. Do not break that.
-- **Modality:** RFC-0026 is schema + `config validate` (Config Studio tree comes from schema). RFC-0027 ships `metagit component list|show|resolve`, MCP `metagit_component_*`, and GET `/v3/ops/components` as modality `component_resolve`. RFC-0028 ships `metagit component graph`, MCP `metagit_component_graph`, and GET `/v3/ops/components/graph` as modality `component_graph`. RFC-0029 compile stays `context_compile`. RFC-0030 ownership extends `acl_claim`. Detect waits for later slices.
+- **Modality:** RFC-0026 is schema + `config validate` (Config Studio tree comes from schema). RFC-0027 ships `metagit component list|show|resolve`, MCP `metagit_component_*`, and GET `/v3/ops/components` as modality `component_resolve`. RFC-0028 ships `metagit component graph`, MCP `metagit_component_graph`, and GET `/v3/ops/components/graph` as modality `component_graph`. RFC-0029 compile stays `context_compile`. RFC-0030 ownership extends `acl_claim`. RFC-0031 ships `metagit component detect|init`, MCP `metagit_component_detect|init`, GET `/v3/ops/components/detect`, and POST `/v3/ops/components/init` as modality `component_detect`.
 - **No LLM** required for discovery or context ranking.
 - **Public docs:** ship operator docs with each slice; do not add `docs/reference/rfc-002N*` stubs.
 
@@ -72,7 +72,7 @@ RFC-0030 Ownership (after 0026 identity; may parallel 0027)
 | 0028 | Graph integration | [design](2026-09-06-rfc-0028-component-graph-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
 | 0029 | Context compiler | [design](2026-09-06-rfc-0029-component-compile-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
 | 0030 | Ownership / claims | [design](2026-09-06-rfc-0030-component-ownership-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | **Implemented** |
-| 0031 | Discovery | [design](2026-09-06-rfc-0031-component-discovery-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
+| 0031 | Discovery | [design](2026-09-06-rfc-0031-component-discovery-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | **Implemented** |
 | 0032 | Derived working sets | [design](2026-09-06-rfc-0032-derived-components-design.md) | [plan](../plans/2026-09-06-rfc-0028-0032-remaining-series.md) | In progress |
 
 ## Architectural north star

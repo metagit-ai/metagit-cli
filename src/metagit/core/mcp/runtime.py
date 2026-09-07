@@ -11,6 +11,7 @@ from typing import Any, Literal, Optional, cast
 
 from metagit.core.agent.service import AgentService
 from metagit.core.appconfig import AppConfig
+from metagit.core.component.detect import ComponentDetector
 from metagit.core.component.graph import ComponentGraphService
 from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
@@ -1178,6 +1179,28 @@ class MetagitMcpRuntime:
                         "type": "string",
                         "enum": ["out", "in", "both"],
                     },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_detect": {
+                "type": "object",
+                "properties": {
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "apply": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_init": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {"type": "string"},
+                    "name": {"type": "string"},
+                    "kind": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "apply": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -3480,6 +3503,76 @@ class MetagitMcpRuntime:
             if result is None:
                 raise InvalidToolArgumentsError(f"component not found: {identity}")
             return result
+        if name == "metagit_component_detect":
+            detector = ComponentDetector()
+            payload = detector.detect(
+                config,
+                project=project,
+                repo=repo,
+                definition_root=status.root_path,
+            )
+            if bool(arguments.get("apply", False)):
+                config_path, _ = self._catalog_paths(status=status, config=config)
+                saved = detector.apply_candidates(
+                    config,
+                    payload["candidates"],
+                    config_path=config_path,
+                )
+                if isinstance(saved, Exception):
+                    raise InvalidToolArgumentsError(str(saved)) from saved
+            return payload
+        if name == "metagit_component_init":
+            query = str(arguments.get("path", "")).strip()
+            if not query:
+                raise InvalidToolArgumentsError("path is required")
+            name_raw = arguments.get("name")
+            kind_raw = arguments.get("kind")
+            init_name = str(name_raw).strip() if isinstance(name_raw, str) and name_raw.strip() else None
+            init_kind = str(kind_raw).strip() if isinstance(kind_raw, str) and kind_raw.strip() else None
+            detector = ComponentDetector()
+            created = detector.init_component(
+                config,
+                query,
+                name=init_name,
+                kind=init_kind,
+                project=project,
+                repo=repo,
+            )
+            if isinstance(created, ValueError):
+                raise InvalidToolArgumentsError(str(created)) from created
+            target = detector._unique_target(config, project=project, repo=repo)
+            if isinstance(target, ValueError):
+                raise InvalidToolArgumentsError(str(target)) from target
+            project_name, repo_name = target
+            applied = bool(arguments.get("apply", False))
+            if applied:
+                config_path, _ = self._catalog_paths(status=status, config=config)
+                saved = detector.apply_candidates(
+                    config,
+                    [
+                        {
+                            "name": created.name,
+                            "path": created.path,
+                            "kind": created.kind,
+                            "language": created.language,
+                            "project": project_name,
+                            "repo": repo_name,
+                            "already_catalogued": False,
+                        }
+                    ],
+                    config_path=config_path,
+                )
+                if isinstance(saved, Exception):
+                    raise InvalidToolArgumentsError(str(saved)) from saved
+            return {
+                "name": created.name,
+                "path": created.path,
+                "kind": created.kind,
+                "language": created.language,
+                "project": project_name,
+                "repo": repo_name,
+                "applied": applied,
+            }
         raise ValueError(f"Unsupported component tool: {name}")
 
     def _call_aos_tool(

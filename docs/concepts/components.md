@@ -120,11 +120,27 @@ metagit claim check --repository platform/core --component api
 
 MCP (ACTIVE workspace): `metagit_claim_declare` / `metagit_claim_check` accept optional `component`. Patterns may be empty when `component` is set.
 
+## Detect and init
+
+<!-- modality:component_detect -->
+
+```bash
+metagit component detect [-c .metagit.yml] [--project P] [--repo R] [--apply] [--json]
+metagit component init PATH [--name NAME] [--kind KIND] [--project P] [--repo R] [--apply] [--json] [-c .metagit.yml]
+```
+
+MCP (ACTIVE workspace): `metagit_component_detect` (optional `project`, `repo`, `apply`) and `metagit_component_init` (required `path`; optional `name`, `kind`, `project`, `repo`, `apply`).
+
+Web: `GET /v3/ops/components/detect?project=&repo=` (read-only) and `POST /v3/ops/components/init` with a JSON body. Detect without `--apply` / `apply: true` never writes the manifest.
+
+Detection is filesystem-marker only (no LLM). High-confidence markers include `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `build.gradle`, and `*.csproj`. Kind hints follow `apps/` → application, `packages/` → package, `services/` → service, `libs/` or `internal/` → library, and `infra/` / `terraform/` / `helm/` / `charts/` → infrastructure. Already catalogued paths are marked `already_catalogued` and skipped on apply.
+
+`init` drafts one component (name defaults to the path basename). Umbrellas need `--project` and `--repo` unless the workspace has a single repo.
+
 ## Not in this release
 
 These land in later RFC-0026 series slices:
 
-- `metagit component detect|init`
 - derived working sets from component graphs
 
 See the RFC-0026 Component Context Graph series under `docs/superpowers/specs/` for the remaining slices.

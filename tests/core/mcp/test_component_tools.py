@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.mcp.runtime import MetagitMcpRuntime
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "components"
@@ -16,6 +17,8 @@ _COMPONENT_TOOLS = (
     "metagit_component_show",
     "metagit_component_resolve",
     "metagit_component_graph",
+    "metagit_component_detect",
+    "metagit_component_init",
 )
 
 
@@ -78,6 +81,19 @@ def test_component_schemas_require_expected_fields(tmp_path: Path) -> None:
         "repo",
         "depth",
         "direction",
+    }
+    detect_schema = tools["metagit_component_detect"]["inputSchema"]
+    assert "required" not in detect_schema or detect_schema.get("required") == []
+    assert set(detect_schema["properties"]) == {"project", "repo", "apply"}
+    init_schema = tools["metagit_component_init"]["inputSchema"]
+    assert init_schema["required"] == ["path"]
+    assert set(init_schema["properties"]) == {
+        "path",
+        "name",
+        "kind",
+        "project",
+        "repo",
+        "apply",
     }
 
 
@@ -218,6 +234,64 @@ def test_claim_schemas_accept_optional_component(tmp_path: Path) -> None:
     assert "component" in check_schema["properties"]
     assert "patterns" not in declare_schema.get("required", [])
     assert "patterns" not in check_schema.get("required", [])
+
+
+def _seed_detect_tree(tmp_path: Path) -> MetagitMcpRuntime:
+    repo = tmp_path / "repo"
+    (repo / "apps" / "web").mkdir(parents=True)
+    (repo / "apps" / "web" / "package.json").write_text("{}\n", encoding="utf-8")
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: umbrella",
+                "workspace:",
+                "  projects:",
+                "    - name: platform",
+                "      repos:",
+                "        - name: core",
+                "          path: ./repo",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return MetagitMcpRuntime(root=str(tmp_path))
+
+
+def test_component_detect_returns_web_candidate(tmp_path: Path) -> None:
+    runtime = _seed_detect_tree(tmp_path)
+    response = _call(runtime, "metagit_component_detect", {}, 940)
+    assert "error" not in response
+    payload = _payload(response)
+    assert isinstance(payload, dict)
+    names = {row["name"] for row in payload["candidates"]}
+    assert "web" in names
+
+
+def test_component_init_apply_writes_component(tmp_path: Path) -> None:
+    runtime = _seed_detect_tree(tmp_path)
+    response = _call(
+        runtime,
+        "metagit_component_init",
+        {
+            "path": "apps/web",
+            "project": "platform",
+            "repo": "core",
+            "kind": "application",
+            "apply": True,
+        },
+        941,
+    )
+    assert "error" not in response
+    payload = _payload(response)
+    assert isinstance(payload, dict)
+    assert payload["name"] == "web"
+    manager = MetagitConfigManager(config_path=str(tmp_path / ".metagit.yml"))
+    loaded = manager.load_config()
+    assert not isinstance(loaded, Exception)
+    names = [item.name for item in loaded.workspace.projects[0].repos[0].components]
+    assert "web" in names
 
 
 def test_claim_declare_component_web_without_patterns(tmp_path: Path) -> None:
