@@ -8,6 +8,9 @@ import uuid
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable, Optional
 
+from metagit.core.component.identity import parse_component_id
+from metagit.core.component.resolve import ComponentResolver
+from metagit.core.config.models import MetagitConfig
 from metagit.core.coordination.event_store import AclEventStore
 from metagit.core.coordination.models import (
     ClaimCheckResult,
@@ -91,7 +94,18 @@ class ClaimService:
         repository: str,
         patterns: list[str],
         agent_id: Optional[str] = None,
+        component: str | None = None,
+        config: MetagitConfig | None = None,
     ) -> ClaimCheckResult | Exception:
+        resolved = self._resolve_claim_patterns(
+            repository=repository,
+            patterns=patterns,
+            component=component,
+            config=config,
+        )
+        if isinstance(resolved, Exception):
+            return resolved
+        cleaned, _ = resolved
         rows = self._store.load()
         if isinstance(rows, Exception):
             return rows
@@ -102,7 +116,7 @@ class ClaimService:
             if agent_id and row.agent_id == agent_id:
                 continue
             overlapping = [
-                pattern for pattern in patterns if any(patterns_overlap(pattern, owned) for owned in row.patterns)
+                pattern for pattern in cleaned if any(patterns_overlap(pattern, owned) for owned in row.patterns)
             ]
             if overlapping:
                 conflicts.append(
@@ -112,7 +126,7 @@ class ClaimService:
                         claim_id=row.claim_id,
                     ),
                 )
-        concept_hints = self._concept_hints(repository=repository, patterns=patterns)
+        concept_hints = self._concept_hints(repository=repository, patterns=cleaned)
         return ClaimCheckResult(
             ok=not conflicts,
             conflicts=conflicts,
@@ -133,6 +147,35 @@ class ClaimService:
             return []
         return result
 
+    def _resolve_claim_patterns(
+        self,
+        *,
+        repository: str,
+        patterns: list[str],
+        component: str | None,
+        config: MetagitConfig | None,
+    ) -> tuple[list[str], str | None] | Exception:
+        cleaned = [item.strip() for item in patterns if item.strip()]
+        component_name = component.strip() if isinstance(component, str) and component.strip() else None
+        if component_name is None:
+            if not cleaned:
+                return ValueError("at least one claim pattern is required")
+            return cleaned, None
+        if config is None:
+            return ValueError("config is required when component is set")
+        parsed = parse_component_id(f"{repository.strip()}/{component_name}")
+        if isinstance(parsed, Exception):
+            return parsed
+        row = ComponentResolver().get(config, parsed.key)
+        if isinstance(row, Exception):
+            return row
+        if row is None:
+            return ValueError(f"unknown component: {parsed.key}")
+        if not cleaned:
+            path = row.spec.path
+            cleaned = ["**"] if path == "." else [f"{path}/**"]
+        return cleaned, component_name
+
     def declare(
         self,
         *,
@@ -141,10 +184,18 @@ class ClaimService:
         patterns: list[str],
         task_id: Optional[str] = None,
         allow_conflicts: bool = True,
+        component: str | None = None,
+        config: MetagitConfig | None = None,
     ) -> FileClaim | ClaimCheckResult | Exception:
-        cleaned = [item.strip() for item in patterns if item.strip()]
-        if not cleaned:
-            return ValueError("at least one claim pattern is required")
+        resolved = self._resolve_claim_patterns(
+            repository=repository,
+            patterns=patterns,
+            component=component,
+            config=config,
+        )
+        if isinstance(resolved, Exception):
+            return resolved
+        cleaned, component_name = resolved
         check = self.check(
             repository=repository,
             patterns=cleaned,
@@ -173,6 +224,7 @@ class ClaimService:
             patterns=cleaned,
             status="active",
             task_id=task_id,
+            component=component_name,
             created_at=now,
             updated_at=now,
         )

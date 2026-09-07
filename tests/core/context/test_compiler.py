@@ -33,6 +33,13 @@ def _fixture(tmp_path: Path):
                 "        - name: svc",
                 "          path: demo/svc",
                 "          sync: true",
+                "          components:",
+                "            - name: web",
+                "              path: apps/web",
+                "              depends_on:",
+                "                - api",
+                "            - name: api",
+                "              path: apps/api",
             ]
         )
         + "\n",
@@ -145,3 +152,97 @@ def test_compile_stamps_task_node(tmp_path: Path) -> None:
     assert status.context_budget == 8000
     saved = json.loads(Path(result.artifact_path).read_text(encoding="utf-8"))
     assert saved["compile_id"] == result.compile_id
+
+
+def test_compile_without_component_leaves_component_fields_unset(tmp_path: Path) -> None:
+    cfg, root, cfg_path = _fixture(tmp_path)
+    result = ContextCompiler().compile(
+        cfg,
+        cfg_path,
+        root,
+        session_root=root,
+        definition_root=root,
+        project="demo",
+        repo="svc",
+        tier=1,
+        depth=3,
+    )
+    assert not isinstance(result, Exception)
+    assert result.component is None
+    assert result.component_graph is None
+    assert result.effective_profile is None
+    assert result.inputs.component is None
+    assert result.inputs.depth == 0
+
+
+def test_compile_component_web_depth_zero_origin_only(tmp_path: Path) -> None:
+    cfg, root, cfg_path = _fixture(tmp_path)
+    result = ContextCompiler().compile(
+        cfg,
+        cfg_path,
+        root,
+        session_root=root,
+        definition_root=root,
+        project="demo",
+        repo="svc",
+        component="web",
+        depth=0,
+    )
+    assert not isinstance(result, Exception)
+    assert result.component is not None
+    assert result.component["name"] == "web"
+    assert result.inputs.component == "web"
+    assert result.inputs.depth == 0
+    assert result.component_graph is not None
+    assert len(result.component_graph["nodes"]) == 1
+    assert result.component_graph["nodes"][0]["name"] == "web"
+
+
+def test_compile_component_web_depth_one_includes_api(tmp_path: Path) -> None:
+    cfg, root, cfg_path = _fixture(tmp_path)
+    result = ContextCompiler().compile(
+        cfg,
+        cfg_path,
+        root,
+        session_root=root,
+        definition_root=root,
+        project="demo",
+        repo="svc",
+        component="web",
+        depth=1,
+    )
+    assert not isinstance(result, Exception)
+    assert result.component_graph is not None
+    names = {node["name"] for node in result.component_graph["nodes"]}
+    assert names == {"web", "api"}
+    assert result.inputs.depth == 1
+
+
+def test_compile_unknown_component_returns_exception(tmp_path: Path) -> None:
+    cfg, root, cfg_path = _fixture(tmp_path)
+    result = ContextCompiler().compile(
+        cfg,
+        cfg_path,
+        root,
+        session_root=root,
+        definition_root=root,
+        project="demo",
+        repo="svc",
+        component="missing",
+    )
+    assert isinstance(result, Exception)
+
+
+def test_compile_three_segment_id_must_agree_with_project_repo(tmp_path: Path) -> None:
+    cfg, root, cfg_path = _fixture(tmp_path)
+    result = ContextCompiler().compile(
+        cfg,
+        cfg_path,
+        root,
+        session_root=root,
+        definition_root=root,
+        project="demo",
+        repo="svc",
+        component="other/svc/web",
+    )
+    assert isinstance(result, Exception)

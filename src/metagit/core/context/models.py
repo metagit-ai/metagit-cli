@@ -209,6 +209,8 @@ class CompiledContextInputs(BaseModel):
     task_id: Optional[str] = None
     graph_id: Optional[str] = None
     objective_id: Optional[str] = None
+    component: Optional[str] = None
+    depth: int = 0
 
 
 class CompiledContext(BaseModel):
@@ -224,6 +226,9 @@ class CompiledContext(BaseModel):
     dropped_sections: list[str] = Field(default_factory=list)
     suggested_repomix_command: Optional[str] = None
     created_at: str
+    component: Optional[dict[str, Any]] = None
+    component_graph: Optional[dict[str, Any]] = None
+    effective_profile: Optional[dict[str, Any]] = None
 
 
 class SessionBeginResult(BaseModel):

@@ -95,6 +95,13 @@ metagit claim declare \
   --pattern 'src/auth/*' \
   --json
 
+# Or claim a catalogued component (defaults patterns to its path)
+metagit claim declare \
+  --repository platform/core \
+  --agent-id agent-1 \
+  --component web \
+  --json
+
 # 5. Show execution manifest written on create
 metagit worktree manifest agent-1
 ```

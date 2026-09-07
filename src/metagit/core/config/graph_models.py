@@ -27,6 +27,10 @@ class GraphEndpoint(BaseModel):
         None,
         description="Optional file or directory path within the repo",
     )
+    component: Optional[str] = Field(
+        None,
+        description="Optional catalogued component name within the repo",
+    )
 
 
 class GraphRelationship(BaseModel):

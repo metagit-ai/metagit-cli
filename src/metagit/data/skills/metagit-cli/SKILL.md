@@ -282,6 +282,7 @@ metagit project sync
 metagit project sync --hydrate   # symlink mounts → full directory copies (per-file progress)
 
 metagit project derived create -n <name> --from <project>/<repo> --json
+metagit project derived create -n <name> --from <project>/<repo>/<component> --include-dependencies --json
 metagit project -p <name> derived refresh --json
 metagit project -p <name> derived include --from <project>/<repo> --json
 metagit project -p <name> derived exclude --repo <repo> --json
@@ -390,6 +391,7 @@ metagit branch allocate --repository project/repo --agent-id agent-1 --task-id 4
 metagit lease acquire --repository project/repo --agent-id agent-1 --task-id 412 --allocate --json
 metagit worktree create --repository project/repo --agent-id agent-1 --task-id 412 --branch agent/412 --json
 metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'src/*' --json
+metagit claim declare --repository platform/core --agent-id agent-1 --component web --json
 metagit worktree manifest agent-1
 ```
 
@@ -493,7 +495,7 @@ Doc: `docs/reference/workspace-discovery.md`. MCP health: `metagit_workspace_hea
 
 | Task | Command |
 |------|---------|
-| Create derived project | `metagit project derived create -n NAME --from P/R [--from …] --json` |
+| Create derived project | `metagit project derived create -n NAME --from P/R [--from P/R/C] [--include-dependencies] --json` |
 | Refresh identity | `metagit project -p NAME derived refresh --json` |
 | Include / exclude | `metagit project -p NAME derived include --from P/R` / `exclude --repo R` |
 | Sync derived mounts | `metagit project -p NAME sync` |

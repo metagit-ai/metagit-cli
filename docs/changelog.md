@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+### Added
+- Component list/show/resolve (RFC-0027): `metagit component list|show|resolve`, MCP `metagit_component_list|show|resolve`, and GET `/v3/ops/components` plus GET `/v3/ops/components/resolve`. `--config-path/-c` is on each CLI subcommand. Resolve `matched: false` is a normal MCP/web result; show-not-found and `ValueError` are MCP `-32602` / HTTP 400.
 
+### Fixed
+- Changelog promotion rewrites repo-root links such as `examples/` to GitHub URLs in `docs/changelog.md` so lychee and MkDocs do not resolve them under `docs/`.
+- Component resolve intersects filesystem mapping with explicit project/repo filters and ignores process cwd when a definition root is set.
 
 ## [0.30.0] - 2026-09-06
 
@@ -20,7 +25,7 @@
 
 
 ### Added
-- Agent OS day-1 quickstart: [docs/agents-quickstart.md](agents-quickstart.md), example workspace [examples/agent-aos-loop/](examples/agent-aos-loop/), and session-start / `metagit-aos` skill pointers to the canonical control loop.
+- Agent OS day-1 quickstart: [docs/agents-quickstart.md](agents-quickstart.md), example workspace [examples/agent-aos-loop/](https://github.com/metagit-ai/metagit-cli/tree/main/examples/agent-aos-loop/), and session-start / `metagit-aos` skill pointers to the canonical control loop.
 - Run ledger read surface: `metagit run show|replay|export`, MCP `metagit_run_*`, control-loop steps on `RunEvidence`, and best-effort `run_id` recording from `aos next --commit` when routing is configured. See [docs/reference/run-ledger.md](reference/run-ledger.md).
 - AOS recovery: `metagit aos recover|heartbeat`, doctor `recovery_recipes[]`, MCP `metagit_aos_recover` / `metagit_aos_heartbeat`. See [docs/reference/aos.md](reference/aos.md).
 - Workspace discovery: `metagit workspace health|summary --json` readiness rollup (RFC-0020). See [docs/reference/workspace-discovery.md](reference/workspace-discovery.md).

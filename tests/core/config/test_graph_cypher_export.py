@@ -89,3 +89,71 @@ def test_export_tool_calls_only_format() -> None:
     )
     assert len(result.tool_calls) >= 2
     assert all(call.arguments.get("query") for call in result.tool_calls)
+
+
+def test_export_component_kind_node_for_component_endpoints(tmp_path: Path) -> None:
+    workspace_root = tmp_path / ".metagit"
+    (workspace_root / "platform" / "core").mkdir(parents=True)
+
+    config = MetagitConfig(
+        name="umbrella",
+        graph={
+            "relationships": [
+                {
+                    "from": {
+                        "project": "platform",
+                        "repo": "core",
+                        "component": "web",
+                    },
+                    "to": {
+                        "project": "platform",
+                        "repo": "core",
+                        "component": "api",
+                    },
+                    "type": "depends_on",
+                    "id": "web-to-api",
+                }
+            ]
+        },
+        workspace={
+            "projects": [
+                {
+                    "name": "platform",
+                    "repos": [
+                        {
+                            "name": "core",
+                            "url": "https://example.com/core.git",
+                            "components": [
+                                {"name": "web", "path": "apps/web"},
+                                {"name": "api", "path": "apps/api"},
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
+    )
+
+    result = GraphCypherExportService().export(
+        config,
+        str(workspace_root),
+        gitnexus_repo="umbrella",
+        include_structure=True,
+        with_schema=True,
+    )
+
+    component_nodes = [node for node in result.nodes if node.kind == "component"]
+    ids = {node.id for node in component_nodes}
+    assert "component:platform/core/web" in ids
+    assert "component:platform/core/api" in ids
+    web = next(node for node in component_nodes if node.component == "web")
+    assert web.project == "platform"
+    assert web.repo == "core"
+    assert web.path == "apps/web"
+    contains = [
+        edge
+        for edge in result.edges
+        if edge.type == "contains" and edge.to_id.startswith("component:")
+    ]
+    assert any(edge.from_id == "repo:platform/core" for edge in contains)
+    assert any(edge.id == "web-to-api" for edge in result.edges)

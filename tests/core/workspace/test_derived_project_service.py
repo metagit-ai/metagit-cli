@@ -5,9 +5,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from metagit.core.component.models import Component
 from metagit.core.config.models import MetagitConfig
 from metagit.core.project.models import ProjectPath
-from metagit.core.workspace.derived_project_service import DerivedProjectService
+from metagit.core.workspace.catalog_models import CatalogError
+from metagit.core.workspace.derived_project_service import (
+  DerivedProjectService,
+  parse_selection,
+)
 from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
@@ -138,3 +143,176 @@ def test_create_rejects_duplicate_identity_without_dedupe(tmp_path: Path) -> Non
   assert result.ok is False
   assert result.error is not None
   assert result.error.kind == "duplicate_identity"
+
+
+def _platform_core_config() -> MetagitConfig:
+  return MetagitConfig(
+    name="umbrella",
+    workspace=Workspace(
+      projects=[
+        WorkspaceProject(
+          name="platform",
+          repos=[
+            ProjectPath(
+              name="core",
+              url="https://github.com/example/core.git",
+              components=[
+                Component(
+                  name="web",
+                  path="apps/web",
+                  kind="application",
+                  depends_on=["api"],
+                ),
+                Component(name="api", path="apps/api", kind="service"),
+              ],
+            ),
+            ProjectPath(
+              name="aux",
+              url="https://github.com/example/aux.git",
+              components=[
+                Component(name="web", path="apps/web", kind="application"),
+              ],
+            ),
+          ],
+        ),
+      ]
+    ),
+  )
+
+
+def test_create_repo_wide_copies_all_components(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  created = DerivedProjectService().create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core"],
+  )
+  assert created.ok is True
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  core = next(repo for repo in project.repos if repo.name == "core")
+  assert [comp.name for comp in core.components] == ["web", "api"]
+  assert project.derived is not None
+  scope = next(item for item in project.derived.sources if item.project == "platform")
+  assert scope.repos == ["core"]
+  assert scope.components == []
+
+
+def test_create_three_segment_copies_only_named_component(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  created = DerivedProjectService().create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core/web"],
+  )
+  assert created.ok is True
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  core = next(repo for repo in project.repos if repo.name == "core")
+  assert [comp.name for comp in core.components] == ["web"]
+  assert project.derived is not None
+  scope = next(item for item in project.derived.sources if item.project == "platform")
+  assert scope.components == ["web"]
+
+
+def test_create_include_dependencies_copies_same_repo_neighbors(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  created = DerivedProjectService().create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core/web"],
+    include_dependencies=True,
+  )
+  assert created.ok is True
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  core = next(repo for repo in project.repos if repo.name == "core")
+  assert [comp.name for comp in core.components] == ["web", "api"]
+  assert project.derived is not None
+  scope = next(item for item in project.derived.sources if item.project == "platform")
+  assert scope.components == ["api", "web"]
+
+
+def test_same_component_filter_keeps_per_repo_allow_lists(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  service = DerivedProjectService()
+  created = service.create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core/web", "platform/aux/web"],
+  )
+  assert created.ok is True
+
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  assert project.derived is not None
+  scopes = project.derived.sources
+  assert len(scopes) == 2
+  assert all(len(scope.repos) == 1 for scope in scopes)
+  core_scope = next(scope for scope in scopes if scope.repos == ["core"])
+  aux_scope = next(scope for scope in scopes if scope.repos == ["aux"])
+  assert core_scope.components == ["web"]
+  assert aux_scope.components == ["web"]
+
+  included = service.include(
+    config,
+    config_path,
+    project_name="surgical",
+    selection="platform/core/api",
+  )
+  assert included.ok is True
+  assert included.operation == "include"
+  core_scope = next(scope for scope in project.derived.sources if scope.repos == ["core"])
+  aux_scope = next(scope for scope in project.derived.sources if scope.repos == ["aux"])
+  assert core_scope.components == ["api", "web"]
+  assert aux_scope.components == ["web"]
+  core = next(repo for repo in project.repos if repo.name == "core")
+  aux = next(repo for repo in project.repos if repo.name == "aux")
+  assert [comp.name for comp in core.components] == ["web", "api"]
+  assert [comp.name for comp in aux.components] == ["web"]
+
+
+def test_include_second_component_merges_into_existing_derived_repo(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  service = DerivedProjectService()
+  created = service.create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core/web"],
+  )
+  assert created.ok is True
+
+  included = service.include(
+    config,
+    config_path,
+    project_name="surgical",
+    selection="platform/core/api",
+  )
+  assert included.ok is True
+  assert included.operation == "include"
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  core = next(repo for repo in project.repos if repo.name == "core")
+  assert [comp.name for comp in core.components] == ["web", "api"]
+  assert project.derived is not None
+  scope = next(item for item in project.derived.sources if item.project == "platform")
+  assert scope.components == ["api", "web"]
+
+
+def test_parse_selection_two_segment_is_repo_wide() -> None:
+  parsed = parse_selection("platform/core")
+  assert not isinstance(parsed, CatalogError)
+  assert parsed.project == "platform"
+  assert parsed.repo == "core"
+  assert parsed.component is None
+
+
+def test_parse_selection_rejects_four_segments() -> None:
+  parsed = parse_selection("a/b/c/d")
+  assert isinstance(parsed, CatalogError)
+  assert parsed.kind == "invalid_selection"

@@ -9,6 +9,12 @@ triggers:
 edges:
   - target: "../context/conventions.md"
     condition: when writing or reviewing component models
+  - target: "component-resolution.md"
+    condition: when resolving a path or looking up a component by id/name (RFC-0027)
+  - target: "component-graph.md"
+    condition: when declaring graph.relationships endpoints with component (RFC-0028)
+  - target: "component-agent-profile.md"
+    condition: when merging Component.agent_profile into EffectiveAgentProfile (RFC-0029)
   - target: "add-cli-command.md"
     condition: when adding metagit component CLI in RFC-0027
 last_updated: 2026-09-06
@@ -40,6 +46,7 @@ Package: `src/metagit/core/component/`. Validation: `metagit.core.config.compone
 - Nested prefix paths are valid; duplicate *normalized* paths are not.
 - Same-repo `depends_on` cycles fail; cross-repo refs are stored only.
 - `CliRunner` races UnifiedLogger; CLI validate tests should use a subprocess (see graph validate tests).
+- Path/identity resolver lives in `src/metagit/core/component/resolve.py` (do not import it from package `__init__`). CLI `component` tests must use subprocess, not `CliRunner`.
 
 ## Verify
 

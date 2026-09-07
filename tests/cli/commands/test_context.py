@@ -581,9 +581,63 @@ def test_context_compile_json(tmp_path: Path, monkeypatch) -> None:
     assert payload["inputs"]["repo"] == "svc"
     assert Path(payload["artifact_path"]).is_file()
     assert "bugfix-local" in (payload.get("suggested_repomix_command") or "")
+    assert payload.get("component") is None
+    assert payload.get("component_graph") is None
+    assert payload.get("effective_profile") is None
+    assert payload["inputs"].get("component") is None
+    assert payload["inputs"].get("depth", 0) == 0
 
 
-def _write_workspace(root: Path, *, with_git_repo: bool) -> None:
+def test_context_compile_json_component_neighborhood(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    _write_workspace(tmp_path, with_git_repo=True, with_components=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "context",
+            "compile",
+            "--project",
+            "demo",
+            "--repo",
+            "svc",
+            "--component",
+            "web",
+            "--depth",
+            "1",
+            "--json",
+        ],
+        env=_env_workspace_root(tmp_path),
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["component"]["name"] == "web"
+    assert payload["inputs"]["component"] == "web"
+    assert payload["inputs"]["depth"] == 1
+    names = {node["name"] for node in payload["component_graph"]["nodes"]}
+    assert names == {"web", "api"}
+
+
+def _write_workspace(root: Path, *, with_git_repo: bool, with_components: bool = False) -> None:
+    repo_lines = [
+        "        - name: svc",
+        "          path: demo/svc",
+        "          sync: true",
+    ]
+    if with_components:
+        repo_lines.extend(
+            [
+                "          components:",
+                "            - name: web",
+                "              path: apps/web",
+                "              depends_on:",
+                "                - api",
+                "            - name: api",
+                "              path: apps/api",
+            ]
+        )
     (root / ".metagit.yml").write_text(
         "\n".join(
             [
@@ -593,9 +647,7 @@ def _write_workspace(root: Path, *, with_git_repo: bool) -> None:
                 "  projects:",
                 "    - name: demo",
                 "      repos:",
-                "        - name: svc",
-                "          path: demo/svc",
-                "          sync: true",
+                *repo_lines,
             ]
         )
         + "\n",

@@ -2,7 +2,23 @@
 
 ## Unreleased
 
+### Added
+- Derived working sets from component selections (RFC-0032): `metagit project derived create --from` accepts `project/repo` or `project/repo/component`. Repo-wide create/include copies the full `components[]` list; three-segment copies that one component and records `derived.sources[].components`. `--include-dependencies` (create only) adds outbound `depends_on` neighbors via `ComponentGraphService.neighborhood`. MCP `metagit_project_derived_create` accepts optional `include_dependencies` plus `project` / `repo` / `component` strings. No `metagit context derive` command.
+- Component detect/init (RFC-0031): `metagit component detect` and `metagit component init PATH` scan filesystem markers (or draft one path) and write `repos[].components[]` only with `--apply`. MCP ACTIVE `metagit_component_detect` / `metagit_component_init`; web `GET /v3/ops/components/detect` and `POST /v3/ops/components/init`. Catalogued paths are marked `already_catalogued` and skipped on apply. Modality `component_detect`.
+- Component claims (RFC-0030): `metagit claim declare|check --component` and MCP `metagit_claim_declare` / `metagit_claim_check` accept an optional catalogued component name. Empty patterns expand to the component path (`apps/web/**`, or `**` for `.`). Overlap stays repository + glob; claims without `--component` still require patterns.
+- `metagit context compile --component` / `--depth` (RFC-0029): optional component neighborhood on compiled context (`component`, `component_graph`, `effective_profile`). MCP `metagit_context_compile` accepts the same optional fields. Unknown components and disagreed three-segment ids fail instead of falling back to the repo.
+- Component-scoped `agent_profile` merge (RFC-0029): `effective_profile(..., component_name=)` walks workspace → project → repo → component. Unknown component names return no profile instead of falling back to the repo merge.
+- Component graph surfaces (RFC-0028): `metagit component graph`, MCP `metagit_component_graph`, and GET `/v3/ops/components/graph`. Cypher export emits `kind=component` nodes for `from.component` / `to.component` endpoints, plus a repo `contains` edge when structure export is on. Modality `component_graph`.
+- `ComponentGraphService.neighborhood` walks catalogued component graphs from durable `graph.relationships` (`origin: declared`) and `Component.depends_on` (`origin: depends_on`). Depth-limited BFS (`out|in|both`, cap 5); path-only declared endpoints resolve via `ComponentResolver`; `declared` wins on duplicate from/to/type.
+- Graph relationship endpoints accept optional `component` (RFC-0028). `config validate` requires project+repo and a catalogued identity; resolver ids are `component:{project}/{repo}/{name}` without consulting index rows.
+- Component list/show/resolve (RFC-0027): `metagit component list|show|resolve`, MCP `metagit_component_list|show|resolve`, and GET `/v3/ops/components` plus GET `/v3/ops/components/resolve`. `--config-path/-c` is on each CLI subcommand. Resolve `matched: false` is a normal MCP/web result; show-not-found and `ValueError` are MCP `-32602` / HTTP 400.
 
+### Fixed
+- Derived component allow-lists stay per source repo. Same-project component selections no longer share one `DerivedSourceScope.components` list; include/widen split a repo out of a multi-repo scope instead of mutating siblings.
+- `metagit project derived include` of a second component on an already-derived repo now merges that component into `repos[].components` and `derived.sources[].components` instead of returning a silent `noop`. A two-segment include on an existing repo widens to the full source component list.
+- Component apply no longer reports success when every candidate was skipped. `apply_candidates` returns `ValueError` if nothing was written (already catalogued, application-kind manifest, no workspace repo). CLI/MCP/web set `applied` only after a real save. Nested `helm/<name>/Chart.yaml` and `charts/<name>/Chart.yaml` are detected as infrastructure.
+- Changelog promotion rewrites repo-root links such as `examples/` to GitHub URLs in `docs/changelog.md` so lychee and MkDocs do not resolve them under `docs/`.
+- Component resolve intersects filesystem mapping with explicit project/repo filters and ignores process cwd when a definition root is set.
 
 ## [0.30.0] - 2026-09-06
 

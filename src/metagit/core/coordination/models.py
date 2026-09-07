@@ -81,6 +81,7 @@ class FileClaim(BaseModel):
     patterns: list[str] = Field(default_factory=list)
     status: ClaimStatus = "active"
     task_id: Optional[str] = None
+    component: str | None = None
     created_at: str
     updated_at: str
 

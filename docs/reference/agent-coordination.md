@@ -72,7 +72,9 @@ metagit worktree gc
 
 # Advisory file claims
 metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'backend/auth/*'
+metagit claim declare --repository platform/core --agent-id agent-1 --component web
 metagit claim check --repository project/repo --pattern 'backend/auth/token.py'
+metagit claim check --repository platform/core --component api
 metagit claim list --repository project/repo --json
 metagit claim release --claim-id <id> --agent-id agent-1
 ```

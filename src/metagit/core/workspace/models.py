@@ -27,6 +27,10 @@ class DerivedSourceScope(BaseModel):
             "empty means membership is whatever repos[] currently holds"
         ),
     )
+    components: List[str] = Field(
+        default_factory=list,
+        description=("Optional allow-list of source component names from that repo; empty means the whole source repo"),
+    )
 
     class Config:
         """Pydantic configuration."""

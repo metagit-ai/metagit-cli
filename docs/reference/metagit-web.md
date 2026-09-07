@@ -228,6 +228,20 @@ Use the **Repositories | Explorer | Search | Graph** toggle on the workspace too
 - **Search** — ripgrep across repository file contents.
 - **Graph** — SVG diagram of workspace relationships: manual edges from `.metagit.yml` `graph.relationships`, optional inferred cross-project dependencies, and project → repo structure edges. Checkboxes control inferred and structure layers.
 
+Component catalog, graph, and detect (RFC-0027/0028/0031, API only — no SPA page):
+
+```bash
+curl -sS 'http://127.0.0.1:8787/v3/ops/components?project=platform&repo=core'
+curl -sS 'http://127.0.0.1:8787/v3/ops/components/resolve?path=apps/web/src/x.tsx&project=platform&repo=core'
+curl -sS 'http://127.0.0.1:8787/v3/ops/components/graph?component=platform/core/web&depth=1&direction=out'
+curl -sS 'http://127.0.0.1:8787/v3/ops/components/detect?project=platform&repo=core'
+curl -sS -X POST 'http://127.0.0.1:8787/v3/ops/components/init' \
+  -H 'Content-Type: application/json' \
+  -d '{"path":"apps/web","project":"platform","repo":"core","kind":"application","apply":true}'
+```
+
+`GET /v3/ops/components` returns `{components:[…]}`. Resolve is 200 even when `matched` is false; missing or invalid `path` is 400. Graph is 200 with `{origin,depth,direction,nodes,edges}`; missing `component` is 400; unknown identity is 404. Detect GET is read-only `{candidates:[…]}`. Init POST drafts one component; `apply: true` writes `repos[].components[]`.
+
 Graph data is loaded from `GET /v3/ops/graph`:
 
 | Query param | Default | Meaning |

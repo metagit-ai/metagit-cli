@@ -15,6 +15,9 @@ from pydantic import ValidationError
 
 from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.component.detect import ComponentDetector
+from metagit.core.component.graph import ComponentGraphService
+from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_resolve import ApprovalResolveOrchestrator
@@ -118,6 +121,26 @@ class OpsWebHandler:
         """Dispatch JSON ops routes; return True when handled."""
         parsed_path = path if path.startswith("/") else f"/{path}"
         headers = request_headers or {}
+
+        if method == "GET" and parsed_path == "/v3/ops/components/graph":
+            self._get_components_graph(query, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/components/detect":
+            self._get_components_detect(query, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/components/resolve":
+            self._get_components_resolve(query, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/components":
+            self._get_components(query, respond)
+            return True
+
+        if method == "POST" and parsed_path == "/v3/ops/components/init":
+            self._post_components_init(body, respond)
+            return True
 
         if method == "GET" and parsed_path == "/v3/ops/graph":
             self._get_graph(query, respond)
@@ -815,6 +838,253 @@ class OpsWebHandler:
             limit=limit,
         )
         respond(200, view.model_dump(mode="json"))
+
+    def _get_components_detect(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        project = (params.get("project") or [""])[0].strip() or None
+        repo = (params.get("repo") or [""])[0].strip() or None
+        payload = ComponentDetector().detect(
+            config,
+            project=project,
+            repo=repo,
+            definition_root=resolve_definition_root(self._config_path),
+        )
+        respond(200, payload)
+
+    def _post_components_init(self, body: bytes, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        payload = self._parse_body(body, respond, required=True)
+        if payload is None:
+            return
+        path = str(payload.get("path") or "").strip()
+        if not path:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_body",
+                        "message": "path is required",
+                    },
+                },
+            )
+            return
+        project_raw = payload.get("project")
+        repo_raw = payload.get("repo")
+        name_raw = payload.get("name")
+        kind_raw = payload.get("kind")
+        project = str(project_raw).strip() if isinstance(project_raw, str) and project_raw.strip() else None
+        repo = str(repo_raw).strip() if isinstance(repo_raw, str) and repo_raw.strip() else None
+        init_name = str(name_raw).strip() if isinstance(name_raw, str) and name_raw.strip() else None
+        init_kind = str(kind_raw).strip() if isinstance(kind_raw, str) and kind_raw.strip() else None
+        detector = ComponentDetector()
+        created = detector.init_component(
+            config,
+            path,
+            name=init_name,
+            kind=init_kind,
+            project=project,
+            repo=repo,
+        )
+        if isinstance(created, ValueError):
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_body",
+                        "message": str(created),
+                    },
+                },
+            )
+            return
+        target = detector._unique_target(config, project=project, repo=repo)
+        if isinstance(target, ValueError):
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_body",
+                        "message": str(target),
+                    },
+                },
+            )
+            return
+        project_name, repo_name = target
+        applied = False
+        skipped: list[str] = []
+        if bool(payload.get("apply", False)):
+            saved = detector.apply_candidates(
+                config,
+                [
+                    {
+                        "name": created.name,
+                        "path": created.path,
+                        "kind": created.kind,
+                        "language": created.language,
+                        "project": project_name,
+                        "repo": repo_name,
+                        "already_catalogued": False,
+                    }
+                ],
+                config_path=self._config_path,
+            )
+            if isinstance(saved, Exception):
+                respond(
+                    400,
+                    {
+                        "ok": False,
+                        "error": {
+                            "kind": "invalid_body",
+                            "message": str(saved),
+                        },
+                    },
+                )
+                return
+            applied = saved.applied
+            skipped = list(saved.skipped)
+        response_body: dict[str, Any] = {
+            "name": created.name,
+            "path": created.path,
+            "kind": created.kind,
+            "language": created.language,
+            "project": project_name,
+            "repo": repo_name,
+            "applied": applied,
+        }
+        if skipped:
+            response_body["skipped"] = skipped
+        respond(200, response_body)
+
+    def _get_components(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        project = (params.get("project") or [""])[0].strip() or None
+        repo = (params.get("repo") or [""])[0].strip() or None
+        rows = ComponentResolver().list(config, project=project, repo=repo)
+        respond(200, {"components": [resolved_component_payload(row) for row in rows]})
+
+    def _get_components_resolve(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        path = (params.get("path") or [""])[0].strip()
+        if not path:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": "path is required",
+                    },
+                },
+            )
+            return
+        project = (params.get("project") or [""])[0].strip() or None
+        repo = (params.get("repo") or [""])[0].strip() or None
+        result = ComponentResolver().resolve(
+            config,
+            path,
+            project=project,
+            repo=repo,
+            definition_root=resolve_definition_root(self._config_path),
+        )
+        if isinstance(result, ValueError):
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": str(result),
+                    },
+                },
+            )
+            return
+        if result is None:
+            respond(200, {"matched": False, "path": path})
+            return
+        respond(200, {"matched": True, **resolved_component_payload(result), "path": path})
+
+    def _get_components_graph(self, query: str, respond: JsonResponder) -> None:
+        config = self._load_metagit(respond)
+        if config is None:
+            return
+        params = parse_qs(query.lstrip("?"))
+        identity = (params.get("component") or [""])[0].strip()
+        if not identity:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": "component is required",
+                    },
+                },
+            )
+            return
+        project = (params.get("project") or [""])[0].strip() or None
+        repo = (params.get("repo") or [""])[0].strip() or None
+        depth_raw = (params.get("depth") or ["1"])[0].strip() or "1"
+        try:
+            depth = int(depth_raw)
+        except ValueError:
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": "depth must be an integer",
+                    },
+                },
+            )
+            return
+        direction = (params.get("direction") or ["out"])[0].strip() or "out"
+        result = ComponentGraphService().neighborhood(
+            config,
+            identity,
+            project=project,
+            repo=repo,
+            depth=depth,
+            direction=direction,  # type: ignore[arg-type]
+        )
+        if isinstance(result, ValueError):
+            respond(
+                400,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "invalid_query",
+                        "message": str(result),
+                    },
+                },
+            )
+            return
+        if result is None:
+            respond(
+                404,
+                {
+                    "ok": False,
+                    "error": {
+                        "kind": "not_found",
+                        "message": f"component not found: {identity}",
+                    },
+                },
+            )
+            return
+        respond(200, result)
 
     def _post_prune_preview(self, body: bytes, respond: JsonResponder) -> None:
         payload = self._parse_body(body, respond, required=True)

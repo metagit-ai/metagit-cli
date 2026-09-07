@@ -9,12 +9,17 @@ from pathlib import Path
 import pytest
 from git import Repo
 
+from metagit.core.component.models import Component
+from metagit.core.config.models import MetagitConfig
 from metagit.core.context.event_service import WorkspaceEventService
 from metagit.core.coordination.branch_service import BranchService
 from metagit.core.coordination.claim_service import ClaimService, patterns_overlap
 from metagit.core.coordination.lease_service import LeaseService
+from metagit.core.coordination.models import ClaimCheckResult, FileClaim
 from metagit.core.coordination.ttl import parse_ttl_seconds
 from metagit.core.coordination.worktree_service import WorktreeService
+from metagit.core.project.models import ProjectPath
+from metagit.core.workspace.models import Workspace, WorkspaceProject
 
 
 def _init_repo(path: Path) -> Repo:
@@ -225,9 +230,115 @@ def test_claim_overlap_detection(workspace: Path) -> None:
         patterns=["backend/auth/*"],
         allow_conflicts=False,
     )
-    from metagit.core.coordination.models import ClaimCheckResult
-
     assert isinstance(conflict, ClaimCheckResult)
+
+
+def _platform_core_config() -> MetagitConfig:
+    return MetagitConfig(
+        name="acme",
+        kind="umbrella",
+        workspace=Workspace(
+            projects=[
+                WorkspaceProject(
+                    name="platform",
+                    repos=[
+                        ProjectPath(
+                            name="core",
+                            path="./platform",
+                            components=[
+                                Component(name="web", path="apps/web", kind="application"),
+                                Component(name="api", path="apps/api", kind="service"),
+                            ],
+                        )
+                    ],
+                )
+            ]
+        ),
+    )
+
+
+def test_declare_component_web_no_patterns_stores_apps_web_glob(workspace: Path) -> None:
+    service = ClaimService(str(workspace))
+    claim = service.declare(
+        repository="platform/core",
+        agent_id="agent-1",
+        patterns=[],
+        component="web",
+        config=_platform_core_config(),
+    )
+    assert isinstance(claim, FileClaim)
+    assert claim.component == "web"
+    assert claim.repository == "platform/core"
+    assert claim.patterns == ["apps/web/**"]
+
+
+def test_web_vs_api_component_claims_do_not_overlap(workspace: Path) -> None:
+    service = ClaimService(str(workspace))
+    config = _platform_core_config()
+    first = service.declare(
+        repository="platform/core",
+        agent_id="agent-1",
+        patterns=[],
+        component="web",
+        config=config,
+    )
+    assert isinstance(first, FileClaim)
+    check = service.check(
+        repository="platform/core",
+        patterns=[],
+        agent_id="agent-2",
+        component="api",
+        config=config,
+    )
+    assert not isinstance(check, Exception)
+    assert check.ok
+    assert not check.conflicts
+
+
+def test_two_declares_on_web_overlap(workspace: Path) -> None:
+    service = ClaimService(str(workspace))
+    config = _platform_core_config()
+    first = service.declare(
+        repository="platform/core",
+        agent_id="agent-1",
+        patterns=[],
+        component="web",
+        config=config,
+    )
+    assert isinstance(first, FileClaim)
+    conflict = service.declare(
+        repository="platform/core",
+        agent_id="agent-2",
+        patterns=[],
+        component="web",
+        config=config,
+        allow_conflicts=False,
+    )
+    assert isinstance(conflict, ClaimCheckResult)
+    assert conflict.conflicts
+    assert conflict.conflicts[0].owner == "agent-1"
+
+
+def test_unknown_component_errors(workspace: Path) -> None:
+    service = ClaimService(str(workspace))
+    result = service.declare(
+        repository="platform/core",
+        agent_id="agent-1",
+        patterns=[],
+        component="missing",
+        config=_platform_core_config(),
+    )
+    assert isinstance(result, Exception)
+
+
+def test_no_component_declare_still_requires_patterns(workspace: Path) -> None:
+    service = ClaimService(str(workspace))
+    result = service.declare(
+        repository="platform/core",
+        agent_id="agent-1",
+        patterns=[],
+    )
+    assert isinstance(result, Exception)
 
 
 def test_acl_events_appear_in_workspace_feed(workspace: Path) -> None:

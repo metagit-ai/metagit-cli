@@ -48,7 +48,7 @@ metagit prompt workspace --kind session-start --text-only
 | Task graph / intent | `metagit task create` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R --json` |
 | Validate components | `metagit config validate` (nested `repos[].components[]`) |
-| ACL worktree / claim | `metagit worktree create` · `metagit claim declare` |
+| ACL worktree / claim | `metagit worktree create` · `metagit claim declare` (`--component` optional) |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
@@ -81,6 +81,12 @@ Cross-modality index (CLI / MCP / Web / docs / skills): [docs/reference/modality
 - **Task Graph & Intent (RFC-0008):** DAG of executable nodes under `.metagit/tasks/`, ready-set, ACL bind hints — see [task-graph.md](docs/reference/task-graph.md).
 - **Context Compiler (RFC-0009):** budgeted pack artifacts via `metagit context compile` — see [context-compiler.md](docs/reference/context-compiler.md).
 - **Component model (RFC-0026):** optional `repos[].components[]` with `project/repo/component` identity; `metagit config validate` — see [components.md](docs/concepts/components.md).
+- **Component resolve (RFC-0027):** `metagit component list|show|resolve`, MCP `metagit_component_list|show|resolve`, GET `/v3/ops/components` and GET `/v3/ops/components/resolve` — see [components.md](docs/concepts/components.md).
+- **Component graph (RFC-0028):** `metagit component graph`, MCP `metagit_component_graph`, GET `/v3/ops/components/graph`; Cypher export emits `kind=component` nodes — see [components.md](docs/concepts/components.md).
+- **Component compile (RFC-0029):** `metagit context compile --component` / `--depth` — see [components.md](docs/concepts/components.md) and [context-compiler.md](docs/reference/context-compiler.md).
+- **Component claims (RFC-0030):** `metagit claim declare|check --component` — see [components.md](docs/concepts/components.md).
+- **Component detect (RFC-0031):** `metagit component detect|init`, MCP `metagit_component_detect|init`, GET `/v3/ops/components/detect` and POST `/v3/ops/components/init` — see [components.md](docs/concepts/components.md).
+- **Derived components (RFC-0032):** `metagit project derived create --from project/repo/component` and `--include-dependencies` — see [components.md](docs/concepts/components.md).
 - **Semantic Ownership (RFC-0010):** concept ownership via `metagit semantic declare|query|owners|conflicts|ingest|seed`; advisory claim `concept_hints`; GitNexus import deferred — see [semantic-ownership.md](docs/reference/semantic-ownership.md).
 - **Merge Orchestrator (RFC-0011):** local queue, conflict records, opt-in validators, CLI/MCP `metagit merge` / `metagit_merge_*` tools — see [merge-orchestrator.md](docs/reference/merge-orchestrator.md).
 - **Agent Scheduler (RFC-0012):** score ready task nodes and emit dispatch hints via `metagit schedule` / `metagit_schedule_*` — see [agent-scheduler.md](docs/reference/agent-scheduler.md).

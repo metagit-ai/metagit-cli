@@ -19,7 +19,7 @@ edges:
     condition: when adding a new MCP tool or changing tool schemas
   - target: patterns/debug-mcp-runtime.md
     condition: when MCP message loop, framing, or tool dispatch fails
-last_updated: 2026-07-17
+last_updated: 2026-09-06
 ---
 
 # MCP Runtime
@@ -43,6 +43,8 @@ last_updated: 2026-07-17
 - **Layered MCP resources (Phases 1–4):** `ResourceService` + catalog — static/dynamic URIs, read-only session digest, objectives/approvals/handoffs/events, MCP `prompts/list` + `prompts/get`, dispatch `mcp_resources`; see `docs/reference/mcp-layered-resources-spec.md`.
 - Resource publisher for config/repo-status/ops-log resources.
 - Bootstrap sampling service with fallback and optional client sampling flow.
+- RFC-0027 component tools: ACTIVE `metagit_component_list|show|resolve` call `ComponentResolver` with `status.root_path` as `definition_root`. Resolve `matched: false` is a normal result; show-not-found and `ValueError` are `-32602`.
+- RFC-0028: ACTIVE `metagit_component_graph` calls `ComponentGraphService.neighborhood`. Not-found and `ValueError` are `-32602`.
 
 ## Protocol Notes
 - Supported methods: `initialize`, `tools/list`, `tools/call`, `resources/list`, `resources/read`, `prompts/list`, `prompts/get`, `ping`.

@@ -249,6 +249,18 @@ def pack_cmd(
     shell_complete=complete_repomix_profiles,
     help="Optional repomix profile name for suggested command",
 )
+@click.option(
+    "--component",
+    default=None,
+    help="Optional component name or project/repo/component id",
+)
+@click.option(
+    "--depth",
+    type=click.IntRange(min=0),
+    default=0,
+    show_default=True,
+    help="Component neighborhood depth (ignored without --component)",
+)
 @click.option("--json", "as_json", is_flag=True, help="Print CompiledContext as JSON")
 @click.pass_context
 def compile_cmd(
@@ -262,6 +274,8 @@ def compile_cmd(
     tier: int,
     budget: int | None,
     profile: str | None,
+    component: str | None,
+    depth: int,
     as_json: bool,
 ) -> None:
     """Compile a budgeted context artifact for a project/repo (RFC-0009)."""
@@ -281,6 +295,8 @@ def compile_cmd(
         task_id=task_id,
         graph_id=graph_id,
         objective_id=objective_id,
+        component=component,
+        depth=depth,
     )
     if isinstance(result, Exception):
         raise click.ClickException(str(result))

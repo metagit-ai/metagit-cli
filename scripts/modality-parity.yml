@@ -705,6 +705,8 @@ features:
         markers:
           - path: src/metagit/cli/commands/project_derived.py
             contains: '@derived.command("create")'
+          - path: src/metagit/cli/commands/project_derived.py
+            contains: include-dependencies
           - path: src/metagit/cli/commands/project.py
             contains: project.add_command(derived)
       mcp:
@@ -713,6 +715,8 @@ features:
             contains: metagit_project_derived_create
           - path: src/metagit/core/mcp/runtime.py
             contains: metagit_project_derived_create
+          - path: src/metagit/core/mcp/runtime.py
+            contains: include_dependencies
       documentation:
         markers:
           - path: docs/reference/derived-projects.md
@@ -769,4 +773,82 @@ features:
             contains: "modality:component_model"
           - path: docs/agents.md
             contains: "modality:component_model"
+
+  - id: component_resolve
+    description: Component catalog list/show and path-to-component resolve
+    service: metagit.core.component.resolve.ComponentResolver
+    reference_doc: docs/concepts/components.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/component.py
+            contains: "component resolve"
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_component_resolve
+      web:
+        markers:
+          - path: src/metagit/core/web/ops_handler.py
+            contains: /v3/ops/components
+      documentation:
+        markers:
+          - path: docs/concepts/components.md
+            contains: "modality:component_resolve"
+          - path: docs/agents.md
+            contains: "modality:component_resolve"
+
+  - id: component_graph
+    description: Component neighborhood graph walk
+    service: metagit.core.component.graph.ComponentGraphService
+    reference_doc: docs/concepts/components.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/component.py
+            contains: "component graph"
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_component_graph
+      web:
+        markers:
+          - path: src/metagit/core/web/ops_handler.py
+            contains: /v3/ops/components/graph
+      documentation:
+        markers:
+          - path: docs/concepts/components.md
+            contains: "modality:component_graph"
+          - path: docs/agents.md
+            contains: "modality:component_graph"
+
+  - id: component_detect
+    description: Detect filesystem component candidates and init one draft
+    service: metagit.core.component.detect.ComponentDetector
+    reference_doc: docs/concepts/components.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/component.py
+            contains: "component detect"
+          - path: src/metagit/cli/commands/component.py
+            contains: "component init"
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_component_detect
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_component_init
+      web:
+        markers:
+          - path: src/metagit/core/web/ops_handler.py
+            contains: /v3/ops/components/detect
+          - path: src/metagit/core/web/ops_handler.py
+            contains: /v3/ops/components/init
+      documentation:
+        markers:
+          - path: docs/concepts/components.md
+            contains: "modality:component_detect"
+          - path: docs/agents.md
+            contains: "modality:component_detect"
 

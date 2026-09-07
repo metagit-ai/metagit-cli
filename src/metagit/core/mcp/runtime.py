@@ -11,9 +11,13 @@ from typing import Any, Literal, Optional, cast
 
 from metagit.core.agent.service import AgentService
 from metagit.core.appconfig import AppConfig
+from metagit.core.component.detect import ComponentDetector
+from metagit.core.component.graph import ComponentGraphService
+from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
 from metagit.core.config.graph_cypher_export import GraphCypherExportService
 from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
 from metagit.core.config.manager import MetagitConfigManager
+from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.compiler import ContextCompiler
 from metagit.core.context.context_pack_service import ContextPackService
@@ -500,6 +504,8 @@ class MetagitMcpRuntime:
                     "task_id": {"type": "string"},
                     "graph_id": {"type": "string"},
                     "objective_id": {"type": "string"},
+                    "component": {"type": "string"},
+                    "depth": {"type": "integer", "minimum": 0},
                 },
                 "additionalProperties": False,
             },
@@ -936,11 +942,12 @@ class MetagitMcpRuntime:
             },
             "metagit_claim_declare": {
                 "type": "object",
-                "required": ["repository", "agent_id", "patterns"],
+                "required": ["repository", "agent_id"],
                 "properties": {
                     "repository": {"type": "string"},
                     "agent_id": {"type": "string"},
                     "patterns": {"type": "array", "items": {"type": "string"}},
+                    "component": {"type": "string"},
                     "task_id": {"type": "string"},
                     "strict": {"type": "boolean"},
                 },
@@ -948,10 +955,11 @@ class MetagitMcpRuntime:
             },
             "metagit_claim_check": {
                 "type": "object",
-                "required": ["repository", "patterns"],
+                "required": ["repository"],
                 "properties": {
                     "repository": {"type": "string"},
                     "patterns": {"type": "array", "items": {"type": "string"}},
+                    "component": {"type": "string"},
                     "agent_id": {"type": "string"},
                 },
                 "additionalProperties": False,
@@ -1131,6 +1139,71 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
+            "metagit_component_list": {
+                "type": "object",
+                "properties": {
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_show": {
+                "type": "object",
+                "required": ["component"],
+                "properties": {
+                    "component": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_resolve": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_graph": {
+                "type": "object",
+                "required": ["component"],
+                "properties": {
+                    "component": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "depth": {"type": "integer"},
+                    "direction": {
+                        "type": "string",
+                        "enum": ["out", "in", "both"],
+                    },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_detect": {
+                "type": "object",
+                "properties": {
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "apply": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_component_init": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {"type": "string"},
+                    "name": {"type": "string"},
+                    "kind": {"type": "string"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "apply": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_workspace_discover": {
                 "type": "object",
                 "properties": {
@@ -1251,6 +1324,10 @@ class MetagitMcpRuntime:
                     "description": {"type": "string"},
                     "agent_instructions": {"type": "string"},
                     "enable_dedupe": {"type": "boolean"},
+                    "include_dependencies": {"type": "boolean"},
+                    "project": {"type": "string"},
+                    "repo": {"type": "string"},
+                    "component": {"type": "string"},
                 },
                 "additionalProperties": False,
             },
@@ -2099,6 +2176,15 @@ class MetagitMcpRuntime:
                     raise InvalidToolArgumentsError("budget must be an integer") from exc
                 if budget < 1:
                     raise InvalidToolArgumentsError("budget must be >= 1")
+            depth_raw = arguments.get("depth", 0)
+            try:
+                depth = int(depth_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("depth must be an integer") from exc
+            if depth < 0:
+                raise InvalidToolArgumentsError("depth must be >= 0")
+            component_raw = arguments.get("component")
+            component = component_raw.strip() if isinstance(component_raw, str) and component_raw.strip() else None
             config_path = str(Path(status.root_path) / ".metagit.yml")
             definition_root = status.root_path
             app_config = AppConfig.load()
@@ -2121,6 +2207,8 @@ class MetagitMcpRuntime:
                 task_id=arguments.get("task_id") if isinstance(arguments.get("task_id"), str) else None,
                 graph_id=arguments.get("graph_id") if isinstance(arguments.get("graph_id"), str) else None,
                 objective_id=arguments.get("objective_id") if isinstance(arguments.get("objective_id"), str) else None,
+                component=component,
+                depth=depth,
             )
             if isinstance(compiled, Exception):
                 raise InvalidToolArgumentsError(str(compiled)) from compiled
@@ -2503,6 +2591,9 @@ class MetagitMcpRuntime:
                 raise InvalidToolArgumentsError(str(exc)) from exc
             return card.model_dump(mode="json")
 
+        if name.startswith("metagit_component_"):
+            return self._call_component_tool(name, arguments, status, config)
+
         if name in {"metagit_repo_ci_show", "metagit_repo_ci_detect"}:
             if not config or not status.root_path:
                 raise InvalidToolArgumentsError("repo ci requires an active workspace")
@@ -2739,15 +2830,25 @@ class MetagitMcpRuntime:
             config_path, _ = self._catalog_paths(status=status, config=config)
             selections = arguments.get("selections")
             if not isinstance(selections, list):
-                raise InvalidToolArgumentsError("selections must be an array of project/repo strings")
+                raise InvalidToolArgumentsError(
+                    "selections must be an array of project/repo or project/repo/component strings"
+                )
+            selected = [str(item) for item in selections]
+            project = str(arguments.get("project", "")).strip()
+            repo = str(arguments.get("repo", "")).strip()
+            component = str(arguments.get("component", "")).strip()
+            if project and repo:
+                extra = f"{project}/{repo}/{component}" if component else f"{project}/{repo}"
+                selected.append(extra)
             return self._derived_projects.create(
                 config=config,
                 config_path=config_path,
                 name=str(arguments.get("name", "")).strip(),
-                selections=[str(item) for item in selections],
+                selections=selected,
                 description=arguments.get("description"),
                 agent_instructions=arguments.get("agent_instructions"),
                 enable_dedupe=bool(arguments.get("enable_dedupe", True)),
+                include_dependencies=bool(arguments.get("include_dependencies", False)),
             ).model_dump(mode="json")
 
         if name == "metagit_project_derived_refresh":
@@ -3139,15 +3240,15 @@ class MetagitMcpRuntime:
             )
         if name == "metagit_claim_declare":
             service = ClaimService(root)
-            patterns_raw = arguments.get("patterns")
-            if not isinstance(patterns_raw, list) or not patterns_raw:
-                raise InvalidToolArgumentsError("patterns is required")
+            patterns, component, config = self._claim_patterns_and_config(arguments, definition)
             result = service.declare(
                 repository=_require("repository"),
                 agent_id=_require("agent_id"),
-                patterns=[str(item) for item in patterns_raw],
+                patterns=patterns,
                 task_id=arguments.get("task_id") if isinstance(arguments.get("task_id"), str) else None,
                 allow_conflicts=not bool(arguments.get("strict", False)),
+                component=component,
+                config=config,
             )
             if isinstance(result, ClaimCheckResult):
                 payload = result.model_dump(mode="json")
@@ -3156,14 +3257,14 @@ class MetagitMcpRuntime:
             return _unwrap(result)
         if name == "metagit_claim_check":
             service = ClaimService(root)
-            patterns_raw = arguments.get("patterns")
-            if not isinstance(patterns_raw, list) or not patterns_raw:
-                raise InvalidToolArgumentsError("patterns is required")
+            patterns, component, config = self._claim_patterns_and_config(arguments, definition)
             return _unwrap(
                 service.check(
                     repository=_require("repository"),
-                    patterns=[str(item) for item in patterns_raw],
+                    patterns=patterns,
                     agent_id=arguments.get("agent_id") if isinstance(arguments.get("agent_id"), str) else None,
+                    component=component,
+                    config=config,
                 ),
             )
         if name == "metagit_claim_list":
@@ -3185,6 +3286,29 @@ class MetagitMcpRuntime:
                 ),
             )
         raise ValueError(f"Unsupported ACL tool: {name}")
+
+    def _claim_patterns_and_config(
+        self,
+        arguments: dict[str, Any],
+        definition: str,
+    ) -> tuple[list[str], str | None, MetagitConfig | None]:
+        patterns_raw = arguments.get("patterns")
+        if patterns_raw is None:
+            patterns_raw = []
+        if not isinstance(patterns_raw, list):
+            raise InvalidToolArgumentsError("patterns must be an array")
+        component_raw = arguments.get("component")
+        component = component_raw.strip() if isinstance(component_raw, str) and component_raw.strip() else None
+        if not component and not patterns_raw:
+            raise InvalidToolArgumentsError("patterns is required")
+        config = None
+        if component:
+            manager = MetagitConfigManager(config_path=Path(definition))
+            loaded = manager.load_config()
+            if isinstance(loaded, Exception):
+                raise InvalidToolArgumentsError(str(loaded))
+            config = loaded
+        return [str(item) for item in patterns_raw], component, config
 
     def _call_merge_tool(
         self,
@@ -3321,6 +3445,162 @@ class MetagitMcpRuntime:
                 )
             )
         raise ValueError(f"Unsupported schedule tool: {name}")
+
+    def _call_component_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+        config: Any,
+    ) -> dict[str, Any]:
+        if not config or not status.root_path:
+            raise InvalidToolArgumentsError("component tools require an active workspace")
+        project_raw = arguments.get("project")
+        repo_raw = arguments.get("repo")
+        project = str(project_raw).strip() if isinstance(project_raw, str) and project_raw.strip() else None
+        repo = str(repo_raw).strip() if isinstance(repo_raw, str) and repo_raw.strip() else None
+        resolver = ComponentResolver()
+        if name == "metagit_component_list":
+            rows = resolver.list(config, project=project, repo=repo)
+            return {"components": [resolved_component_payload(row) for row in rows]}
+        if name == "metagit_component_show":
+            identity = str(arguments.get("component", "")).strip()
+            if not identity:
+                raise InvalidToolArgumentsError("component is required")
+            result = resolver.get(config, identity, project=project, repo=repo)
+            if isinstance(result, ValueError):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if result is None:
+                raise InvalidToolArgumentsError(f"component not found: {identity}")
+            return resolved_component_payload(result)
+        if name == "metagit_component_resolve":
+            query = str(arguments.get("path", "")).strip()
+            if not query:
+                raise InvalidToolArgumentsError("path is required")
+            result = resolver.resolve(
+                config,
+                query,
+                project=project,
+                repo=repo,
+                definition_root=status.root_path,
+            )
+            if isinstance(result, ValueError):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if result is None:
+                return {"matched": False, "path": query}
+            return {"matched": True, **resolved_component_payload(result), "path": query}
+        if name == "metagit_component_graph":
+            identity = str(arguments.get("component", "")).strip()
+            if not identity:
+                raise InvalidToolArgumentsError("component is required")
+            depth_raw = arguments.get("depth", 1)
+            if depth_raw is None:
+                depth = 1
+            elif isinstance(depth_raw, bool) or not isinstance(depth_raw, int):
+                raise InvalidToolArgumentsError("depth must be an integer")
+            else:
+                depth = depth_raw
+            direction_raw = arguments.get("direction", "out")
+            direction = (
+                str(direction_raw).strip() if isinstance(direction_raw, str) and direction_raw.strip() else "out"
+            )
+            result = ComponentGraphService().neighborhood(
+                config,
+                identity,
+                project=project,
+                repo=repo,
+                depth=depth,
+                direction=direction,  # type: ignore[arg-type]
+            )
+            if isinstance(result, ValueError):
+                raise InvalidToolArgumentsError(str(result)) from result
+            if result is None:
+                raise InvalidToolArgumentsError(f"component not found: {identity}")
+            return result
+        if name == "metagit_component_detect":
+            detector = ComponentDetector()
+            payload = detector.detect(
+                config,
+                project=project,
+                repo=repo,
+                definition_root=status.root_path,
+            )
+            applied = False
+            skipped: list[str] = []
+            if bool(arguments.get("apply", False)):
+                config_path, _ = self._catalog_paths(status=status, config=config)
+                saved = detector.apply_candidates(
+                    config,
+                    payload["candidates"],
+                    config_path=config_path,
+                )
+                if isinstance(saved, Exception):
+                    raise InvalidToolArgumentsError(str(saved)) from saved
+                applied = saved.applied
+                skipped = list(saved.skipped)
+            payload["applied"] = applied
+            if skipped:
+                payload["skipped"] = skipped
+            return payload
+        if name == "metagit_component_init":
+            query = str(arguments.get("path", "")).strip()
+            if not query:
+                raise InvalidToolArgumentsError("path is required")
+            name_raw = arguments.get("name")
+            kind_raw = arguments.get("kind")
+            init_name = str(name_raw).strip() if isinstance(name_raw, str) and name_raw.strip() else None
+            init_kind = str(kind_raw).strip() if isinstance(kind_raw, str) and kind_raw.strip() else None
+            detector = ComponentDetector()
+            created = detector.init_component(
+                config,
+                query,
+                name=init_name,
+                kind=init_kind,
+                project=project,
+                repo=repo,
+            )
+            if isinstance(created, ValueError):
+                raise InvalidToolArgumentsError(str(created)) from created
+            target = detector._unique_target(config, project=project, repo=repo)
+            if isinstance(target, ValueError):
+                raise InvalidToolArgumentsError(str(target)) from target
+            project_name, repo_name = target
+            applied = False
+            skipped: list[str] = []
+            if bool(arguments.get("apply", False)):
+                config_path, _ = self._catalog_paths(status=status, config=config)
+                saved = detector.apply_candidates(
+                    config,
+                    [
+                        {
+                            "name": created.name,
+                            "path": created.path,
+                            "kind": created.kind,
+                            "language": created.language,
+                            "project": project_name,
+                            "repo": repo_name,
+                            "already_catalogued": False,
+                        }
+                    ],
+                    config_path=config_path,
+                )
+                if isinstance(saved, Exception):
+                    raise InvalidToolArgumentsError(str(saved)) from saved
+                applied = saved.applied
+                skipped = list(saved.skipped)
+            payload = {
+                "name": created.name,
+                "path": created.path,
+                "kind": created.kind,
+                "language": created.language,
+                "project": project_name,
+                "repo": repo_name,
+                "applied": applied,
+            }
+            if skipped:
+                payload["skipped"] = skipped
+            return payload
+        raise ValueError(f"Unsupported component tool: {name}")
 
     def _call_aos_tool(
         self,

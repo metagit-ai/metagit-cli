@@ -65,15 +65,87 @@ A repository with no `components` key is valid and catalogs as empty.
 
 Nested paths (`apps/web` and `apps/web/packages/auth`) are allowed.
 
-## Not in this release
+## Lookup and resolve
 
-These land in later RFC-0026 series slices:
+<!-- modality:component_resolve -->
 
-- `metagit component list|show|resolve|detect|init|graph`
-- `context compile --component`
-- graph `from.component` / `to.component`
-- component-level claims/ownership
-- derived working sets from component graphs
-- MCP component tools
+```bash
+metagit component list [-c .metagit.yml] [--project P] [--repo R] [--json]
+metagit component show <name-or-id> [-c .metagit.yml] [--project P] [--repo R] [--json]
+metagit component resolve <path> [-c .metagit.yml] [--project P] [--repo R] [--json]
+```
 
-See the RFC-0026 Component Context Graph series under `docs/superpowers/specs/` for the remaining slices.
+MCP (ACTIVE workspace): `metagit_component_list`, `metagit_component_show`, `metagit_component_resolve`.
+
+Web (read-only): `GET /v3/ops/components?project=&repo=`, `GET /v3/ops/components/resolve?path=&project=&repo=`.
+
+`resolve` longest-matches a repo-relative or filesystem path to the most specific catalogued component. A miss is `matched: false` (not an exception). Ambiguous names or cross-repo paths are errors — pass `--project` and `--repo`, or a full `project/repo/component` id.
+
+`--config-path/-c` is on each CLI subcommand so `component list -c FILE` works.
+
+## Neighborhood graph
+
+<!-- modality:component_graph -->
+
+```bash
+metagit component graph <identity> [-c .metagit.yml] [--project P] [--repo R] [--depth 1] [--direction out|in|both] [--json]
+```
+
+MCP (ACTIVE workspace): `metagit_component_graph` (required `component`; optional `project`, `repo`, `depth`, `direction`).
+
+Web: `GET /v3/ops/components/graph?component=&project=&repo=&depth=&direction=`. Missing `component` or invalid depth/direction is 400; unknown identity is 404.
+
+Neighborhood combines durable `graph.relationships` (`origin: declared`) with same-catalog `Component.depends_on`. Depth defaults to 1 (cap 5). Cypher export emits `kind=component` nodes for `from.component` / `to.component` endpoints, plus a `contains` edge from the parent repo when structure export is on.
+
+## Context compile
+
+<!-- modality:context_compile -->
+
+```bash
+metagit context compile --project P --repo R [--component NAME] [--depth N] --json
+```
+
+MCP (ACTIVE workspace): `metagit_context_compile` optional `component` and `depth` (default 0, cap 5). Unknown component and a three-segment id that disagrees with `--project`/`--repo` are errors. The compiled pack stays project/repo scoped; `component` / `component_graph` / `effective_profile` are extra sections.
+
+## Claims
+
+<!-- modality:acl_claim -->
+
+Catalogued components can be claimed without a whole-repo glob. `--component` stores the component **name**; `repository` stays `project/repo`. Empty `--pattern` expands to `{path}/**` (or `**` when the component path is `.`). Explicit patterns are stored as given. Overlap is still keyed by repository + patterns, so `web` vs `api` do not conflict when their paths do not overlap.
+
+```bash
+metagit claim declare --repository platform/core --agent-id agent-1 --component web
+metagit claim check --repository platform/core --component api
+```
+
+MCP (ACTIVE workspace): `metagit_claim_declare` / `metagit_claim_check` accept optional `component`. Patterns may be empty when `component` is set.
+
+## Detect and init
+
+<!-- modality:component_detect -->
+
+```bash
+metagit component detect [-c .metagit.yml] [--project P] [--repo R] [--apply] [--json]
+metagit component init PATH [--name NAME] [--kind KIND] [--project P] [--repo R] [--apply] [--json] [-c .metagit.yml]
+```
+
+MCP (ACTIVE workspace): `metagit_component_detect` (optional `project`, `repo`, `apply`) and `metagit_component_init` (required `path`; optional `name`, `kind`, `project`, `repo`, `apply`).
+
+Web: `GET /v3/ops/components/detect?project=&repo=` (read-only) and `POST /v3/ops/components/init` with a JSON body. Detect without `--apply` / `apply: true` never writes the manifest.
+
+Detection is filesystem-marker only (no LLM). High-confidence markers include `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`, `build.gradle`, and `*.csproj`. Kind hints follow `apps/` → application, `packages/` → package, `services/` → service, `libs/` or `internal/` → library, and `infra/` / `terraform/` / `helm/` / `charts/` → infrastructure. Nested `helm/<name>/Chart.yaml` and `charts/<name>/Chart.yaml` are also infrastructure candidates. Already catalogued paths are marked `already_catalogued`. `--apply` / `apply: true` sets `applied` only when at least one new component was written; a second init of the same path or apply on an application-kind manifest (no workspace repos) is an error, not silent success.
+
+`init` drafts one component (name defaults to the path basename). Umbrellas need `--project` and `--repo` unless the workspace has a single repo.
+
+## Derived working sets
+
+<!-- modality:derived_projects -->
+
+`metagit project derived create|include` accepts `project/repo` or `project/repo/component`. Repo-wide selections copy the full `components[]` list. Three-segment selections copy that one component. Create `--include-dependencies` adds outbound `depends_on` neighbors (depth 1). Include of a second component on an already-derived repo merges it; a two-segment include widens to the full source list.
+
+```bash
+metagit project derived create -n surgical --from platform/core/web --include-dependencies
+metagit project derived include -n surgical --from platform/core/api
+```
+
+There is no `metagit context derive` command.

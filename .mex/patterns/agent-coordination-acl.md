@@ -6,7 +6,7 @@ edges:
     condition: when placing new coordination services
   - target: modality-parity.md
     condition: when exposing CLI/MCP surfaces
-last_updated: 2026-07-09
+last_updated: 2026-09-06
 ---
 
 # Agent Coordination Layer (ACL)
@@ -30,6 +30,7 @@ Adding or changing worktree/branch/lease/claim behavior for multi-agent Git isol
 - Don't implement task DAG, merge orchestrator, or semantic ownership here (later RFCs).
 - Don't put agent worktrees under the sync-root catalog mounts.
 - Don't share one worktree across agents.
+- Don't store a three-segment id on `FileClaim.component` — that field is the component name. See [component-claims.md](component-claims.md).
 
 ## Verify
 

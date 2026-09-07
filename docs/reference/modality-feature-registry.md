@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 31
+- **Features tracked:** 34
 
 When you add or change a backend feature:
 
@@ -51,6 +51,9 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `derived_projects` | Derived surgical workspace projects with frozen membership and refreshable identity | yes | yes | — | yes | yes | [derived-projects.md](derived-projects.md) |
 | `skills_surface` | Layered on-disk and declared skill inventory across workspace/project/repo | yes | yes | — | yes | yes | [skills-surface.md](skills-surface.md) |
 | `component_model` | First-class repository components (schema, catalog, config validate) | yes | — | — | yes | — | [components.md](../concepts/components.md) |
+| `component_resolve` | Component catalog list/show and path-to-component resolve | yes | yes | yes | yes | — | [components.md](../concepts/components.md) |
+| `component_graph` | Component neighborhood graph walk | yes | yes | yes | yes | — | [components.md](../concepts/components.md) |
+| `component_detect` | Detect filesystem component candidates and init one draft | yes | yes | yes | yes | — | [components.md](../concepts/components.md) |
 <!-- registry:table:end -->
 
 ## Surface legend
