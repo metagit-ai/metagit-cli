@@ -495,7 +495,7 @@ class DerivedProjectService:
         selection: str,
         force: bool = False,
     ) -> DerivedMutationResult:
-        """Add one source repo to a derived project's frozen membership."""
+        """Add one source repo, or merge a component into an existing derived repo."""
         project = find_project(config, project_name)
         if project is None:
             return self._error(
@@ -522,14 +522,6 @@ class DerivedProjectService:
         if isinstance(parsed, CatalogError):
             return self._error("include", parsed.kind, parsed.message, project_name=project_name)
         source_project_name, source_repo_name = parsed.project, parsed.repo
-        if any(repo.name == source_repo_name for repo in project.repos):
-            return DerivedMutationResult(
-                ok=True,
-                operation="noop",
-                project_name=project_name,
-                repo_names=[source_repo_name],
-                config_path=config_path,
-            )
         source_project = find_project(config, source_project_name)
         if source_project is None:
             return self._error(
@@ -553,24 +545,35 @@ class DerivedProjectService:
                 f"source component '{source_project_name}/{source_repo_name}/{parsed.component}' not found",
                 project_name=project_name,
             )
-        component_names = None if parsed.component is None else [parsed.component]
-        derived_repo = _copy_identity_from_source(
-            source_repo,
-            name=source_repo_name,
-            derived_from=DerivedFromRef(
-                project=source_project_name,
-                repo=source_repo_name,
-                refreshed_at=_utc_now_iso(),
-            ),
-            component_names=component_names,
-        )
-        project.repos.append(derived_repo)
-        self._upsert_source_scope(
-            project,
-            source_project_name,
-            source_repo_name,
-            components=component_names or [],
-        )
+        existing = find_repo(project, source_repo_name)
+        if existing is not None:
+            if not self._merge_into_existing_repo(project, existing, source_repo, parsed):
+                return DerivedMutationResult(
+                    ok=True,
+                    operation="noop",
+                    project_name=project_name,
+                    repo_names=[source_repo_name],
+                    config_path=config_path,
+                )
+        else:
+            component_names = None if parsed.component is None else [parsed.component]
+            derived_repo = _copy_identity_from_source(
+                source_repo,
+                name=source_repo_name,
+                derived_from=DerivedFromRef(
+                    project=source_project_name,
+                    repo=source_repo_name,
+                    refreshed_at=_utc_now_iso(),
+                ),
+                component_names=component_names,
+            )
+            project.repos.append(derived_repo)
+            self._upsert_source_scope(
+                project,
+                source_project_name,
+                source_repo_name,
+                components=component_names or [],
+            )
         save_err = self._save(config=config, config_path=config_path)
         if save_err:
             return self._error(
@@ -649,6 +652,56 @@ class DerivedProjectService:
             repo_names=[repo_name],
             config_path=config_path,
         )
+
+    def _merge_into_existing_repo(
+        self,
+        project: WorkspaceProject,
+        existing: ProjectPath,
+        source_repo: ProjectPath,
+        parsed: DerivedSelection,
+    ) -> bool:
+        """Merge a selection into an existing derived repo. True when membership changed."""
+        allow = _scope_component_names(project, parsed.project, parsed.repo)
+        if parsed.component is None:
+            have = {item.name for item in existing.components}
+            source_names = {item.name for item in source_repo.components}
+            if allow is None and have >= source_names:
+                return False
+            existing.components = _copy_components(source_repo, None)
+            self._widen_source_scope(project, parsed.project, parsed.repo)
+            return True
+        already = any(item.name == parsed.component for item in existing.components)
+        changed = False
+        if not already:
+            source_comp = next(item for item in source_repo.components if item.name == parsed.component)
+            existing.components.append(source_comp.model_copy(deep=True))
+            changed = True
+        if allow is not None and parsed.component not in allow:
+            self._upsert_source_scope(
+                project,
+                parsed.project,
+                parsed.repo,
+                components=[parsed.component],
+            )
+            changed = True
+        return changed
+
+    def _widen_source_scope(
+        self,
+        project: WorkspaceProject,
+        source_project: str,
+        source_repo: str,
+    ) -> None:
+        """Clear a source allow-list so the derived repo tracks the whole source repo."""
+        if project.derived is None:
+            project.derived = DerivedProjectConfig(enabled=True, sources=[])
+        for scope in project.derived.sources:
+            if scope.project != source_project:
+                continue
+            if source_repo in scope.repos:
+                scope.components = []
+                return
+        project.derived.sources.append(DerivedSourceScope(project=source_project, repos=[source_repo], components=[]))
 
     def _sources_from_wanted(
         self,

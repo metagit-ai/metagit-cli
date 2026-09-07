@@ -229,6 +229,34 @@ def test_create_include_dependencies_copies_same_repo_neighbors(tmp_path: Path) 
   assert scope.components == ["api", "web"]
 
 
+def test_include_second_component_merges_into_existing_derived_repo(tmp_path: Path) -> None:
+  config_path = str(tmp_path / ".metagit.yml")
+  config = _platform_core_config()
+  service = DerivedProjectService()
+  created = service.create(
+    config,
+    config_path,
+    name="surgical",
+    selections=["platform/core/web"],
+  )
+  assert created.ok is True
+
+  included = service.include(
+    config,
+    config_path,
+    project_name="surgical",
+    selection="platform/core/api",
+  )
+  assert included.ok is True
+  assert included.operation == "include"
+  project = next(item for item in config.workspace.projects if item.name == "surgical")
+  core = next(repo for repo in project.repos if repo.name == "core")
+  assert [comp.name for comp in core.components] == ["web", "api"]
+  assert project.derived is not None
+  scope = next(item for item in project.derived.sources if item.project == "platform")
+  assert scope.components == ["api", "web"]
+
+
 def test_parse_selection_two_segment_is_repo_wide() -> None:
   parsed = parse_selection("platform/core")
   assert not isinstance(parsed, CatalogError)
