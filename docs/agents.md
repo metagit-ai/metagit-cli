@@ -56,6 +56,8 @@ metagit workspace health --json
 | Goal | Command |
 |------|---------|
 | Find a managed repo | `metagit search "<query>" --json` |
+| Resolve one absolute path | `metagit search "<query>" --path-only` · MCP `metagit_repo_search` `{path_only: true}` |
+| List every managed target | `metagit workspace repo list --json` · MCP `metagit_workspace_repos_list` |
 | Search file contents (workspace) | `metagit workspace grep "<query>" --json` |
 | Ripgrep / grep backend status | `metagit workspace grep info --json` |
 | Workspace catalog | `metagit workspace list --json` |
@@ -112,6 +114,8 @@ metagit workspace health --json
 <!-- modality:component_resolve -->
 <!-- modality:component_graph -->
 <!-- modality:component_detect -->
+<!-- modality:nav_flattened -->
+<!-- modality:managed_repo_search -->
 
 Set `--definition path/to/.metagit.yml` when not in the manifest repo root.
 
@@ -353,6 +357,8 @@ metagit prompt workspace -k context-switch --text-only
 ```
 
 MCP: `metagit_context_switch` (full bootstrap). Lean alternative: `metagit_project_context_switch`.
+
+Human FuzzyFinder shortcut (not for agent mode): `metagit nav --all` lists every managed `project/repo` with the repo-picker preview; `--print-path` prints the absolute path instead of opening an editor; `--unmanaged` includes extra sync-folder dirs. Agents must use `workspace repo list --json` and `search --path-only` instead.
 
 ### Semantic Ownership (RFC-0010)
 

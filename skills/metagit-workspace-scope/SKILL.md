@@ -60,12 +60,23 @@ Scope discovery:
 metagit context pack --tier 1 --json -c .metagit.yml
 metagit workspace list -c .metagit.yml --json
 metagit search "<query>" -c .metagit.yml --json
+cd "$(metagit search "<query>" -c .metagit.yml --path-only)"
 ```
+
+<!-- modality:managed_repo_search -->
 
 Interactive (human sessions only):
 
+<!-- modality:nav_flattened -->
+
 - `metagit nav` / `metagit navigate` — FuzzyFinder project then repo, then open editor
+- `metagit nav --all` — one picker of every managed `project/repo` (optional `--unmanaged`, `--print-path`)
 - `metagit workspace select --project <name>`
+
+Agent navigate (preferred over `nav`):
+
+- `metagit workspace repo list -c .metagit.yml --json` — MCP `metagit_workspace_repos_list`
+- `metagit search "<query>" --path-only` — MCP `metagit_repo_search` `{path_only: true}`
 
 Agent context switch (preferred):
 

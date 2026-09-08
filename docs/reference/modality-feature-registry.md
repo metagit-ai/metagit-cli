@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 34
+- **Features tracked:** 36
 
 When you add or change a backend feature:
 
@@ -54,6 +54,8 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `component_resolve` | Component catalog list/show and path-to-component resolve | yes | yes | yes | yes | — | [components.md](../concepts/components.md) |
 | `component_graph` | Component neighborhood graph walk | yes | yes | yes | yes | — | [components.md](../concepts/components.md) |
 | `component_detect` | Detect filesystem component candidates and init one draft | yes | yes | yes | yes | — | [components.md](../concepts/components.md) |
+| `nav_flattened` | Human FuzzyFinder nav --all / --print-path (agents use catalog + search --path-only) | yes | — | — | yes | yes | [cli_reference.md](../cli_reference.md) |
+| `managed_repo_search` | Managed repo search and single-path resolve (CLI --path-only, MCP path_only) | yes | yes | — | yes | yes | [cli_reference.md](../cli_reference.md) |
 <!-- registry:table:end -->
 
 ## Surface legend

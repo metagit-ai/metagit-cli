@@ -16,7 +16,7 @@ This page contains the auto-generated documentation for the `metagit` command-li
 - Print status snapshot and exit:
   - `metagit mcp serve --status-once`
 - **Shared coordination state:** export `METAGIT_STATE_URL` and optional `METAGIT_STATE_TOKEN` on the **MCP server process** before `metagit mcp serve` so objectives/handoffs/approvals/events use the remote ops backend. Verify via `resources/read` → `metagit://gate/status` (`state_backend` field). Skill: `metagit-sharing-state`.
-- When the workspace gate is **active**, the tool **`metagit_repo_search`** searches only repos listed under `workspace.projects[].repos` in `.metagit.yml` (tags, sync status, resolved paths). Optional filters: `status[]`, `has_url`, `sync_enabled`, `sort` (`score`|`project`|`name`). Use query `*` for filter-only listing.
+- When the workspace gate is **active**, the tool **`metagit_repo_search`** searches only repos listed under `workspace.projects[].repos` in `.metagit.yml` (tags, sync status, resolved paths). Optional filters: `status[]`, `has_url`, `sync_enabled`, `sort` (`score`|`project`|`name`). Use query `*` for filter-only listing. Set `path_only: true` to resolve one absolute path (`ok` + `path` / `project` / `repo`, or `ok: false` when missing/ambiguous).
 - **`metagit_workspace_search`** searches on-disk file contents (not manifest metadata). Uses ripgrep when available (`repos`, `paths`, `exclude`, `context_lines`, `intent`, `include_paths`). Always excludes scaffold paths (`node_modules`, `.venv`, etc.). Falls back to a bounded scanner if `rg` is not installed.
 - **`metagit_workspace_grep_info`** returns `ripgrep_available`, `ripgrep_path`, `ripgrep_version`, and `search_backend` (`ripgrep` or `python_walk`). CLI equivalent: `metagit workspace grep info`.
 - **`metagit_workspace_sync`** batch-syncs repos (`repos: ["all"]` or selectors), with `only_if` (`any`|`missing`|`dirty`|`behind_origin`), `max_parallel`, and `dry_run`.
@@ -75,9 +75,21 @@ Promote path-based entries to git-managed clones when they should be reproducibl
 - `metagit find QUERY` — alias for `metagit search`.
 - `--definition PATH` — `.metagit.yml` to load (default: `.metagit.yml` in the current directory). The workspace root for resolving `path:` entries is the parent directory of that file.
 - `--json` — print search results as JSON (matches include `match_reasons` and scores).
-- `--path-only` — resolve to exactly one local directory (fails if there is no match or more than one match).
+- `--path-only` — resolve to exactly one local directory (fails if there is no match or more than one match). MCP: `metagit_repo_search` with `path_only: true`.
 - `--tag key=value` — repeat to require matching tag values (all given pairs must match).
 - `--project`, `--exact`, `--synced-only`, and `--limit` narrow or rank results further.
+
+<!-- modality:managed_repo_search -->
+
+## Human navigation (`metagit nav`)
+
+<!-- modality:nav_flattened -->
+
+- `metagit nav` / `metagit navigate` — FuzzyFinder project then repo, then open the configured editor.
+- `--all` — one FuzzyFinder over every managed `project/repo` (ignores `--project` / `--repo`).
+- `--unmanaged` — with `--all`, also list extra sync-folder directories (dimmed).
+- `--print-path` — print the selected absolute path to stdout and skip the editor.
+- Disabled when `METAGIT_AGENT_MODE` is set. Agents: `metagit workspace repo list --json` then `metagit search QUERY --path-only`.
 
 ## Local JSON API (`metagit api`)
 

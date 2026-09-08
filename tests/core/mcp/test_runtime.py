@@ -501,6 +501,92 @@ def test_tools_call_repo_search_returns_matches(tmp_path: Path) -> None:
     assert payload["matches"][0]["repo_name"] == "abacus-app"
 
 
+def test_tools_call_repo_search_path_only_returns_path(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "platform" / "abacus-app"
+    repo_dir.mkdir(parents=True)
+    (repo_dir / ".git").mkdir()
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: platform",
+                "      repos:",
+                "        - name: abacus-app",
+                "          path: platform/abacus-app",
+                "          sync: true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 12,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_repo_search",
+                "arguments": {"query": "abacus", "path_only": True},
+            },
+        }
+    )
+
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is True
+    assert payload["project"] == "platform"
+    assert payload["repo"] == "abacus-app"
+    assert Path(payload["path"]).resolve() == repo_dir.resolve()
+
+
+def test_tools_call_repo_search_path_only_ambiguous(tmp_path: Path) -> None:
+    for name in ("abacus-app", "abacus-lib"):
+        repo_dir = tmp_path / "platform" / name
+        repo_dir.mkdir(parents=True)
+        (repo_dir / ".git").mkdir()
+    (tmp_path / ".metagit.yml").write_text(
+        "\n".join(
+            [
+                "name: workspace",
+                "kind: application",
+                "workspace:",
+                "  projects:",
+                "    - name: platform",
+                "      repos:",
+                "        - name: abacus-app",
+                "          path: platform/abacus-app",
+                "          sync: true",
+                "        - name: abacus-lib",
+                "          path: platform/abacus-lib",
+                "          sync: true",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 13,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_repo_search",
+                "arguments": {"query": "abacus", "path_only": True},
+            },
+        }
+    )
+
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is False
+    assert payload["error"]["kind"] == "ambiguous_match"
+
+
 def test_tools_list_includes_project_context_tools(tmp_path: Path) -> None:
     (tmp_path / ".metagit.yml").write_text(
         "\n".join(

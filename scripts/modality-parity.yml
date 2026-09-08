@@ -852,3 +852,56 @@ features:
           - path: docs/agents.md
             contains: "modality:component_detect"
 
+  - id: nav_flattened
+    description: Human FuzzyFinder nav --all / --print-path (agents use catalog + search --path-only)
+    service: metagit.core.project.manager.ProjectManager
+    reference_doc: docs/cli_reference.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/nav.py
+            contains: flatten_all
+          - path: src/metagit/cli/commands/nav.py
+            contains: print_path
+      documentation:
+        markers:
+          - path: docs/cli_reference.md
+            contains: "modality:nav_flattened"
+          - path: docs/agents.md
+            contains: "modality:nav_flattened"
+      skills:
+        markers:
+          - path: skills/metagit-cli/SKILL.md
+            contains: "modality:nav_flattened"
+          - path: skills/metagit-workspace-scope/SKILL.md
+            contains: "modality:nav_flattened"
+
+  - id: managed_repo_search
+    description: Managed repo search and single-path resolve (CLI --path-only, MCP path_only)
+    service: metagit.core.project.search_service.ManagedRepoSearchService
+    reference_doc: docs/cli_reference.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/search.py
+            contains: path_only
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/runtime.py
+            contains: path_only
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_repo_search
+      documentation:
+        markers:
+          - path: docs/cli_reference.md
+            contains: "modality:managed_repo_search"
+          - path: docs/agents.md
+            contains: "modality:managed_repo_search"
+      skills:
+        markers:
+          - path: skills/metagit-cli/SKILL.md
+            contains: "modality:managed_repo_search"
+          - path: skills/metagit-workspace-scope/SKILL.md
+            contains: "modality:managed_repo_search"
+
+

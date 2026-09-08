@@ -21,6 +21,25 @@ metagit prompt workspace -k session-start --text-only -c .metagit.yml
 
 Repo-root agent docs: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob/main/AGENTS.md) · [llms.txt](https://github.com/metagit-ai/metagit-cli/blob/main/llms.txt) · [docs/agents.md](https://metagit-ai.github.io/metagit-cli/agents/).
 
+<!-- modality:nav_flattened -->
+<!-- modality:managed_repo_search -->
+
+## Navigate a target (copy/paste)
+
+Do **not** call `metagit nav` (human FuzzyFinder; rejected in `METAGIT_AGENT_MODE`).
+
+```bash
+# 1. List every managed project/repo + path
+metagit workspace repo list -c .metagit.yml --json
+# MCP: metagit_workspace_repos_list
+
+# 2. Resolve one absolute path (fails if the query is ambiguous)
+cd "$(metagit search '<repo>' -c .metagit.yml --path-only)"
+# MCP: metagit_repo_search { "query": "<repo>", "path_only": true }
+```
+
+Humans: `metagit nav --all` (optional `--unmanaged`, `--print-path`).
+
 Global flags (most commands):
 
 - `metagit -c path/to/metagit.config.yaml` — **appconfig** only (default `metagit.config.yaml`)
@@ -478,6 +497,23 @@ Doc: `docs/reference/aos.md`. MCP: `metagit_aos_status|doctor|next` (+ `metagit_
 | Readiness summary | `metagit workspace summary --json` |
 
 Doc: `docs/reference/workspace-discovery.md`. MCP health: `metagit_workspace_health_check` (summary MCP deferred).
+
+---
+
+## Derived projects + skills surface
+
+<!-- modality:derived_projects -->
+<!-- modality:skills_surface -->
+
+| Task | Command |
+|------|---------|
+| Create derived project | `metagit project derived create -n NAME --from P/R [--from P/R/C] [--include-dependencies] --json` |
+| Refresh identity | `metagit project -p NAME derived refresh --json` |
+| Include / exclude | `metagit project -p NAME derived include --from P/R` / `exclude --repo R` |
+| Sync derived mounts | `metagit project -p NAME sync` |
+| Skills inventory | `metagit skills surface [--project P] [--repo R] --json` |
+
+Docs: `docs/reference/derived-projects.md`, `docs/reference/skills-surface.md`. MCP: `metagit_project_derived_*`, `metagit_skills_surface`.
 
 ---
 

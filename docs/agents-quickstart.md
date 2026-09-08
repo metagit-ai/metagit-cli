@@ -66,6 +66,15 @@ metagit prompt workspace --kind session-start --text-only
 
 Token-tight: `--tier 0` instead of 2.
 
+To land in a managed checkout (never `metagit nav` — that is a human TUI):
+
+```bash
+metagit workspace repo list --json
+cd "$(metagit search "<name>" --path-only)"
+```
+
+MCP: `metagit_workspace_repos_list`, then `metagit_repo_search` with `path_only: true`.
+
 ### 2. Health
 
 ```bash

@@ -17,16 +17,36 @@ export METAGIT_AGENT_MODE=true
 **Session start** (from umbrella repo with `.metagit.yml`):
 
 ```bash
-metagit -c .metagit.yml context pack --tier 2 --json
-metagit -c .metagit.yml prompt workspace -k session-start --text-only
+metagit context pack --tier 2 --json
+metagit prompt workspace -k session-start --text-only -c .metagit.yml
 ```
 
 Repo-root agent docs: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob/main/AGENTS.md) · [llms.txt](https://github.com/metagit-ai/metagit-cli/blob/main/llms.txt) · [docs/agents.md](https://metagit-ai.github.io/metagit-cli/agents/).
+
+<!-- modality:nav_flattened -->
+<!-- modality:managed_repo_search -->
+
+## Navigate a target (copy/paste)
+
+Do **not** call `metagit nav` (human FuzzyFinder; rejected in `METAGIT_AGENT_MODE`).
+
+```bash
+# 1. List every managed project/repo + path
+metagit workspace repo list -c .metagit.yml --json
+# MCP: metagit_workspace_repos_list
+
+# 2. Resolve one absolute path (fails if the query is ambiguous)
+cd "$(metagit search '<repo>' -c .metagit.yml --path-only)"
+# MCP: metagit_repo_search { "query": "<repo>", "path_only": true }
+```
+
+Humans: `metagit nav --all` (optional `--unmanaged`, `--print-path`).
 
 Global flags (most commands):
 
 - `metagit -c path/to/metagit.config.yaml` — **appconfig** only (default `metagit.config.yaml`)
 - Workspace manifest: `-c .metagit.yml` on `metagit config …`, `metagit workspace …`, and leaf `config graph suggest|export -c …`
+- Workspace manifest on the coordination families (`branch`, `lease`, `worktree`, `claim`, `task`, `semantic`, `merge`, `schedule`, `aos`): `--definition .metagit.yml` — these commands expose **no `-c`**
 - `--workspace-root` on graph suggest — checkout root used to **scan** inferred deps (default: appconfig `workspace.path`); not the manifest path
 
 ---
@@ -244,9 +264,9 @@ workspace:
 
 ```bash
 metagit appconfig show --format json
-metagit -c .metagit.yml config info
-metagit -c .metagit.yml config show
-metagit -c .metagit.yml config validate
+metagit config info -c .metagit.yml
+metagit config show -c .metagit.yml
+metagit config validate -c .metagit.yml
 
 metagit workspace list -c .metagit.yml --json
 metagit workspace project list -c .metagit.yml --json
@@ -280,12 +300,6 @@ metagit project rename --name <old> --new-name <new> --dry-run --json
 metagit project select
 metagit project sync
 metagit project sync --hydrate   # symlink mounts → full directory copies (per-file progress)
-
-metagit project derived create -n <name> --from <project>/<repo> --json
-metagit project derived create -n <name> --from <project>/<repo>/<component> --include-dependencies --json
-metagit project -p <name> derived refresh --json
-metagit project -p <name> derived include --from <project>/<repo> --json
-metagit project -p <name> derived exclude --repo <repo> --json
 
 metagit project repo list --json
 metagit project repo add --project <name> --name <repo> --url <url>
@@ -345,9 +359,9 @@ metagit project repo select
 See **Manifest editing fast map** above for day-to-day manifest work. Additional commands:
 
 ```bash
-metagit -c .metagit.yml config info
-metagit -c .metagit.yml config example
-metagit -c .metagit.yml config schema
+metagit config info -c .metagit.yml
+metagit config example
+metagit config schema
 metagit appconfig validate
 metagit appconfig get --name config.workspace.path
 metagit appconfig tree --json
@@ -537,7 +551,6 @@ Skill: `metagit-campaign`
 metagit record search "<query>"
 metagit skills list
 metagit skills show metagit-cli
-metagit skills surface --json
 metagit skills install --skill metagit-cli
 metagit version
 metagit version check --json

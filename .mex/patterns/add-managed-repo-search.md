@@ -24,7 +24,7 @@ Managed repo search is **only** the repos declared under `workspace.projects[].r
 ## Steps
 1. Confirm ranking/filter behavior in `ManagedRepoSearchService` (`search` / `resolve_one`) and adjust tests in `tests/test_project_search_service.py`.
 2. **CLI:** `src/metagit/cli/commands/search.py` — keep thin; delegate to the service + `MetagitConfigManager`.
-3. **MCP:** register in `tool_registry.py`, add `inputSchema` + dispatch in `runtime.py` (`metagit_repo_search`); extend `tests/core/mcp/test_runtime.py` (and integration if gating changes).
+3. **MCP:** register in `tool_registry.py`, add `inputSchema` + dispatch in `runtime.py` (`metagit_repo_search`, including `path_only` → `resolve_one`); extend `tests/core/mcp/test_runtime.py` (and integration if gating changes).
 4. **HTTP API:** `src/metagit/core/api/server.py` — GET handlers only; keep JSON stable; add tests under `tests/api/`.
 5. Regenerate schema if `.metagit.yml` / models affecting tags change (`task generate:schema`).
 

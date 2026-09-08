@@ -165,10 +165,11 @@ Day-1 Agent OS control loop (canonical): docs/agents-quickstart.md — context p
 1. `metagit appconfig show --format json` — workspace.path, dedupe, agent_mode.
 2. `metagit context pack --tier 0|1|2 --json` then `metagit aos status --json` / `metagit aos doctor --json`.
 3. `metagit workspace list -c <definition> --json` — projects, repos, clone/sync hints from index.
-4. `metagit config info -c <definition>` — manifest summary.
-5. `metagit search "<name-or-url>" -c <definition> --json` before creating projects or repos.
-6. Prefer `metagit workspace project|repo add` over hand-editing repo lists; always `metagit config validate -c <definition>` after edits.
-7. For coordinated work: `metagit aos next --json` (preview) then `--commit` when recording; see skill metagit-aos.""",
+4. `metagit workspace repo list -c <definition> --json` then `metagit search "<name>" --path-only` to cd into a managed repo. Never call `metagit nav` (human FuzzyFinder). MCP: `metagit_workspace_repos_list` and `metagit_repo_search` with `path_only: true`.
+5. `metagit config info -c <definition>` — manifest summary.
+6. `metagit search "<name-or-url>" -c <definition> --json` before creating projects or repos.
+7. Prefer `metagit workspace project|repo add` over hand-editing repo lists; always `metagit config validate -c <definition>` after edits.
+8. For coordinated work: `metagit aos next --json` (preview) then `--commit` when recording; see skill metagit-aos.""",
         "context-switch": """You are switching Metagit workspace context mid-session (not a cold session-start).
 
 1. Trust env exports already set (METAGIT_PROJECT, METAGIT_WORKSPACE_ROOT, METAGIT_WORKING_DIR, optional METAGIT_HERMES_PROFILE).

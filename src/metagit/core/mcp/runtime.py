@@ -202,6 +202,7 @@ class MetagitMcpRuntime:
                         "type": "object",
                         "additionalProperties": {"type": "string"},
                     },
+                    "path_only": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -1811,11 +1812,49 @@ class MetagitMcpRuntime:
             has_url_val = bool(has_url) if isinstance(has_url, bool) else None
             sync_enabled = arguments.get("sync_enabled")
             sync_enabled_val = bool(sync_enabled) if isinstance(sync_enabled, bool) else None
+            path_only_raw = arguments.get("path_only", False)
+            if path_only_raw not in (True, False):
+                raise InvalidToolArgumentsError("path_only must be a boolean")
+            project_filter = arguments.get("project")
+            project_val = (
+                str(project_filter).strip() if isinstance(project_filter, str) and project_filter.strip() else None
+            )
+            if path_only_raw:
+                resolved = self._managed_repo_search.resolve_one(
+                    config=config,
+                    workspace_root=status.root_path,
+                    query=query,
+                    project=project_val,
+                    exact=bool(arguments.get("exact", False)),
+                    synced_only=bool(arguments.get("synced_only", False)),
+                    tags=tag_filter,
+                    status=status_filter,
+                    has_url=has_url_val,
+                    sync_enabled=sync_enabled_val,
+                    sort=sort_val,
+                )
+                if resolved.error:
+                    return {"ok": False, "error": resolved.error.model_dump(mode="json")}
+                if resolved.match is None:
+                    return {
+                        "ok": False,
+                        "error": {
+                            "kind": "not_found",
+                            "message": "No managed repository matched the query.",
+                            "matches": [],
+                        },
+                    }
+                return {
+                    "ok": True,
+                    "path": resolved.match.status.resolved_path,
+                    "project": resolved.match.project_name,
+                    "repo": resolved.match.repo_name,
+                }
             result = self._managed_repo_search.search(
                 config=config,
                 workspace_root=status.root_path,
                 query=query,
-                project=arguments.get("project"),
+                project=project_val,
                 exact=bool(arguments.get("exact", False)),
                 synced_only=bool(arguments.get("synced_only", False)),
                 tags=tag_filter,
