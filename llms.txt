@@ -34,6 +34,8 @@ metagit prompt workspace --kind session-start --text-only
 |------|---------|
 | Context pack | `metagit context pack --tier 0\|1\|2 --json` |
 | Find repo (manifest) | `metagit search "query" --json` |
+| Resolve one repo path | `metagit search "query" --path-only` |
+| List all managed targets | `metagit workspace repo list --json` |
 | Grep file contents | `metagit workspace grep "query" --json` |
 | Grep backend status | `metagit workspace grep info --json` |
 | List workspace | `metagit workspace list --json` |

@@ -8,7 +8,7 @@ triggers:
 edges:
   - target: patterns/add-cli-command.md
     condition: when adding new TUI-launched CLI workflows
-last_updated: 2026-08-03
+last_updated: 2026-09-07
 ---
 
 # CLI TUI Hub
@@ -33,7 +33,7 @@ Dedicated CLI shortcut `metagit nav` / `navigate` (design `docs/superpowers/spec
 - Manifest flags differ by CLI group: `project`/`config` use `-c`; `workspace` uses `--config`; `search` uses trailing `--definition`.
 - The TUI catalog omits context/agent prompt commands; use the CLI directly for those workflows.
 - Legacy fuzzy picker (`run_repo_picker_session`) still suspends the hub and runs FuzzyFinder in a worker thread (`_run_textual_app`). Prefer the in-app project→repo screens for new UX.
-- `metagit nav` / `navigate` intentionally uses FuzzyFinder for project then repo (not in-TUI ListViews). Keep that as a separate CLI surface.
+- `metagit nav` / `navigate` intentionally uses FuzzyFinder for project then repo (not in-TUI ListViews). `--all` flattens managed `project/repo` rows; `--print-path` skips the editor. Keep that as a separate CLI surface. Agents use `workspace repo list` + `search --path-only`, not `nav`.
 - Quit bindings need `priority=True`; wrap `run_tui` against `KeyboardInterrupt`; catch `SuspendNotSupported` in interactive helpers.
 
 ## Verify

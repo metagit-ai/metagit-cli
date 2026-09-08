@@ -224,3 +224,88 @@ def test_nav_resolves_sync_root_from_manifest_dir(tmp_path: Path, monkeypatch) -
     )
     assert result.exit_code == 0
     assert Path(opened[0]).resolve() == (tmp_path / ".metagit" / "platform" / "backend").resolve()
+
+
+def test_nav_print_path_skips_editor(tmp_path: Path, monkeypatch) -> None:
+    app_cfg, metagit_yml = _write_multi_project_fixture(tmp_path)
+    opened: list[str] = []
+    monkeypatch.setattr("metagit.cli.commands.nav.open_editor", lambda *_a, **_k: opened.append("opened"))
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--config",
+            str(app_cfg),
+            "nav",
+            "-c",
+            str(metagit_yml),
+            "-p",
+            "platform",
+            "--repo",
+            "backend",
+            "--print-path",
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0, result.output
+    assert opened == []
+    expected = str((tmp_path / ".metagit" / "platform" / "backend").resolve())
+    assert result.output.strip() == expected
+
+
+def test_nav_all_uses_workspace_picker_and_ignores_project_repo(tmp_path: Path, monkeypatch) -> None:
+    app_cfg, metagit_yml = _write_multi_project_fixture(tmp_path)
+    opened: list[str] = []
+    called: list[dict] = []
+
+    def _fake_all(self, *_a, **kwargs):
+        called.append(kwargs)
+        return str(tmp_path / ".metagit" / "edge" / "gateway")
+
+    monkeypatch.setattr("metagit.cli.commands.nav.open_editor", lambda _e, p: opened.append(p))
+    monkeypatch.setattr(
+        "metagit.cli.commands.nav.select_project_name",
+        lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("project picker should not run")),
+    )
+    monkeypatch.setattr(
+        "metagit.core.project.manager.ProjectManager.select_workspace_repos",
+        _fake_all,
+    )
+    monkeypatch.setattr(
+        "metagit.core.project.manager.ProjectManager.resolve_selected_repo_path",
+        lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("--all must ignore --repo")),
+    )
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "--config",
+            str(app_cfg),
+            "nav",
+            "-c",
+            str(metagit_yml),
+            "--all",
+            "-p",
+            "platform",
+            "--repo",
+            "backend",
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == 0, result.output
+    assert called
+    assert called[0].get("include_unmanaged") is False
+    assert len(opened) == 1
+    assert "Ignoring --project/--repo" in (result.output or "")
+
+
+def test_nav_unmanaged_requires_all(tmp_path: Path) -> None:
+    app_cfg, metagit_yml = _write_multi_project_fixture(tmp_path)
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["--config", str(app_cfg), "nav", "-c", str(metagit_yml), "--unmanaged"],
+    )
+    assert result.exit_code != 0
+    combined = (result.output or "") + str(result.exception or "")
+    assert "unmanaged" in combined.lower()

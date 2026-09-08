@@ -571,6 +571,158 @@ class ProjectManager:
         elif path.is_dir():
             shutil.rmtree(path)
 
+    def _resolve_workspace_project(
+        self,
+        metagit_config: MetagitConfig,
+        project: str,
+    ) -> Union[WorkspaceProject, Exception]:
+        """Return the workspace project model for a picker, or a ValueError."""
+        if project == "local":
+            return metagit_config.local_workspace_project
+        workspace_project = find_project(metagit_config, project)
+        if workspace_project is None:
+            available = list_project_names(metagit_config)
+            hint = (
+                f" Available projects: {', '.join(available)}."
+                if available
+                else " No workspace projects are defined in .metagit.yml."
+            )
+            return ValueError(f"Project '{project}' not found in workspace configuration.{hint}")
+        return workspace_project
+
+    def _scan_sync_dir_previews(
+        self,
+        project_path: str,
+        *,
+        ignore_hidden: bool,
+    ) -> dict[str, str]:
+        """Build filesystem preview bodies for dirs and symlinks under a project mount."""
+        project_dict: dict[str, str] = {}
+        root = Path(project_path)
+        if not root.exists(follow_symlinks=True):
+            return project_dict
+        ignore_patterns = parse_gitignore(root / ".gitignore")
+        for entry in root.iterdir():
+            if not (entry.is_dir() or entry.is_symlink()):
+                continue
+            if ignore_hidden and entry.name.startswith("."):
+                continue
+            if should_ignore_path(entry, ignore_patterns, root):
+                continue
+            item_type = "Symlink" if entry.is_symlink() else "Directory"
+            has_git = (entry / ".git").exists() if entry.is_dir() else False
+            has_metagit_yml = (entry / ".metagit.yml").exists() if entry.is_dir() else False
+            description_parts = [
+                f"Name: {entry.name}",
+                f"Type: {item_type}",
+            ]
+            if entry.is_symlink():
+                target_path = entry.readlink()
+                try:
+                    if target_path.is_absolute():
+                        description_parts.append(f"Target: {os.path.relpath(target_path, project_path)}")
+                    else:
+                        description_parts.append(f"Target: {target_path}")
+                except (ValueError, OSError):
+                    description_parts.append(f"Target: {target_path}")
+            description_parts.append("Git: ✅ Repository" if has_git else "Git: ❌ No repository")
+            description_parts.append(
+                "MetaGit: ✅ .metagit.yml found" if has_metagit_yml else "MetaGit: ❌ No .metagit.yml"
+            )
+            project_dict[entry.name] = self._build_preview_sections(description_parts)
+        return project_dict
+
+    def _merge_managed_previews(
+        self,
+        project_dict: dict[str, str],
+        workspace_project: WorkspaceProject,
+    ) -> set[str]:
+        """Overlay catalog metadata and unmanaged status. Returns managed repo names."""
+        managed_repos = {repo.name for repo in workspace_project.repos}
+        for repo in workspace_project.repos:
+            if repo.name in project_dict:
+                summary_lines = self._build_project_repo_summary(repo)
+                project_dict[repo.name] = self._append_preview_lines(project_dict[repo.name], summary_lines)
+                continue
+            description_parts = [
+                f"Name: {repo.name}",
+                "Type: Missing (configured but not synced)",
+                "Status: ⚠️ Configured but missing",
+                "Git: ❓ Unknown (not synced)",
+                "MetaGit: ❓ Unknown (not synced)",
+            ]
+            description_parts.extend(self._build_project_repo_summary(repo))
+            project_dict[repo.name] = self._build_preview_sections(description_parts)
+        for item_name in list(project_dict.keys()):
+            if item_name not in managed_repos:
+                project_dict[item_name] = f"{project_dict[item_name]}\nStatus: ❌ Unmanaged"
+        return managed_repos
+
+    def _fuzzy_targets_from_previews(
+        self,
+        project_path: str,
+        project_dict: dict[str, str],
+        managed_repos: set[str],
+        *,
+        name_prefix: Optional[str] = None,
+    ) -> List[FuzzyFinderTarget]:
+        """Build FuzzyFinder rows. Optional name_prefix labels items as project/repo."""
+        targets: List[FuzzyFinderTarget] = []
+        for repo_name, description in project_dict.items():
+            target_path = Path(project_path) / repo_name
+            color = "#87ceeb" if target_path.is_symlink() else "white"
+            opacity = 1.0 if repo_name in managed_repos else 0.5
+            display_name = f"{name_prefix}/{repo_name}" if name_prefix else repo_name
+            targets.append(
+                FuzzyFinderTarget(
+                    name=display_name,
+                    description=description,
+                    color=color,
+                    opacity=opacity,
+                )
+            )
+        return targets
+
+    @staticmethod
+    def _normalize_selected_path(selected_path: str) -> str:
+        """Keep historical ../../ → ./ rewrite used by the per-project picker."""
+        if selected_path.startswith("../../"):
+            return selected_path.replace("../../", "./", 1)
+        return selected_path
+
+    def _run_repo_fuzzy_finder(
+        self,
+        items: List[FuzzyFinderTarget],
+        *,
+        show_preview: bool,
+        menu_length: int,
+        prompt_text: str,
+    ) -> Union[FuzzyFinderTarget, None, Exception]:
+        """Run FuzzyFinder over repo targets. Returns the selected target, None, or Exception."""
+        finder_config = FuzzyFinderConfig(
+            items=items,
+            prompt_text=prompt_text,
+            max_results=menu_length,
+            total_count=len(items),
+            query_mode_label="matches",
+            score_threshold=60.0,
+            highlight_color="bold white bg:#0066cc",
+            normal_color="cyan",
+            prompt_color="bold green",
+            separator_color="gray",
+            enable_preview=show_preview,
+            display_field="name",
+            preview_field="description",
+        )
+        selected = FuzzyFinder(finder_config).run()
+        if isinstance(selected, Exception):
+            return selected
+        if selected is None:
+            return None
+        if isinstance(selected, FuzzyFinderTarget):
+            return selected
+        return ValueError(f"Unexpected repo selection type: {type(selected)!r}")
+
     def select_repo(
         self,
         metagit_config: MetagitConfig,
@@ -588,152 +740,97 @@ class ProjectManager:
                 "Interactive repo selection is disabled in agent mode; "
                 "use `metagit project repo list --json` or specify a repo in commands"
             )
+        workspace_project = self._resolve_workspace_project(metagit_config, project)
+        if isinstance(workspace_project, Exception):
+            return workspace_project
         project_path: str = os.path.join(self.workspace_path, project)
-        if project == "local":
-            workspace_project = metagit_config.local_workspace_project
-        else:
-            workspace_project = find_project(metagit_config, project)
-            if workspace_project is None:
-                available = list_project_names(metagit_config)
-                if available:
-                    hint = f" Available projects: {', '.join(available)}."
-                else:
-                    hint = " No workspace projects are defined in .metagit.yml."
-                return ValueError(f"Project '{project}' not found in workspace configuration.{hint}")
-
         if not Path(project_path).exists(follow_symlinks=True):
             self.logger.warning(f"Project path does not exist for project: {project_path}")
             self.logger.warning(f"You can sync the project with `metagit workspace sync --project {project_path}`")
             return
-        project_dict = {}
-        ignore_patterns = parse_gitignore(Path(project_path) / ".gitignore")
-        # Iterate through the project path and add the directories and symlinks to the project_dict
-        for f in Path(project_path).iterdir():
-            if f.is_dir() or f.is_symlink():
-                if ignore_hidden and f.name.startswith("."):
-                    continue
-                if should_ignore_path(f, ignore_patterns, Path(project_path)):
-                    continue
-                # Determine type
-                item_type = "Symlink" if f.is_symlink() else "Directory"
-
-                # Check for git repository
-                has_git = (f / ".git").exists() if f.is_dir() else False
-
-                # Check for .metagit.yml file
-                has_metagit_yml = (f / ".metagit.yml").exists() if f.is_dir() else False
-
-                # Build initial description
-                description_parts = [
-                    f"Name: {f.name}",
-                    f"Type: {item_type}",
-                ]
-
-                if f.is_symlink():
-                    target_path = f.readlink()
-                    # Convert absolute path to relative path from project_path
-                    try:
-                        if target_path.is_absolute():
-                            relative_target = os.path.relpath(target_path, project_path)
-                            description_parts.append(f"Target: {relative_target}")
-                        else:
-                            description_parts.append(f"Target: {target_path}")
-                    except (ValueError, OSError):
-                        # Fallback to original path if relative path calculation fails
-                        description_parts.append(f"Target: {target_path}")
-
-                # Add git and metagit info
-                if has_git:
-                    description_parts.append("Git: ✅ Repository")
-                else:
-                    description_parts.append("Git: ❌ No repository")
-
-                if has_metagit_yml:
-                    description_parts.append("MetaGit: ✅ .metagit.yml found")
-                else:
-                    description_parts.append("MetaGit: ❌ No .metagit.yml")
-
-                project_dict[f.name] = self._build_preview_sections(description_parts)
-
-        # Track which items exist in the project configuration
-        managed_repos = {repo.name for repo in workspace_project.repos}
-
-        # Iterate through the workspace project and add the repo descriptions to the project_dict
-        for repo in workspace_project.repos:
-            if repo.name in project_dict:
-                # Update the description with management status and repo description
-                summary_lines = self._build_project_repo_summary(repo)
-                project_dict[repo.name] = self._append_preview_lines(project_dict[repo.name], summary_lines)
-            else:
-                # This repo is configured but doesn't exist on filesystem
-                description_parts = [
-                    f"Name: {repo.name}",
-                    "Type: Missing (configured but not synced)",
-                    "Status: ⚠️ Configured but missing",
-                    "Git: ❓ Unknown (not synced)",
-                    "MetaGit: ❓ Unknown (not synced)",
-                ]
-
-                description_parts.extend(self._build_project_repo_summary(repo))
-                project_dict[repo.name] = self._build_preview_sections(description_parts)
-
-        # Add unmanaged status to items that exist on filesystem but not in config
-        for item_name in list(project_dict.keys()):
-            if item_name not in managed_repos:
-                current_description = project_dict[item_name]
-                current_description += "\nStatus: ❌ Unmanaged"
-                project_dict[item_name] = current_description
-
-        projects: List[FuzzyFinderTarget] = []
-        for target in project_dict:
-            # Determine color based on directory type (check filesystem)
-            target_path = Path(project_path) / target
-            is_symlink = target_path.is_symlink()
-
-            # Set color: white for directories, light blue for symlinks
-            color = "#87ceeb" if is_symlink else "white"  # light blue for symlinks, white for directories
-
-            # Set opacity: 1.0 if managed (exists in project list), 0.5 if not managed
-            opacity = 1.0 if target in managed_repos else 0.5
-
-            projects.append(
-                FuzzyFinderTarget(
-                    name=target,
-                    description=project_dict[target],
-                    color=color,
-                    opacity=opacity,
-                )
-            )
+        project_dict = self._scan_sync_dir_previews(project_path, ignore_hidden=ignore_hidden)
+        managed_repos = self._merge_managed_previews(project_dict, workspace_project)
+        projects = self._fuzzy_targets_from_previews(project_path, project_dict, managed_repos)
         if len(projects) == 0:
             self.logger.warning(f"No projects found in workspace: {project_path}")
             return
-        finder_config = FuzzyFinderConfig(
-            items=projects,
+        selected = self._run_repo_fuzzy_finder(
+            projects,
+            show_preview=show_preview,
+            menu_length=menu_length,
             prompt_text="🔍 Search projects: ",
-            max_results=menu_length,
-            total_count=len(projects),
-            query_mode_label="matches",
-            score_threshold=60.0,
-            highlight_color="bold white bg:#0066cc",
-            normal_color="cyan",
-            prompt_color="bold green",
-            separator_color="gray",
-            enable_preview=show_preview,
-            display_field="name",
-            preview_field="description",
         )
-        finder = FuzzyFinder(finder_config)
-        selected = finder.run()
         if isinstance(selected, Exception):
             raise selected
         if selected is None:
             return None
-        else:
-            selected_path = os.path.join(project_path, selected.name)
-            # If the path starts with ../../, replace it with ./
-            if selected_path.startswith("../../"):
-                selected_path = selected_path.replace("../../", "./", 1)
-            return selected_path
+        selected_path = os.path.join(project_path, selected.name)
+        return self._normalize_selected_path(selected_path)
+
+    def select_workspace_repos(
+        self,
+        metagit_config: MetagitConfig,
+        *,
+        include_unmanaged: bool = False,
+        show_preview: bool = False,
+        menu_length: int = 10,
+        ignore_hidden: bool = True,
+        agent_mode: bool = False,
+        definition_root: Optional[str] = None,
+    ) -> Union[str, None, Exception]:
+        """Pick from a flattened list of workspace repos (managed-only unless include_unmanaged)."""
+        if agent_mode:
+            return ValueError(
+                "Interactive repo selection is disabled in agent mode; "
+                "use `metagit workspace repo list --json` or `metagit search QUERY --path-only`"
+            )
+        items: List[FuzzyFinderTarget] = []
+        path_by_label: dict[str, str] = {}
+        for project in list_project_names(metagit_config):
+            workspace_project = self._resolve_workspace_project(metagit_config, project)
+            if isinstance(workspace_project, Exception):
+                continue
+            project_path = os.path.join(self.workspace_path, project)
+            project_dict = self._scan_sync_dir_previews(project_path, ignore_hidden=ignore_hidden)
+            managed_repos = self._merge_managed_previews(project_dict, workspace_project)
+            if not include_unmanaged:
+                project_dict = {name: body for name, body in project_dict.items() if name in managed_repos}
+            for target in self._fuzzy_targets_from_previews(
+                project_path,
+                project_dict,
+                managed_repos,
+                name_prefix=project,
+            ):
+                repo_name = target.name.split("/", 1)[1] if "/" in target.name else target.name
+                if repo_name in managed_repos:
+                    resolved = self.resolve_selected_repo_path(
+                        metagit_config,
+                        project,
+                        repo_name,
+                        definition_root=definition_root,
+                    )
+                    path_by_label[target.name] = (
+                        str(resolved) if not isinstance(resolved, Exception) else os.path.join(project_path, repo_name)
+                    )
+                else:
+                    path_by_label[target.name] = os.path.join(project_path, repo_name)
+                items.append(target)
+        if not items:
+            return ValueError("No repositories found in workspace configuration.")
+        selected = self._run_repo_fuzzy_finder(
+            items,
+            show_preview=show_preview,
+            menu_length=menu_length,
+            prompt_text="🔍 Search repos: ",
+        )
+        if isinstance(selected, Exception):
+            return selected
+        if selected is None:
+            return None
+        selected_path = path_by_label.get(selected.name)
+        if selected_path is None:
+            return ValueError(f"Selected repo '{selected.name}' has no resolved path.")
+        return self._normalize_selected_path(selected_path)
 
     def resolve_selected_repo_path(
         self,

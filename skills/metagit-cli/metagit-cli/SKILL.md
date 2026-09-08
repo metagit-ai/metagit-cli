@@ -18,6 +18,18 @@ Global flags (most commands):
 - `-c path/to/metagit.config.yaml` — app config (default `metagit.config.yaml`)
 - Workspace manifest: `--definition` / `-c` on catalog commands (default `.metagit.yml`)
 
+<!-- modality:nav_flattened -->
+<!-- modality:managed_repo_search -->
+
+## Navigate a target (copy/paste)
+
+Do **not** call `metagit nav` (human FuzzyFinder; rejected in `METAGIT_AGENT_MODE`).
+
+```bash
+metagit workspace repo list -c .metagit.yml --json
+cd "$(metagit search '<repo>' -c .metagit.yml --path-only)"
+```
+
 ---
 
 ## Prompt commands (all kinds)

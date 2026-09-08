@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
-last_updated: 2026-09-06
+last_updated: 2026-09-07
 ---
 
 # Metagit
@@ -44,6 +44,8 @@ metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 |------|---------|
 | Workspace map / repo cards | `metagit context pack --tier 0\|1\|2 --json` |
 | Find managed repo | `metagit search "…" --json` |
+| Resolve one repo path | `metagit search "…" --path-only` (MCP `metagit_repo_search` `path_only: true`) |
+| List all managed targets | `metagit workspace repo list --json` (MCP `metagit_workspace_repos_list`) |
 | Repo CI topology | `metagit project repo ci show` / `detect` / `set` (`--json`) |
 | Search repo file contents | `metagit workspace grep "…" --json` |
 | Grep backend (ripgrep) | `metagit workspace grep info --json` |
@@ -62,7 +64,7 @@ metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 | Context compile | `metagit context compile --project P --repo R [--component NAME] [--depth N] --json` |
 | Components (RFC-0026–0032) | Nested `repos[].components[]`; `metagit component list|show|resolve|graph|detect|init`; `metagit claim declare --component`; `metagit project derived create --from P/R/C`; MCP `metagit_component_*` / `metagit_claim_*`; `metagit config validate` · [docs/concepts/components.md](docs/concepts/components.md) |
 | Context switch | `metagit context switch <project> [<repo>]` · `--json` · MCP `metagit_context_switch` |
-| Nav (human) | `metagit nav` / `navigate` [-p PROJECT] [--repo REPO] |
+| Nav (human) | `metagit nav` / `navigate` [--all] [--unmanaged] [--print-path] |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
