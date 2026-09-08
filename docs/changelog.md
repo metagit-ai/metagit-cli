@@ -2,13 +2,18 @@
 
 ## Unreleased
 
+
+
+## [0.32.0] - 2026-09-08
+
+
+
 ### Added
 - `metagit nav --all` flattens every managed `project/repo` into one FuzzyFinder with the existing repo-picker preview. `--unmanaged` includes extra sync-folder directories. `--print-path` prints the selected absolute path to stdout and skips the editor.
 - MCP `metagit_repo_search` accepts `path_only: true` (same `resolve_one` contract as `metagit search --path-only`).
 
 ### Changed
 - Agent docs/skills/`session-start` now tell agents to list targets with `workspace repo list --json` / `metagit_workspace_repos_list` and resolve a path with `search --path-only` / MCP `path_only` instead of `metagit nav`.
-
 
 ## [0.31.0] - 2026-09-07
 
