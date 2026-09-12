@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from metagit.core.campaign.models import (
+    CampaignContextProviderConfig,
     CampaignDocument,
     CampaignExpandResult,
     CampaignListItem,
@@ -307,5 +308,36 @@ class CampaignService:
         self._campaigns_dir.mkdir(parents=True, exist_ok=True)
         path = self._campaign_path(campaign.slug)
         payload = campaign.model_dump(mode="json", exclude_none=True)
+        context = payload.get("context")
+        if isinstance(context, dict) and not context.get("providers"):
+            payload.pop("context", None)
         path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
         return path
+
+    def persist(self, campaign: CampaignDocument) -> CampaignDocument:
+        """Write a campaign document and refresh its updated timestamp."""
+        campaign.updated = datetime.now(timezone.utc).isoformat()
+        self._save(campaign)
+        return campaign
+
+    def upsert_context_provider(
+        self,
+        slug: str,
+        provider: CampaignContextProviderConfig,
+    ) -> CampaignDocument:
+        """Replace or insert a context provider of the given type."""
+        campaign = self.load(slug)
+        if campaign is None:
+            raise ValueError(f"Unknown campaign: {slug!r}")
+        remaining = [item for item in campaign.context.providers if item.type != provider.type]
+        remaining.append(provider)
+        campaign.context.providers = remaining
+        return self.persist(campaign)
+
+    def remove_context_provider(self, slug: str, provider_type: str) -> CampaignDocument:
+        """Drop a context provider association without touching remote systems."""
+        campaign = self.load(slug)
+        if campaign is None:
+            raise ValueError(f"Unknown campaign: {slug!r}")
+        campaign.context.providers = [item for item in campaign.context.providers if item.type != provider_type]
+        return self.persist(campaign)

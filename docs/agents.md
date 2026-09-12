@@ -97,6 +97,7 @@ metagit workspace health --json
 
 <!-- modality:agent_profile_apply -->
 <!-- modality:native_campaigns -->
+<!-- modality:campaign_everroom_context -->
 <!-- modality:objective_mr_approval_binding -->
 <!-- modality:coordination_events_scope -->
 <!-- modality:semantic_ownership -->
@@ -145,7 +146,7 @@ metagit prompt project --kind sync-safe --project myproj --text-only
 | Shell / subprocess agent | IDE host with MCP (Cursor, Claude Desktop, OpenClaw) |
 | `METAGIT_AGENT_MODE=true` | Gate active (valid `.metagit.yml` in workspace) |
 
-Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_session_begin`, `metagit_repo_search`, `metagit_workspace_search`, `metagit_workspace_grep_info`, `metagit_workspace_discover`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`, `metagit_semantic_declare`, `metagit_semantic_query`, `metagit_semantic_owners`, `metagit_semantic_conflicts`, `metagit_semantic_ingest`, `metagit_component_list`, `metagit_component_show`, `metagit_component_resolve`.
+Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_session_begin`, `metagit_repo_search`, `metagit_workspace_search`, `metagit_workspace_grep_info`, `metagit_workspace_discover`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`, `metagit_semantic_declare`, `metagit_semantic_query`, `metagit_semantic_owners`, `metagit_semantic_conflicts`, `metagit_semantic_ingest`, `metagit_component_list`, `metagit_component_show`, `metagit_component_resolve`, `metagit_campaign_context`.
 
 **MCP resources (read-only, token-efficient):** `metagit://catalog` → `workspace/map` → `prompt/workspace/session-start?instructions=0` → `session/meta`; drill into `project/{name}/summary`, `repo/{p}/{r}/card`, `objectives`, `approvals/pending`, `session/digest/summary` when scoped. MCP **`prompts/list`** + **`prompts/get`** mirror prompt resources. Install skill `metagit-mcp-resources`. Spec: [reference/mcp-layered-resources-spec.md](reference/mcp-layered-resources-spec.md).
 

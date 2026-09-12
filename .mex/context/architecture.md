@@ -16,7 +16,7 @@ edges:
     condition: when implementing changes across CLI, core services, and tests
   - target: context/mcp-runtime.md
     condition: when task scope includes MCP tools, resources, stdio runtime, or sampling
-last_updated: 2026-09-06
+last_updated: 2026-09-12
 ---
 
 # Architecture
@@ -35,8 +35,8 @@ Testing flow is pytest-driven from `tests/` with focused unit tests per core mod
 - **Config subsystem (`metagit.core.config.*`)** — loads/creates/saves `.metagit.yml` and validates schema via Pydantic models; foundational for workspace and MCP gating behavior. Optional repository **components** (`metagit.core.component`) are nested under `ProjectPath.components` and checked by `config validate`.
 - **Detection subsystem (`metagit.core.detect.*`)** — infers repository metadata (language/framework/dependencies) and feeds generated config/context output.
 - **Record subsystem (`metagit.core.record.*`)** — manages normalized records and conversions; used for storage/search flows beyond raw config files.
-- **MCP runtime (`metagit.core.mcp.*`)** — stdio JSON-RPC server for tools/resources with state-aware gating, workspace path search/index, managed-repo search (`metagit_repo_search`), upstream hints, repo ops, and bootstrap sampling flow.
-- **MCP runtime (`metagit.core.mcp.*`)** — stdio JSON-RPC server for tools/resources with state-aware gating, workspace path search/index, managed-repo search (`metagit_repo_search`), upstream hints, repo ops, bootstrap sampling flow, and objective/session collaboration tools (session begin/digest + objective list/upsert/edit).
+- **Campaign overlays (`metagit.core.campaign`)** — committed YAML under `_campaigns/`; optional EverRoom context provider via `metagit.core.integrations.everroom` (loopback Gateway, no hard runtime dependency).
+- **MCP runtime (`metagit.core.mcp.*`)** — stdio JSON-RPC server for tools/resources with state-aware gating, workspace path search/index, managed-repo search (`metagit_repo_search`), upstream hints, repo ops, bootstrap sampling flow, objective/session collaboration tools, and `metagit_campaign_context`.
 - **Managed repo search (`metagit.core.project.search_service`, `search_models`)** — ranks `.metagit.yml` workspace repos with tags/status; shared by CLI, MCP, and the local HTTP API.
 - **Local HTTP API (`metagit.core.api.server`)** — optional `ThreadingHTTPServer` with read-only JSON routes for the same managed-repo search and resolve semantics.
 - **Local Web ops API (`metagit.core.web.*`)** — localhost-only v3 ops endpoints for workspace maintenance plus objective/session workflows (`/v3/ops/objectives*`, `/v3/ops/session*`) used by the SPA.
@@ -46,7 +46,7 @@ Testing flow is pytest-driven from `tests/` with focused unit tests per core mod
 - **Git providers (GitHub/GitLab APIs via provider modules)** — used for metadata/provider operations; provider wiring is optional/config-driven.
 - **Git repository access (`GitPython`)** — used for repo introspection and sync-like operations (`inspect`, `fetch`, `pull`, `clone`) in project/MCP flows.
 - **YAML/Pydantic stack (`PyYAML` + `pydantic`)** — enforces `.metagit.yml` and app config shape; all config entry points depend on this validation boundary.
-- **MCP client host (Cursor/other MCP-compatible runtime)** — provides stdio transport and optional sampling capability (`sampling/createMessage`) for bootstrap generation.
+- **EverRoom NxCore Gateway (optional)** — local loopback REST/OpenAPI for campaign context; configured with `METAGIT_EVERROOM_URL` / `METAGIT_EVERROOM_TOKEN`. Not required to run MetaGit.
 
 ## What Does NOT Exist Here
 - No production-grade multi-tenant HTTP deployment; the bundled HTTP server is for local use alongside the CLI and MCP.

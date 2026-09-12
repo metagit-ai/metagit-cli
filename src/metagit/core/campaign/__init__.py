@@ -2,6 +2,8 @@
 """Native workspace campaign primitives."""
 
 from metagit.core.campaign.models import (
+    CampaignContextConfig,
+    CampaignContextProviderConfig,
     CampaignDocument,
     CampaignExpandResult,
     CampaignListResult,
@@ -11,6 +13,8 @@ from metagit.core.campaign.models import (
 from metagit.core.campaign.service import CampaignService
 
 __all__ = [
+    "CampaignContextConfig",
+    "CampaignContextProviderConfig",
     "CampaignDocument",
     "CampaignExpandResult",
     "CampaignListResult",

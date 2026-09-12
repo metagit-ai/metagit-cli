@@ -96,6 +96,7 @@ class ToolRegistry:
         "metagit_schedule_next",
         "metagit_schedule_status",
         "metagit_schedule_policy",
+        "metagit_campaign_context",
         "metagit_aos_status",
         "metagit_aos_doctor",
         "metagit_aos_next",

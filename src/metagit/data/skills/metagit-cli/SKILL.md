@@ -534,12 +534,15 @@ Doc: `docs/reference/context-compiler.md`. MCP: `metagit_context_compile`.
 ## Campaigns
 
 <!-- modality:native_campaigns -->
+<!-- modality:campaign_everroom_context -->
 
 | Task | Command |
 |------|---------|
 | List / status | `metagit campaign list` / `metagit campaign status --slug <s> --json` |
 | Create | `metagit campaign new --slug <s> --title "…" --query "…"` |
 | Validate / set / expand | `metagit campaign validate` / `set` / `expand --dry-run` |
+| Context | `metagit campaign context --slug <s> --json` (MCP `metagit_campaign_context`) |
+| EverRoom | `metagit campaign everroom status\|attach\|create\|detach\|sync` |
 
 Skill: `metagit-campaign`
 

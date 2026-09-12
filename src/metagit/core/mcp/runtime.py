@@ -42,6 +42,7 @@ from metagit.core.mcp.resource_service import ResourceContext
 from metagit.core.mcp.resources import ResourcePublisher
 from metagit.core.mcp.root_resolver import WorkspaceRootResolver
 from metagit.core.mcp.services.bootstrap_sampling import BootstrapSamplingService
+from metagit.core.mcp.services.campaign_context import resolve_campaign_context_payload
 from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
@@ -731,6 +732,32 @@ class MetagitMcpRuntime:
                     "merge_pressure_penalty": {"type": "number"},
                     "skip_on_merge_pressure": {"type": "boolean"},
                     "graph_id": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_campaign_context": {
+                "type": "object",
+                "required": ["campaign"],
+                "properties": {
+                    "campaign": {"type": "string"},
+                    "include": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "summary",
+                                "repositories",
+                                "relationships",
+                                "git_state",
+                                "instructions",
+                                "decisions",
+                                "open_questions",
+                                "documents",
+                                "sources",
+                                "knowledge",
+                            ],
+                        },
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -2591,6 +2618,8 @@ class MetagitMcpRuntime:
 
         if name.startswith("metagit_schedule_"):
             return self._call_schedule_tool(name, arguments, status)
+        if name == "metagit_campaign_context":
+            return self._call_campaign_context_tool(arguments, status, config)
         if name.startswith("metagit_aos_") or name.startswith("metagit_coord_"):
             return self._call_aos_tool(name, arguments, status)
 
@@ -3484,6 +3513,43 @@ class MetagitMcpRuntime:
                 )
             )
         raise ValueError(f"Unsupported schedule tool: {name}")
+
+    def _call_campaign_context_tool(
+        self,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+        config: Any,
+    ) -> dict[str, Any]:
+        if not config or not status.root_path:
+            raise InvalidToolArgumentsError("campaign context requires an active workspace")
+        slug = str(arguments.get("campaign", "")).strip()
+        if not slug:
+            raise InvalidToolArgumentsError("campaign is required")
+        include_raw = arguments.get("include")
+        include: list[str] | None = None
+        if isinstance(include_raw, list) and include_raw:
+            include = [str(item).strip() for item in include_raw if str(item).strip()]
+            if not include:
+                include = None
+        definition_root = status.root_path
+        app_config = AppConfig.load()
+        sync_root = (
+            resolve_sync_root(definition_root, app_config.workspace.path)
+            if not isinstance(app_config, Exception)
+            else definition_root
+        )
+        loaded_app = app_config if not isinstance(app_config, Exception) else None
+        try:
+            return resolve_campaign_context_payload(
+                config=config,
+                definition_root=definition_root,
+                workspace_root=sync_root,
+                slug=slug,
+                include=include,
+                appconfig=loaded_app,
+            )
+        except ValueError as exc:
+            raise InvalidToolArgumentsError(str(exc)) from exc
 
     def _call_component_tool(
         self,

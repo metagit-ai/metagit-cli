@@ -28,6 +28,7 @@ nav:
     - 'Derived projects': 'reference/derived-projects.md'
     - 'Skills surface': 'reference/skills-surface.md'
     - 'Campaigns': 'reference/campaigns.md'
+    - 'Campaign ↔ EverRoom': 'reference/campaign-everroom.md'
     - 'Agent coordination (ACL)': 'reference/agent-coordination.md'
     - 'Task graph & intent': 'reference/task-graph.md'
     - 'Context compiler': 'reference/context-compiler.md'

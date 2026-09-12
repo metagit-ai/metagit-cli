@@ -134,6 +134,38 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:native_campaigns"
 
+  - id: campaign_everroom_context
+    description: Optional Campaign ↔ EverRoom Room association and provenance-aware campaign context
+    service: metagit.core.campaign.context.CampaignContextService
+    reference_doc: docs/reference/campaign-everroom.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/campaign.py
+            contains: '@campaign.command("context")'
+          - path: src/metagit/cli/commands/campaign.py
+            contains: '@campaign.group("everroom")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_campaign_context
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_campaign_context
+      documentation:
+        markers:
+          - path: docs/reference/campaign-everroom.md
+            contains: "modality:campaign_everroom_context"
+          - path: docs/reference/campaigns.md
+            contains: "modality:campaign_everroom_context"
+          - path: docs/agents.md
+            contains: "modality:campaign_everroom_context"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-campaign/SKILL.md
+            contains: "modality:campaign_everroom_context"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:campaign_everroom_context"
+
   - id: handoff_lease_heartbeat
     description: Handoff claim TTL, heartbeat renew, auto-release expired claims
     service: metagit.core.context.handoff_service.HandoffService

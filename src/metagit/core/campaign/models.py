@@ -71,6 +71,30 @@ class CampaignLesson(BaseModel):
     recorded_at: Optional[str] = Field(default=None, description="ISO timestamp")
 
 
+class CampaignContextProviderConfig(BaseModel):
+    """Optional external context provider bound to a campaign.
+
+    Tokens and credentials must never be stored here. EverRoom persists only
+    ``room_id`` and ``endpoint`` so stale Gateway configuration can be detected.
+    """
+
+    type: str
+    room_id: Optional[str] = Field(
+        default=None,
+        description="Provider-native stable identifier (EverRoom Room id, not the campaign slug)",
+    )
+    endpoint: Optional[str] = Field(
+        default=None,
+        description="Gateway base URL used when this association was last verified",
+    )
+
+
+class CampaignContextConfig(BaseModel):
+    """Campaign-local context provider associations."""
+
+    providers: list[CampaignContextProviderConfig] = Field(default_factory=list)
+
+
 class CampaignDocument(BaseModel):
     """On-disk campaign overlay committed under the configured campaigns directory."""
 
@@ -101,6 +125,10 @@ class CampaignDocument(BaseModel):
     selection: CampaignSelection = Field(default_factory=CampaignSelection)
     repos: list[CampaignRepoEntry] = Field(default_factory=list)
     lessons: list[CampaignLesson] = Field(default_factory=list)
+    context: CampaignContextConfig = Field(
+        default_factory=CampaignContextConfig,
+        description="Optional external context providers (EverRoom Room association, …)",
+    )
 
     @field_validator("schema_version", mode="before")
     @classmethod
@@ -116,6 +144,13 @@ class CampaignDocument(BaseModel):
         if isinstance(value, str):
             return _STATUS_ALIASES.get(value, value)
         return value
+
+    def everroom_provider(self) -> Optional[CampaignContextProviderConfig]:
+        """Return the EverRoom provider association when one is configured."""
+        for provider in self.context.providers:
+            if provider.type == "everroom":
+                return provider
+        return None
 
 
 class CampaignListItem(BaseModel):

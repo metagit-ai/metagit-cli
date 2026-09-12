@@ -45,7 +45,7 @@ metagit prompt workspace --kind session-start --text-only
 | Latest release / notes | `metagit version check --json` |
 | Self-update | `metagit version upgrade --apply --json` |
 | Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
-| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
+| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` · `metagit campaign context` |
 | ACL branch / lease | `metagit branch allocate` · `metagit lease acquire --allocate` |
 | Task graph / intent | `metagit task create` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R --json` |

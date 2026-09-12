@@ -297,6 +297,34 @@ class MergeConfig(BaseModel):
     )
 
 
+class EverRoomConfig(BaseModel):
+    """Optional local EverRoom Gateway connection defaults.
+
+    Bearer tokens belong in ``METAGIT_EVERROOM_TOKEN`` (or this local appconfig
+    field). They must never be written to campaign YAML or Git.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = Field(
+        default=False,
+        description="When true, use these defaults when a campaign EverRoom provider is attached",
+    )
+    endpoint: str = Field(
+        default="http://127.0.0.1:3210",
+        description="EverRoom Gateway base URL (loopback by default)",
+    )
+    token: str = Field(
+        default="",
+        description="Gateway bearer token; prefer METAGIT_EVERROOM_TOKEN so it is not written to files",
+    )
+    timeout_seconds: float = Field(
+        default=8.0,
+        ge=0.5,
+        description="HTTP timeout for Gateway requests",
+    )
+
+
 class AppConfig(BaseModel):
     """Application-level settings (not the Metagit package release version — use `metagit version`)."""
 
@@ -342,6 +370,10 @@ class AppConfig(BaseModel):
         description="Workspace coordination state backend (objectives, handoffs, approvals)",
     )
     merge: MergeConfig = Field(default_factory=MergeConfig, description="Merge orchestrator settings")
+    everroom: EverRoomConfig = Field(
+        default_factory=EverRoomConfig,
+        description="Optional EverRoom Gateway defaults for campaign context",
+    )
 
     @classmethod
     def _normalize_loaded_payload(cls, payload: object) -> object:
@@ -493,6 +525,23 @@ class AppConfig(BaseModel):
             config.providers.azure_devops.api_token = os.getenv("AZURE_DEVOPS_EXT_PAT", "")
         if os.getenv("METAGIT_AZURE_DEVOPS_BASE_URL"):
             config.providers.azure_devops.base_url = os.getenv("METAGIT_AZURE_DEVOPS_BASE_URL", "")
+
+        if os.getenv("METAGIT_EVERROOM_ENABLED"):
+            config.everroom.enabled = os.getenv("METAGIT_EVERROOM_ENABLED", "").lower() == "true"
+        if os.getenv("METAGIT_EVERROOM_URL"):
+            config.everroom.endpoint = os.getenv("METAGIT_EVERROOM_URL", "")
+        elif os.getenv("METAGIT_EVERROOM_ENDPOINT"):
+            config.everroom.endpoint = os.getenv("METAGIT_EVERROOM_ENDPOINT", "")
+        if os.getenv("METAGIT_EVERROOM_TOKEN"):
+            config.everroom.token = os.getenv("METAGIT_EVERROOM_TOKEN", "")
+        timeout_raw = os.getenv("METAGIT_EVERROOM_TIMEOUT")
+        if timeout_raw:
+            try:
+                parsed_timeout = float(timeout_raw)
+            except ValueError:
+                parsed_timeout = None
+            if parsed_timeout is not None:
+                config.everroom.timeout_seconds = parsed_timeout
 
         return config
 

@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
-last_updated: 2026-09-07
+last_updated: 2026-09-12
 ---
 
 # Metagit
@@ -55,7 +55,7 @@ metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 | Latest release / notes | `metagit version check --json` |
 | Self-update | `metagit version upgrade --apply --json` |
 | Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
-| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` |
+| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` · `metagit campaign context` |
 | Derived surgical project | `metagit project derived create -n N --from P/R` or `P/R/C` [`--include-dependencies`] · `refresh` · `include` · `exclude` |
 | Skills surface | `metagit skills surface --json` |
 | ACL isolate agent checkout | `metagit branch allocate` · `metagit lease acquire --allocate` · `metagit worktree create` |
