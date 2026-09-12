@@ -109,7 +109,8 @@ Structured manifest fields and CLI groups for multi-agent coordination. Full ref
 - **`metagit agent profile show`** — print the effective merged profile for one repo.
 
 <!-- modality:native_campaigns -->
-- **`metagit campaign`** — `list`, `status`, `new`, `validate`, `set`, `expand` for cross-project campaign YAML under `workspace.campaigns_path` (default `_campaigns/`). See [campaigns.md](reference/campaigns.md).
+<!-- modality:campaign_everroom_context -->
+- **`metagit campaign`** — `list`, `status`, `new`, `validate`, `set`, `expand`, `context`, and optional `everroom` attach/status/sync for cross-project campaign YAML under `workspace.campaigns_path` (default `_campaigns/`). See [campaigns.md](reference/campaigns.md) and [campaign-everroom.md](reference/campaign-everroom.md).
 
 <!-- modality:handoff_lease_heartbeat -->
 <!-- modality:coordination_events_scope -->

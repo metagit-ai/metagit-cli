@@ -74,6 +74,9 @@ def test_appconfig_defaults():
     assert cfg.workspace.session_path == ".metagit/sessions"
     assert cfg.workspace.dedupe.enabled is False
     assert cfg.workspace.ui_ignore_hidden is True
+    assert cfg.everroom.enabled is False
+    assert cfg.everroom.endpoint == "http://127.0.0.1:3210"
+    assert cfg.everroom.token == ""
 
 
 def test_appconfig_load_and_save(tmp_path):

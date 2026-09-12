@@ -45,6 +45,11 @@ repos:
 lessons:
   - text: Prefer agent apply before dispatch
     recorded_at: "2026-07-06T18:00:00+00:00"
+context:
+  providers:   # optional; omitted when empty
+    - type: everroom
+      room_id: room_01J…
+      endpoint: http://127.0.0.1:3210   # never store tokens here
 ```
 
 > **Legacy compatibility.** Documents authored before the native schema are read
@@ -64,6 +69,8 @@ lessons:
 | `metagit campaign validate` | Schema + every repo exists in atlas |
 | `metagit campaign set --slug <s> --repo project/repo --status merged [--mr URL] [--note "…"]` | Update one repo row |
 | `metagit campaign expand --slug <s> [--tag k=v] [--dry-run]` | One spine objective per matching repo |
+| `metagit campaign context --slug <s> [--include …]` | Provenance-aware MetaGit + optional EverRoom packet |
+| `metagit campaign everroom status\|attach\|create\|detach\|sync` | Optional Room association (see [campaign-everroom.md](campaign-everroom.md)) |
 
 `campaign new` accepts **either** `--query` (dynamic resolution) **or** one or more
 `--repo project/repo` (explicit frozen set); at least one is required. Optional
@@ -112,7 +119,9 @@ Documented in [For AI agents](../agents.md#handoffs-and-leases). Campaign orches
 
 ## MCP / Web
 
-CLI-only in v0.13.x. Objectives/approvals/handoffs remain available via MCP and web ops routes; campaign documents are file-based and read through the CLI today.
+<!-- modality:campaign_everroom_context -->
+
+Campaign YAML remains file-based. Combined **Campaign Context** is available via CLI `metagit campaign context` and MCP `metagit_campaign_context`. Optional EverRoom Room association: [campaign-everroom.md](campaign-everroom.md). Objectives/approvals/handoffs remain available via MCP and web ops routes.
 
 ## Related skills
 

@@ -42,19 +42,19 @@
           "type": "string"
         },
         "cicd_file_data": {
-          "default": "/home/zloeber/Projects/zachs-assistant/.metagit/metagit-umbrella/metagit-cli/src/metagit/data/cicd-files.json",
+          "default": "/workspace/src/metagit/data/cicd-files.json",
           "description": "The path to the cicd file data",
           "title": "Cicd File Data",
           "type": "string"
         },
         "file_type_data": {
-          "default": "/home/zloeber/Projects/zachs-assistant/.metagit/metagit-umbrella/metagit-cli/src/metagit/data/file-types.json",
+          "default": "/workspace/src/metagit/data/file-types.json",
           "description": "The path to the file type data",
           "title": "File Type Data",
           "type": "string"
         },
         "package_manager_data": {
-          "default": "/home/zloeber/Projects/zachs-assistant/.metagit/metagit-umbrella/metagit-cli/src/metagit/data/package-managers.json",
+          "default": "/workspace/src/metagit/data/package-managers.json",
           "description": "The path to the package manager data",
           "title": "Package Manager Data",
           "type": "string"
@@ -171,6 +171,10 @@
           "$ref": "#/$defs/MergeConfig",
           "description": "Merge orchestrator settings"
         },
+        "everroom": {
+          "$ref": "#/$defs/EverRoomConfig",
+          "description": "Optional EverRoom Gateway defaults for campaign context"
+        },
         "default_profile": {
           "type": "string",
           "description": "Legacy profile selector (removed on load)"
@@ -233,6 +237,39 @@
         "name"
       ],
       "title": "Boundary",
+      "type": "object"
+    },
+    "EverRoomConfig": {
+      "additionalProperties": false,
+      "description": "Optional local EverRoom Gateway connection defaults.\n\nBearer tokens belong in ``METAGIT_EVERROOM_TOKEN`` (or this local appconfig\nfield). They must never be written to campaign YAML or Git.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "description": "When true, use these defaults when a campaign EverRoom provider is attached",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "endpoint": {
+          "default": "http://127.0.0.1:3210",
+          "description": "EverRoom Gateway base URL (loopback by default)",
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "token": {
+          "default": "",
+          "description": "Gateway bearer token; prefer METAGIT_EVERROOM_TOKEN so it is not written to files",
+          "title": "Token",
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "default": 8.0,
+          "description": "HTTP timeout for Gateway requests",
+          "minimum": 0.5,
+          "title": "Timeout Seconds",
+          "type": "number"
+        }
+      },
+      "title": "EverRoomConfig",
       "type": "object"
     },
     "GitHubProvider": {

@@ -23,6 +23,25 @@ metagit prompt workspace -k session-start --text-only -c .metagit.yml
 
 Repo-root agent docs: [AGENTS.md](https://github.com/metagit-ai/metagit-cli/blob/main/AGENTS.md) · [llms.txt](https://github.com/metagit-ai/metagit-cli/blob/main/llms.txt) · [docs/agents.md](https://metagit-ai.github.io/metagit-cli/agents/).
 
+<!-- modality:nav_flattened -->
+<!-- modality:managed_repo_search -->
+
+## Navigate a target (copy/paste)
+
+Do **not** call `metagit nav` (human FuzzyFinder; rejected in `METAGIT_AGENT_MODE`).
+
+```bash
+# 1. List every managed project/repo + path
+metagit workspace repo list -c .metagit.yml --json
+# MCP: metagit_workspace_repos_list
+
+# 2. Resolve one absolute path (fails if the query is ambiguous)
+cd "$(metagit search '<repo>' -c .metagit.yml --path-only)"
+# MCP: metagit_repo_search { "query": "<repo>", "path_only": true }
+```
+
+Humans: `metagit nav --all` (optional `--unmanaged`, `--print-path`).
+
 Global flags (most commands):
 
 - `metagit -c path/to/metagit.config.yaml` — **appconfig** only (default `metagit.config.yaml`)
@@ -386,6 +405,7 @@ metagit branch allocate --repository project/repo --agent-id agent-1 --task-id 4
 metagit lease acquire --repository project/repo --agent-id agent-1 --task-id 412 --allocate --json
 metagit worktree create --repository project/repo --agent-id agent-1 --task-id 412 --branch agent/412 --json
 metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'src/*' --json
+metagit claim declare --repository platform/core --agent-id agent-1 --component web --json
 metagit worktree manifest agent-1
 ```
 
@@ -468,6 +488,37 @@ Doc: `docs/reference/aos.md`. MCP: `metagit_aos_status|doctor|next` (+ `metagit_
 
 ---
 
+## Workspace discovery & readiness (RFC-0020)
+
+<!-- modality:workspace_health -->
+<!-- modality:workspace_summary -->
+
+| Task | Command |
+|------|---------|
+| Maintenance health | `metagit workspace health --json` |
+| Readiness summary | `metagit workspace summary --json` |
+
+Doc: `docs/reference/workspace-discovery.md`. MCP health: `metagit_workspace_health_check` (summary MCP deferred).
+
+---
+
+## Derived projects + skills surface
+
+<!-- modality:derived_projects -->
+<!-- modality:skills_surface -->
+
+| Task | Command |
+|------|---------|
+| Create derived project | `metagit project derived create -n NAME --from P/R [--from P/R/C] [--include-dependencies] --json` |
+| Refresh identity | `metagit project -p NAME derived refresh --json` |
+| Include / exclude | `metagit project -p NAME derived include --from P/R` / `exclude --repo R` |
+| Sync derived mounts | `metagit project -p NAME sync` |
+| Skills inventory | `metagit skills surface [--project P] [--repo R] --json` |
+
+Docs: `docs/reference/derived-projects.md`, `docs/reference/skills-surface.md`. MCP: `metagit_project_derived_*`, `metagit_skills_surface`.
+
+---
+
 ## Context Compiler (RFC-0009)
 
 <!-- modality:context_compile -->
@@ -483,12 +534,15 @@ Doc: `docs/reference/context-compiler.md`. MCP: `metagit_context_compile`.
 ## Campaigns
 
 <!-- modality:native_campaigns -->
+<!-- modality:campaign_everroom_context -->
 
 | Task | Command |
 |------|---------|
 | List / status | `metagit campaign list` / `metagit campaign status --slug <s> --json` |
 | Create | `metagit campaign new --slug <s> --title "…" --query "…"` |
 | Validate / set / expand | `metagit campaign validate` / `set` / `expand --dry-run` |
+| Context | `metagit campaign context --slug <s> --json` (MCP `metagit_campaign_context`) |
+| EverRoom | `metagit campaign everroom status\|attach\|create\|detach\|sync` |
 
 Skill: `metagit-campaign`
 
