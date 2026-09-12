@@ -4,6 +4,13 @@
 
 
 
+## [0.33.0] - 2026-09-12
+
+
+
+### Added
+- Optional MetaGit Campaign ↔ EverRoom Room integration: `metagit campaign context` assembles a provenance-aware packet (`context_schema_version: "1"`) from campaign topology plus Room-scoped evidence. CLI `metagit campaign everroom status|attach|create|detach|sync`, MCP `metagit_campaign_context`, and local Gateway auth via `METAGIT_EVERROOM_URL` / `METAGIT_EVERROOM_TOKEN` (never stored in campaign YAML). EverRoom outages degrade read-only context to MetaGit-only instead of failing the campaign command. Docs: [campaign-everroom.md](reference/campaign-everroom.md).
+
 ## [0.32.0] - 2026-09-08
 
 
