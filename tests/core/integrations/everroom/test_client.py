@@ -109,7 +109,9 @@ def test_connection_refused() -> None:
     client = EverRoomHttpClient(endpoint="http://127.0.0.1:1", token=SECRET_TOKEN, timeout_seconds=0.2)
     with pytest.raises(EverRoomUnavailableError) as exc:
         client.health()
-    assert "unavailable" in exc.value.message.lower()
+    assert exc.value.status == "UNAVAILABLE"
+    # Windows may surface this as a timeout rather than an immediate refuse.
+    assert "unavailable" in exc.value.message.lower() or "timed out" in exc.value.message.lower()
     assert SECRET_TOKEN not in str(exc.value)
 
 
