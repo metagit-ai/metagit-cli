@@ -2,12 +2,17 @@
 
 ## Unreleased
 
+
+
+## [0.34.0] - 2026-09-16
+
+
+
 ### Added
 - External repository nodes and GitHub organization indexing: `metagit org index github <org>` stores disposable observations in `~/.metagit/indexes/github/` (no clone). `metagit org search` queries that index. Graph validation now resolves relationship endpoints through local repos, curated `graph.nodes`, or the org index. `metagit graph neighbors` and `metagit repo materialize` keep `github://org/repo` identity stable from known → indexed → materialized. MCP `metagit_org_*` / `metagit_graph_neighbors`; web `GET /v3/ops/org/search`. Docs: [org-index.md](reference/org-index.md).
 
 ### Changed
 - Agent bootstrap skills default to deterministic `metagit init --kind application --no-prompt`. Detect payloads write to `--output-file` (typically `.metagit/.detect/`) instead of dumping yaml/json into context. `metagit detect repo_map` is no longer part of skill/prompt discovery chains.
-
 
 ## [0.33.0] - 2026-09-12
 
