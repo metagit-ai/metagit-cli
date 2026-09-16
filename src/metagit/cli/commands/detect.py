@@ -30,6 +30,26 @@ from metagit.core.utils.files import (
     list_git_files,
 )
 
+_OUTPUT_FILE_HELP = (
+    "Write the full payload to this path and print a compact status line "
+    "(status=written path=... bytes=... format=...). Prefer this over dumping "
+    "yaml/json to stdout in agent sessions."
+)
+
+
+def _emit_detect_payload(payload: object, *, output_file: str | None, fmt: str) -> None:
+    """Echo a detect payload, or write it to disk and print a compact status line."""
+    if not output_file:
+        click.echo(payload)
+        return
+    text = payload if isinstance(payload, str) else json.dumps(payload, indent=2, default=str)
+    if not text.endswith("\n"):
+        text = f"{text}\n"
+    path = Path(output_file).expanduser()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    click.echo(f"status=written\tpath={path.resolve()}\tbytes={path.stat().st_size}\tformat={fmt}")
+
 
 @click.group(name="detect", invoke_without_command=True, help="Detection subcommands")
 @click.pass_context
@@ -56,8 +76,9 @@ def detect(ctx: click.Context) -> None:
     show_default=True,
     help="Output format (yaml, json, summary).",
 )
+@click.option("--output-file", default=None, help=_OUTPUT_FILE_HELP)
 @click.pass_context
-def detect_project(ctx: click.Context, path: str, output: str) -> None:
+def detect_project(ctx: click.Context, path: str, output: str, output_file: str | None) -> None:
     """Perform project detection and analysis."""
     logger = ctx.obj["logger"]
     try:
@@ -91,7 +112,7 @@ def detect_project(ctx: click.Context, path: str, output: str) -> None:
             "project_detections": [d["name"] for d in detections],
             "total_detections": len(detections),
         }
-        click.echo(json.dumps(summary, indent=2))
+        _emit_detect_payload(json.dumps(summary, indent=2), output_file=output_file, fmt="summary")
         return
 
     # .model_dump(exclude_none=True, exclude_defaults=True)
@@ -104,12 +125,12 @@ def detect_project(ctx: click.Context, path: str, output: str) -> None:
 
     if output == "yaml":
         yaml_output = yaml.safe_dump(full_result, default_flow_style=False, sort_keys=False, indent=2)
-        click.echo(yaml_output)
+        _emit_detect_payload(yaml_output, output_file=output_file, fmt="yaml")
     elif output == "json":
         json_output = json.dumps(full_result, indent=2)
-        click.echo(json_output)
+        _emit_detect_payload(json_output, output_file=output_file, fmt="json")
     else:
-        click.echo(detections)
+        _emit_detect_payload(detections, output_file=output_file, fmt=output)
 
 
 @detect.command("repo_map")
@@ -127,9 +148,10 @@ def detect_project(ctx: click.Context, path: str, output: str) -> None:
     show_default=True,
     help="Output format (yaml, json, summary).",
 )
+@click.option("--output-file", default=None, help=_OUTPUT_FILE_HELP)
 @click.pass_context
-def detect_repo_map(ctx: click.Context, path: str, output: str) -> None:
-    """Create a map of files and folders in a repository for further analysis."""
+def detect_repo_map(ctx: click.Context, path: str, output: str, output_file: str | None) -> None:
+    """Create a directory map. Agents should avoid this command; it is large and rarely needed."""
     logger = ctx.obj["logger"]
     try:
         summary = directory_summary(path)
@@ -149,12 +171,12 @@ def detect_repo_map(ctx: click.Context, path: str, output: str) -> None:
     }
     if output == "yaml":
         yaml_output = yaml.safe_dump(result, default_flow_style=False, sort_keys=False, indent=2)
-        click.echo(yaml_output)
+        _emit_detect_payload(yaml_output, output_file=output_file, fmt="yaml")
     elif output == "json":
         json_output = json.dumps(result, indent=2)
-        click.echo(json_output)
+        _emit_detect_payload(json_output, output_file=output_file, fmt="json")
     else:
-        click.echo(result)
+        _emit_detect_payload(result, output_file=output_file, fmt=output)
 
 
 @detect.command("repo")
@@ -172,8 +194,9 @@ def detect_repo_map(ctx: click.Context, path: str, output: str) -> None:
     show_default=True,
     help="Output format (yaml, json, summary).",
 )
+@click.option("--output-file", default=None, help=_OUTPUT_FILE_HELP)
 @click.pass_context
-def detect_repo(ctx: click.Context, path: str, output: str) -> None:
+def detect_repo(ctx: click.Context, path: str, output: str, output_file: str | None) -> None:
     """Detect the codebase."""
     logger = ctx.obj["logger"]
     try:
@@ -191,17 +214,17 @@ def detect_repo(ctx: click.Context, path: str, output: str) -> None:
             yaml_output = project.to_yaml()
             if isinstance(yaml_output, Exception):
                 raise yaml_output
-            click.echo(yaml_output)
+            _emit_detect_payload(yaml_output, output_file=output_file, fmt="yaml")
         elif output == "json":
             json_output = project.to_json()
             if isinstance(json_output, Exception):
                 raise json_output
-            click.echo(json_output)
+            _emit_detect_payload(json_output, output_file=output_file, fmt="json")
         else:
             summary_output = project.summary()
             if isinstance(summary_output, Exception):
                 raise summary_output
-            click.echo(summary_output)
+            _emit_detect_payload(summary_output, output_file=output_file, fmt="summary")
     except Exception as e:
         logger.error(f"Error analyzing project at {path}: {e}")
         ctx.abort()
@@ -236,6 +259,7 @@ def detect_repo(ctx: click.Context, path: str, output: str) -> None:
     ),
     help="Output format. Defaults to 'summary'",
 )
+@click.option("--output-file", default=None, help=_OUTPUT_FILE_HELP)
 @click.option(
     "--save",
     "-s",
@@ -290,6 +314,7 @@ def detect_repository(
     path: str,
     url: str,
     output: str,
+    output_file: str | None,
     save: bool,
     temp_dir: str,
     github_token: str,
@@ -434,9 +459,11 @@ def detect_repository(
                 indent=2,
             )
 
-        if not save:
+        if output_file:
+            _emit_detect_payload(result, output_file=output_file, fmt=output)
+        elif not save:
             click.echo(result)
-        else:
+        if save:
             save_target = Path(config_path)
             agent_mode = bool(ctx.obj.get("agent_mode", False))
             if save_target.is_file() and force and agent_mode:

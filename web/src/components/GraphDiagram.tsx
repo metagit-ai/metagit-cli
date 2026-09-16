@@ -87,6 +87,26 @@ function center(layout: LayoutNode): { cx: number; cy: number } {
   }
 }
 
+function nodeClass(node: GraphViewNode): string {
+  if (node.kind === 'project') {
+    return styles.nodeProject
+  }
+  if (node.presence === 'indexed') {
+    return styles.nodeIndexed
+  }
+  if (node.presence === 'known') {
+    return styles.nodeKnown
+  }
+  return styles.nodeRepo
+}
+
+function nodeLabel(node: GraphViewNode): string {
+  if (node.kind === 'repo' && node.presence && node.presence !== 'materialized') {
+    return `${node.label} [${node.presence}]`
+  }
+  return node.label
+}
+
 export default function GraphDiagram({
   nodes,
   edges,
@@ -206,11 +226,7 @@ export default function GraphDiagram({
                 width={item.width}
                 height={item.height}
                 rx={8}
-                className={
-                  item.node.kind === 'project'
-                    ? styles.nodeProject
-                    : styles.nodeRepo
-                }
+                className={nodeClass(item.node)}
               />
               <text
                 x={item.x + item.width / 2}
@@ -218,7 +234,7 @@ export default function GraphDiagram({
                 className={styles.nodeLabel}
                 textAnchor="middle"
               >
-                {item.node.label}
+                {nodeLabel(item.node)}
               </text>
             </g>
           ))}

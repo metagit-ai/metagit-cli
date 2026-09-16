@@ -14,6 +14,8 @@ Set non-interactive defaults when automating:
 export METAGIT_AGENT_MODE=true
 ```
 
+**Token hygiene:** do not dump `detect` yaml/json or `config example` into context. Prefer `-o summary`. Write full detect payloads with `--output-file .metagit/.detect/…`. Never run `metagit detect repo_map`. Bootstrap with `metagit init --kind application --no-prompt` (see `metagit-bootstrap`).
+
 **Session start** (from umbrella repo with `.metagit.yml`):
 
 ```bash
@@ -229,9 +231,10 @@ Typical discovery chain on the checkout:
 
 ```bash
 cd "$(metagit search '<repo>' -c .metagit.yml --path-only)"
-metagit detect repository -p . -o json
-metagit detect repo -p . -o yaml
-metagit detect repo_map -p . -o json
+mkdir -p .metagit/.detect
+metagit detect repository -p . -o summary
+metagit detect repository -p . -o json --output-file .metagit/.detect/repository.json
+# do not run detect repo_map
 ```
 
 Provider metadata (dry-run):
@@ -326,20 +329,21 @@ metagit workspace repo move --project <p> --name <repo> --to-project <other> --d
 
 ## Discovery and local metadata
 
+Prefer compact stdout. Full payloads go to a file under `.metagit/.detect/` (gitignored). Do not run `detect repo_map`.
+
 ```bash
-metagit detect project -p <path> -o yaml
-metagit detect repo -p <path> -o yaml
-metagit detect repo_map -p <path> -o json
-metagit detect repository -p <path> -o json
-metagit detect repository -p <path> -o metagit
+metagit detect repository -p <path> -o summary
+metagit detect repository -p <path> -o json --output-file .metagit/.detect/repository.json
+metagit detect project -p <path> -o summary
+metagit detect repo -p <path> -o summary
 # --save only with operator approval (blocked in agent_mode)
 ```
 
 Bootstrap new trees:
 
 ```bash
-metagit init --kind application
-metagit init --kind umbrella --template hermes-orchestrator
+metagit init --kind application --no-prompt
+metagit init --kind umbrella --template hermes-orchestrator --no-prompt
 ```
 
 ---

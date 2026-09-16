@@ -48,6 +48,7 @@ from metagit.core.mcp.services.cross_project_dependencies import (
 )
 from metagit.core.mcp.services.discovery_context import DiscoveryContextService
 from metagit.core.mcp.services.ops_log import OperationsLogService
+from metagit.core.mcp.services.orgindex import OrgIndexMcpService
 from metagit.core.mcp.services.project_context import ProjectContextService
 from metagit.core.mcp.services.repo_ops import RepoOperationsService
 from metagit.core.mcp.services.session_store import SessionStore
@@ -1488,6 +1489,57 @@ class MetagitMcpRuntime:
                 "properties": {},
                 "additionalProperties": False,
             },
+            "metagit_org_index": {
+                "type": "object",
+                "required": ["organization"],
+                "properties": {
+                    "organization": {"type": "string"},
+                    "provider": {"type": "string", "enum": ["github"]},
+                    "refresh": {"type": "boolean"},
+                    "full": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_org_search": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "organization": {"type": "string"},
+                    "language": {"type": "string"},
+                    "topic": {"type": "string"},
+                    "has": {"type": "string"},
+                    "stale_days": {"type": "integer", "minimum": 1},
+                    "limit": {"type": "integer", "minimum": 1},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_org_repo_get": {
+                "type": "object",
+                "required": ["repository"],
+                "properties": {
+                    "repository": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_org_repo_materialize": {
+                "type": "object",
+                "required": ["repository"],
+                "properties": {
+                    "repository": {"type": "string"},
+                    "project_name": {"type": "string"},
+                    "confirm": {"type": "boolean"},
+                    "dry_run": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_graph_neighbors": {
+                "type": "object",
+                "required": ["repository"],
+                "properties": {
+                    "repository": {"type": "string"},
+                },
+                "additionalProperties": False,
+            },
             "metagit_agent_dispatch_plan": {
                 "type": "object",
                 "required": ["template_id"],
@@ -2629,6 +2681,15 @@ class MetagitMcpRuntime:
         if name.startswith("metagit_semantic_"):
             return self._call_semantic_tool(name, arguments, status)
 
+        if name in {
+            "metagit_org_index",
+            "metagit_org_search",
+            "metagit_org_repo_get",
+            "metagit_org_repo_materialize",
+            "metagit_graph_neighbors",
+        }:
+            return self._call_orgindex_tool(name, arguments, status, config)
+
         if (
             name.startswith("metagit_branch_")
             or name.startswith("metagit_lease_")
@@ -3706,6 +3767,80 @@ class MetagitMcpRuntime:
                 payload["skipped"] = skipped
             return payload
         raise ValueError(f"Unsupported component tool: {name}")
+
+    def _call_orgindex_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+        config: Any,
+    ) -> dict[str, Any]:
+        service = OrgIndexMcpService()
+        if name == "metagit_org_index":
+            organization = str(arguments.get("organization", "")).strip()
+            if not organization:
+                raise InvalidToolArgumentsError("organization is required")
+            provider = str(arguments.get("provider", "github") or "github").strip().lower()
+            if provider != "github":
+                raise InvalidToolArgumentsError("only provider github is supported")
+            app_config = AppConfig.load()
+            if isinstance(app_config, Exception):
+                raise InvalidToolArgumentsError(str(app_config)) from app_config
+            return service.index_github(
+                organization,
+                app_config=app_config,
+                refresh=bool(arguments.get("refresh")),
+                full=bool(arguments.get("full")),
+            )
+        if name == "metagit_org_search":
+            stale_raw = arguments.get("stale_days")
+            stale_days = int(stale_raw) if isinstance(stale_raw, int) else None
+            limit_raw = arguments.get("limit", 50)
+            try:
+                limit_val = int(limit_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("limit must be an integer") from exc
+            query = arguments.get("query")
+            return service.search(
+                str(query).strip() if isinstance(query, str) and query.strip() else None,
+                organization=str(arguments.get("organization")).strip() if arguments.get("organization") else None,
+                language=str(arguments.get("language")).strip() if arguments.get("language") else None,
+                topic=str(arguments.get("topic")).strip() if arguments.get("topic") else None,
+                has=str(arguments.get("has")).strip() if arguments.get("has") else None,
+                stale_days=stale_days,
+                limit=limit_val,
+            )
+        if name == "metagit_org_repo_get":
+            repository = str(arguments.get("repository", "")).strip()
+            if not repository:
+                raise InvalidToolArgumentsError("repository is required")
+            return service.get_repository(repository, config=config)
+        if name == "metagit_graph_neighbors":
+            repository = str(arguments.get("repository", "")).strip()
+            if not repository:
+                raise InvalidToolArgumentsError("repository is required")
+            return service.neighbors(repository, config=config)
+        if name == "metagit_org_repo_materialize":
+            if not config or not status.root_path:
+                raise InvalidToolArgumentsError("materialize requires an active workspace")
+            repository = str(arguments.get("repository", "")).strip()
+            if not repository:
+                raise InvalidToolArgumentsError("repository is required")
+            app_config = AppConfig.load()
+            if isinstance(app_config, Exception):
+                raise InvalidToolArgumentsError(str(app_config)) from app_config
+            config_path, workspace_root = self._catalog_paths(status=status, config=config)
+            sync_root = resolve_sync_root(status.root_path, app_config.workspace.path)
+            return service.materialize(
+                repository,
+                config=config,
+                config_path=config_path,
+                workspace_root=sync_root or workspace_root,
+                project_name=str(arguments.get("project_name")).strip() if arguments.get("project_name") else None,
+                confirm=bool(arguments.get("confirm")),
+                dry_run=bool(arguments.get("dry_run")),
+            )
+        raise ValueError(f"Unsupported org index tool: {name}")
 
     def _call_aos_tool(
         self,

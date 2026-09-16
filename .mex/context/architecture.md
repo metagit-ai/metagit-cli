@@ -16,7 +16,7 @@ edges:
     condition: when implementing changes across CLI, core services, and tests
   - target: context/mcp-runtime.md
     condition: when task scope includes MCP tools, resources, stdio runtime, or sampling
-last_updated: 2026-09-12
+last_updated: 2026-09-16
 ---
 
 # Architecture
@@ -33,10 +33,11 @@ Testing flow is pytest-driven from `tests/` with focused unit tests per core mod
 ## Key Components
 - **CLI command layer (`src/metagit/cli/commands/*.py`)** — routes user actions (`config`, `detect`, `project`, `record`, `workspace`, `mcp`, `search`/`find`, `api`), depends on Click context + core managers.
 - **Config subsystem (`metagit.core.config.*`)** — loads/creates/saves `.metagit.yml` and validates schema via Pydantic models; foundational for workspace and MCP gating behavior. Optional repository **components** (`metagit.core.component`) are nested under `ProjectPath.components` and checked by `config validate`.
-- **Detection subsystem (`metagit.core.detect.*`)** — infers repository metadata (language/framework/dependencies) and feeds generated config/context output.
+- **Detection subsystem (`metagit.core.detect.*`)** — infers repository metadata (language/framework/dependencies) and feeds generated config/context output. CLI `detect` supports `--output-file` so agents keep full payloads off stdout.
+- **Organization index (`metagit.core.orgindex.*`)** — disposable GitHub observations in SQLite under `~/.metagit/indexes/github/`. Canonical identity is `github://org/repo` via `metagit.core.repo`.
 - **Record subsystem (`metagit.core.record.*`)** — manages normalized records and conversions; used for storage/search flows beyond raw config files.
 - **Campaign overlays (`metagit.core.campaign`)** — committed YAML under `_campaigns/`; optional EverRoom context provider via `metagit.core.integrations.everroom` (loopback Gateway, no hard runtime dependency).
-- **MCP runtime (`metagit.core.mcp.*`)** — stdio JSON-RPC server for tools/resources with state-aware gating, workspace path search/index, managed-repo search (`metagit_repo_search`), upstream hints, repo ops, bootstrap sampling flow, objective/session collaboration tools, and `metagit_campaign_context`.
+- **MCP runtime (`metagit.core.mcp.*`)** — stdio JSON-RPC server for tools/resources with state-aware gating, workspace path search/index, managed-repo search (`metagit_repo_search`), organization index search (`metagit_org_search`), upstream hints, repo ops, bootstrap sampling flow, objective/session collaboration tools, and `metagit_campaign_context`.
 - **Managed repo search (`metagit.core.project.search_service`, `search_models`)** — ranks `.metagit.yml` workspace repos with tags/status; shared by CLI, MCP, and the local HTTP API.
 - **Local HTTP API (`metagit.core.api.server`)** — optional `ThreadingHTTPServer` with read-only JSON routes for the same managed-repo search and resolve semantics.
 - **Local Web ops API (`metagit.core.web.*`)** — localhost-only v3 ops endpoints for workspace maintenance plus objective/session workflows (`/v3/ops/objectives*`, `/v3/ops/session*`) used by the SPA.

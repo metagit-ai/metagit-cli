@@ -38,16 +38,19 @@ from metagit.cli.commands.context import context
 from metagit.cli.commands.detect import detect
 from metagit.cli.commands.fmt import fmt_cmd
 from metagit.cli.commands.gitnexus import gitnexus
+from metagit.cli.commands.graph import graph_group
 from metagit.cli.commands.init import init
 from metagit.cli.commands.lane import lane_group
 from metagit.cli.commands.lease import lease_group
 from metagit.cli.commands.mcp import mcp
 from metagit.cli.commands.merge_cmd import merge_group
 from metagit.cli.commands.nav import nav_cmd
+from metagit.cli.commands.org import org_group
 from metagit.cli.commands.policy import policy_group
 from metagit.cli.commands.project import project
 from metagit.cli.commands.prompt import prompt
 from metagit.cli.commands.record import record
+from metagit.cli.commands.repo import repo_group
 from metagit.cli.commands.route import route_group
 from metagit.cli.commands.run import run_group
 from metagit.cli.commands.schedule import schedule_group
@@ -185,6 +188,9 @@ cli.add_command(task_group)
 cli.add_command(init)
 cli.add_command(mcp)
 cli.add_command(gitnexus)
+cli.add_command(org_group)
+cli.add_command(graph_group)
+cli.add_command(repo_group)
 cli.add_command(api)
 cli.add_command(web)
 cli.add_command(search)

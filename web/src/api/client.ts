@@ -325,6 +325,9 @@ export interface GraphViewNode {
   kind: 'project' | 'repo'
   project_name?: string | null
   repo_name?: string | null
+  presence?: 'known' | 'indexed' | 'materialized' | null
+  identity?: string | null
+  provider?: string | null
 }
 
 export interface GraphViewEdge {

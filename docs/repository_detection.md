@@ -48,9 +48,9 @@ metagit detect repository --url https://github.com/username/repo
 # Save configuration to .metagit.yml
 metagit detect repository --save
 
-# Output in different formats
-metagit detect repository --output yaml
-metagit detect repository --output json
+# Output in different formats (prefer summary in agent sessions)
+metagit detect repository --output summary
+metagit detect repository --output json --output-file .metagit/.detect/repository.json
 ```
 
 ## Git Provider Plugins

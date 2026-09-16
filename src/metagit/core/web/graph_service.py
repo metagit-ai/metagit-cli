@@ -15,6 +15,8 @@ from metagit.core.mcp.services.cross_project_dependencies import (
     CrossProjectDependencyService,
 )
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.repo.identity import identity_from_git_url
+from metagit.core.repo.resolver import RepositoryResolver
 
 
 class GraphViewNode(BaseModel):
@@ -25,6 +27,9 @@ class GraphViewNode(BaseModel):
     kind: Literal["project", "repo"]
     project_name: Optional[str] = None
     repo_name: Optional[str] = None
+    presence: Optional[Literal["known", "indexed", "materialized"]] = None
+    identity: Optional[str] = None
+    provider: Optional[str] = None
 
 
 class GraphViewEdge(BaseModel):
@@ -71,6 +76,10 @@ class WorkspaceGraphService:
         """Return diagram-ready nodes and edges."""
         rows = self._index.build_index(config=config, workspace_root=workspace_root)
         project_names = {project.name for project in (config.workspace.projects if config.workspace else [])}
+        resolver = RepositoryResolver(config)
+        known = resolver.known_nodes()
+        if isinstance(known, Exception):
+            known = []
         nodes: list[GraphViewNode] = []
         node_ids: set[str] = set()
 
@@ -82,12 +91,13 @@ class WorkspaceGraphService:
                     label=project_name,
                     kind="project",
                     project_name=project_name,
+                    presence="materialized",
                 )
             )
             node_ids.add(node_id)
 
         for row in rows:
-            node_id = f"repo:{row['project_name']}/{row['repo_name']}"
+            node_id = identity_from_git_url(row.get("url")) or f"repo:{row['project_name']}/{row['repo_name']}"
             if node_id in node_ids:
                 continue
             nodes.append(
@@ -97,6 +107,31 @@ class WorkspaceGraphService:
                     kind="repo",
                     project_name=str(row.get("project_name", "")),
                     repo_name=str(row.get("repo_name", "")),
+                    presence="materialized",
+                    identity=identity_from_git_url(row.get("url")),
+                    provider="github" if identity_from_git_url(row.get("url")) else None,
+                )
+            )
+            node_ids.add(node_id)
+
+        for repo_node in known:
+            node_id = repo_node.graph_node_id
+            if node_id in node_ids:
+                continue
+            if repo_node.project_name:
+                local_id = f"repo:{repo_node.project_name}/{repo_node.name}"
+                if local_id in node_ids:
+                    continue
+            nodes.append(
+                GraphViewNode(
+                    id=node_id,
+                    label=repo_node.name,
+                    kind="repo",
+                    project_name=repo_node.project_name or repo_node.organization,
+                    repo_name=repo_node.name,
+                    presence=repo_node.presence,
+                    identity=repo_node.identity,
+                    provider=repo_node.provider,
                 )
             )
             node_ids.add(node_id)
@@ -107,7 +142,7 @@ class WorkspaceGraphService:
         if include_structure:
             for row in rows:
                 project_id = f"project:{row['project_name']}"
-                repo_id = f"repo:{row['project_name']}/{row['repo_name']}"
+                repo_id = identity_from_git_url(row.get("url")) or f"repo:{row['project_name']}/{row['repo_name']}"
                 if project_id in node_ids and repo_id in node_ids:
                     self._append_edge(
                         edges,
@@ -161,16 +196,19 @@ class WorkspaceGraphService:
         if config.graph is None or not config.graph.relationships:
             return 0
         added = 0
+        resolver = RepositoryResolver(config)
         for rel in config.graph.relationships:
             from_id = resolve_graph_endpoint_id(
                 rel.from_endpoint,
                 rows=rows,
                 project_names=project_names,
+                resolver=resolver,
             )
             to_id = resolve_graph_endpoint_id(
                 rel.to,
                 rows=rows,
                 project_names=project_names,
+                resolver=resolver,
             )
             if not from_id or not to_id:
                 continue

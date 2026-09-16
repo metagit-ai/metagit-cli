@@ -229,10 +229,10 @@ At **session start**, always load **tier 0** workspace orientation (minimal toke
 
 ## 2. Discover on disk
 From the repo checkout under `{workspace.path}/<project>/<repo>/` (or resolved path from search):
-- `metagit detect repository -p . -o json` — full detection payload (language, kind, frameworks, url hints).
-- `metagit detect repo -p . -o yaml` — codebase analysis summary.
-- `metagit detect repo_map -p . -o json` — directory map for structure-aware agent_instructions.
-If the repo has its own `.metagit.yml`: `metagit detect repository -p . -o metagit` for local metadata (do not overwrite workspace file).
+- `metagit detect repository -p . -o summary` — compact language/kind/frameworks (prefer this).
+- Full payload only if needed: `mkdir -p .metagit/.detect && metagit detect repository -p . -o json --output-file .metagit/.detect/repository.json` — then read selected fields. Do not paste the file into context.
+- Do **not** run `metagit detect repo_map` (directory maps are too large for agent context).
+If the repo has its own `.metagit.yml`: `metagit detect repository -p . -o metagit --output-file .metagit/.detect/local-metagit.yml` for local metadata (do not overwrite the workspace file).
 
 ## 3. Provider discovery (when remote url is known)
 - `metagit project source sync --provider github|gitlab --org|--user|--group ... --mode discover --no-apply`
