@@ -192,7 +192,8 @@ def test_corrupted_index_recovers(tmp_path: Path) -> None:
             name="shared-auth",
         )
     )
-    assert not isinstance(written, Exception)
+    assert not isinstance(written, Exception), written
+    assert path.with_suffix(path.suffix + ".corrupt").is_file()
     found = store.get("github://example-org/shared-auth")
     assert found is not None
     assert not isinstance(found, Exception)

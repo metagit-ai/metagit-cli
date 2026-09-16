@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
+import gc
 import json
 import os
 import sqlite3
+from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -96,6 +98,7 @@ class OrgIndexStore:
 
     def open(self) -> sqlite3.Connection | Exception:
         """Open (or recreate) the database, recovering from corruption."""
+        connection: sqlite3.Connection | None = None
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
             connection = sqlite3.connect(str(self.path))
@@ -103,8 +106,10 @@ class OrgIndexStore:
             self._ensure_schema(connection)
             return connection
         except sqlite3.DatabaseError as exc:
+            _close_sqlite(connection)
             return self._recover(exc)
         except OSError as exc:
+            _close_sqlite(connection)
             return Exception(f"Failed to open organization index: {exc}")
 
     def upsert_repository(self, repo: IndexedRepository) -> IndexedRepository | Exception:
@@ -323,16 +328,41 @@ class OrgIndexStore:
         connection.commit()
 
     def _recover(self, exc: sqlite3.DatabaseError) -> sqlite3.Connection | Exception:
-        backup = self.path.with_suffix(self.path.suffix + ".corrupt")
         try:
             if self.path.exists():
-                self.path.replace(backup)
+                _quarantine_corrupt_index(self.path)
             connection = sqlite3.connect(str(self.path))
             connection.row_factory = sqlite3.Row
             self._ensure_schema(connection)
             return connection
         except Exception as recover_exc:
             return Exception(f"Organization index is corrupt ({exc}); recovery failed: {recover_exc}")
+
+
+def _close_sqlite(connection: sqlite3.Connection | None) -> None:
+    """Close a SQLite connection, ignoring close errors."""
+    if connection is None:
+        return
+    with suppress(sqlite3.Error):
+        connection.close()
+    gc.collect()
+
+
+def _quarantine_corrupt_index(path: Path) -> None:
+    """Move a corrupt index aside. Windows may still hold a lock after a failed open."""
+    backup = path.with_suffix(path.suffix + ".corrupt")
+    try:
+        path.replace(backup)
+        return
+    except OSError:
+        pass
+    backup.write_bytes(path.read_bytes())
+    try:
+        path.unlink()
+        return
+    except OSError:
+        pass
+    path.write_bytes(b"")
 
 
 def utc_now() -> str:
