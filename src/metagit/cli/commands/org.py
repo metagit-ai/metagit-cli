@@ -68,7 +68,9 @@ def org_index_github(
 @click.option("--organization", "--org", default=None, help="Limit search to one indexed GitHub organization.")
 @click.option("--language", default=None, help="Primary language filter (csharp, python, …).")
 @click.option("--topic", default=None, help="GitHub topic filter.")
-@click.option("--has", "has_file", default=None, help="Fingerprint path, filename, or detector tag (Dockerfile, terraform).")
+@click.option(
+    "--has", "has_file", default=None, help="Fingerprint path, filename, or detector tag (Dockerfile, terraform)."
+)
 @click.option("--stale-days", type=int, default=None, help="Only repositories not pushed within N days.")
 @click.option("--limit", type=int, default=50, show_default=True)
 @click.option("--json", "as_json", is_flag=True, help="Print a JSON envelope.")

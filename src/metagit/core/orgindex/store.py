@@ -113,14 +113,9 @@ class OrgIndexStore:
             return connection
         try:
             payload = _row_from_model(repo)
-            columns = ", ".join(payload.keys())
-            placeholders = ", ".join(f":{key}" for key in payload)
-            assignments = ", ".join(f"{key}=excluded.{key}" for key in payload if key != "identity")
-            connection.execute(
-                f"INSERT INTO repositories ({columns}) VALUES ({placeholders}) "
-                f"ON CONFLICT(identity) DO UPDATE SET {assignments}",
-                payload,
-            )
+            if tuple(payload.keys()) != _REPOSITORY_COLUMNS:
+                return Exception("indexed repository row columns drifted from schema")
+            connection.execute(_REPOSITORY_UPSERT_SQL, payload)
             connection.commit()
             return repo
         except sqlite3.Error as exc:
@@ -322,8 +317,7 @@ class OrgIndexStore:
             """
         )
         connection.execute(
-            "INSERT INTO index_meta (key, value) VALUES (?, ?) "
-            "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            "INSERT INTO index_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
             ("schema_version", str(SCHEMA_VERSION)),
         )
         connection.commit()
@@ -422,6 +416,76 @@ def _row_from_model(repo: IndexedRepository) -> dict[str, Any]:
         "indexed_at": repo.indexed_at,
         "pushed_at_indexed": repo.pushed_at_indexed,
     }
+
+
+_REPOSITORY_COLUMNS: tuple[str, ...] = (
+    "identity",
+    "provider",
+    "organization",
+    "name",
+    "full_name",
+    "description",
+    "url",
+    "clone_url",
+    "html_url",
+    "visibility",
+    "lifecycle",
+    "presence",
+    "default_branch",
+    "created_at",
+    "updated_at",
+    "pushed_at",
+    "language",
+    "languages_json",
+    "topics_json",
+    "is_fork",
+    "is_template",
+    "size",
+    "github_id",
+    "open_issues",
+    "open_pulls",
+    "latest_release",
+    "has_codeowners",
+    "has_readme",
+    "has_github_actions",
+    "fingerprints_json",
+    "detected_json",
+    "provenance_json",
+    "seen_at",
+    "indexed_at",
+    "pushed_at_indexed",
+)
+_REPOSITORY_UPSERT_SQL = (
+    "INSERT INTO repositories (identity, provider, organization, name, full_name, "
+    "description, url, clone_url, html_url, visibility, lifecycle, presence, "
+    "default_branch, created_at, updated_at, pushed_at, language, languages_json, "
+    "topics_json, is_fork, is_template, size, github_id, open_issues, open_pulls, "
+    "latest_release, has_codeowners, has_readme, has_github_actions, fingerprints_json, "
+    "detected_json, provenance_json, seen_at, indexed_at, pushed_at_indexed) "
+    "VALUES (:identity, :provider, :organization, :name, :full_name, :description, "
+    ":url, :clone_url, :html_url, :visibility, :lifecycle, :presence, :default_branch, "
+    ":created_at, :updated_at, :pushed_at, :language, :languages_json, :topics_json, "
+    ":is_fork, :is_template, :size, :github_id, :open_issues, :open_pulls, "
+    ":latest_release, :has_codeowners, :has_readme, :has_github_actions, "
+    ":fingerprints_json, :detected_json, :provenance_json, :seen_at, :indexed_at, "
+    ":pushed_at_indexed) ON CONFLICT(identity) DO UPDATE SET "
+    "provider=excluded.provider, organization=excluded.organization, name=excluded.name, "
+    "full_name=excluded.full_name, description=excluded.description, url=excluded.url, "
+    "clone_url=excluded.clone_url, html_url=excluded.html_url, "
+    "visibility=excluded.visibility, lifecycle=excluded.lifecycle, "
+    "presence=excluded.presence, default_branch=excluded.default_branch, "
+    "created_at=excluded.created_at, updated_at=excluded.updated_at, "
+    "pushed_at=excluded.pushed_at, language=excluded.language, "
+    "languages_json=excluded.languages_json, topics_json=excluded.topics_json, "
+    "is_fork=excluded.is_fork, is_template=excluded.is_template, size=excluded.size, "
+    "github_id=excluded.github_id, open_issues=excluded.open_issues, "
+    "open_pulls=excluded.open_pulls, latest_release=excluded.latest_release, "
+    "has_codeowners=excluded.has_codeowners, has_readme=excluded.has_readme, "
+    "has_github_actions=excluded.has_github_actions, "
+    "fingerprints_json=excluded.fingerprints_json, detected_json=excluded.detected_json, "
+    "provenance_json=excluded.provenance_json, seen_at=excluded.seen_at, "
+    "indexed_at=excluded.indexed_at, pushed_at_indexed=excluded.pushed_at_indexed"
+)
 
 
 def _model_from_row(row: sqlite3.Row) -> IndexedRepository:

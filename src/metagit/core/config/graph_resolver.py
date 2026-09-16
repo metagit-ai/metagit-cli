@@ -37,12 +37,7 @@ def resolve_graph_endpoint_id(
             return None
         if resolved is not None:
             return resolved.graph_node_id
-        if (
-            endpoint.project
-            and not endpoint.repo
-            and not endpoint.identity
-            and endpoint.project in project_names
-        ):
+        if endpoint.project and not endpoint.repo and not endpoint.identity and endpoint.project in project_names:
             return f"project:{endpoint.project}"
         return None
     if endpoint.project and endpoint.project not in project_names:

@@ -229,3 +229,14 @@ def test_search_language_and_fingerprint(tmp_path: Path) -> None:
     assert [hit.name for hit in csharp.hits] == ["payments-api"]
     terraform = service.search("terraform aws")
     assert [hit.name for hit in terraform.hits] == ["tf-net"]
+
+
+def test_repository_upsert_sql_uses_model_columns() -> None:
+    from metagit.core.orgindex.store import _REPOSITORY_COLUMNS, _REPOSITORY_UPSERT_SQL, _row_from_model
+
+    repo = IndexedRepository(identity="github://example/x", organization="example", name="x")
+    assert tuple(_row_from_model(repo).keys()) == _REPOSITORY_COLUMNS
+    for column in _REPOSITORY_COLUMNS:
+        assert column in _REPOSITORY_UPSERT_SQL
+
+

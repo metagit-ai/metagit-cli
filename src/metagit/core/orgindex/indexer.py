@@ -111,8 +111,10 @@ class GitHubOrgIndexer:
                 row.has_github_actions = previous.has_github_actions
                 row.pushed_at_indexed = previous.pushed_at_indexed
                 row.provenance = sorted(set(previous.provenance + ["github"]))
-            enrich = full or previous is None or (
-                refresh and (previous.pushed_at != row.pushed_at or not previous.fingerprint_paths)
+            enrich = (
+                full
+                or previous is None
+                or (refresh and (previous.pushed_at != row.pushed_at or not previous.fingerprint_paths))
             )
             if enrich:
                 self._enrich(client, row, previous=previous, full=full)
