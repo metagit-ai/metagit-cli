@@ -58,7 +58,7 @@ Other targets: `opencode`, `claude_code`, `cursor`, `github_copilot`, `windsurf`
 | `metagit-aos` | Compose ACL/task/scheduler/merge via `aos|coord status|doctor|next`; day-1 loop in [agents-quickstart.md](agents-quickstart.md) |
 | `metagit-workspace-sync` | Guarded fetch/pull/clone |
 | `metagit-config-refresh` | `.metagit.yml` missing or stale |
-| `metagit-bootstrap` | Generate or refine config with discovery/MCP or CLI-only fallbacks |
+| `metagit-bootstrap` | Deterministic `metagit init` for `.metagit.yml`; optional file-backed detect (no `repo_map`) |
 | `metagit-gating` | MCP workspace gate status |
 | `metagit-upstream-scan` | Search other managed repos for causes |
 | `metagit-upstream-triage` | Rank upstream blockers |

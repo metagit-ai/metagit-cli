@@ -38,6 +38,7 @@ from metagit.core.mcp.services.source_sync import run_mcp_source_sync
 from metagit.core.mcp.services.workspace_health import WorkspaceHealthService
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_sync import WorkspaceSyncService
+from metagit.core.orgindex.search import OrgSearchService
 from metagit.core.project.manager import project_manager_from_app
 from metagit.core.project.source_manifest_sync import SourceManifestSyncService
 from metagit.core.state.base import StateToken
@@ -144,6 +145,10 @@ class OpsWebHandler:
 
         if method == "GET" and parsed_path == "/v3/ops/graph":
             self._get_graph(query, respond)
+            return True
+
+        if method == "GET" and parsed_path == "/v3/ops/org/search":
+            self._get_org_search(query, respond)
             return True
 
         if method == "GET" and parsed_path == "/v3/ops/terrain":
@@ -806,6 +811,32 @@ class OpsWebHandler:
             include_structure=include_structure,
         )
         respond(200, view.model_dump(mode="json"))
+
+    def _get_org_search(self, query: str, respond: JsonResponder) -> None:
+        params = parse_qs(query.lstrip("?"))
+        q = (params.get("q") or params.get("query") or [""])[0]
+        organization = (params.get("organization") or [None])[0]
+        language = (params.get("language") or [None])[0]
+        topic = (params.get("topic") or [None])[0]
+        has = (params.get("has") or [None])[0]
+        stale_raw = (params.get("stale_days") or [None])[0]
+        stale_days = int(stale_raw) if stale_raw and str(stale_raw).isdigit() else None
+        limit_raw = (params.get("limit") or ["50"])[0]
+        try:
+            limit = max(1, min(int(limit_raw), 500))
+        except ValueError:
+            limit = 50
+        result = OrgSearchService().search(
+            q or None,
+            organization=organization or None,
+            language=language or None,
+            topic=topic or None,
+            has=has or None,
+            stale_days=stale_days,
+            limit=limit,
+        )
+        status = 200 if result.ok else 400
+        respond(status, result.model_dump(mode="json"))
 
     def _get_terrain(self, query: str, respond: JsonResponder) -> None:
         config = self._load_metagit(respond)

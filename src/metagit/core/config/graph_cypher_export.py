@@ -12,6 +12,7 @@ from metagit.core.component.catalog import ComponentCatalog
 from metagit.core.config.graph_resolver import resolve_graph_endpoint_id
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
+from metagit.core.repo.resolver import RepositoryResolver
 
 
 class GraphCypherNode(BaseModel):
@@ -266,16 +267,19 @@ class GraphCypherExportService:
             return 0
         catalog_paths = {(row.project, row.repo, row.name): row.spec.path for row in ComponentCatalog().list(config)}
         added = 0
+        resolver = RepositoryResolver(config)
         for rel in config.graph.relationships:
             from_id = resolve_graph_endpoint_id(
                 rel.from_endpoint,
                 rows=rows,
                 project_names=project_names,
+                resolver=resolver,
             )
             to_id = resolve_graph_endpoint_id(
                 rel.to,
                 rows=rows,
                 project_names=project_names,
+                resolver=resolver,
             )
             if not from_id or not to_id:
                 warnings.append(f"skipped relationship {rel.id or rel.type}: unresolved endpoint")
@@ -397,6 +401,16 @@ class GraphCypherExportService:
                 project=project,
                 repo=repo,
                 path=str((row or {}).get("configured_path") or (row or {}).get("repo_path") or ""),
+            )
+            return
+        if "://" in node_id:
+            label = node_id.rsplit("/", 1)[-1]
+            nodes[node_id] = GraphCypherNode(
+                id=node_id,
+                kind="repo",
+                label=label,
+                repo=label,
+                properties={"identity": node_id, "external": True},
             )
 
     def _build_statements(

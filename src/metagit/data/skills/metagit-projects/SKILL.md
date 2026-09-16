@@ -70,8 +70,8 @@ In the new application repo (if applicable):
 
 ```bash
 cd /path/to/new/repo
-metagit init
-metagit detect repo --force   # optional: enrich .metagit.yml
+metagit init --kind application --no-prompt
+metagit detect repository -p . -o summary   # optional compact enrich
 ```
 
 ### New project group (new `workspace.projects[]` entry)

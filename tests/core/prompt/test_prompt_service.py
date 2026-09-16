@@ -146,6 +146,8 @@ def test_emit_repo_enrich_includes_detect_commands() -> None:
         include_instructions=False,
     )
     assert "metagit detect repository" in result.text
+    assert "metagit detect repo_map -p" not in result.text
+    assert "--output-file" in result.text
     assert "merge" in result.text.lower()
     assert result.project_name == "alpha"
     assert result.repo_name == "api"

@@ -249,7 +249,9 @@ Graph data is loaded from `GET /v3/ops/graph`:
 | `include_inferred` | `true` | Include edges inferred from cross-project dependency analysis. |
 | `include_structure` | `true` | Include project → repo containment edges. |
 
-Response shape: `{ ok, nodes[], edges[], manual_edge_count, inferred_edge_count, structure_edge_count }`. Each node has `id`, `label`, `kind` (`project` \| `repo`). Each edge has `from_id`, `to_id`, `type`, optional `label`, and `source` (`manual` \| `inferred` \| `structure`).
+Response shape: `{ ok, nodes[], edges[], manual_edge_count, inferred_edge_count, structure_edge_count }`. Each node has `id`, `label`, `kind` (`project` \| `repo`), optional `presence` (`known` \| `indexed` \| `materialized`), `identity`, and `provider`. Each edge has `from_id`, `to_id`, `type`, optional `label`, and `source` (`manual` \| `inferred` \| `structure`). Indexed GitHub repositories appear as repo nodes without a fake local path.
+
+Organization search is `GET /v3/ops/org/search` (`q`/`query`, `organization`, `language`, `topic`, `has`, `stale_days`, `limit`). See [org-index.md](org-index.md).
 
 ## Frontend development workflow
 

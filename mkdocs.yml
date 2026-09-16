@@ -41,6 +41,7 @@ nav:
     - 'Workspace discovery': 'reference/workspace-discovery.md'
     - 'Mutation policy': 'reference/mutation-policy.md'
     - 'Metagit Atlas': 'reference/atlas.md'
+    - 'Organization index': 'reference/org-index.md'
     - 'Metagit agent templates': 'reference/metagit-agent.md'
     - 'Modality feature registry': 'reference/modality-feature-registry.md'
     - 'Metagit Web UI': 'reference/metagit-web.md'

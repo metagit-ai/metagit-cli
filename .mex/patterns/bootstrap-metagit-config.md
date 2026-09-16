@@ -12,7 +12,7 @@ edges:
     condition: when config/schema model constraints need confirmation
   - target: context/mcp-runtime.md
     condition: when bootstrap is performed through MCP tool calls and sampling flow
-last_updated: 2026-05-05
+last_updated: 2026-09-16
 ---
 
 # Bootstrap Metagit Config
@@ -22,15 +22,17 @@ Use this when `.metagit.yml` is missing or invalid, or when onboarding a new wor
 
 ## Steps
 1. Check for existing `.metagit.yml` and validate (`uv run metagit config validate`).
-2. If missing/invalid, create baseline config using manager/create flow or bootstrap wrapper.
-3. Re-validate using model-driven load path (not string-only checks).
-4. If running through MCP, use `metagit_bootstrap_config` and verify returned mode (`plan_only` vs `sampled`).
-5. Keep writes explicit when replacing existing config.
+2. If missing, run **deterministic** `metagit init --kind application --no-prompt` or `bootstrap-config.sh`. Do not dump `detect` yaml/json into the conversation.
+3. Optional enrich: `metagit detect repository -p . -o summary` or `--output-file .metagit/.detect/repository.json`. Never run `detect repo_map`.
+4. Re-validate using model-driven load path (not string-only checks).
+5. If running through MCP, prefer init first. Use `metagit_bootstrap_config` only when sampling is requested; verify returned mode (`plan_only` vs `sampled`).
+6. Keep writes explicit when replacing existing config.
 
 ## Gotchas
 - Writing guessed YAML without model validation creates downstream gate failures.
 - Overwriting a valid `.metagit.yml` silently can erase workspace repo mappings.
 - Sampling output must still pass strict config model validation before use.
+- `detect repo_map` and full detect JSON on stdout waste agent tokens; use `--output-file`.
 
 ## Verify
 - [ ] `.metagit.yml` loads through `MetagitConfigManager.load_config()` without exception.

@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 37
+- **Features tracked:** 38
 
 When you add or change a backend feature:
 
@@ -20,6 +20,7 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 <!-- registry:table:start -->
 | Feature ID | Description | CLI | MCP | Web | Docs | Skills | Reference |
 |------------|-------------|-----|-----|-----|------|--------|-----------|
+| `org_index` | GitHub organization index, external repo nodes, search, and materialize | yes | yes | yes | yes | — | [org-index.md](org-index.md) |
 | `atlas_local` | Repository-local Atlas semantic layer (init/generate/validate/query) | yes | — | — | yes | — | [atlas.md](atlas.md) |
 | `provider_source_sync_imperative` | Imperative provider discovery and manifest apply | yes | yes | — | — | — | [cli_reference.md](../cli_reference.md) |
 | `provider_source_sync_manifest` | Declarative sync from workspace.projects[].sources[] | yes | yes | yes | — | — | [cli_reference.md](../cli_reference.md) |

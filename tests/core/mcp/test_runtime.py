@@ -1694,3 +1694,79 @@ def test_stdio_read_accepts_legacy_content_length_framing(
     assert message["method"] == "ping"
     assert message["id"] == 9
 
+
+def test_tools_list_includes_org_index_when_active(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "name: workspace\nkind: application\nworkspace:\n  projects:\n    - name: alpha\n      repos: []\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request({"jsonrpc": "2.0", "id": 210, "method": "tools/list", "params": {}})
+    assert response is not None
+    names = [item["name"] for item in response["result"]["tools"]]
+    assert "metagit_org_index" in names
+    assert "metagit_org_search" in names
+    assert "metagit_org_repo_get" in names
+    assert "metagit_org_repo_materialize" in names
+    assert "metagit_graph_neighbors" in names
+
+
+def test_tools_call_org_search(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "name: workspace\nkind: application\nworkspace:\n  projects:\n    - name: alpha\n      repos: []\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("METAGIT_INDEX_HOME", str(tmp_path / "indexes"))
+    from metagit.core.orgindex.store import IndexedRepository, OrgIndexStore, github_index_path
+
+    store = OrgIndexStore(github_index_path("example-org", home=tmp_path / "indexes"))
+    store.upsert_repository(
+        IndexedRepository(
+            identity="github://example-org/payments-api",
+            organization="example-org",
+            name="payments-api",
+            language="C#",
+            presence="indexed",
+        )
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 211,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_org_search",
+                "arguments": {"language": "csharp"},
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is True
+    assert payload["hits"][0]["name"] == "payments-api"
+
+
+def test_tools_call_org_repo_materialize_requires_confirm(tmp_path: Path) -> None:
+    (tmp_path / ".metagit.yml").write_text(
+        "name: workspace\nkind: application\nworkspace:\n  projects:\n    - name: alpha\n      repos: []\n",
+        encoding="utf-8",
+    )
+    runtime = MetagitMcpRuntime(root=str(tmp_path))
+    response = runtime._handle_request(
+        {
+            "jsonrpc": "2.0",
+            "id": 212,
+            "method": "tools/call",
+            "params": {
+                "name": "metagit_org_repo_materialize",
+                "arguments": {"repository": "shared-auth"},
+            },
+        }
+    )
+    assert response is not None
+    payload = json.loads(response["result"]["content"][0]["text"])
+    assert payload["ok"] is False
+    assert "confirm" in payload["error"]
+
+

@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-09-12
+last_updated: 2026-09-16
 ---
 
 # Session Bootstrap
@@ -27,6 +27,8 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **External repository nodes & GitHub org index (2026-09-16, `cursor/external-repo-org-index-b7e4`):** Disposable SQLite observations at `~/.metagit/indexes/github/` (`METAGIT_INDEX_HOME`). CLI `metagit org index github` / `org search`, `metagit graph neighbors`, `metagit repo materialize`. Graph validation resolves local, curated `graph.nodes`, or indexed identities (`github://org/repo`) without requiring a checkout. MCP `metagit_org_*` / `metagit_graph_neighbors`; web `GET /v3/ops/org/search`. Docs [docs/reference/org-index.md](../docs/reference/org-index.md); pattern `.mex/patterns/org-index-external-nodes.md`.
+- **Agent skill token hygiene (2026-09-16):** `metagit-bootstrap` defaults to deterministic `metagit init --kind application --no-prompt`. Detect payloads use `--output-file` (`.metagit/.detect/`); `detect repo_map` is out of skill/prompt discovery. Pattern `.mex/patterns/bootstrap-metagit-config.md`.
 - **Campaign ↔ EverRoom context (2026-09-12, `cursor/campaign-everroom-context-c3ad`):** Optional campaign-scoped EverRoom adapter. CLI `metagit campaign context` / `campaign everroom status|attach|create|detach|sync`; MCP `metagit_campaign_context`; isolated Gateway client under `src/metagit/core/integrations/everroom/`. Tokens via `METAGIT_EVERROOM_TOKEN` only. Read-only context degrades to MetaGit-only when the Gateway is down. Docs [docs/reference/campaign-everroom.md](../docs/reference/campaign-everroom.md); pattern `.mex/patterns/campaign-everroom-context.md`.
 - **`metagit nav --all` / `--print-path` (2026-09-07, `zloeber/minor_fixups`):** Flattened FuzzyFinder of managed `project/repo` targets with the existing repo-picker preview; `--unmanaged` opt-in; `--print-path` prints the absolute path. Agents use `workspace repo list --json` + `search --path-only` / MCP `metagit_repo_search` `path_only`. Design [docs/superpowers/specs/2026-09-07-metagit-nav-all-print-path-design.md](../docs/superpowers/specs/2026-09-07-metagit-nav-all-print-path-design.md).
 - **Component Context Graph RFC-0026–0032 shipped (2026-09-06, `feat/rfc-0027-component-resolve`):** Nested `repos[].components[]` with `project/repo/component` identity; `ComponentResolver` list/show/resolve; `GraphEndpoint.component` + `ComponentGraphService.neighborhood`; `context compile --component --depth`; claim `--component`; `component detect|init`; `project derived create --from P/R/C` with `--include-dependencies`. Do not import catalog/resolve/graph/detect from `metagit.core.component.__init__`. Operator guide [docs/concepts/components.md](../docs/concepts/components.md); series index [docs/superpowers/specs/2026-09-06-rfc-0026-component-context-graph-index.md](../docs/superpowers/specs/2026-09-06-rfc-0026-component-context-graph-index.md). Patterns `.mex/patterns/component-*.md`.

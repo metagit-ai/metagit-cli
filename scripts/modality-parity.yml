@@ -5,6 +5,34 @@
 version: 1
 
 features:
+  - id: org_index
+    description: GitHub organization index, external repo nodes, search, and materialize
+    service: metagit.core.orgindex.indexer.GitHubOrgIndexer
+    reference_doc: docs/reference/org-index.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/org.py
+            contains: '@org_index_group.command("github")'
+          - path: src/metagit/cli/main.py
+            contains: org_group
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_org_index
+          - path: src/metagit/core/mcp/services/orgindex.py
+            contains: class OrgIndexMcpService
+      web:
+        markers:
+          - path: src/metagit/core/web/ops_handler.py
+            contains: /v3/ops/org/search
+      documentation:
+        markers:
+          - path: docs/reference/org-index.md
+            contains: "modality:org_index"
+          - path: docs/agents.md
+            contains: "modality:org_index"
+
   - id: atlas_local
     description: Repository-local Atlas semantic layer (init/generate/validate/query)
     service: metagit.core.atlas.service.AtlasService
