@@ -219,6 +219,9 @@ class ObjectiveService:
                             synthesized_human_notes,
                         ),
                         "agent_notes": data.get("agent_notes"),
+                        "mr_url": data.get("mr_url"),
+                        "approval_id": data.get("approval_id"),
+                        "work_item": data.get("work_item"),
                         "created_at": now,
                         "updated_at": now,
                     }

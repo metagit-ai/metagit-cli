@@ -9,13 +9,19 @@ metadata:
 Use this skill at session start for workspace-aware tasks. Prefer **`metagit-context-pack`**
 for the full tiered pack workflow; this skill focuses on scope boundaries and Hermes wiring.
 
+<!-- modality:context_reduction -->
+
+Do not dump the umbrella manifest. `metagit workspace list --json` is a paged index (no
+`summary.workspace`). Use `--project` on packs and `workspace repo list --json --detail slim`.
+500+ repos: `metagit prompt workspace -k large-workspace --text-only`.
+
 ## Workflow
 
 1. Run context pack (tier 0 minimum, tier 2 at session open):
 
 ```bash
 export METAGIT_AGENT_MODE=true
-metagit context pack --tier 2 --json -c .metagit.yml
+metagit context pack --tier 0 --json --project <name> -c .metagit.yml
 metagit prompt workspace -k session-start --text-only -c .metagit.yml
 ```
 
@@ -29,7 +35,7 @@ Wire into Hermes (or any orchestrator) **before the first tool call** on a works
 
 ```bash
 export METAGIT_AGENT_MODE=true
-PACK_JSON="$(metagit context pack --tier 2 --json -c .metagit.yml)"
+PACK_JSON="$(metagit context pack --tier 0 --json -c .metagit.yml)"
 PROMPT_TEXT="$(metagit prompt workspace -k session-start --text-only -c .metagit.yml)"
 ```
 
@@ -38,7 +44,7 @@ PROMPT_TEXT="$(metagit prompt workspace -k session-start --text-only -c .metagit
 | Hermes system / bootstrap template | `PROMPT_TEXT` verbatim; summarize `PACK_JSON` map + health flags |
 | Pre-turn shell hook | Run commands; append stdout to conversation context |
 | Subagent dispatch | Tier-1 pack scoped with `--project`/`--repo` + `subagent-handoff` prompt |
-| MCP-connected Hermes | `metagit_context_pack` tier 2, then workspace resources |
+| MCP-connected Hermes | `metagit_context_pack` tier 0 (paged map), then workspace resources |
 
 Token-tight alternative: tier 0 pack + `session-start` prompt only.
 
@@ -58,9 +64,10 @@ metagit mcp serve --status-once --root .
 Scope discovery:
 
 ```bash
-metagit context pack --tier 1 --json -c .metagit.yml
+metagit context pack --tier 1 --json --project <name> -c .metagit.yml
 metagit workspace list -c .metagit.yml --json
-metagit search "<query>" -c .metagit.yml --json
+metagit workspace repo list -c .metagit.yml --json --detail slim
+metagit search "<query>" -c .metagit.yml --json --limit 10
 cd "$(metagit search "<query>" -c .metagit.yml --path-only)"
 ```
 
@@ -76,7 +83,7 @@ Interactive (human sessions only):
 
 Agent navigate (preferred over `nav`):
 
-- `metagit workspace repo list -c .metagit.yml --json` — MCP `metagit_workspace_repos_list`
+- `metagit workspace repo list -c .metagit.yml --json --detail slim` — MCP `metagit_workspace_repos_list`
 - `metagit search "<query>" --path-only` — MCP `metagit_repo_search` `{path_only: true}`
 
 Agent context switch (preferred):

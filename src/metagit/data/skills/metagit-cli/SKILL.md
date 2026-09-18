@@ -14,12 +14,17 @@ Set non-interactive defaults when automating:
 export METAGIT_AGENT_MODE=true
 ```
 
-**Token hygiene:** do not dump `detect` yaml/json or `config example` into context. Prefer `-o summary`. Write full detect payloads with `--output-file .metagit/.detect/…`. Never run `metagit detect repo_map`. Bootstrap with `metagit init --kind application --no-prompt` (see `metagit-bootstrap`).
+**Token hygiene:** do not dump `detect` yaml/json, `config example`, or a full umbrella `.metagit.yml` into context. Prefer `-o summary`. Write full detect payloads with `--output-file .metagit/.detect/…`. Never run `metagit detect repo_map`. Bootstrap with `metagit init --kind application --no-prompt` (see `metagit-bootstrap`).
+
+<!-- modality:context_reduction -->
+<!-- modality:campaign_board_link -->
+
+Agents: `metagit config show --json` refuses above 80 repos unless `--confirm-full`. `workspace list --json` omits `summary.workspace` unless `--include-workspace`. Maps/lists are paged (default 80). Large umbrellas: `metagit prompt workspace -k large-workspace --text-only`.
 
 **Session start** (from umbrella repo with `.metagit.yml`):
 
 ```bash
-metagit context pack --tier 2 --json
+metagit context pack --tier 0 --json
 metagit prompt workspace -k session-start --text-only -c .metagit.yml
 ```
 
@@ -61,7 +66,7 @@ Use this table first when changing a workspace manifest from the CLI. Prefer **c
 |------|---------|
 | **Inspect** manifest on disk | `metagit config show -c .metagit.yml` |
 | **Inspect** normalized model | `metagit config show -c .metagit.yml --normalized` |
-| **Inspect** as JSON (agents) | `metagit config show -c .metagit.yml --json` |
+| **Inspect** as JSON (agents) | `metagit config show -c .metagit.yml --json` (refused on large umbrellas unless `--confirm-full`) |
 | **Browse** fields / paths | `metagit config tree -c .metagit.yml` or `… --json` |
 | **Validate** after edits | `metagit config validate -c .metagit.yml` |
 | **Dry-run** schema change | `metagit config preview -c .metagit.yml --file ops.json` |
@@ -139,7 +144,7 @@ metagit config providers --show
 ### After every manifest edit
 
 1. `metagit config validate -c .metagit.yml`
-2. `metagit workspace list -c .metagit.yml --json` (sanity-check catalog)
+2. `metagit workspace list -c .metagit.yml --json` (paged index; no full workspace object)
 3. If repos changed on disk: `metagit project sync` or `metagit project sync --hydrate`
 
 ### Graph relationships (suggest, apply, export)
@@ -539,12 +544,14 @@ Doc: `docs/reference/context-compiler.md`. MCP: `metagit_context_compile`.
 
 <!-- modality:native_campaigns -->
 <!-- modality:campaign_everroom_context -->
+<!-- modality:campaign_board_link -->
 
 | Task | Command |
 |------|---------|
-| List / status | `metagit campaign list` / `metagit campaign status --slug <s> --json` |
-| Create | `metagit campaign new --slug <s> --title "…" --query "…"` |
-| Validate / set / expand | `metagit campaign validate` / `set` / `expand --dry-run` |
+| List / status | `metagit campaign list` / `metagit campaign status --slug <s> --json --limit 40` |
+| Create | `metagit campaign new --slug <s> --title "…" --query "…"` (JSON is counts, not every repo) |
+| Validate / set / expand | `metagit campaign validate` / `set` / `expand --dry-run --limit 40` |
+| Board (ADO WIT) | `metagit campaign board-sync --slug <s> --organization ORG --ado-project PROJ --dry-run --json` |
 | Context | `metagit campaign context --slug <s> --json` (MCP `metagit_campaign_context`) |
 | EverRoom | `metagit campaign everroom status\|attach\|create\|detach\|sync` |
 

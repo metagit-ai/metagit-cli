@@ -14,6 +14,7 @@ from git.exc import GitCommandError
 
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.models import SessionDigestRepoChange, SessionDigestResult
+from metagit.core.context.reduction import DEFAULT_DIGEST_REPO_LIMIT, page_rows
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 
 
@@ -45,6 +46,9 @@ class SessionDigestService:
         since: Optional[str] = None,
         active_objective_id: Optional[str] = None,
         definition_root: Optional[str] = None,
+        project_name: Optional[str] = None,
+        repo_name: Optional[str] = None,
+        limit: int = DEFAULT_DIGEST_REPO_LIMIT,
     ) -> SessionDigestResult:
         """
         Assemble a session digest.
@@ -59,6 +63,8 @@ class SessionDigestService:
                 manifest_changed=False,
                 active_objective_id=active_objective_id,
                 repo_changes=[],
+                truncated=False,
+                total_repo_changes=0,
             )
 
         since_dt = _parse_since_iso(since)
@@ -73,6 +79,10 @@ class SessionDigestService:
             workspace_root,
             definition_root=resolved_definition_root,
         ):
+            if project_name and str(row.get("project_name")) != project_name:
+                continue
+            if repo_name and str(row.get("repo_name")) != repo_name:
+                continue
             if not row.get("exists") or not row.get("is_git_repo"):
                 continue
             repo_path = str(row["repo_path"])
@@ -84,12 +94,15 @@ class SessionDigestService:
             )
             repo_changes.append(change)
 
+        paged, truncated = page_rows(repo_changes, limit=limit, offset=0)
         return SessionDigestResult(
             since=since,
             first_session=False,
             manifest_changed=manifest_changed,
             active_objective_id=active_objective_id,
-            repo_changes=repo_changes,
+            repo_changes=paged,
+            truncated=truncated,
+            total_repo_changes=len(repo_changes),
         )
 
     @staticmethod

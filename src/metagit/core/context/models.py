@@ -8,6 +8,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from metagit.core.workitem.models import ExternalWorkRef
+
 _OBJECTIVE_ID_PATTERN = re.compile(r"^[\w.-]+$")
 
 
@@ -44,6 +46,9 @@ class WorkspaceMapResult(BaseModel):
     projects: list[WorkspaceMapProject]
     repos: list[WorkspaceMapEntry]
     active_project: Optional[str] = None
+    truncated: bool = False
+    offset: int = 0
+    limit: Optional[int] = None
 
 
 class RepoCardResult(BaseModel):
@@ -93,6 +98,8 @@ class SessionDigestResult(BaseModel):
     manifest_changed: bool = False
     active_objective_id: Optional[str] = None
     repo_changes: list[SessionDigestRepoChange] = Field(default_factory=list)
+    truncated: bool = False
+    total_repo_changes: int = 0
 
 
 ObjectiveStatus = Literal["pending", "in_progress", "done", "cancelled"]
@@ -115,6 +122,10 @@ class Objective(BaseModel):
     approval_id: Optional[str] = Field(
         default=None,
         description="Approval queue id when work is gated on human review",
+    )
+    work_item: Optional[ExternalWorkRef] = Field(
+        default=None,
+        description="Optional Azure DevOps / GitHub / Jira work item bound to this objective",
     )
     created_at: str
     updated_at: str

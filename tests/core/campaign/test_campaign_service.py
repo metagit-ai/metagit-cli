@@ -179,3 +179,28 @@ def test_campaign_loads_legacy_document(tmp_path: Path) -> None:
     # And it participates in list/status rollups cleanly.
     summary = service.list_campaigns()
     assert any(item.slug == "legacy" and item.status == "completed" for item in summary.campaigns)
+
+
+def test_campaign_status_pages_repos(tmp_path: Path) -> None:
+    config = _sample_config()
+    service = CampaignService(config=config, definition_root=tmp_path)
+    service.create(slug="all", title="All", repos=["demo/alpha", "demo/beta"])
+    status = service.status("all", limit=1, offset=0)
+    assert status is not None
+    assert status.repo_count == 2
+    assert len(status.repos) == 1
+    assert status.truncated is True
+    page_two = service.status("all", limit=1, offset=1)
+    assert page_two is not None
+    assert page_two.truncated is False
+    assert page_two.repos[0].repo == "beta"
+
+
+def test_campaign_expand_respects_limit(tmp_path: Path) -> None:
+    config = _sample_config()
+    service = CampaignService(config=config, definition_root=tmp_path)
+    service.create(slug="all", title="All", repos=["demo/alpha", "demo/beta"])
+    result = service.expand(slug="all", session_root=tmp_path, dry_run=True, limit=1)
+    assert len(result.objective_ids) == 1
+    assert result.truncated is True
+    assert result.matched_count == 2

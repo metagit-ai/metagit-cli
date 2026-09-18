@@ -18,6 +18,7 @@ from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.context.reduction import DEFAULT_INDEX_ROW_LIMIT
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.mcp.services.workspace_search import WorkspaceSearchService
 from metagit.core.workspace.catalog_models import CatalogError
@@ -121,16 +122,41 @@ def workspace(ctx: click.Context, config_path: str) -> None:
     default=False,
     help="Omit per-repo disk status from workspace list JSON",
 )
+@click.option(
+    "--include-workspace",
+    is_flag=True,
+    default=False,
+    help="Embed the full workspace object (large umbrellas — operator only)",
+)
+@click.option(
+    "--limit",
+    type=int,
+    default=DEFAULT_INDEX_ROW_LIMIT,
+    show_default=True,
+    help="Max repos_index rows. Use 0 for all rows (operator only).",
+)
+@click.option("--offset", type=int, default=0, show_default=True)
 @click.pass_context
-def workspace_list(ctx: click.Context, as_json: bool, no_index: bool) -> None:
+def workspace_list(
+    ctx: click.Context,
+    as_json: bool,
+    no_index: bool,
+    include_workspace: bool,
+    limit: int,
+    offset: int,
+) -> None:
     """List workspace manifest summary, projects, and repository index."""
     local_config, config_path, workspace_root = _catalog_ctx(ctx)
     service = WorkspaceCatalogService()
+    index_limit = None if limit == 0 else limit
     result = service.list_workspace(
         local_config,
         config_path,
         workspace_root,
         include_index=not no_index,
+        include_workspace=include_workspace,
+        index_limit=index_limit,
+        index_offset=offset,
     )
     if as_json:
         emit_json(result)
@@ -394,11 +420,29 @@ def workspace_repo(_ctx: click.Context) -> None:
     shell_complete=complete_projects,
 )
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.option(
+    "--detail",
+    type=click.Choice(["slim", "full"]),
+    default="slim",
+    show_default=True,
+    help="slim omits agent instructions and components",
+)
+@click.option(
+    "--limit",
+    type=int,
+    default=DEFAULT_INDEX_ROW_LIMIT,
+    show_default=True,
+    help="Max repo rows. Use 0 for all rows (operator only).",
+)
+@click.option("--offset", type=int, default=0, show_default=True)
 @click.pass_context
 def workspace_repo_list(
     ctx: click.Context,
     project: str | None,
     as_json: bool,
+    detail: str,
+    limit: int,
+    offset: int,
 ) -> None:
     """List repositories in the workspace manifest."""
     local_config, _, workspace_root = _catalog_ctx(ctx)
@@ -406,6 +450,9 @@ def workspace_repo_list(
         local_config,
         workspace_root,
         project_name=project,
+        detail=detail,
+        limit=None if limit == 0 else limit,
+        offset=offset,
     )
     if as_json:
         emit_json(result)

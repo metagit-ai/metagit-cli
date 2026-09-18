@@ -19,11 +19,19 @@ from metagit.core.campaign.context_models import (
     CampaignContextResult,
 )
 from metagit.core.campaign.everroom_service import CampaignEverRoomService, EverRoomSettings
+from metagit.core.campaign.models import CampaignDocument
 from metagit.core.campaign.service import CampaignService
 from metagit.core.campaign.settings import everroom_settings_from_appconfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.context.reduction import (
+    DEFAULT_CAMPAIGN_EXPAND_LIMIT,
+    DEFAULT_CAMPAIGN_STATUS_REPO_LIMIT,
+)
 from metagit.core.integrations.everroom.errors import EverRoomError
+from metagit.core.workitem.azure_devops import AzureDevOpsBoardClient
+from metagit.core.workitem.board_service import CampaignBoardService
+from metagit.core.workitem.refs import parse_work_item_ref
 from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_session_root, resolve_sync_root
 
 
@@ -34,6 +42,39 @@ class _CampaignRuntime:
     workspace_root: Path
     config: MetagitConfig
     everroom: EverRoomSettings
+
+
+def _campaign_create_payload(document: CampaignDocument) -> dict:
+    return {
+        "ok": True,
+        "slug": document.slug,
+        "title": document.title,
+        "status": document.status,
+        "repo_count": len(document.repos),
+        "goal": document.goal,
+        "reference_impl": document.reference_impl,
+        "work_item": document.work_item.model_dump(mode="json") if document.work_item else None,
+        "selection": document.selection.model_dump(mode="json"),
+    }
+
+
+def _parse_optional_work_item(
+    work_item: Optional[str],
+    *,
+    url: Optional[str] = None,
+    organization: Optional[str] = None,
+    project: Optional[str] = None,
+    kind: Optional[str] = None,
+):
+    if not work_item:
+        return None
+    return parse_work_item_ref(
+        work_item,
+        url=url,
+        organization=organization,
+        project=project,
+        kind=kind,
+    )
 
 
 def _parse_tag_filters(tag_values: tuple[str, ...]) -> dict[str, str] | None:
@@ -175,30 +216,75 @@ def campaign_list(ctx: click.Context, definition_path: str, as_json: bool) -> No
     show_default=True,
 )
 @click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON.")
+@click.option(
+    "--limit",
+    type=int,
+    default=DEFAULT_CAMPAIGN_STATUS_REPO_LIMIT,
+    show_default=True,
+    help="Max repo rows to include (JSON and human). Use 0 for counts-only.",
+)
+@click.option("--offset", type=int, default=0, show_default=True)
+@click.option(
+    "--repo-status",
+    default=None,
+    type=click.Choice(["pending", "routed", "mr-open", "merged", "blocked"]),
+    help="Filter the paged repo window by status.",
+)
+@click.option(
+    "--include-repos/--no-repos",
+    default=True,
+    show_default=True,
+    help="Include a paged repo window. Counts are always returned.",
+)
 @click.pass_context
-def campaign_status(ctx: click.Context, slug: str, definition_path: str, as_json: bool) -> None:
-    """Show detailed campaign status and repo rollup."""
+def campaign_status(
+    ctx: click.Context,
+    slug: str,
+    definition_path: str,
+    as_json: bool,
+    limit: int,
+    offset: int,
+    repo_status: Optional[str],
+    include_repos: bool,
+) -> None:
+    """Show campaign status with a paged repo window (not the full overlay)."""
     _ = ctx
     service, _ = _campaign_service(definition_path, config_path=ctx.obj.get("config_path"))
-    result = service.status(slug)
+    effective_limit = None if limit < 0 else (0 if limit == 0 else limit)
+    if effective_limit == 0:
+        include_repos = False
+        effective_limit = DEFAULT_CAMPAIGN_STATUS_REPO_LIMIT
+    result = service.status(
+        slug,
+        include_repos=include_repos,
+        limit=effective_limit,
+        offset=offset,
+        repo_status=repo_status,
+    )
     if result is None:
         raise click.ClickException(f"Unknown campaign: {slug!r}")
     if as_json:
         _emit_json(result.model_dump(mode="json"))
         return
-    click.echo(f"{result.campaign.title} ({result.campaign.status})")
-    if result.campaign.goal:
-        click.echo(f"goal: {result.campaign.goal}")
-    if result.campaign.reference_impl:
-        click.echo(f"reference: {result.campaign.reference_impl}")
+    click.echo(f"{result.title} ({result.status})")
+    if result.goal:
+        click.echo(f"goal: {result.goal}")
+    if result.reference_impl:
+        click.echo(f"reference: {result.reference_impl}")
+    if result.work_item:
+        click.echo(f"work_item: {result.work_item.provider}:{result.work_item.id}")
     click.echo(
         f"rollup: {result.merged_count} merged, {result.open_mr_count} MRs open, "
-        f"{result.blocked_count} blocked, {result.pending_count} pending",
+        f"{result.blocked_count} blocked, {result.pending_count} pending "
+        f"({result.repo_count} repos)"
     )
-    for repo in result.campaign.repos:
+    if result.truncated:
+        click.echo(f"repos truncated at offset={result.offset} limit={result.limit}")
+    for repo in result.repos:
         mr = f" mr={repo.mr}" if repo.mr else ""
         note = f" note={repo.note}" if repo.note else ""
-        click.echo(f"  {repo.project}/{repo.repo}\t{repo.status}{mr}{note}")
+        work = f" work_item={repo.work_item.provider}:{repo.work_item.id}" if repo.work_item else ""
+        click.echo(f"  {repo.project}/{repo.repo}\t{repo.status}{mr}{note}{work}")
 
 
 @campaign.command("new")
@@ -219,6 +305,8 @@ def campaign_status(ctx: click.Context, slug: str, definition_path: str, as_json
 @click.option("--goal", default=None, help="Free-text objective describing what the campaign delivers.")
 @click.option("--reference", "reference_impl", default=None, help="Exemplar repo (project/repo) to model changes on.")
 @click.option("--objective-id", default=None, help="Optional spine objective id to bind.")
+@click.option("--work-item", default=None, help="Parent board ref (azure_devops:123 or URL).")
+@click.option("--work-item-url", default=None, help="Browser URL for the parent work item.")
 @click.option(
     "--definition",
     "definition_path",
@@ -237,6 +325,8 @@ def campaign_new(
     goal: Optional[str],
     reference_impl: Optional[str],
     objective_id: Optional[str],
+    work_item: Optional[str],
+    work_item_url: Optional[str],
     definition_path: str,
     as_json: bool,
 ) -> None:
@@ -253,11 +343,12 @@ def campaign_new(
             objective_id=objective_id,
             goal=goal,
             reference_impl=reference_impl,
+            work_item=_parse_optional_work_item(work_item, url=work_item_url),
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
     if as_json:
-        _emit_json(document.model_dump(mode="json"))
+        _emit_json(_campaign_create_payload(document))
         return
     click.echo(f"Created campaign {document.slug} with {len(document.repos)} repos.")
 
@@ -293,6 +384,8 @@ def campaign_validate(ctx: click.Context, definition_path: str) -> None:
 )
 @click.option("--mr", default=None, help="Merge request URL.")
 @click.option("--note", default=None, help="Status note.")
+@click.option("--work-item", default=None, help="Board ref for this repo (azure_devops:123 or URL).")
+@click.option("--work-item-url", default=None, help="Browser URL for the repo work item.")
 @click.option(
     "--definition",
     "definition_path",
@@ -308,6 +401,8 @@ def campaign_set(
     status: str,
     mr: Optional[str],
     note: Optional[str],
+    work_item: Optional[str],
+    work_item_url: Optional[str],
     definition_path: str,
     as_json: bool,
 ) -> None:
@@ -325,11 +420,22 @@ def campaign_set(
             status=status,  # type: ignore[arg-type]
             mr=mr,
             note=note,
+            work_item=_parse_optional_work_item(work_item, url=work_item_url),
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
     if as_json:
-        _emit_json(document.model_dump(mode="json"))
+        updated = next(
+            (row for row in document.repos if row.project == project and row.repo == repo_name),
+            None,
+        )
+        _emit_json(
+            {
+                "ok": True,
+                "slug": document.slug,
+                "repo": updated.model_dump(mode="json") if updated else None,
+            }
+        )
         return
     click.echo(f"Updated {repo} -> {status}")
 
@@ -338,6 +444,14 @@ def campaign_set(
 @click.option("--slug", required=True, help="Campaign slug.")
 @click.option("--tag", "tag_values", multiple=True, help="Optional tag filter for expansion.")
 @click.option("--dry-run", is_flag=True, help="Show objective ids without writing.")
+@click.option(
+    "--limit",
+    type=int,
+    default=DEFAULT_CAMPAIGN_EXPAND_LIMIT,
+    show_default=True,
+    help="Max objectives to create this call. Page with --offset.",
+)
+@click.option("--offset", type=int, default=0, show_default=True)
 @click.option(
     "--definition",
     "definition_path",
@@ -351,10 +465,12 @@ def campaign_expand(
     slug: str,
     tag_values: tuple[str, ...],
     dry_run: bool,
+    limit: int,
+    offset: int,
     definition_path: str,
     as_json: bool,
 ) -> None:
-    """Generate one spine objective per matching campaign repo."""
+    """Generate one spine objective per matching campaign repo (paged)."""
     _ = ctx
     service, definition_root = _campaign_service(
         definition_path,
@@ -367,6 +483,8 @@ def campaign_expand(
             session_root=session_root,
             tag_filters=_parse_tag_filters(tag_values),
             dry_run=dry_run,
+            limit=None if limit < 0 else limit,
+            offset=offset,
         )
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
@@ -374,7 +492,94 @@ def campaign_expand(
         _emit_json(result.model_dump(mode="json"))
         return
     verb = "Would create" if dry_run else "Created"
-    click.echo(f"{verb} {len(result.objective_ids)} objectives for campaign {slug}.")
+    extra = f" (truncated, matched={result.matched_count})" if result.truncated else ""
+    click.echo(f"{verb} {len(result.objective_ids)} objectives for campaign {slug}.{extra}")
+
+
+@campaign.command("board-sync")
+@click.option("--slug", required=True, help="Campaign slug.")
+@click.option(
+    "--provider",
+    type=click.Choice(["azure_devops"]),
+    default="azure_devops",
+    show_default=True,
+)
+@click.option("--organization", default=None, help="ADO organization (or METAGIT_AZURE_DEVOPS_ORGANIZATION).")
+@click.option("--ado-project", "ado_project", default=None, help="ADO project (or METAGIT_AZURE_DEVOPS_PROJECT).")
+@click.option("--parent-type", default="Feature", show_default=True)
+@click.option("--child-type", default="User Story", show_default=True)
+@click.option(
+    "--limit",
+    type=int,
+    default=DEFAULT_CAMPAIGN_EXPAND_LIMIT,
+    show_default=True,
+    help="Max child work items to create this call.",
+)
+@click.option("--offset", type=int, default=0, show_default=True)
+@click.option("--dry-run", is_flag=True, help="Report what would be created without calling ADO.")
+@click.option(
+    "--definition",
+    "definition_path",
+    default=".metagit.yml",
+    show_default=True,
+)
+@click.option("--json", "as_json", is_flag=True, help="Emit machine-readable JSON.")
+@click.pass_context
+def campaign_board_sync(
+    ctx: click.Context,
+    slug: str,
+    provider: str,
+    organization: Optional[str],
+    ado_project: Optional[str],
+    parent_type: str,
+    child_type: str,
+    limit: int,
+    offset: int,
+    dry_run: bool,
+    definition_path: str,
+    as_json: bool,
+) -> None:
+    """Create or refresh Azure DevOps work items for a campaign (paged)."""
+    _ = provider
+    runtime = _campaign_runtime(definition_path, config_path=ctx.obj.get("config_path"))
+    appconfig = load_appconfig(ctx.obj.get("config_path"))
+    ado = None if isinstance(appconfig, Exception) else appconfig.providers.azure_devops
+    token = (ado.api_token if ado else "") or ""
+    org = organization or (ado.organization if ado else "") or ""
+    project = ado_project or (ado.project if ado else "") or ""
+    base_url = (ado.base_url if ado else "https://dev.azure.com") or "https://dev.azure.com"
+    if not dry_run and not token:
+        raise click.ClickException(
+            "Azure DevOps token required. Set METAGIT_AZURE_DEVOPS_API_TOKEN or AZURE_DEVOPS_EXT_PAT."
+        )
+    if not org or not project:
+        raise click.ClickException("Azure DevOps --organization and --ado-project are required.")
+    client = AzureDevOpsBoardClient(
+        api_token=token or "dry-run",
+        organization=org,
+        project=project,
+        base_url=base_url,
+    )
+    service = CampaignBoardService(campaign_service=runtime.service, client=client)
+    result = service.sync(
+        slug=slug,
+        parent_kind=parent_type,
+        child_kind=child_type,
+        limit=limit,
+        offset=offset,
+        dry_run=dry_run,
+    )
+    if as_json:
+        _emit_json(result.model_dump(mode="json"))
+        if not result.ok:
+            raise click.ClickException(result.error or "board sync failed")
+        return
+    if not result.ok:
+        raise click.ClickException(result.error or "board sync failed")
+    click.echo(
+        f"campaign {result.slug}: created {len(result.created)} work items, "
+        f"skipped {result.skipped}, truncated={result.truncated}"
+    )
 
 
 @campaign.command("context")

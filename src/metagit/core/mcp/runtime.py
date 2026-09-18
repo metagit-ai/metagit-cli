@@ -11,6 +11,7 @@ from typing import Any, Literal, Optional, cast
 
 from metagit.core.agent.service import AgentService
 from metagit.core.appconfig import AppConfig
+from metagit.core.campaign.service import CampaignService
 from metagit.core.component.detect import ComponentDetector
 from metagit.core.component.graph import ComponentGraphService
 from metagit.core.component.resolve import ComponentResolver, resolved_component_payload
@@ -25,6 +26,13 @@ from metagit.core.context.context_switch_service import ContextSwitchService
 from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.models import ApprovalStatus
 from metagit.core.context.objective_service import ObjectiveService
+from metagit.core.context.reduction import (
+    DEFAULT_CAMPAIGN_EXPAND_LIMIT,
+    DEFAULT_CAMPAIGN_STATUS_REPO_LIMIT,
+    DEFAULT_INDEX_ROW_LIMIT,
+    DEFAULT_MAP_REPO_LIMIT,
+    DEFAULT_MAX_CARDS,
+)
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.session_begin_service import SessionBeginService
 from metagit.core.context.session_digest_service import SessionDigestService
@@ -82,6 +90,8 @@ from metagit.core.skills.surface_service import SkillSurfaceService
 from metagit.core.state.resolver import resolve_backend
 from metagit.core.taskgraph.service import TaskGraphService
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
+from metagit.core.workitem.azure_devops import AzureDevOpsBoardClient
+from metagit.core.workitem.board_service import CampaignBoardService
 from metagit.core.workspace.catalog_models import CatalogError
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 from metagit.core.workspace.derived_project_service import DerivedProjectService
@@ -492,6 +502,8 @@ class MetagitMcpRuntime:
                     "project_name": {"type": "string"},
                     "repo_name": {"type": "string"},
                     "max_tokens": {"type": "integer", "minimum": 1},
+                    "max_cards": {"type": "integer", "minimum": 1},
+                    "max_map_repos": {"type": "integer", "minimum": 1},
                 },
                 "additionalProperties": False,
             },
@@ -759,6 +771,36 @@ class MetagitMcpRuntime:
                             ],
                         },
                     },
+                },
+                "additionalProperties": False,
+            },
+            "metagit_campaign_status": {
+                "type": "object",
+                "required": ["campaign"],
+                "properties": {
+                    "campaign": {"type": "string"},
+                    "limit": {"type": "integer", "minimum": 0},
+                    "offset": {"type": "integer", "minimum": 0},
+                    "repo_status": {
+                        "type": "string",
+                        "enum": ["pending", "routed", "mr-open", "merged", "blocked"],
+                    },
+                    "include_repos": {"type": "boolean"},
+                },
+                "additionalProperties": False,
+            },
+            "metagit_campaign_board_sync": {
+                "type": "object",
+                "required": ["campaign"],
+                "properties": {
+                    "campaign": {"type": "string"},
+                    "organization": {"type": "string"},
+                    "project": {"type": "string"},
+                    "parent_type": {"type": "string"},
+                    "child_type": {"type": "string"},
+                    "limit": {"type": "integer", "minimum": 1},
+                    "offset": {"type": "integer", "minimum": 0},
+                    "dry_run": {"type": "boolean"},
                 },
                 "additionalProperties": False,
             },
@@ -1282,7 +1324,16 @@ class MetagitMcpRuntime:
                 },
                 "additionalProperties": False,
             },
-            "metagit_workspace_list": {"type": "object", "properties": {}},
+            "metagit_workspace_list": {
+                "type": "object",
+                "properties": {
+                    "include_index": {"type": "boolean"},
+                    "include_workspace": {"type": "boolean"},
+                    "limit": {"type": "integer", "minimum": 0},
+                    "offset": {"type": "integer", "minimum": 0},
+                },
+                "additionalProperties": False,
+            },
             "metagit_workspace_projects_list": {"type": "object", "properties": {}},
             "metagit_workspace_project_add": {
                 "type": "object",
@@ -1306,7 +1357,12 @@ class MetagitMcpRuntime:
             },
             "metagit_workspace_repos_list": {
                 "type": "object",
-                "properties": {"project_name": {"type": "string"}},
+                "properties": {
+                    "project_name": {"type": "string"},
+                    "detail": {"type": "string", "enum": ["slim", "full"]},
+                    "limit": {"type": "integer", "minimum": 0},
+                    "offset": {"type": "integer", "minimum": 0},
+                },
                 "additionalProperties": False,
             },
             "metagit_workspace_repo_add": {
@@ -2266,6 +2322,10 @@ class MetagitMcpRuntime:
                 project_name=project_opt,
                 repo_name=repo_opt,
                 max_tokens=max_tokens,
+                max_cards=int(arguments["max_cards"]) if arguments.get("max_cards") is not None else DEFAULT_MAX_CARDS,
+                max_map_repos=int(arguments["max_map_repos"])
+                if arguments.get("max_map_repos") is not None
+                else DEFAULT_MAP_REPO_LIMIT,
             )
             return pack.model_dump(mode="json")
 
@@ -2672,6 +2732,12 @@ class MetagitMcpRuntime:
             return self._call_schedule_tool(name, arguments, status)
         if name == "metagit_campaign_context":
             return self._call_campaign_context_tool(arguments, status, config)
+
+        if name == "metagit_campaign_status":
+            return self._call_campaign_status_tool(arguments, status, config)
+
+        if name == "metagit_campaign_board_sync":
+            return self._call_campaign_board_sync_tool(arguments, status, config)
         if name.startswith("metagit_aos_") or name.startswith("metagit_coord_"):
             return self._call_aos_tool(name, arguments, status)
 
@@ -2878,10 +2944,23 @@ class MetagitMcpRuntime:
 
         if name == "metagit_workspace_list":
             config_path, workspace_root = self._catalog_paths(status=status, config=config)
+            include_index = bool(arguments.get("include_index", True))
+            include_workspace = bool(arguments.get("include_workspace", False))
+            limit_raw = arguments.get("limit", DEFAULT_INDEX_ROW_LIMIT)
+            offset_raw = arguments.get("offset", 0)
+            try:
+                limit_val = int(limit_raw)
+                offset_val = int(offset_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("limit and offset must be integers") from exc
             return self._workspace_catalog.list_workspace(
                 config=config,
                 config_path=config_path,
                 workspace_root=workspace_root,
+                include_index=include_index,
+                include_workspace=include_workspace,
+                index_limit=None if limit_val == 0 else limit_val,
+                index_offset=offset_val,
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_projects_list":
@@ -2914,12 +2993,24 @@ class MetagitMcpRuntime:
             config_path, workspace_root = self._catalog_paths(status=status, config=config)
             _ = config_path
             project_filter = arguments.get("project_name")
+            detail_raw = arguments.get("detail", "slim")
+            detail = str(detail_raw).strip() if isinstance(detail_raw, str) else "slim"
+            limit_raw = arguments.get("limit", DEFAULT_INDEX_ROW_LIMIT)
+            offset_raw = arguments.get("offset", 0)
+            try:
+                limit_val = int(limit_raw)
+                offset_val = int(offset_raw)
+            except (TypeError, ValueError) as exc:
+                raise InvalidToolArgumentsError("limit and offset must be integers") from exc
             return self._workspace_catalog.list_repos(
                 config=config,
                 workspace_root=workspace_root,
                 project_name=str(project_filter).strip()
                 if isinstance(project_filter, str) and project_filter.strip()
                 else None,
+                detail="full" if detail == "full" else "slim",
+                limit=None if limit_val == 0 else limit_val,
+                offset=offset_val,
             ).model_dump(mode="json")
 
         if name == "metagit_workspace_repo_add":
@@ -3611,6 +3702,105 @@ class MetagitMcpRuntime:
             )
         except ValueError as exc:
             raise InvalidToolArgumentsError(str(exc)) from exc
+
+    def _call_campaign_status_tool(
+        self,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+        config: Any,
+    ) -> dict[str, Any]:
+        if not config or not status.root_path:
+            raise InvalidToolArgumentsError("campaign status requires an active workspace")
+        slug = str(arguments.get("campaign", "")).strip()
+        if not slug:
+            raise InvalidToolArgumentsError("campaign is required")
+        limit_raw = arguments.get("limit", DEFAULT_CAMPAIGN_STATUS_REPO_LIMIT)
+        offset_raw = arguments.get("offset", 0)
+        try:
+            limit_val = int(limit_raw)
+            offset_val = int(offset_raw)
+        except (TypeError, ValueError) as exc:
+            raise InvalidToolArgumentsError("limit and offset must be integers") from exc
+        include_repos = bool(arguments.get("include_repos", True))
+        repo_status = arguments.get("repo_status")
+        definition_root = status.root_path
+        app_config = AppConfig.load()
+        sync_root = (
+            resolve_sync_root(definition_root, app_config.workspace.path)
+            if not isinstance(app_config, Exception)
+            else definition_root
+        )
+        service = CampaignService(
+            config=config,
+            definition_root=Path(definition_root),
+            workspace_root=Path(sync_root),
+        )
+        result = service.status(
+            slug,
+            include_repos=include_repos,
+            limit=None if limit_val == 0 else limit_val,
+            offset=offset_val,
+            repo_status=str(repo_status) if isinstance(repo_status, str) and repo_status else None,
+        )
+        if result is None:
+            raise InvalidToolArgumentsError(f"Unknown campaign: {slug!r}")
+        return result.model_dump(mode="json")
+
+    def _call_campaign_board_sync_tool(
+        self,
+        arguments: dict[str, Any],
+        status: WorkspaceStatus,
+        config: Any,
+    ) -> dict[str, Any]:
+        if not config or not status.root_path:
+            raise InvalidToolArgumentsError("campaign board sync requires an active workspace")
+        slug = str(arguments.get("campaign", "")).strip()
+        if not slug:
+            raise InvalidToolArgumentsError("campaign is required")
+        dry_run = bool(arguments.get("dry_run", False))
+        app_config = AppConfig.load()
+        ado = None if isinstance(app_config, Exception) else app_config.providers.azure_devops
+        organization = str(arguments.get("organization") or (ado.organization if ado else "") or "").strip()
+        project = str(arguments.get("project") or (ado.project if ado else "") or "").strip()
+        token = (ado.api_token if ado else "") or ""
+        base_url = (ado.base_url if ado else "https://dev.azure.com") or "https://dev.azure.com"
+        if not organization or not project:
+            raise InvalidToolArgumentsError("organization and project are required")
+        if not dry_run and not token:
+            raise InvalidToolArgumentsError("Azure DevOps token is required for board sync")
+        definition_root = status.root_path
+        sync_root = (
+            resolve_sync_root(definition_root, app_config.workspace.path)
+            if not isinstance(app_config, Exception)
+            else definition_root
+        )
+        campaigns = CampaignService(
+            config=config,
+            definition_root=Path(definition_root),
+            workspace_root=Path(sync_root),
+        )
+        client = AzureDevOpsBoardClient(
+            api_token=token or "dry-run",
+            organization=organization,
+            project=project,
+            base_url=base_url,
+        )
+        limit_raw = arguments.get("limit", DEFAULT_CAMPAIGN_EXPAND_LIMIT)
+        offset_raw = arguments.get("offset", 0)
+        try:
+            limit_val = int(limit_raw)
+            offset_val = int(offset_raw)
+        except (TypeError, ValueError) as exc:
+            raise InvalidToolArgumentsError("limit and offset must be integers") from exc
+        result = CampaignBoardService(campaign_service=campaigns, client=client).sync(
+            slug=slug,
+            parent_kind=str(arguments.get("parent_type") or "Feature"),
+            child_kind=str(arguments.get("child_type") or "User Story"),
+            limit=limit_val,
+            offset=offset_val,
+            dry_run=dry_run,
+        )
+        return result.model_dump(mode="json")
 
     def _call_component_tool(
         self,

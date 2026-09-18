@@ -19,7 +19,7 @@ edges:
     condition: when adding a new MCP tool or changing tool schemas
   - target: patterns/debug-mcp-runtime.md
     condition: when MCP message loop, framing, or tool dispatch fails
-last_updated: 2026-09-06
+last_updated: 2026-09-18
 ---
 
 # MCP Runtime
@@ -37,7 +37,10 @@ last_updated: 2026-09-06
 - Repo ops service for inspect/sync with mutation guardrails.
 - Project context service (`metagit_project_context_switch`, `metagit_session_update`) with session store under `.metagit/sessions/`.
 - Workspace snapshot service (`metagit_workspace_state_snapshot`, `metagit_workspace_state_restore`) under `.metagit/snapshots/`.
-- Workspace search uses ripgrep when `rg` is on PATH; `metagit_workspace_sync` batches guarded fetch/pull/clone across index rows.
+- Context packs (`metagit_context_pack`) honor `max_cards` / `max_map_repos`; `max_tokens` drops cards → digest → map rows.
+- Catalog tools `metagit_workspace_list` / `metagit_workspace_repos_list` page results; `include_workspace` defaults false.
+- Campaign tools `metagit_campaign_status` (paged summary) and `metagit_campaign_board_sync` (ADO WIT, `dry_run` first).
+- Resource `metagit://workspace/config?view=full` refuses above 80 repos unless `confirm=1`.
 - `metagit_cross_project_dependencies` combines config-declared edges, manifest import hints, shared URL/path detection, and GitNexus per-repo index status.
 - Phase 3: `metagit_workspace_health_check` (branch-age / integration staleness when enabled), `metagit_workspace_discover`, `metagit_project_template_apply`, resources `metagit://workspace/health` and `metagit://workspace/context`.
 - **Layered MCP resources (Phases 1–4):** `ResourceService` + catalog — static/dynamic URIs, read-only session digest, objectives/approvals/handoffs/events, MCP `prompts/list` + `prompts/get`, dispatch `mcp_resources`; see `docs/reference/mcp-layered-resources-spec.md`.

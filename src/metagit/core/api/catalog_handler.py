@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.context.reduction import DEFAULT_INDEX_ROW_LIMIT
 from metagit.core.workspace.catalog_models import CatalogError, CatalogMutationResult
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 
@@ -42,10 +43,20 @@ class CatalogApiHandler:
             return True
 
         if method == "GET" and parsed_path == "/v2/workspace":
+            include_workspace = self._first(params, "include_workspace") == "true"
+            include_index = self._first(params, "include_index") != "false"
+            limit_raw = self._first(params, "limit")
+            offset_raw = self._first(params, "offset")
+            limit_val = int(limit_raw) if limit_raw and limit_raw.isdigit() else DEFAULT_INDEX_ROW_LIMIT
+            offset_val = int(offset_raw) if offset_raw and offset_raw.isdigit() else 0
             result = self._service.list_workspace(
                 config,
                 self._config_path,
                 self._workspace_root,
+                include_index=include_index,
+                include_workspace=include_workspace,
+                index_limit=None if limit_val == 0 else limit_val,
+                index_offset=offset_val,
             )
             respond(200, result.model_dump(mode="json"))
             return True
@@ -88,10 +99,18 @@ class CatalogApiHandler:
 
         if method == "GET" and parsed_path == "/v2/repos":
             project = self._first(params, "project")
+            detail = self._first(params, "detail") or "slim"
+            limit_raw = self._first(params, "limit")
+            offset_raw = self._first(params, "offset")
+            limit_val = int(limit_raw) if limit_raw and limit_raw.isdigit() else DEFAULT_INDEX_ROW_LIMIT
+            offset_val = int(offset_raw) if offset_raw and offset_raw.isdigit() else 0
             result = self._service.list_repos(
                 config,
                 self._workspace_root,
                 project_name=project,
+                detail="full" if detail == "full" else "slim",
+                limit=None if limit_val == 0 else limit_val,
+                offset=offset_val,
             )
             respond(200, result.model_dump(mode="json"))
             return True

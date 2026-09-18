@@ -34,7 +34,7 @@ _STATIC_DESCRIPTORS: list[ResourceDescriptor] = [
     ResourceDescriptor(
         uri="metagit://workspace/map",
         name="Workspace map (T0)",
-        description="Projects, repos, clone existence — tier-0 map only.",
+        description="Paged T0 map (default 80 repos). Query ?project=&limit=&offset=.",
         estimated_tokens=300,
     ),
     ResourceDescriptor(
@@ -88,13 +88,13 @@ _STATIC_DESCRIPTORS: list[ResourceDescriptor] = [
     ResourceDescriptor(
         uri="metagit://workspace/config",
         name="Workspace config",
-        description="Manifest summary by default; use ?view=full for entire .metagit.yml.",
+        description=("Manifest summary by default. ?view=full is refused above 80 repos unless ?confirm=1."),
         estimated_tokens=250,
     ),
     ResourceDescriptor(
         uri="metagit://workspace/repos/status",
         name="Repos status",
-        description="Workspace index rows; optional ?project= filter.",
+        description="Workspace index rows; ?project=, ?summary=1, ?limit=&offset= (default 80).",
         estimated_tokens=600,
     ),
     ResourceDescriptor(
@@ -163,6 +163,8 @@ _PROMPT_KINDS: frozenset[str] = frozenset(
         "context-pack",
         "graph-discover",
         "graph-maintain",
+        "context-switch",
+        "large-workspace",
     }
 )
 

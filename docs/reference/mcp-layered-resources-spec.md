@@ -1,8 +1,8 @@
 # Metagit MCP layered resources — specification
 
 **Status:** Implemented (Phases 1–4)  
-**Version:** 1.1  
-**Last updated:** 2026-06-30  
+**Version:** 1.2  
+**Last updated:** 2026-09-18  
 
 ## Problem
 
@@ -32,7 +32,7 @@ Agents and MCP hosts that auto-subscribe to resources therefore loaded maximum c
 
 | URI | MIME | Tier | Description |
 |-----|------|------|-------------|
-| `metagit://workspace/map` | JSON | T0 | `WorkspaceMapResult` |
+| `metagit://workspace/map` | JSON | T0 | Paged `WorkspaceMapResult` (`?limit=`, `?offset=`, `?project=`; default 80) |
 | `metagit://session/meta` | JSON | T0 | Active project + session notes |
 | `metagit://session/digest` | JSON | T2 | Read-only digest (no boundary bump) |
 | `metagit://session/digest/summary` | JSON | T2 | Compact digest counts |
@@ -41,7 +41,7 @@ Agents and MCP hosts that auto-subscribe to resources therefore loaded maximum c
 | `metagit://approvals/pending` | JSON | L1 | Pending approval queue |
 | `metagit://handoffs/open` | JSON | L1 | Open/claimed handoffs |
 | `metagit://events/recent` | JSON | L2 | Poll feed (`?since=` ISO cursor) |
-| `metagit://workspace/config` | JSON | L3 | Default `?view=summary`; `?view=full` for manifest |
+| `metagit://workspace/config` | JSON | L3 | Default `?view=summary`; `?view=full` refused above 80 repos unless `confirm=1` |
 | `metagit://workspace/repos/status` | JSON | L2 | Index rows; `?project=`, `?summary=1` |
 | `metagit://workspace/health` | JSON | L2 | Health check payload |
 | `metagit://workspace/context` | JSON | T0 | **Deprecated alias** of `session/meta` |
@@ -74,7 +74,7 @@ Agents and MCP hosts that auto-subscribe to resources therefore loaded maximum c
 ## Recommended read order (session start)
 
 1. `metagit://catalog`
-2. `metagit://workspace/map`
+2. `metagit://workspace/map?limit=80`
 3. `metagit://prompt/workspace/session-start?instructions=0`
 4. `metagit://session/meta`
 5. Tool: `metagit_session_begin` when a full bootstrap envelope is required (mutates boundary)

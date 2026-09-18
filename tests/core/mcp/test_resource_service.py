@@ -204,3 +204,20 @@ def test_read_events_recent_uses_state_backend(tmp_path) -> None:
     assert result.error is None
     assert result.data["schema_version"] == "1.0"
     assert isinstance(result.data["events"], list)
+
+
+def test_read_config_full_refused_above_threshold() -> None:
+    repos = [{"name": f"r{i}", "path": f"./r{i}"} for i in range(81)]
+    config = MetagitConfig(
+        name="demo",
+        kind="application",
+        workspace={"projects": [{"name": "default", "repos": repos}]},
+    )
+    service = ResourceService(ops_log=OperationsLogService())
+    result = service.read("metagit://workspace/config?view=full", _active_context(config))
+    assert result.data["error"] == "full_manifest_refused"
+    confirmed = service.read(
+        "metagit://workspace/config?view=full&confirm=1",
+        _active_context(config),
+    )
+    assert "workspace" in confirmed.data

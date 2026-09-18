@@ -38,6 +38,7 @@ def test_catalog_lists_instructions_kind() -> None:
     assert "context-pack" in kinds
     assert "graph-discover" in kinds
     assert "graph-maintain" in kinds
+    assert "large-workspace" in kinds
 
 
 def test_emit_graph_discover_workspace() -> None:

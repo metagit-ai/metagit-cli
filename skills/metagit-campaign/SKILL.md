@@ -6,6 +6,7 @@ description: Plan and track cross-project multi-repo campaigns — YAML overlays
 
 <!-- modality:native_campaigns -->
 <!-- modality:campaign_everroom_context -->
+<!-- modality:campaign_board_link -->
 <!-- modality:objective_mr_approval_binding -->
 <!-- modality:coordination_events_scope -->
 
@@ -41,8 +42,27 @@ metagit campaign validate
 metagit campaign expand --slug tier-full --dry-run
 metagit campaign expand --slug tier-full
 metagit campaign set --slug tier-full --repo platform/api --status merged --mr "https://…"
-metagit campaign status --slug tier-full --json
+metagit campaign status --slug tier-full --json --limit 40
 ```
+
+`--json` on `new`/`status`/`set`/`expand` returns **counts + a page**, not the overlay YAML. Page with `--offset`. Freeze up to 2000 matches on disk; never paste `_campaigns/*.yml` into the conversation.
+
+## Board linking (Azure DevOps)
+
+<!-- modality:campaign_board_link -->
+
+Pointer on the campaign or a repo row (`provider`, `id`, `url`, `organization`, `project`, `kind`). Tokens stay in AppConfig / `METAGIT_AZURE_DEVOPS_*`.
+
+```bash
+metagit campaign new --slug payments --title "Payments" --query payments \
+  --work-item azure_devops:12345 --json
+metagit campaign board-sync --slug payments --organization myorg --ado-project platform \
+  --dry-run --json
+metagit campaign board-sync --slug payments --organization myorg --ado-project platform \
+  --limit 40 --offset 0 --json
+```
+
+MCP: `metagit_campaign_status`, `metagit_campaign_board_sync` (`dry_run: true` first). Docs: [context-reduction.md](https://metagit-ai.github.io/metagit-cli/reference/context-reduction/).
 
 ## Campaign Context (optional EverRoom)
 

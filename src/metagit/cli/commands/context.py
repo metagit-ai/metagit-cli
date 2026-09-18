@@ -39,6 +39,7 @@ from metagit.core.context.models import (
     SessionDigestResult,
 )
 from metagit.core.context.objective_service import ObjectiveService
+from metagit.core.context.reduction import DEFAULT_MAP_REPO_LIMIT, DEFAULT_MAX_CARDS
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.repomix_profile_service import RepomixProfileService
 from metagit.core.context.session_begin_service import SessionBeginService
@@ -91,7 +92,11 @@ def _summarize_pack(pack: ContextPackResult) -> None:
     click.echo(f"tier: {pack.tier}")
     if pack.map:
         mp = pack.map
-        click.echo(f"map: {mp.project_count} project(s), {mp.repo_count} repo(s); root={mp.workspace_root}")
+        truncated = " truncated" if mp.truncated else ""
+        click.echo(
+            f"map: {mp.project_count} project(s), {mp.repo_count} repo(s) "
+            f"showing {len(mp.repos)}{truncated}; root={mp.workspace_root}"
+        )
         if mp.projects:
             names = ", ".join(p.name for p in mp.projects[:8])
             suffix = "" if len(mp.projects) <= 8 else ", …"
@@ -102,8 +107,8 @@ def _summarize_pack(pack: ContextPackResult) -> None:
             _summarize_card_line(card)
         if len(pack.cards) > 10:
             click.echo("  …")
-        if pack.tier == 2 and pack.digest is not None:
-            _summarize_digest_line(pack.digest)
+    if pack.tier == 2 and pack.digest is not None:
+        _summarize_digest_line(pack.digest)
 
 
 def _summarize_card_line(card: RepoCardResult) -> None:
@@ -159,14 +164,14 @@ def context(ctx: click.Context) -> None:
     "--project",
     "project_name",
     default=None,
-    help="Limit cards (tier 1+)",
+    help="Limit cards and map rows (tier 0+)",
     shell_complete=complete_projects,
 )
 @click.option(
     "--repo",
     "repo_name",
     default=None,
-    help="Limit cards (tier 1+)",
+    help="Limit cards and map rows (tier 0+)",
     shell_complete=complete_repos,
 )
 @click.option(
@@ -182,6 +187,19 @@ def context(ctx: click.Context) -> None:
     default=None,
     help="Optional token budget for context pack with greedy drops",
 )
+@click.option(
+    "--max-cards",
+    type=click.IntRange(min=1),
+    default=DEFAULT_MAX_CARDS,
+    show_default=True,
+)
+@click.option(
+    "--max-map-repos",
+    type=click.IntRange(min=1),
+    default=DEFAULT_MAP_REPO_LIMIT,
+    show_default=True,
+    help="Max workspace map repo rows (tier 0+)",
+)
 @click.pass_context
 def pack_cmd(
     ctx: click.Context,
@@ -191,6 +209,8 @@ def pack_cmd(
     repo_name: str | None,
     as_json: bool,
     max_tokens: int | None,
+    max_cards: int,
+    max_map_repos: int,
 ) -> None:
     """Emit a tiered context pack (workspace map ± repo cards ± digest)."""
     config, config_path, sync_root, session_root, _ = _context_paths(
@@ -209,6 +229,8 @@ def pack_cmd(
         project_name=project_name,
         repo_name=repo_name,
         max_tokens=max_tokens,
+        max_cards=max_cards,
+        max_map_repos=max_map_repos,
     )
     if as_json:
         emit_json(result)

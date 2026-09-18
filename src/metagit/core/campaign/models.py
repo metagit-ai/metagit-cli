@@ -7,6 +7,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from metagit.core.workitem.models import ExternalWorkRef
+
 CampaignStatus = Literal["draft", "active", "completed", "archived"]
 CampaignRepoStatus = Literal["pending", "routed", "mr-open", "merged", "blocked"]
 
@@ -62,6 +64,10 @@ class CampaignRepoEntry(BaseModel):
     status: CampaignRepoStatus = Field(default="pending")
     mr: Optional[str] = Field(default=None, description="Merge request or pull request URL")
     note: Optional[str] = Field(default=None, description="Free-form status note")
+    work_item: Optional[ExternalWorkRef] = Field(
+        default=None,
+        description="Optional board/work-item bound to this repo row",
+    )
 
 
 class CampaignLesson(BaseModel):
@@ -129,6 +135,10 @@ class CampaignDocument(BaseModel):
         default_factory=CampaignContextConfig,
         description="Optional external context providers (EverRoom Room association, …)",
     )
+    work_item: Optional[ExternalWorkRef] = Field(
+        default=None,
+        description="Optional parent board/work-item for the whole campaign",
+    )
 
     @field_validator("schema_version", mode="before")
     @classmethod
@@ -172,13 +182,23 @@ class CampaignListResult(BaseModel):
 
 
 class CampaignStatusResult(BaseModel):
-    """Detailed campaign status rollup."""
+    """Detailed campaign status rollup with a paged repo window."""
 
-    campaign: CampaignDocument
+    slug: str
+    title: str
+    status: CampaignStatus
+    goal: Optional[str] = None
+    reference_impl: Optional[str] = None
+    work_item: Optional[ExternalWorkRef] = None
     merged_count: int
     open_mr_count: int
     blocked_count: int
     pending_count: int
+    repo_count: int
+    repos: list[CampaignRepoEntry] = Field(default_factory=list)
+    truncated: bool = False
+    offset: int = 0
+    limit: Optional[int] = None
 
 
 class CampaignValidationIssue(BaseModel):
@@ -194,3 +214,7 @@ class CampaignExpandResult(BaseModel):
     slug: str
     objective_ids: list[str] = Field(default_factory=list)
     dry_run: bool = False
+    truncated: bool = False
+    offset: int = 0
+    limit: Optional[int] = None
+    matched_count: int = 0

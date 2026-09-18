@@ -206,3 +206,25 @@ def test_tier_two_includes_digest_and_touches_session(tmp_path: Path) -> None:
     assert len(pack.cards) == 1
     meta_after = SessionStore(workspace_root=root).get_workspace_meta()
     assert meta_after.last_session_at is not None
+
+
+def test_pack_scopes_map_to_project(tmp_path: Path) -> None:
+    workspace_root = _write_two_project_workspace(tmp_path)
+    config = _load_config(workspace_root)
+    pack = ContextPackService().pack(
+        config,
+        str(workspace_root / ".metagit.yml"),
+        str(workspace_root.resolve()),
+        tier=0,
+        project_name="alpha",
+    )
+    assert pack.map is not None
+    assert {row.project_name for row in pack.map.repos} == {"alpha"}
+
+
+def test_pack_max_tokens_drops_map_repos(tmp_path: Path) -> None:
+    cfg, root, cfg_path = _fixture(tmp_path)
+    pack = ContextPackService().pack(cfg, cfg_path, root, tier=0, max_tokens=1)
+    assert "map.repos" in pack.dropped_sections
+    assert pack.map is not None
+    assert pack.map.repos == []

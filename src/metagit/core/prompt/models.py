@@ -25,6 +25,7 @@ PromptKind = Literal[
     "context-pack",
     "graph-discover",
     "graph-maintain",
+    "large-workspace",
 ]
 
 
