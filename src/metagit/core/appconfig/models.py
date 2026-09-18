@@ -8,6 +8,7 @@ from typing import List, Literal, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field
 
 from metagit import DATA_PATH
+from metagit.core.appconfig.paths import default_user_appconfig_path
 from metagit.core.utils.yaml_class import yaml
 
 success_blurb: str = "Success! ✅"
@@ -399,7 +400,7 @@ class AppConfig(BaseModel):
         """
         try:
             if not config_path:
-                config_path = os.path.join(Path.home(), ".config", "metagit", "config.yml")
+                config_path = default_user_appconfig_path()
 
             config_file = Path(config_path)
             if config_file.exists():
@@ -557,7 +558,7 @@ class AppConfig(BaseModel):
         """
         try:
             if not config_path:
-                config_path = os.path.join(Path.home(), ".config", "metagit", "config.yml")
+                config_path = default_user_appconfig_path()
 
             config_file = Path(config_path)
             config_file.parent.mkdir(parents=True, exist_ok=True)

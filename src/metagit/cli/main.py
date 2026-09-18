@@ -22,7 +22,7 @@ from pathlib import Path
 
 import click
 
-from metagit import DEFAULT_CONFIG, __version__
+from metagit import __version__
 from metagit.cli.commands.agent import agent
 from metagit.cli.commands.aos import aos_group
 from metagit.cli.commands.api import api
@@ -105,29 +105,13 @@ def cli(ctx: click.Context, config: str, debug: bool, verbose: bool) -> None:
         logger: UnifiedLogger = UnifiedLogger(LoggerConfig(log_level=log_level, minimal_console=minimal_console))
 
         kind = detect_cli_config_file(config)
+        cfg, definition_path, config_path = resolve_cli_bootstrap(config)
         if kind == "missing" and not Path(config).expanduser().is_file():
-            logger.debug(f"Config file '{config}' not found, using default: {DEFAULT_CONFIG}")
+            logger.debug(f"Config file '{config}' not found, using default: {config_path}")
 
-        cfg, definition_path = resolve_cli_bootstrap(config)
         if isinstance(cfg, Exception):
             logger.error(str(cfg))
             ctx.abort()
-
-        # Use the config_path returned from resolve_cli_bootstrap (it's either the explicit appconfig path or DEFAULT_CONFIG)
-        config_path = (
-            config
-            if kind == "appconfig"
-            else (
-                str(Path(config).expanduser())
-                if kind == "manifest" and not definition_path
-                else cfg.workspace.path
-                if hasattr(cfg, "workspace")
-                else DEFAULT_CONFIG
-            )
-        )
-        # Actually, let's just get the config file path from the loaded config or use DEFAULT_CONFIG
-        # The load_config function returns an AppConfig object, we need to know what file was loaded
-        # For now, keep the old logic but this is a deeper refactor
 
         # Store the configuration and logger in the context
         ctx.obj = {

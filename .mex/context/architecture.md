@@ -16,14 +16,14 @@ edges:
     condition: when implementing changes across CLI, core services, and tests
   - target: context/mcp-runtime.md
     condition: when task scope includes MCP tools, resources, stdio runtime, or sampling
-last_updated: 2026-09-16
+last_updated: 2026-09-18
 ---
 
 # Architecture
 
 ## System Overview
 User runs `metagit` CLI command via `src/metagit/cli/main.py` and command modules under `src/metagit/cli/commands/`.
-CLI command loads app config (`metagit.config.yaml`) through `metagit.core.appconfig` and initializes `UnifiedLogger`.
+CLI command loads app config (`metagit.config.yaml`, else `metagit.config.yml`, else `~/.config/metagit/config.yml`, else the bundled default) through `metagit.cli.config_path.resolve_cli_bootstrap` / `metagit.core.appconfig` and initializes `UnifiedLogger`. `ctx.obj["config_path"]` is that YAML file, never `workspace.path`.
 Command handlers call core managers/services in `src/metagit/core/*` (config manager, detection manager, workspace/project helpers, record managers).
 For project metadata, `.metagit.yml` is loaded/validated via `MetagitConfigManager` and Pydantic models in `metagit.core.config.models`.
 For MCP mode, `metagit mcp serve` enters `MetagitMcpRuntime`, evaluates workspace gate state, exposes tools/resources, and dispatches calls to MCP services (including `metagit_repo_search` for managed-repo-only lookup via `ManagedRepoSearchService`).

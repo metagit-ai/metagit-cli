@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-09-16
+last_updated: 2026-09-18
 ---
 
 # Session Bootstrap
@@ -27,6 +27,7 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **AppConfig file fallback (2026-09-18, `cursor/fix-appconfig-default-path-e8cf`):** Missing local `metagit.config.yaml` no longer sets `ctx.obj["config_path"]` to `workspace.path` (`./.metagit`). Lookup is local `.yml`, then `~/.config/metagit/config.yml` (XDG-aware), then bundled default. Pattern `.mex/patterns/appconfig-path-resolution.md`.
 - **External repository nodes & GitHub org index (2026-09-16, `cursor/external-repo-org-index-b7e4`):** Disposable SQLite observations at `~/.metagit/indexes/github/` (`METAGIT_INDEX_HOME`). CLI `metagit org index github` / `org search`, `metagit graph neighbors`, `metagit repo materialize`. Graph validation resolves local, curated `graph.nodes`, or indexed identities (`github://org/repo`) without requiring a checkout. MCP `metagit_org_*` / `metagit_graph_neighbors`; web `GET /v3/ops/org/search`. Docs [docs/reference/org-index.md](../docs/reference/org-index.md); pattern `.mex/patterns/org-index-external-nodes.md`.
 - **Agent skill token hygiene (2026-09-16):** `metagit-bootstrap` defaults to deterministic `metagit init --kind application --no-prompt`. Detect payloads use `--output-file` (`.metagit/.detect/`); `detect repo_map` is out of skill/prompt discovery. Pattern `.mex/patterns/bootstrap-metagit-config.md`.
 - **Campaign ↔ EverRoom context (2026-09-12, `cursor/campaign-everroom-context-c3ad`):** Optional campaign-scoped EverRoom adapter. CLI `metagit campaign context` / `campaign everroom status|attach|create|detach|sync`; MCP `metagit_campaign_context`; isolated Gateway client under `src/metagit/core/integrations/everroom/`. Tokens via `METAGIT_EVERROOM_TOKEN` only. Read-only context degrades to MetaGit-only when the Gateway is down. Docs [docs/reference/campaign-everroom.md](../docs/reference/campaign-everroom.md); pattern `.mex/patterns/campaign-everroom-context.md`.

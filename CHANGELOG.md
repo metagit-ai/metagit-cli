@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+- CLI AppConfig bootstrap no longer treats `workspace.path` (`./.metagit`) as the config file when a local `metagit.config.yaml` is missing. Fallback is now `metagit.config.yml`, then `~/.config/metagit/config.yml` (or `config.yaml`, honoring `XDG_CONFIG_HOME`), then the bundled default. `metagit appconfig info` / `validate` report and read that YAML path.
 
+### Security
+- Bump transitive `soupsieve` to `>=2.9.2` (CVE-2026-85999 / CVE-2026-86000).
 
 ## [0.34.0] - 2026-09-16
 

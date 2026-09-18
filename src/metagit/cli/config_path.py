@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Optional, Tuple, Union
+from typing import Literal, Optional, Sequence, Tuple, Union
 
 import yaml
 
 from metagit import DEFAULT_CONFIG
 from metagit.core.appconfig import AppConfig, load_config
+from metagit.core.appconfig.paths import local_appconfig_paths, user_appconfig_paths
 
 ConfigKind = Literal["appconfig", "manifest", "missing", "invalid"]
 
@@ -31,28 +32,66 @@ def detect_cli_config_file(path: str) -> ConfigKind:
     return "invalid"
 
 
+def _as_config_path(path: Path | str) -> str:
+    return str(Path(path).expanduser().resolve())
+
+
+def _first_appconfig_file(candidates: Sequence[Path]) -> Optional[Path]:
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        if detect_cli_config_file(key) == "appconfig":
+            return Path(key)
+    return None
+
+
+def _missing_appconfig_candidates(requested: Path) -> list[Path]:
+    candidates: list[Path] = []
+    suffix = requested.suffix.lower()
+    if suffix == ".yaml":
+        candidates.append(requested.with_suffix(".yml"))
+    elif suffix == ".yml":
+        candidates.append(requested.with_suffix(".yaml"))
+    candidates.extend(local_appconfig_paths(requested.parent))
+    candidates.extend(user_appconfig_paths())
+    return candidates
+
+
 def resolve_cli_bootstrap(
     path: str,
-) -> Tuple[Union[AppConfig, Exception], Optional[str]]:
+) -> Tuple[Union[AppConfig, Exception], Optional[str], str]:
+    """Load AppConfig for a CLI ``-c`` path.
+
+    Returns ``(config_or_error, definition_path_or_None, appconfig_path)``.
+    ``appconfig_path`` is always a YAML file (local, user, or bundled default),
+    never ``workspace.path``.
+    """
     kind = detect_cli_config_file(path)
-    if kind == "missing":
-        cfg = load_config(DEFAULT_CONFIG)
-        return cfg, None
+    requested = Path(path).expanduser()
     if kind == "appconfig":
-        return load_config(path), None
+        appconfig_path = _as_config_path(requested)
+        return load_config(appconfig_path), None, appconfig_path
     if kind == "manifest":
-        # When given a manifest, try to find a local appconfig in the same directory
-        manifest_path = Path(path).expanduser()
-        manifest_dir = manifest_dir = manifest_path.parent
-        local_appconfig = manifest_dir / "metagit.config.yaml"
-        if local_appconfig.is_file():
-            return load_config(str(local_appconfig)), str(manifest_path)
-        cfg = load_config(DEFAULT_CONFIG)
-        return cfg, str(manifest_path)
+        found = _first_appconfig_file(
+            [
+                *local_appconfig_paths(requested.parent),
+                *user_appconfig_paths(),
+            ]
+        )
+        appconfig_path = _as_config_path(found) if found is not None else DEFAULT_CONFIG
+        return load_config(appconfig_path), str(requested), appconfig_path
+    if kind == "missing":
+        found = _first_appconfig_file(_missing_appconfig_candidates(requested))
+        appconfig_path = _as_config_path(found) if found is not None else DEFAULT_CONFIG
+        return load_config(appconfig_path), None, appconfig_path
     return (
         ValueError(
             f"Path '{path}' is neither metagit.config.yaml (top-level 'config:') "
             "nor a .metagit.yml manifest (expected keys like name/kind/workspace)."
         ),
         None,
+        DEFAULT_CONFIG,
     )
