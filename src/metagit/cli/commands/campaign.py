@@ -283,11 +283,7 @@ def campaign_status(
     for repo in result.repos:
         mr = f" mr={repo.mr}" if repo.mr else ""
         note = f" note={repo.note}" if repo.note else ""
-        work = (
-            f" work_item={repo.work_item.provider}:{repo.work_item.id}"
-            if repo.work_item
-            else ""
-        )
+        work = f" work_item={repo.work_item.provider}:{repo.work_item.id}" if repo.work_item else ""
         click.echo(f"  {repo.project}/{repo.repo}\t{repo.status}{mr}{note}{work}")
 
 

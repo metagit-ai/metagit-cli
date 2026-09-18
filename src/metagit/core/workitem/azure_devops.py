@@ -92,10 +92,7 @@ class AzureDevOpsBoardClient:
             if isinstance(html, dict):
                 web_url = html.get("href")
             if not web_url:
-                web_url = (
-                    f"{self._base_url}/{self._organization}/{self._project}"
-                    f"/_workitems/edit/{identifier}"
-                )
+                web_url = f"{self._base_url}/{self._organization}/{self._project}/_workitems/edit/{identifier}"
             return ExternalWorkRef(
                 provider="azure_devops",
                 id=identifier,
@@ -123,10 +120,7 @@ class AzureDevOpsBoardClient:
             identifier = str(data.get("id") or ref.id)
             fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
             kind = fields.get("System.WorkItemType") if isinstance(fields, dict) else ref.kind
-            web_url = (
-                f"{self._base_url}/{self._organization}/{self._project}"
-                f"/_workitems/edit/{identifier}"
-            )
+            web_url = f"{self._base_url}/{self._organization}/{self._project}/_workitems/edit/{identifier}"
             return ExternalWorkRef(
                 provider="azure_devops",
                 id=identifier,

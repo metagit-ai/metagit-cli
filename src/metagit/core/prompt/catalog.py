@@ -94,9 +94,7 @@ _CATALOG: list[PromptCatalogEntry] = [
     PromptCatalogEntry(
         kind="large-workspace",
         title="Large umbrella workspace loop",
-        description=(
-            "On-demand search, paged campaigns, and board-linked work for 500+ repo umbrellas."
-        ),
+        description=("On-demand search, paged campaigns, and board-linked work for 500+ repo umbrellas."),
         scopes=["workspace"],
     ),
 ]

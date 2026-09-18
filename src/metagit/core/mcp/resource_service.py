@@ -228,8 +228,7 @@ class ResourceService:
                     full_manifest_refused_payload(
                         repo_count=repo_count,
                         hint=(
-                            "Use ?view=summary, metagit search, or "
-                            "?view=full&confirm=1 for an operator-approved dump."
+                            "Use ?view=summary, metagit search, or ?view=full&confirm=1 for an operator-approved dump."
                         ),
                     ),
                 )

@@ -2322,9 +2322,7 @@ class MetagitMcpRuntime:
                 project_name=project_opt,
                 repo_name=repo_opt,
                 max_tokens=max_tokens,
-                max_cards=int(arguments["max_cards"])
-                if arguments.get("max_cards") is not None
-                else DEFAULT_MAX_CARDS,
+                max_cards=int(arguments["max_cards"]) if arguments.get("max_cards") is not None else DEFAULT_MAX_CARDS,
                 max_map_repos=int(arguments["max_map_repos"])
                 if arguments.get("max_map_repos") is not None
                 else DEFAULT_MAP_REPO_LIMIT,

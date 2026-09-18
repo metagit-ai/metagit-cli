@@ -88,10 +88,7 @@ _STATIC_DESCRIPTORS: list[ResourceDescriptor] = [
     ResourceDescriptor(
         uri="metagit://workspace/config",
         name="Workspace config",
-        description=(
-            "Manifest summary by default. ?view=full is refused above 80 repos unless "
-            "?confirm=1."
-        ),
+        description=("Manifest summary by default. ?view=full is refused above 80 repos unless ?confirm=1."),
         estimated_tokens=250,
     ),
     ResourceDescriptor(

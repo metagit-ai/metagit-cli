@@ -9,6 +9,9 @@
 ### Changed
 - Context packs honor `--max-map-repos` and shrink the map after cards/digest when `--max-tokens` is exceeded. Workspace repo list defaults to slim rows. Campaign `status`/`expand`/`new --json` return counts and a page, not the overlay YAML.
 
+### Security
+- Bump transitive `anyio` to `>=4.14.2` (CVE-2026-63374 / CVE-2026-64847).
+
 ## [0.34.1] - 2026-09-18
 
 
