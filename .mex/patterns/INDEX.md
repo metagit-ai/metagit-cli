@@ -29,6 +29,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [agent-coordination-acl.md](agent-coordination-acl.md) | Implementing or extending RFC-0007 ACL branch/lease/worktree/claim primitives |
 | [agent-scheduler.md](agent-scheduler.md) | Implementing or extending RFC-0012 schedule scoring, policy, CLI/MCP, and events |
 | [aos-composition.md](aos-composition.md) | Implementing or operating RFC-0013 AOS status/doctor/next composition façade |
+| [appconfig-path-resolution.md](appconfig-path-resolution.md) | CLI AppConfig file lookup when local metagit.config.yaml is missing; never use workspace.path as config_path |
 | [atlas-local.md](atlas-local.md) | Operating or extending the repository-local Atlas semantic layer |
 | [campaign-everroom-context.md](campaign-everroom-context.md) | Optional Campaign ↔ EverRoom Room association, campaign context packet, and Gateway adapter |
 | [task-graph-intent.md](task-graph-intent.md) | Implementing or extending RFC-0008 task DAG + intent (CLI/MCP/events) |

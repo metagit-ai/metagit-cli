@@ -9,14 +9,24 @@ import yaml as base_yaml
 
 from metagit.core.appconfig.agent_mode import resolve_agent_mode
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.appconfig.paths import (
+    default_user_appconfig_path,
+    first_existing_user_appconfig,
+    local_appconfig_paths,
+    user_appconfig_paths,
+)
 
 __all__ = [
     "AppConfig",
+    "default_user_appconfig_path",
+    "first_existing_user_appconfig",
     "get_config",
     "load_config",
+    "local_appconfig_paths",
     "resolve_agent_mode",
     "save_config",
     "set_config",
+    "user_appconfig_paths",
 ]
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.utils.yaml_class import yaml

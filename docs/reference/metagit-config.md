@@ -67,6 +67,18 @@ metagit config patch --file ops.json --save
 
 Do not deploy the generated exemplar verbatim; copy sections you need and replace placeholders.
 
+## Application config file resolution
+
+Global `-c` / `--config` defaults to `metagit.config.yaml` in the current directory. When that file is missing, Metagit loads AppConfig from:
+
+1. `metagit.config.yml` in the same directory
+2. `~/.config/metagit/config.yml` or `config.yaml` (honors `XDG_CONFIG_HOME`)
+3. The bundled default shipped in the package
+
+`metagit appconfig info` reports that YAML file path. It is never `workspace.path` (schema default `./.metagit`), which is the workspace sync folder, not an AppConfig file.
+
+When `-c` points at a `.metagit.yml` manifest, the same local-then-user-then-bundled lookup runs next to the manifest.
+
 ## Documentation sources
 
 The top-level `documentation` list accepts **bare strings** or **objects**:

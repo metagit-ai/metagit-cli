@@ -23,6 +23,7 @@ from pydantic import (
 )
 
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.appconfig.paths import default_user_appconfig_path
 from metagit.core.config.documentation_models import (
     DocumentationSource,
     normalize_documentation_entries,
@@ -928,7 +929,7 @@ class TenantConfig(AppConfig):
         """
         try:
             if not config_path:
-                config_path = os.path.join(Path.home(), ".config", "metagit", "config.yml")
+                config_path = default_user_appconfig_path()
 
             config_file = Path(config_path)
             if not config_file.exists():
