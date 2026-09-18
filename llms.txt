@@ -14,11 +14,12 @@ PyPI name: `metagit-cli` (not `metagit`).
 ## Session start (minimal tokens)
 
 ```bash
-metagit context pack --tier 2 --json
+metagit context pack --tier 0 --json
 metagit prompt workspace --kind session-start --text-only
 ```
 
-- Tier 0: workspace map · Tier 1: + repo cards · Tier 2: + since-last-session digest
+- Tier 0: paged workspace map · Tier 1: + repo cards · Tier 2: + since-last-session digest
+- 500+ repos: `metagit prompt workspace -k large-workspace --text-only` — never dump `.metagit.yml` (see [docs/reference/context-reduction.md](docs/reference/context-reduction.md))
 
 ## Agent docs (read in this order)
 
@@ -38,14 +39,15 @@ metagit prompt workspace --kind session-start --text-only
 | List all managed targets | `metagit workspace repo list --json` |
 | Grep file contents | `metagit workspace grep "query" --json` |
 | Grep backend status | `metagit workspace grep info --json` |
-| List workspace | `metagit workspace list --json` |
+| List workspace (paged) | `metagit workspace list --json` |
+| Campaign page / ADO board | `metagit campaign status --json --limit 40` · `metagit campaign board-sync --dry-run --json` |
 | Prompts | `metagit prompt list` |
 | Skills | `metagit skills install --scope user` |
 | MCP | `metagit mcp install --scope user` |
 | Latest release / notes | `metagit version check --json` |
 | Self-update | `metagit version upgrade --apply --json` |
 | Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
-| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` · `metagit campaign context` |
+| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign status --limit 40` · `metagit campaign board-sync` · `metagit campaign context` |
 | ACL branch / lease | `metagit branch allocate` · `metagit lease acquire --allocate` |
 | Task graph / intent | `metagit task create` · `metagit task ready` · `metagit task complete` |
 | Context compile | `metagit context compile --project P --repo R --json` |

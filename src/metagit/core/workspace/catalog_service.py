@@ -10,6 +10,12 @@ from typing import Any, Optional
 
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
+from metagit.core.context.reduction import (
+    DEFAULT_INDEX_ROW_LIMIT,
+    DEFAULT_INSTRUCTION_EXCERPT_CHARS,
+    excerpt_text,
+    page_rows,
+)
 from metagit.core.mcp.services.workspace_index import WorkspaceIndexService
 from metagit.core.project.models import ProjectPath
 from metagit.core.workspace.catalog_models import (
@@ -81,24 +87,44 @@ class WorkspaceCatalogService:
         workspace_root: str,
         *,
         include_index: bool = True,
+        include_workspace: bool = False,
+        index_limit: Optional[int] = DEFAULT_INDEX_ROW_LIMIT,
+        index_offset: int = 0,
     ) -> CatalogResult:
-        """Return workspace summary, projects, and optional index rows."""
+        """Return workspace summary, projects, and optional index rows.
+
+        The full ``workspace`` object is omitted unless ``include_workspace``
+        is true. Index rows are paged so 500-repo umbrellas do not dump into
+        agent context.
+        """
         summary = self._workspace_summary(
             config=config,
             config_path=config_path,
             workspace_root=workspace_root,
+            include_workspace=include_workspace,
         )
         projects = self.list_projects(config=config).data or {}
         payload: dict[str, Any] = {
             "summary": summary.model_dump(mode="json"),
             "projects": projects.get("projects", []),
+            "truncated": False,
+            "index_limit": index_limit,
+            "index_offset": index_offset,
         }
         if include_index:
-            payload["repos_index"] = self._index.build_index(
+            index_rows = self._index.build_index(
                 config=config,
                 workspace_root=workspace_root,
                 definition_root=resolve_definition_root(config_path),
             )
+            paged, truncated = page_rows(
+                index_rows,
+                limit=index_limit,
+                offset=index_offset,
+            )
+            payload["repos_index"] = paged
+            payload["truncated"] = truncated
+            payload["index_total"] = len(index_rows)
         return CatalogResult(ok=True, data=payload)
 
     def list_projects(self, config: MetagitConfig) -> CatalogResult:
@@ -108,21 +134,24 @@ class WorkspaceCatalogService:
                 ok=True,
                 data={"projects": [], "project_count": 0},
             )
-        entries = [
-            ProjectListEntry(
-                name=project.name,
-                description=project.description,
-                agent_instructions=project.agent_instructions,
-                protected=bool(project.protected),
-                tags=dict(project.tags),
-                metadata=dict(project.metadata),
-                documentation_count=len(project.documentation or []),
-                dedupe_enabled=(project.dedupe.enabled if project.dedupe is not None else None),
-                derived=bool(project.derived is not None and project.derived.enabled),
-                repo_count=len(project.repos),
-            ).model_dump(mode="json")
-            for project in config.workspace.projects
-        ]
+        entries = []
+        for project in config.workspace.projects:
+            instructions, truncated = excerpt_text(project.agent_instructions)
+            entries.append(
+                ProjectListEntry(
+                    name=project.name,
+                    description=project.description,
+                    agent_instructions=instructions,
+                    agent_instructions_truncated=truncated,
+                    protected=bool(project.protected),
+                    tags=dict(project.tags),
+                    metadata=dict(project.metadata),
+                    documentation_count=len(project.documentation or []),
+                    dedupe_enabled=(project.dedupe.enabled if project.dedupe is not None else None),
+                    derived=bool(project.derived is not None and project.derived.enabled),
+                    repo_count=len(project.repos),
+                ).model_dump(mode="json")
+            )
         return CatalogResult(
             ok=True,
             data={"projects": entries, "project_count": len(entries)},
@@ -135,10 +164,27 @@ class WorkspaceCatalogService:
         *,
         project_name: Optional[str] = None,
         include_status: bool = True,
+        detail: str = "slim",
+        limit: Optional[int] = DEFAULT_INDEX_ROW_LIMIT,
+        offset: int = 0,
     ) -> CatalogResult:
-        """List configured repositories, optionally scoped to one project."""
+        """List configured repositories, optionally scoped to one project.
+
+        Default ``detail='slim'`` omits agent instructions, components, and
+        other heavy ``ProjectPath`` fields. Pass ``detail='full'`` only when
+        editing a single repo entry.
+        """
         if not config.workspace:
-            return CatalogResult(ok=True, data={"repos": [], "repo_count": 0})
+            return CatalogResult(
+                ok=True,
+                data={
+                    "repos": [],
+                    "repo_count": 0,
+                    "truncated": False,
+                    "limit": limit,
+                    "offset": offset,
+                },
+            )
         index_rows: list[dict[str, Any]] = []
         if include_status:
             index_rows = self._index.build_index(
@@ -160,10 +206,26 @@ class WorkspaceCatalogService:
                     exists=row.get("exists"),
                     status=row.get("status"),
                 )
-                repos.append(entry.model_dump(mode="json"))
+                dumped = entry.model_dump(mode="json")
+                if detail != "full":
+                    dumped["repo"] = {
+                        "name": repo.name,
+                        "path": repo.path,
+                        "url": str(repo.url) if repo.url else None,
+                        "tags": dict(repo.tags or {}),
+                    }
+                repos.append(dumped)
+        paged, truncated = page_rows(repos, limit=limit, offset=offset)
         return CatalogResult(
             ok=True,
-            data={"repos": repos, "repo_count": len(repos)},
+            data={
+                "repos": paged,
+                "repo_count": len(repos),
+                "truncated": truncated,
+                "limit": limit,
+                "offset": offset,
+                "detail": "full" if detail == "full" else "slim",
+            },
         )
 
     def add_project(
@@ -524,18 +586,25 @@ class WorkspaceCatalogService:
         config: MetagitConfig,
         config_path: str,
         workspace_root: str,
+        *,
+        include_workspace: bool = False,
     ) -> WorkspaceSummary:
         project_count = len(config.workspace.projects) if config.workspace else 0
         repo_count = 0
         if config.workspace:
             repo_count = sum(len(project.repos) for project in config.workspace.projects)
+        instructions, truncated = excerpt_text(
+            config.agent_instructions,
+            limit=DEFAULT_INSTRUCTION_EXCERPT_CHARS,
+        )
         return WorkspaceSummary(
             definition_path=str(Path(config_path).resolve()),
             workspace_root=str(Path(workspace_root).resolve()),
             file_name=config.name,
             file_description=config.description,
-            file_agent_instructions=config.agent_instructions,
-            workspace=config.workspace,
+            file_agent_instructions=instructions,
+            file_agent_instructions_truncated=truncated,
+            workspace=config.workspace if include_workspace else None,
             project_count=project_count,
             repo_count=repo_count,
         )

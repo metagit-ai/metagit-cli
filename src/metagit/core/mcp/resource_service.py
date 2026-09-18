@@ -14,6 +14,14 @@ from metagit.core.config.models import MetagitConfig
 from metagit.core.context.approval_service import ApprovalService
 from metagit.core.context.handoff_service import HandoffService
 from metagit.core.context.objective_service import ObjectiveService
+from metagit.core.context.reduction import (
+    DEFAULT_MAP_REPO_LIMIT,
+    DEFAULT_PROJECT_SUMMARY_REPO_LIMIT,
+    FULL_MANIFEST_REPO_THRESHOLD,
+    count_workspace_repos,
+    full_manifest_refused_payload,
+    page_rows,
+)
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.session_digest_service import SessionDigestService
 from metagit.core.context.workspace_map_service import WorkspaceMapService
@@ -162,13 +170,22 @@ class ResourceService:
         return ResourceReadResult(uri=uri, error="Unknown resource URI")
 
     def _read_map(self, uri: str, context: ResourceContext) -> ResourceReadResult:
+        parsed = parse_resource_uri(uri)
         store = SessionStore(workspace_root=context.session_root)
         meta = store.get_workspace_meta()
+        project_filter = parsed.query.get("project")
+        repo_filter = parsed.query.get("repo")
+        limit = query_int(parsed.query.get("limit"), default=DEFAULT_MAP_REPO_LIMIT)
+        offset = query_int(parsed.query.get("offset"), default=0) or 0
         map_result = self._map.build(
             config=context.config,  # type: ignore[arg-type]
             config_path=context.config_path,
             workspace_root=context.workspace_root,
             active_project=meta.active_project,
+            project_name=project_filter,
+            repo_name=repo_filter,
+            limit=limit,
+            offset=offset,
         )
         return self._json(uri, map_result.model_dump(mode="json"))
 
@@ -203,6 +220,19 @@ class ResourceService:
         if config is None:
             return ResourceReadResult(uri=uri, error="config unavailable")
         if view == "full":
+            repo_count = count_workspace_repos(config)
+            confirm = query_bool(parsed.query.get("confirm"), default=False)
+            if repo_count > FULL_MANIFEST_REPO_THRESHOLD and not confirm:
+                return self._json(
+                    uri,
+                    full_manifest_refused_payload(
+                        repo_count=repo_count,
+                        hint=(
+                            "Use ?view=summary, metagit search, or "
+                            "?view=full&confirm=1 for an operator-approved dump."
+                        ),
+                    ),
+                )
             return self._json(uri, config.model_dump(exclude_none=True))
         projects: list[dict[str, Any]] = []
         repo_count = 0
@@ -238,7 +268,19 @@ class ResourceService:
             rows = [row for row in rows if row.get("project_name") == project_filter]
         if query_bool(parsed.query.get("summary"), default=False):
             return self._json(uri, self._repos_status_summary(rows))
-        return self._json(uri, rows)
+        limit = query_int(parsed.query.get("limit"), default=DEFAULT_MAP_REPO_LIMIT)
+        offset = query_int(parsed.query.get("offset"), default=0) or 0
+        paged, truncated = page_rows(rows, limit=limit, offset=offset)
+        return self._json(
+            uri,
+            {
+                "repos": paged,
+                "repo_count": len(rows),
+                "truncated": truncated,
+                "limit": limit,
+                "offset": offset,
+            },
+        )
 
     @staticmethod
     def _repos_status_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -391,19 +433,24 @@ class ResourceService:
                 }
             )
 
+        limit = DEFAULT_PROJECT_SUMMARY_REPO_LIMIT
+        paged, truncated = page_rows(repo_rows, limit=limit, offset=0)
         summary = ProjectSummaryResult(
             project_name=project.name,
             description=project.description,
             tags=[f"{key}={value}" for key, value in sorted((project.tags or {}).items())],
             protected=bool(project.protected),
             repo_count=len(repo_rows),
-            repos=repo_rows,
+            repos=paged,
             health_summary={
                 "missing_clone": missing_clone,
                 **{f"status_{key}": value for key, value in sorted(status_counts.items())},
             },
         )
-        return self._json(uri, summary.model_dump(mode="json"))
+        payload = summary.model_dump(mode="json")
+        payload["truncated"] = truncated
+        payload["limit"] = limit
+        return self._json(uri, payload)
 
     def _read_repo_card(
         self,

@@ -91,6 +91,14 @@ _CATALOG: list[PromptCatalogEntry] = [
         ),
         scopes=["workspace"],
     ),
+    PromptCatalogEntry(
+        kind="large-workspace",
+        title="Large umbrella workspace loop",
+        description=(
+            "On-demand search, paged campaigns, and board-linked work for 500+ repo umbrellas."
+        ),
+        scopes=["workspace"],
+    ),
 ]
 
 _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
@@ -106,6 +114,7 @@ _SCOPE_KINDS: dict[PromptScope, frozenset[PromptKind]] = {
             "context-pack",
             "graph-discover",
             "graph-maintain",
+            "large-workspace",
         }
     ),
     "project": frozenset(
@@ -162,14 +171,16 @@ def template_body(
 
 Day-1 Agent OS control loop (canonical): docs/agents-quickstart.md — context pack → aos status/doctor → aos next → compile → ACL → work → task complete → merge enqueue.
 
+Never load the full umbrella `.metagit.yml` into context. Do not run `metagit config show --json`, `metagit workspace list --include-workspace`, or `metagit://workspace/config?view=full`.
+
 1. `metagit appconfig show --format json` — workspace.path, dedupe, agent_mode.
-2. `metagit context pack --tier 0|1|2 --json` then `metagit aos status --json` / `metagit aos doctor --json`.
-3. `metagit workspace list -c <definition> --json` — projects, repos, clone/sync hints from index.
-4. `metagit workspace repo list -c <definition> --json` then `metagit search "<name>" --path-only` to cd into a managed repo. Never call `metagit nav` (human FuzzyFinder). MCP: `metagit_workspace_repos_list` and `metagit_repo_search` with `path_only: true`.
-5. `metagit config info -c <definition>` — manifest summary.
-6. `metagit search "<name-or-url>" -c <definition> --json` before creating projects or repos.
-7. Prefer `metagit workspace project|repo add` over hand-editing repo lists; always `metagit config validate -c <definition>` after edits.
-8. For coordinated work: `metagit aos next --json` (preview) then `--commit` when recording; see skill metagit-aos.""",
+2. `metagit context pack --tier 0 --json` (map is paged; scope with `--project`/`--repo` when known) then `metagit aos status --json` / `metagit aos doctor --json`.
+3. `metagit search "<name>" --json --limit 10` or MCP `metagit_repo_search` — do not dump the catalog.
+4. `metagit workspace repo list -c <definition> --json --project <name>` (slim, paged) then `metagit search "<name>" --path-only` to cd into a managed repo. Never call `metagit nav` (human FuzzyFinder).
+5. `metagit config info -c <definition>` — manifest summary counts only.
+6. Prefer `metagit workspace project|repo add` over hand-editing repo lists; always `metagit config validate -c <definition>` after edits.
+7. For coordinated work: `metagit aos next --json` (preview) then `--commit` when recording; see skill metagit-aos.
+8. For 500+ repo umbrellas: `metagit prompt workspace -k large-workspace --text-only`.""",
         "context-switch": """You are switching Metagit workspace context mid-session (not a cold session-start).
 
 1. Trust env exports already set (METAGIT_PROJECT, METAGIT_WORKSPACE_ROOT, METAGIT_WORKING_DIR, optional METAGIT_HERMES_PROFILE).
@@ -186,15 +197,15 @@ Day-1 Agent OS control loop (canonical): docs/agents-quickstart.md — context p
 5. Sync only with explicit approval: `metagit project sync --project <name>` (fetch/pull as operator directs).""",
         "health-preflight": """Before implementation work, run a workspace health pass:
 
-1. `metagit workspace list -c <definition> --json` — missing clones, duplicate URLs, per-repo status in repos_index.
-2. `metagit workspace repo list -c <definition> --project <name> --json` to narrow to one project.
+1. `metagit context pack --tier 0 --json --project <name>` — clone existence without dumping the umbrella.
+2. `metagit workspace repo list -c <definition> --project <name> --json` (slim, paged) to inspect one project.
 3. Resolve blockers (missing clone, broken symlink mount, duplicate URL) before editing application code.
-4. Re-run list after catalog or layout changes.""",
+4. Re-run a scoped pack after catalog or layout changes. Never `workspace list --include-workspace`.""",
         "sync-safe": """Repository sync rules for metagit-managed workspaces:
 
 - Default to fetch-only; use pull or clone only with explicit operator approval.
-- Project batch: `metagit project sync --project <name>` after confirming scope with `metagit workspace repo list --json`.
-- Inspect before sync: `metagit workspace list --json` for missing or dirty repos.
+- Project batch: `metagit project sync --project <name>` after confirming scope with `metagit workspace repo list --json --project <name>`.
+- Inspect before sync: `metagit context pack --tier 0 --json --project <name>` for missing clones.
 - Never delete canonical dedupe directories; project mounts are symlinks when workspace.dedupe is enabled.""",
         "subagent-handoff": """Hand off single-repo implementation to a subagent:
 
@@ -207,7 +218,7 @@ Day-1 Agent OS control loop (canonical): docs/agents-quickstart.md — context p
 1. Dry-run first: `metagit workspace project rename|repo rename|repo move --dry-run --json`.
 2. Confirm disk_steps in JSON before applying without --dry-run.
 3. `metagit config validate -c <definition>` after manifest updates.
-4. `metagit workspace list --json` after layout changes complete.""",
+4. `metagit context pack --tier 0 --json` after layout changes complete.""",
         "context-pack": """## Tiered context pack (metagit)
 
 At **session start**, always load **tier 0** workspace orientation (minimal tokens):
@@ -219,7 +230,7 @@ At **session start**, always load **tier 0** workspace orientation (minimal toke
 
 **Tier 2 (session-aware):** Adds a digest of git activity since the last session boundary (from `.metagit/sessions`), the active ``in_progress`` objective id when present, and whether the manifest changed—then bumps the session clock. Prefer **tier 2** when resuming multi-repo work rather than reloading an entire tier-1 pack blindly: `metagit context pack --tier 2 --json` / `metagit_context_pack` with tier ``2``.
 
-**Token budgeting:** default to tier 0; add tier 1 only when needed; use tier 2 for resume/session deltas without replacing tier 1. Avoid loading full tier-1 packs for every repo—stay within the model context window.""",
+**Token budgeting:** default to tier 0; add tier 1 only when needed; use tier 2 for resume/session deltas without replacing tier 1. Avoid loading full tier-1 packs for every repo—stay within the model context window. The map is capped (default 80 repos) and `--max-tokens` will shrink map rows after dropping cards/digest. For 500+ repo umbrellas use `metagit prompt workspace -k large-workspace`.""",
         "repo-enrich": """Review this repository and enrich its workspace manifest entry using metagit CLI discovery only.
 
 ## 1. Baseline (manifest)
@@ -257,7 +268,7 @@ Use `METAGIT_AGENT_MODE=true` for non-interactive runs; never use `detect reposi
         "graph-discover": """Build an initial cross-repo relationship model for a metagit workspace. **Report first — do not apply** until the operator approves.
 
 ## 1. Inventory
-- `metagit workspace list -c <definition> --json` — projects, repos, clone status.
+- `metagit context pack --tier 0 --json` — project counts and a paged repo map.
 - `metagit config info -c <definition>` — confirm whether `graph.relationships` is empty or partial.
 - MCP `metagit_workspace_health_check` — surface missing clones before inferring edges.
 
@@ -302,7 +313,7 @@ Hand off apply/validate/ingest to `metagit prompt workspace -k graph-maintain` a
         "graph-maintain": """Maintain durable cross-repo edges in `.metagit.yml` `graph.relationships` and sync them into GitNexus.
 
 ## 1. Discover inferred dependencies
-- `metagit workspace list -c <definition> --json` — confirm projects/repos exist locally.
+- `metagit context pack --tier 0 --json` — confirm projects exist without dumping the umbrella.
 - MCP `metagit_cross_project_dependencies` per project (or CLI-equivalent scope) for imports, url_match, shared_config.
 - `metagit config graph suggest -c <definition> --json` — candidates, evidence, and patch `operations`.
 
@@ -332,6 +343,28 @@ Safety: do not promote edges without evidence; do not overwrite existing manual 
 - Review suggest `stale_manual[]` (report-only): confirm with operator before editing/removing.
 - Use `--verbose` when candidates are empty to confirm scan roots and ignore prune counts.
 - `-c` selects the manifest; `--workspace-root` selects the checkout scan root.""",
+        "large-workspace": """You are operating a large metagit umbrella (hundreds of repos). Keep the full manifest and campaign overlay on disk — never inject them into the conversation.
+
+## Discovery (on demand)
+- `metagit search "<query>" --json --limit 10` then `--limit 50` only if needed.
+- `metagit search "<query>" --path-only` to resolve one checkout.
+- `metagit context pack --tier 0 --json --project P` (map is paged; check `truncated`).
+- `metagit workspace grep "<symbol>" --json` with `--project`/`--repo` when known.
+- GitHub-only uncloned inventory: `metagit org search "<query>" --json`.
+
+## Campaigns (frozen on disk, paged in context)
+- Create: `metagit campaign new --slug S --title "…" --query "…" --json` (returns counts, not every repo).
+- Status: `metagit campaign status --slug S --json --limit 40` (page with `--offset`; filter `--repo-status`).
+- Expand in pages: `metagit campaign expand --slug S --limit 40 --offset 0 --json`.
+- Bind a parent board item: `--work-item azure_devops:123` on create, or `campaign board-sync --slug S --organization ORG --ado-project PROJ --json`.
+- MCP: `metagit_campaign_status`, `metagit_campaign_board_sync` (`dry_run` first).
+
+## Forbidden
+- `metagit config show --json` without `--confirm-full`
+- `metagit workspace list --include-workspace`
+- `metagit://workspace/config?view=full` without `confirm=1`
+- Expanding all 500+ repos into objectives in one call
+""",
     }
     if kind == "instructions":
         return ""

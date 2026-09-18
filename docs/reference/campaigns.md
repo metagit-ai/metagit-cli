@@ -1,6 +1,7 @@
 # Native campaigns
 
 <!-- modality:native_campaigns -->
+<!-- modality:campaign_board_link -->
 
 Cross-project, multi-repo work tracked as **committed YAML overlays** — selection query, frozen repo list, per-repo status, MR URLs, and lessons. CLI: `metagit campaign …`.
 
@@ -67,8 +68,9 @@ context:
 | `metagit campaign new --slug <s> --title "…" --query "…"` | Resolve repos via `metagit find`, freeze `repos[]` |
 | `metagit campaign new --slug <s> --title "…" --repo p/r --repo p/r2` | Freeze an **explicit** repo set (no query drift) |
 | `metagit campaign validate` | Schema + every repo exists in atlas |
-| `metagit campaign set --slug <s> --repo project/repo --status merged [--mr URL] [--note "…"]` | Update one repo row |
-| `metagit campaign expand --slug <s> [--tag k=v] [--dry-run]` | One spine objective per matching repo |
+| `metagit campaign set --slug <s> --repo project/repo --status merged [--mr URL] [--note "…"] [--work-item azure_devops:123]` | Update one repo row |
+| `metagit campaign expand --slug <s> [--tag k=v] [--dry-run] [--limit 40] [--offset 0]` | Paged spine objectives per matching repo |
+| `metagit campaign board-sync --slug <s> --organization ORG --ado-project PROJ` | Create parent Feature + paged child User Stories in Azure Boards |
 | `metagit campaign context --slug <s> [--include …]` | Provenance-aware MetaGit + optional EverRoom packet |
 | `metagit campaign everroom status\|attach\|create\|detach\|sync` | Optional Room association (see [campaign-everroom.md](campaign-everroom.md)) |
 
@@ -84,10 +86,37 @@ metagit campaign new --slug tier-full --title "Full tier rollout" --query "platf
 metagit campaign new --slug vibe-app --title "Ship the vibe app" \
   --repo ai/publish-aws --repo gdo/shared-terraform-modules \
   --reference ai/publish-aws --goal "Containerize and deploy on ECS"
-metagit campaign status --slug tier-full --json
+metagit campaign status --slug tier-full --json --limit 40
 metagit campaign set --slug tier-full --repo platform/api --status mr-open --mr "https://…"
-metagit campaign expand --slug tier-full --dry-run
+metagit campaign expand --slug tier-full --dry-run --limit 40
 ```
+
+## Board / work-item linking
+
+<!-- modality:campaign_board_link -->
+
+Campaigns and per-repo rows accept an optional `work_item` pointer (`provider`, `id`, `url`, `organization`, `project`, `kind`). Credentials never belong in `_campaigns/*.yml`.
+
+```yaml
+work_item:
+  provider: azure_devops
+  id: "12345"
+  organization: myorg
+  project: platform
+  kind: Feature
+  url: https://dev.azure.com/myorg/platform/_workitems/edit/12345
+```
+
+```bash
+metagit campaign new --slug payments --title "Payments" --query payments \
+  --work-item azure_devops:12345 --json
+metagit campaign board-sync --slug payments --organization myorg --ado-project platform \
+  --limit 40 --json
+```
+
+`board-sync` creates a parent Feature when missing, then up to `--limit` child User Stories, skipping rows that already have a `work_item`. JSON returns created refs and `truncated` — not the full overlay.
+
+Large umbrellas: [context-reduction.md](context-reduction.md).
 
 ## Coordination
 

@@ -11,11 +11,16 @@ Use this skill when an agent connects via **MCP** (`metagit mcp serve`) and shou
 minimize context bloat. Prefer **`resources/read`** and **`prompts/get`** over dumping
 the full manifest or calling `metagit_context_pack` tier 2 repeatedly.
 
+<!-- modality:context_reduction -->
+
+Never read `metagit://workspace/config?view=full` on large umbrellas unless the operator
+passed `confirm=1`. Maps, catalog lists, and campaign status are **paged**.
+
 ## Session start (MCP)
 
 1. `resources/read` → `metagit://catalog`
 2. `metagit://gate/status` — confirm `state_backend.backend` (`local` vs `http`) when using shared coordination state
-3. `metagit://workspace/map`
+3. `metagit://workspace/map?limit=80`
 4. `metagit://prompt/workspace/session-start?instructions=0` **or** `prompts/get` name `workspace/session-start`
 5. `metagit://session/meta`
 6. **Once per session window:** tool `metagit_session_begin` when a full bootstrap envelope is required (mutates boundary)
@@ -27,7 +32,7 @@ Idle return: `metagit://session/digest/summary` (read-only; does not bump bounda
 | Layer | URI | When |
 |-------|-----|------|
 | L0 | `metagit://catalog` | First read every connect |
-| L0 | `metagit://workspace/map` | Boundaries, clone existence |
+| L0 | `metagit://workspace/map?limit=80` | Paged boundaries, clone existence |
 | L0 | `metagit://session/meta` | Active project context |
 | L1 | `metagit://prompt/{scope}/{kind}?instructions=0` | Task procedure |
 | L1 | `metagit://project/{project}/summary` | After project scope is known |
@@ -39,7 +44,8 @@ Idle return: `metagit://session/digest/summary` (read-only; does not bump bounda
 | L2 | `metagit://workspace/health` | Preflight before sync |
 | L2 | `metagit://workspace/repos/status?summary=1` | Aggregate index health |
 | L2 | `metagit://events/recent?since=` | Poll objective/approval/handoff changes |
-| L3 | `metagit://workspace/config?view=full` | Manifest editing only |
+| L3 | `metagit://workspace/config?view=summary` | Manifest counts only |
+| L3 | `metagit://workspace/config?view=full&confirm=1` | Operator-approved dump only |
 
 ## MCP prompts capability
 
@@ -53,7 +59,9 @@ Idle return: `metagit://session/digest/summary` (read-only; does not bump bounda
 | Need | Resource | Tool |
 |------|----------|------|
 | Backend mode | `gate/status` (`state_backend`) | — |
-| Map | `workspace/map` | `metagit_context_pack` tier 0 |
+| Map | `workspace/map?limit=80` | `metagit_context_pack` tier 0 (`max_map_repos`) |
+| Campaign page | — | `metagit_campaign_status` |
+| ADO WIT | — | `metagit_campaign_board_sync` (`dry_run` first) |
 | Repo card | `repo/{p}/{r}/card` | `metagit_repo_card` |
 | Objectives | `objectives` | `metagit_objective_*` |
 | Approvals | `approvals/pending` | `metagit_approval_*` |
@@ -68,8 +76,10 @@ Idle return: `metagit://session/digest/summary` (read-only; does not bump bounda
 ## Anti-patterns
 
 - Auto-subscribing to `metagit://workspace/config` without `?view=summary`
-- Calling `metagit_context_pack` tier 2 on every turn
+- Calling `metagit_context_pack` tier 2 on every turn or unscoped on 500+ repos
 - Loading all repo cards when only one repo is in scope
+- `metagit_workspace_list` with `include_workspace: true`
+- `metagit_campaign_status` without a `limit` page on a large overlay
 
 ## Spec
 

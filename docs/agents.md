@@ -34,7 +34,7 @@ metagit prompt workspace --kind session-start --text-only
 
 | Tier | Command | Tokens (typical) | Contents |
 |------|---------|------------------|----------|
-| 0 | `context pack --tier 0` | ~100–400 | Workspace map: projects, repos, clone status |
+| 0 | `context pack --tier 0` | ~100–400 | Paged workspace map (default 80 repos; check `truncated`) |
 | 1 | `context pack --tier 1` | +200–600/repo | Tier 0 + repo cards (git, stack hints, health) |
 | 2 | `context pack --tier 2` | +digest | Tier 1 + changes since last session |
 
@@ -57,10 +57,11 @@ metagit workspace health --json
 |------|---------|
 | Find a managed repo | `metagit search "<query>" --json` |
 | Resolve one absolute path | `metagit search "<query>" --path-only` · MCP `metagit_repo_search` `{path_only: true}` |
-| List every managed target | `metagit workspace repo list --json` · MCP `metagit_workspace_repos_list` |
+| List managed targets (paged, slim) | `metagit workspace repo list --json` · MCP `metagit_workspace_repos_list` |
 | Search file contents (workspace) | `metagit workspace grep "<query>" --json` |
 | Ripgrep / grep backend status | `metagit workspace grep info --json` |
-| Workspace catalog | `metagit workspace list --json` |
+| Workspace catalog (no full manifest) | `metagit workspace list --json` (paged index; no `summary.workspace`) |
+| Large umbrella loop | `metagit prompt workspace -k large-workspace --text-only` · [context-reduction.md](reference/context-reduction.md) |
 | Workspace health | `metagit workspace health --json` |
 | Workspace readiness summary | `metagit workspace summary --json` |
 | Validate manifest | `metagit config validate` |
@@ -84,8 +85,9 @@ metagit workspace health --json
 | Self-update (apply) | `metagit version upgrade --apply --json` |
 | Agent profile (merged) | `metagit agent profile show -p P -n R --json` |
 | Materialize agent posture | `metagit agent apply --vendor claude_code -p P -n R` |
-| Campaign list / status | `metagit campaign list` / `metagit campaign status --slug <s>` |
-| Campaign create / expand | `metagit campaign new …` / `metagit campaign expand --slug <s>` |
+| Campaign list / status | `metagit campaign list` / `metagit campaign status --slug <s> --json --limit 40` |
+| Campaign create / expand | `metagit campaign new …` / `metagit campaign expand --slug <s> --limit 40` |
+| Campaign board-sync (ADO) | `metagit campaign board-sync --slug <s> --organization ORG --ado-project PROJ --dry-run --json` |
 | Semantic ownership | `metagit semantic declare` · `metagit semantic owners` · `metagit semantic conflicts` |
 | Merge orchestration | `metagit merge enqueue` · `metagit merge integrate` · `metagit merge status` |
 | Agent scheduler | `metagit schedule next` · `metagit schedule status` · `metagit schedule policy show` |
@@ -113,6 +115,8 @@ metagit workspace health --json
 <!-- modality:atlas_local -->
 <!-- modality:derived_projects -->
 <!-- modality:skills_surface -->
+<!-- modality:campaign_board_link -->
+<!-- modality:context_reduction -->
 <!-- modality:component_model -->
 <!-- modality:component_resolve -->
 <!-- modality:component_graph -->
@@ -128,6 +132,7 @@ Agent profile and campaigns: [reference/agent-profile.md](reference/agent-profil
 
 | Kind | Scope | Use when |
 |------|-------|----------|
+| `large-workspace` | workspace | 500+ repo search → paged campaign → board-sync loop |
 | `session-start` | workspace | Bootstrap checklist after context pack |
 | `context-switch` | workspace | Mid-session switch checklist after `metagit context switch` |
 | `context-pack` | workspace, project, repo | Tier 0→2 escalation guidance |
@@ -148,9 +153,9 @@ metagit prompt project --kind sync-safe --project myproj --text-only
 | Shell / subprocess agent | IDE host with MCP (Cursor, Claude Desktop, OpenClaw) |
 | `METAGIT_AGENT_MODE=true` | Gate active (valid `.metagit.yml` in workspace) |
 
-Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_session_begin`, `metagit_repo_search`, `metagit_workspace_search`, `metagit_workspace_grep_info`, `metagit_workspace_discover`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`, `metagit_semantic_declare`, `metagit_semantic_query`, `metagit_semantic_owners`, `metagit_semantic_conflicts`, `metagit_semantic_ingest`, `metagit_component_list`, `metagit_component_show`, `metagit_component_resolve`, `metagit_campaign_context`.
+Key MCP tools (when gate **ACTIVE**): `metagit_context_pack`, `metagit_session_begin`, `metagit_repo_search`, `metagit_workspace_search`, `metagit_workspace_grep_info`, `metagit_workspace_discover`, `metagit_workspace_health_check`, `metagit_workspace_sync`, `metagit_objective_list`, `metagit_approval_request`, `metagit_campaign_status`, `metagit_campaign_board_sync`, `metagit_campaign_context`.
 
-**MCP resources (read-only, token-efficient):** `metagit://catalog` → `workspace/map` → `prompt/workspace/session-start?instructions=0` → `session/meta`; drill into `project/{name}/summary`, `repo/{p}/{r}/card`, `objectives`, `approvals/pending`, `session/digest/summary` when scoped. MCP **`prompts/list`** + **`prompts/get`** mirror prompt resources. Install skill `metagit-mcp-resources`. Spec: [reference/mcp-layered-resources-spec.md](reference/mcp-layered-resources-spec.md).
+**MCP resources (read-only, token-efficient):** `metagit://catalog` → `workspace/map?limit=80` → `prompt/workspace/session-start?instructions=0` → `session/meta`. Do not read `workspace/config?view=full` on large umbrellas. See [context-reduction.md](reference/context-reduction.md).
 
 `metagit_version_check` and `metagit_version_upgrade` are available even when the workspace gate is inactive. Use `version check` (or `metagit_version_check`) to compare against the latest GitHub release and PyPI. Use `version upgrade` (or `metagit_version_upgrade` with `apply: true`) to run the detected package-manager upgrade (`uv tool upgrade metagit-cli` by default). Upgrades default to dry-run; pass `--apply` or `apply: true` explicitly.
 

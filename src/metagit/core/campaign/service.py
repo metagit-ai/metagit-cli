@@ -21,8 +21,15 @@ from metagit.core.campaign.models import (
 )
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.objective_service import ObjectiveService
+from metagit.core.context.reduction import (
+    CAMPAIGN_SELECTION_LIMIT,
+    DEFAULT_CAMPAIGN_EXPAND_LIMIT,
+    DEFAULT_CAMPAIGN_STATUS_REPO_LIMIT,
+    page_rows,
+)
 from metagit.core.project.search_service import ManagedRepoSearchService
 from metagit.core.utils.yaml_class import yaml
+from metagit.core.workitem.models import ExternalWorkRef
 from metagit.core.workspace.layout_resolver import find_project, find_repo
 from metagit.core.workspace.root_resolver import resolve_campaigns_root
 
@@ -64,7 +71,15 @@ class CampaignService:
             return None
         return self._load_file(path)
 
-    def status(self, slug: str) -> Optional[CampaignStatusResult]:
+    def status(
+        self,
+        slug: str,
+        *,
+        include_repos: bool = True,
+        limit: Optional[int] = DEFAULT_CAMPAIGN_STATUS_REPO_LIMIT,
+        offset: int = 0,
+        repo_status: Optional[str] = None,
+    ) -> Optional[CampaignStatusResult]:
         campaign = self.load(slug)
         if campaign is None:
             return None
@@ -72,12 +87,29 @@ class CampaignService:
         open_mr = sum(1 for repo in campaign.repos if repo.status == "mr-open")
         blocked = sum(1 for repo in campaign.repos if repo.status == "blocked")
         pending = sum(1 for repo in campaign.repos if repo.status in {"pending", "routed"})
+        filtered = campaign.repos
+        if repo_status:
+            filtered = [repo for repo in filtered if repo.status == repo_status]
+        paged: list[CampaignRepoEntry] = []
+        truncated = False
+        if include_repos:
+            paged, truncated = page_rows(filtered, limit=limit, offset=offset)
         return CampaignStatusResult(
-            campaign=campaign,
+            slug=campaign.slug,
+            title=campaign.title,
+            status=campaign.status,
+            goal=campaign.goal,
+            reference_impl=campaign.reference_impl,
+            work_item=campaign.work_item,
             merged_count=merged,
             open_mr_count=open_mr,
             blocked_count=blocked,
             pending_count=pending,
+            repo_count=len(campaign.repos),
+            repos=paged,
+            truncated=truncated,
+            offset=max(offset, 0),
+            limit=limit,
         )
 
     def create(
@@ -91,6 +123,7 @@ class CampaignService:
         objective_id: Optional[str] = None,
         goal: Optional[str] = None,
         reference_impl: Optional[str] = None,
+        work_item: Optional[ExternalWorkRef] = None,
     ) -> CampaignDocument:
         existing = self.load(slug)
         if existing is not None:
@@ -117,6 +150,7 @@ class CampaignService:
                 resolved_at=now,
             ),
             repos=repo_entries,
+            work_item=work_item,
         )
         self._save(campaign)
         return campaign
@@ -143,6 +177,7 @@ class CampaignService:
         status: CampaignRepoStatus,
         mr: Optional[str] = None,
         note: Optional[str] = None,
+        work_item: Optional[ExternalWorkRef] = None,
     ) -> CampaignDocument:
         campaign = self.load(slug)
         if campaign is None:
@@ -156,6 +191,8 @@ class CampaignService:
                 entry.mr = mr
             if note is not None:
                 entry.note = note
+            if work_item is not None:
+                entry.work_item = work_item
             campaign.updated = datetime.now(timezone.utc).isoformat()
             self._save(campaign)
             return campaign
@@ -168,32 +205,49 @@ class CampaignService:
         session_root: Path,
         tag_filters: Optional[dict[str, str]] = None,
         dry_run: bool = False,
+        limit: Optional[int] = DEFAULT_CAMPAIGN_EXPAND_LIMIT,
+        offset: int = 0,
     ) -> CampaignExpandResult:
         """Create one spine objective per matching campaign repo."""
         campaign = self.load(slug)
         if campaign is None:
             raise ValueError(f"Unknown campaign: {slug!r}")
         objective_service = ObjectiveService(workspace_root=str(session_root))
-        objective_ids: list[str] = []
         filters = tag_filters or dict(campaign.selection.tags)
+        matched: list[CampaignRepoEntry] = []
         for entry in campaign.repos:
             if filters and not self._repo_matches_tags(entry, filters):
                 continue
+            matched.append(entry)
+        paged, truncated = page_rows(matched, limit=limit, offset=offset)
+        objective_ids: list[str] = []
+        for entry in paged:
             objective_id = f"campaign-{slug}-{entry.project}-{entry.repo}"
             if dry_run:
                 objective_ids.append(objective_id)
                 continue
-            objective_service.upsert_partial(
-                {
-                    "id": objective_id,
-                    "title": f"{campaign.title}: {entry.project}/{entry.repo}",
-                    "status": "active",
-                    "repos": [f"{entry.project}/{entry.repo}"],
-                    "agent_notes": f"Generated from campaign {slug}",
-                },
-            )
+            payload: dict[str, object] = {
+                "id": objective_id,
+                "title": f"{campaign.title}: {entry.project}/{entry.repo}",
+                "status": "pending",
+                "repos": [f"{entry.project}/{entry.repo}"],
+                "agent_notes": f"Generated from campaign {slug}",
+            }
+            if entry.work_item is not None:
+                payload["work_item"] = entry.work_item.model_dump(mode="json")
+            elif campaign.work_item is not None:
+                payload["work_item"] = campaign.work_item.model_dump(mode="json")
+            objective_service.upsert_partial(payload)
             objective_ids.append(objective_id)
-        return CampaignExpandResult(slug=slug, objective_ids=objective_ids, dry_run=dry_run)
+        return CampaignExpandResult(
+            slug=slug,
+            objective_ids=objective_ids,
+            dry_run=dry_run,
+            truncated=truncated,
+            offset=max(offset, 0),
+            limit=limit,
+            matched_count=len(matched),
+        )
 
     def _repo_matches_tags(
         self,
@@ -242,7 +296,7 @@ class CampaignService:
             workspace_root=str(self._workspace_root),
             query=query,
             tags=tag_filters,
-            limit=500,
+            limit=CAMPAIGN_SELECTION_LIMIT,
         )
         repos: list[CampaignRepoEntry] = []
         for match in result.matches:

@@ -13,6 +13,12 @@ from typing import Literal, Optional
 from metagit.core.config.models import MetagitConfig
 from metagit.core.context.models import ContextPackResult
 from metagit.core.context.objective_service import ObjectiveService
+from metagit.core.context.reduction import (
+    DEFAULT_MAP_REPO_LIMIT,
+    DEFAULT_MAX_CARDS,
+    MAP_TOKEN_BUDGET_REPO_CAP,
+    page_rows,
+)
 from metagit.core.context.repo_card_service import RepoCardService
 from metagit.core.context.session_digest_service import SessionDigestService
 from metagit.core.context.workspace_map_service import WorkspaceMapService
@@ -47,9 +53,10 @@ class ContextPackService:
         project_name: Optional[str] = None,
         repo_name: Optional[str] = None,
         active_project: Optional[str] = None,
-        max_cards: int = 50,
+        max_cards: int = DEFAULT_MAX_CARDS,
         definition_root: Optional[str] = None,
         max_tokens: Optional[int] = None,
+        max_map_repos: int = DEFAULT_MAP_REPO_LIMIT,
     ) -> ContextPackResult:
         """Assemble a context pack for tier 0, 1, or 2 (see module docstring)."""
         resolved_definition_root = definition_root or str(Path(config_path).expanduser().resolve().parent)
@@ -59,6 +66,9 @@ class ContextPackService:
             config_path=config_path,
             workspace_root=workspace_root,
             active_project=active_project,
+            project_name=project_name,
+            repo_name=repo_name,
+            limit=max_map_repos,
         )
         if tier == 0:
             base = ContextPackResult(
@@ -109,6 +119,8 @@ class ContextPackService:
                 definition_root=resolved_definition_root,
                 since=since,
                 active_objective_id=active_oid,
+                project_name=project_name,
+                repo_name=repo_name,
             )
             base = ContextPackResult(
                 tier=2,
@@ -129,6 +141,26 @@ class ContextPackService:
             if estimated > max_tokens and base.digest is not None:
                 base.digest = None
                 dropped.append("digest")
+                estimated = _estimate_tokens(base)
+            if estimated > max_tokens and base.map is not None and base.map.repos:
+                capped, still_more = page_rows(
+                    base.map.repos,
+                    limit=MAP_TOKEN_BUDGET_REPO_CAP,
+                    offset=0,
+                )
+                base.map = base.map.model_copy(
+                    update={
+                        "repos": capped,
+                        "truncated": base.map.truncated or still_more or len(capped) < len(base.map.repos),
+                        "limit": MAP_TOKEN_BUDGET_REPO_CAP,
+                    }
+                )
+                dropped.append("map.repos")
+                estimated = _estimate_tokens(base)
+            if estimated > max_tokens and base.map is not None:
+                base.map = base.map.model_copy(update={"repos": [], "truncated": True, "limit": 0})
+                if "map.repos" not in dropped:
+                    dropped.append("map.repos")
                 estimated = _estimate_tokens(base)
         return base.model_copy(
             update={

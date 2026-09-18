@@ -202,3 +202,56 @@ def test_add_project_ensure_noop(tmp_path: Path) -> None:
     assert result.ok
     assert result.operation == "noop"
 
+
+def test_list_workspace_omits_full_workspace_object(tmp_path: Path) -> None:
+    config, config_path = _write_manifest(
+        tmp_path,
+        [
+            {
+                "name": "platform",
+                "repos": [{"name": f"svc-{index}", "path": f"p/svc-{index}"} for index in range(5)],
+            }
+        ],
+    )
+    service = WorkspaceCatalogService()
+    listing = service.list_workspace(config, config_path, str(tmp_path), index_limit=2)
+    assert listing.data is not None
+    assert listing.data["summary"]["workspace"] is None
+    assert listing.data["truncated"] is True
+    assert len(listing.data["repos_index"]) == 2
+    full = service.list_workspace(
+        config,
+        config_path,
+        str(tmp_path),
+        include_workspace=True,
+        index_limit=None,
+    )
+    assert full.data is not None
+    assert full.data["summary"]["workspace"] is not None
+
+
+def test_list_repos_slim_omits_agent_instructions(tmp_path: Path) -> None:
+    config, config_path = _write_manifest(
+        tmp_path,
+        [
+            {
+                "name": "platform",
+                "repos": [
+                    {
+                        "name": "svc-a",
+                        "path": "platform/svc-a",
+                        "agent_instructions": "secret-long-instructions",
+                    }
+                ],
+            }
+        ],
+    )
+    _ = config_path
+    service = WorkspaceCatalogService()
+    slim = service.list_repos(config, str(tmp_path), project_name="platform", detail="slim")
+    assert slim.data is not None
+    assert "agent_instructions" not in slim.data["repos"][0]["repo"]
+    full = service.list_repos(config, str(tmp_path), project_name="platform", detail="full")
+    assert full.data is not None
+    assert full.data["repos"][0]["repo"]["agent_instructions"] == "secret-long-instructions"
+

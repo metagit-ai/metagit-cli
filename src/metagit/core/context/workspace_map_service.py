@@ -13,6 +13,7 @@ from metagit.core.context.models import (
     WorkspaceMapProject,
     WorkspaceMapResult,
 )
+from metagit.core.context.reduction import DEFAULT_MAP_REPO_LIMIT, page_rows
 from metagit.core.workspace.catalog_models import WorkspaceSummary
 from metagit.core.workspace.catalog_service import WorkspaceCatalogService
 
@@ -40,6 +41,10 @@ class WorkspaceMapService:
         workspace_root: str,
         *,
         active_project: Optional[str] = None,
+        project_name: Optional[str] = None,
+        repo_name: Optional[str] = None,
+        limit: Optional[int] = DEFAULT_MAP_REPO_LIMIT,
+        offset: int = 0,
     ) -> WorkspaceMapResult:
         """Assemble tier-0 map fields from catalog summary, projects, and index."""
         listing = self._catalog.list_workspace(
@@ -47,6 +52,9 @@ class WorkspaceMapService:
             config_path=config_path,
             workspace_root=workspace_root,
             include_index=True,
+            include_workspace=False,
+            index_limit=None,
+            index_offset=0,
         )
         if not listing.ok or listing.data is None:
             return WorkspaceMapResult(
@@ -58,6 +66,9 @@ class WorkspaceMapService:
                 projects=[],
                 repos=[],
                 active_project=active_project,
+                truncated=False,
+                offset=offset,
+                limit=limit,
             )
 
         payload = listing.data
@@ -73,10 +84,15 @@ class WorkspaceMapService:
                 protected=bool(proj.get("protected")),
             )
             for proj in raw_projects
+            if not project_name or proj.get("name") == project_name
         ]
 
         repos: list[WorkspaceMapEntry] = []
         for row in payload.get("repos_index") or []:
+            if project_name and row.get("project_name") != project_name:
+                continue
+            if repo_name and row.get("repo_name") != repo_name:
+                continue
             tags = _normalized_tag_list(row.get("tags"))
             repos.append(
                 WorkspaceMapEntry(
@@ -89,6 +105,7 @@ class WorkspaceMapService:
                 )
             )
 
+        paged, truncated = page_rows(repos, limit=limit, offset=offset)
         return WorkspaceMapResult(
             workspace_name=config.name,
             workspace_root=summary.workspace_root,
@@ -96,6 +113,9 @@ class WorkspaceMapService:
             project_count=summary.project_count,
             repo_count=summary.repo_count,
             projects=projects,
-            repos=repos,
+            repos=paged,
             active_project=active_project,
+            truncated=truncated,
+            offset=max(offset, 0),
+            limit=limit,
         )

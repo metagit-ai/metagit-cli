@@ -27,13 +27,18 @@ class CatalogResult(BaseModel):
 
 
 class WorkspaceSummary(BaseModel):
-    """Workspace section of a manifest with project roll-up."""
+    """Workspace section of a manifest with project roll-up.
+
+    ``workspace`` is omitted unless the caller opts into a full dump via
+    ``include_workspace``. Agent list/pack paths must not embed the umbrella.
+    """
 
     definition_path: str
     workspace_root: str
     file_name: str
     file_description: Optional[str] = None
     file_agent_instructions: Optional[str] = None
+    file_agent_instructions_truncated: bool = False
     workspace: Optional[Workspace] = None
     project_count: int = 0
     repo_count: int = 0
@@ -45,6 +50,7 @@ class ProjectListEntry(BaseModel):
     name: str
     description: Optional[str] = None
     agent_instructions: Optional[str] = None
+    agent_instructions_truncated: bool = False
     protected: bool = False
     tags: dict[str, str] = Field(default_factory=dict)
     metadata: dict[str, Any] = Field(default_factory=dict)

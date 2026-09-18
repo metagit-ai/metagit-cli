@@ -12,6 +12,10 @@ metadata:
 Use this skill for the **most token-efficient** way to onboard into a metagit workspace.
 Prefer `metagit context pack --tier N --json` over reading raw trees or full manifests.
 
+<!-- modality:context_reduction -->
+
+Umbrella `.metagit.yml` stays on disk. Do **not** inject it: no `config show --json` without `--confirm-full`, no `workspace list --include-workspace`, no `metagit://workspace/config?view=full` without `confirm=1`. Maps default to 80 repos; check `truncated`. 500+ repos: `metagit prompt workspace -k large-workspace --text-only` and [context-reduction.md](https://metagit-ai.github.io/metagit-cli/reference/context-reduction/).
+
 Set non-interactive defaults:
 
 ```bash
@@ -43,7 +47,8 @@ Escalate tiers only when needed. Narrow tier 1/2 with `--project` and/or `--repo
 ### Primary session command
 
 ```bash
-metagit context pack --tier 2 --json -c .metagit.yml
+metagit context pack --tier 0 --json --project P -c .metagit.yml   # large umbrellas
+metagit context pack --tier 2 --json --project P --repo R -c .metagit.yml
 ```
 
 Pair with operational prompts (paste `--text-only` output into agent context):
@@ -158,7 +163,7 @@ Wire metagit into Hermes (or any orchestrator) so every objective begins with bo
 
 ```bash
 export METAGIT_AGENT_MODE=true
-PACK_JSON="$(metagit context pack --tier 2 --json -c .metagit.yml)"
+PACK_JSON="$(metagit context pack --tier 0 --json -c .metagit.yml)"
 PROMPT_TEXT="$(metagit prompt workspace -k session-start --text-only -c .metagit.yml)"
 ```
 
@@ -178,13 +183,15 @@ metagit context pack --tier 0 --json
 metagit prompt workspace -k session-start --text-only
 ```
 
-**Default bootstrap:**
+**Default bootstrap** (scope `--project`/`--repo` when known; unscoped tier 2 on 500+ repos is too large):
 
 ```bash
-metagit context pack --tier 2 --json
+metagit context pack --tier 0 --json
 metagit prompt workspace -k context-pack --text-only
 metagit prompt workspace -k session-start --text-only
 ```
+
+Flags: `--max-cards`, `--max-map-repos`, `--max-tokens` (drops cards → digest → map rows).
 
 Parse pack JSON top-level keys: `workspace_name`, `tier`, `map`, `cards`, `digest`.
 
@@ -251,7 +258,7 @@ Use CLI when operating shell-only (`METAGIT_AGENT_MODE=true`); use MCP resources
 | Step | URI |
 |------|-----|
 | 1 | `metagit://catalog` |
-| 2 | `metagit://workspace/map` |
+| 2 | `metagit://workspace/map?limit=80` |
 | 3 | `metagit://prompt/workspace/session-start?instructions=0` |
 | 4 | `metagit://session/meta` |
 | Scoped | `metagit://project/{P}/summary`, `metagit://repo/{P}/{R}/card` |

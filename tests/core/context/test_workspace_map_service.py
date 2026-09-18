@@ -149,3 +149,32 @@ def test_build_missing_repo_reports_configured_missing(tmp_path: Path) -> None:
     resolved = str((tmp_path / "does-not-exist").resolve())
     assert result.repos[0].repo_path == resolved
     assert result.repos[0].tags is None
+
+
+def test_build_pages_map_repos(tmp_path: Path) -> None:
+    lines = [
+        "name: many-repos",
+        "kind: application",
+        "workspace:",
+        "  projects:",
+        "    - name: demo",
+        "      repos:",
+    ]
+    for index in range(5):
+        lines.extend(
+            [
+                f"        - name: repo-{index}",
+                f"          path: missing-{index}",
+            ]
+        )
+    (tmp_path / ".metagit.yml").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    config = _load_config(tmp_path)
+    result = WorkspaceMapService().build(
+        config=config,
+        config_path=str(tmp_path / ".metagit.yml"),
+        workspace_root=str(tmp_path),
+        limit=2,
+    )
+    assert result.repo_count == 5
+    assert len(result.repos) == 2
+    assert result.truncated is True

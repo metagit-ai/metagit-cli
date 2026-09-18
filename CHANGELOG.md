@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+### Added
+- Context reduction for large umbrellas: catalog/map/pack/digest/campaign JSON is paged; `workspace list` omits the full `workspace` object unless `--include-workspace`; `config show --json` and `metagit://workspace/config?view=full` refuse above 80 repos unless `--confirm-full` / `confirm=1`. Prompt kind `large-workspace`. Docs: [context-reduction.md](docs/reference/context-reduction.md).
+- Campaign board linking: optional `work_item` refs on campaign documents and repo rows, plus `metagit campaign board-sync` / MCP `metagit_campaign_status` and `metagit_campaign_board_sync` to create a parent Azure Boards Feature and paged child User Stories. AppConfig `providers.azure_devops.organization` / `project`.
 
+### Changed
+- Context packs honor `--max-map-repos` and shrink the map after cards/digest when `--max-tokens` is exceeded. Workspace repo list defaults to slim rows. Campaign `status`/`expand`/`new --json` return counts and a page, not the overlay YAML.
 
 ## [0.34.1] - 2026-09-18
 

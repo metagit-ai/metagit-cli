@@ -198,6 +198,14 @@ class AzureDevOpsProvider(BaseModel):
         default="https://dev.azure.com",
         description="Azure DevOps organization base URL (cloud or self-hosted)",
     )
+    organization: str = Field(
+        default="",
+        description="Azure DevOps organization name used for board/work-item APIs",
+    )
+    project: str = Field(
+        default="",
+        description="Default Azure DevOps project for board/work-item APIs",
+    )
 
     class Config:
         """Pydantic configuration."""
@@ -526,6 +534,10 @@ class AppConfig(BaseModel):
             config.providers.azure_devops.api_token = os.getenv("AZURE_DEVOPS_EXT_PAT", "")
         if os.getenv("METAGIT_AZURE_DEVOPS_BASE_URL"):
             config.providers.azure_devops.base_url = os.getenv("METAGIT_AZURE_DEVOPS_BASE_URL", "")
+        if os.getenv("METAGIT_AZURE_DEVOPS_ORGANIZATION"):
+            config.providers.azure_devops.organization = os.getenv("METAGIT_AZURE_DEVOPS_ORGANIZATION", "")
+        if os.getenv("METAGIT_AZURE_DEVOPS_PROJECT"):
+            config.providers.azure_devops.project = os.getenv("METAGIT_AZURE_DEVOPS_PROJECT", "")
 
         if os.getenv("METAGIT_EVERROOM_ENABLED"):
             config.everroom.enabled = os.getenv("METAGIT_EVERROOM_ENABLED", "").lower() == "true"

@@ -4,7 +4,7 @@ Master index of user-facing Metagit capabilities across **CLI**, **MCP**, **Web*
 
 - **Source of truth:** [`scripts/modality-parity.yml`](https://github.com/metagit-ai/metagit-cli/blob/main/scripts/modality-parity.yml) (validated in `task qa:prepush`)
 - **Registry version:** 1
-- **Features tracked:** 38
+- **Features tracked:** 40
 
 When you add or change a backend feature:
 
@@ -29,6 +29,8 @@ See [Agent profile](agent-profile.md), [Campaigns](campaigns.md), and [Metagit a
 | `agent_profile_apply` | Structured agent_profile in manifest + vendor materialization | yes | — | — | yes | yes | [agent-profile.md](agent-profile.md) |
 | `native_campaigns` | Cross-project campaign YAML overlays and CLI lifecycle | yes | — | — | yes | yes | [campaigns.md](campaigns.md) |
 | `campaign_everroom_context` | Optional Campaign ↔ EverRoom Room association and provenance-aware campaign context | yes | yes | — | yes | yes | [campaign-everroom.md](campaign-everroom.md) |
+| `context_reduction` | Paged catalog/map/pack/campaign JSON so large umbrella manifests stay on disk | yes | yes | — | yes | yes | [context-reduction.md](context-reduction.md) |
+| `campaign_board_link` | Provider-agnostic campaign work-item refs plus Azure DevOps WIT board-sync | yes | yes | — | yes | yes | [campaigns.md](campaigns.md) |
 | `handoff_lease_heartbeat` | Handoff claim TTL, heartbeat renew, auto-release expired claims | yes | — | — | yes | yes | [agents.md](../agents.md) |
 | `coordination_events_scope` | Campaign/objective filters on workspace events poll | yes | — | — | yes | yes | [campaigns.md](campaigns.md) |
 | `objective_mr_approval_binding` | Objective mr_url and approval_id fields for review rollups | yes | — | — | yes | yes | [campaigns.md](campaigns.md) |

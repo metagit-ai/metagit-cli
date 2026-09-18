@@ -1,7 +1,7 @@
 ---
 name: agents
 description: Always-loaded project anchor. Read this first. Contains project identity, non-negotiables, commands, and pointer to .mex/ROUTER.md for full context. Use GitNexus MCP tools for all structural and impact analysis.
-last_updated: 2026-09-12
+last_updated: 2026-09-18
 ---
 
 # Metagit
@@ -34,9 +34,11 @@ For agents instructed to **use Metagit** (not necessarily to contribute to this 
 **Session start** (from repo with `.metagit.yml`):
 
 ```bash
-metagit -c .metagit.yml context pack --tier 2 --json
+metagit -c .metagit.yml context pack --tier 0 --json
 metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 ```
+
+Large umbrellas (500+ repos): keep `.metagit.yml` on disk. Use search + paged packs + `prompt workspace -k large-workspace`. Do not run `config show --json` or `workspace list --include-workspace`. See [docs/reference/context-reduction.md](docs/reference/context-reduction.md).
 
 **Skills:** `metagit skills install --scope user` · **MCP:** `metagit mcp install --scope user`
 
@@ -49,13 +51,13 @@ metagit -c .metagit.yml prompt workspace --kind session-start --text-only
 | Repo CI topology | `metagit project repo ci show` / `detect` / `set` (`--json`) |
 | Search repo file contents | `metagit workspace grep "…" --json` |
 | Grep backend (ripgrep) | `metagit workspace grep info --json` |
-| Catalog | `metagit workspace list --json` |
+| Catalog (paged; no full manifest) | `metagit workspace list --json` |
 | Operational prompts | `metagit prompt list` |
 | Scoped repo text | `metagit context repomix --profile bugfix-local --project P --repo R` |
 | Latest release / notes | `metagit version check --json` |
 | Self-update | `metagit version upgrade --apply --json` |
 | Agent profile / apply | `metagit agent profile show` / `metagit agent apply --vendor cursor` |
-| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign expand` · `metagit campaign context` |
+| Campaigns | `metagit campaign list` · `metagit campaign new` · `metagit campaign status --limit 40` · `metagit campaign expand` · `metagit campaign board-sync` · `metagit campaign context` |
 | Derived surgical project | `metagit project derived create -n N --from P/R` or `P/R/C` [`--include-dependencies`] · `refresh` · `include` · `exclude` |
 | Skills surface | `metagit skills surface --json` |
 | ACL isolate agent checkout | `metagit branch allocate` · `metagit lease acquire --allocate` · `metagit worktree create` |

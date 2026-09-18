@@ -194,6 +194,72 @@ features:
           - path: src/metagit/data/skills/metagit-cli/SKILL.md
             contains: "modality:campaign_everroom_context"
 
+  - id: context_reduction
+    description: Paged catalog/map/pack/campaign JSON so large umbrella manifests stay on disk
+    service: metagit.core.context.reduction
+    reference_doc: docs/reference/context-reduction.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/workspace.py
+            contains: "--include-workspace"
+          - path: src/metagit/cli/commands/config.py
+            contains: "--confirm-full"
+          - path: src/metagit/cli/commands/context.py
+            contains: "--max-map-repos"
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/runtime.py
+            contains: include_workspace
+          - path: src/metagit/core/mcp/resource_service.py
+            contains: full_manifest_refused_payload
+      documentation:
+        markers:
+          - path: docs/reference/context-reduction.md
+            contains: "modality:context_reduction"
+          - path: docs/agents.md
+            contains: "modality:context_reduction"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-context-pack/SKILL.md
+            contains: "modality:context_reduction"
+          - path: src/metagit/data/skills/metagit-mcp-resources/SKILL.md
+            contains: "modality:context_reduction"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:context_reduction"
+          - path: src/metagit/data/skills/metagit-workspace-scope/SKILL.md
+            contains: "modality:context_reduction"
+
+  - id: campaign_board_link
+    description: Provider-agnostic campaign work-item refs plus Azure DevOps WIT board-sync
+    service: metagit.core.workitem.board_service.CampaignBoardService
+    reference_doc: docs/reference/campaigns.md
+    surfaces:
+      cli:
+        markers:
+          - path: src/metagit/cli/commands/campaign.py
+            contains: '@campaign.command("board-sync")'
+      mcp:
+        markers:
+          - path: src/metagit/core/mcp/tool_registry.py
+            contains: metagit_campaign_board_sync
+          - path: src/metagit/core/mcp/runtime.py
+            contains: metagit_campaign_board_sync
+      documentation:
+        markers:
+          - path: docs/reference/campaigns.md
+            contains: "modality:campaign_board_link"
+          - path: docs/reference/context-reduction.md
+            contains: "modality:campaign_board_link"
+          - path: docs/agents.md
+            contains: "modality:campaign_board_link"
+      skills:
+        markers:
+          - path: src/metagit/data/skills/metagit-campaign/SKILL.md
+            contains: "modality:campaign_board_link"
+          - path: src/metagit/data/skills/metagit-cli/SKILL.md
+            contains: "modality:campaign_board_link"
+
   - id: handoff_lease_heartbeat
     description: Handoff claim TTL, heartbeat renew, auto-release expired claims
     service: metagit.core.context.handoff_service.HandoffService

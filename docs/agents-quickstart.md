@@ -60,11 +60,11 @@ Run from the umbrella repo that owns `.metagit.yml` (or pass `-c path/to/.metagi
 ### 1. Orient
 
 ```bash
-metagit context pack --tier 2 --json
+metagit context pack --tier 0 --json
 metagit prompt workspace --kind session-start --text-only
 ```
 
-Token-tight: `--tier 0` instead of 2.
+Escalate to `--tier 2` only when scoped with `--project`/`--repo`. 500+ repos: `metagit prompt workspace -k large-workspace --text-only` and [context-reduction.md](reference/context-reduction.md). Never dump `.metagit.yml`.
 
 To land in a managed checkout (never `metagit nav` — that is a human TUI):
 

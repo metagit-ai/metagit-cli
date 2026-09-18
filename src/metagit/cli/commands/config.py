@@ -28,6 +28,11 @@ from metagit.core.config.graph_validation import validate_graph_relationships
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
 from metagit.core.config.patch_service import ConfigPatchService
 from metagit.core.config.yaml_display import dump_config_dict
+from metagit.core.context.reduction import (
+    FULL_MANIFEST_REPO_THRESHOLD,
+    count_workspace_repos,
+    full_manifest_refused_payload,
+)
 from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_workspace_root
 
 
@@ -70,8 +75,14 @@ def config(ctx: click.Context, config_path: str) -> None:
     help="Re-serialize from the loaded model (readable YAML, not the file on disk)",
 )
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.option(
+    "--confirm-full",
+    is_flag=True,
+    default=False,
+    help="Allow dumping a large umbrella manifest (over the repo threshold)",
+)
 @click.pass_context
-def config_show(ctx: click.Context, normalized: bool, as_json: bool) -> None:
+def config_show(ctx: click.Context, normalized: bool, as_json: bool, confirm_full: bool) -> None:
     """Show metagit configuration (source file by default)."""
     logger = ctx.obj["logger"]
     try:
@@ -80,6 +91,19 @@ def config_show(ctx: click.Context, normalized: bool, as_json: bool) -> None:
         config_result = config_manager.load_config()
         if isinstance(config_result, Exception):
             raise config_result
+
+        repo_count = count_workspace_repos(config_result)
+        agent_mode = bool(ctx.obj.get("agent_mode", False))
+        if (as_json or agent_mode) and repo_count > FULL_MANIFEST_REPO_THRESHOLD and not confirm_full:
+            payload = full_manifest_refused_payload(
+                repo_count=repo_count,
+                hint=(
+                    "Use `metagit context pack --tier 0 --json`, `metagit search`, "
+                    "or `metagit config show --json --confirm-full` for an operator-approved dump."
+                ),
+            )
+            emit_json(payload)
+            ctx.exit(2)
 
         if as_json:
             emit_json(config_result.model_dump(mode="json", exclude_none=True))
