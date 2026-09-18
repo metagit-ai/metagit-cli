@@ -110,6 +110,7 @@ override-dependencies = [
     "pyjwt>=2.13.0",
     "pymdown-extensions>=11.0.0",
     "pynacl>=1.6.2",
+    "soupsieve>=2.9.2",
     "urllib3>=2.7.0",
     "uv>=0.11.6",
     "virtualenv>=20.36.1",
