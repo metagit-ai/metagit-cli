@@ -4,6 +4,8 @@
 exclude = [
   "^https?://127\\.0\\.0\\.1",
   "^https?://localhost",
+  # DeepWiki badge host returns 429 under CI load. The badge is decorative.
+  "^https?://deepwiki\\.com",
 ]
 
 exclude_path = [

@@ -27,8 +27,9 @@ def test_appconfig_info_missing_local_does_not_use_workspace_folder(
   with runner.isolated_filesystem():
     result = runner.invoke(cli, ["appconfig", "info"])
     assert result.exit_code == 0, result.output
-    assert "./.metagit" not in result.output
-    assert DEFAULT_CONFIG in result.output
+    compact = "".join(result.output.split())
+    assert "./.metagit" not in compact
+    assert DEFAULT_CONFIG in compact
 
 
 def test_appconfig_validate_succeeds_without_local_file(

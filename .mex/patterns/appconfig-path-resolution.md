@@ -11,7 +11,7 @@ edges:
     condition: when project list/select is wrong because workspace.path or default_project is mis-resolved
   - target: context/architecture.md
     condition: when tracing CLI bootstrap into AppConfig load
-last_updated: 2026-09-18
+last_updated: 2026-09-28
 ---
 
 # AppConfig path resolution
@@ -32,6 +32,7 @@ last_updated: 2026-09-18
 - `resolve_cli_bootstrap` returns `(config, definition_path, appconfig_path)` — three values. Do not unpack two and then guess the file from `cfg.workspace.path`.
 - `AppConfig.load()` with no path uses `default_user_appconfig_path()`, not the bundled package file. CLI missing-file fallback uses the bundled file when no user file exists.
 - `metagit.config.yml` is a valid local alias; `~/.config/metagit/config.yml` is the user-level file documented for providers and sharing-state.
+- Rich wraps `appconfig info` lines at the console width, so a long `config_path` is split in captured output. Assert it with `"".join(output.split())`, the same way `test_appconfig_info_uses_user_config_when_local_missing` does.
 
 ## Verify
 - [ ] `tests/cli/test_config_path.py` and `tests/cli/commands/test_appconfig.py` pass.
