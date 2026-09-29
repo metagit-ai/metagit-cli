@@ -10,7 +10,7 @@ task docs:links
 
 Requires [lychee](https://github.com/lycheeverse/lychee): `brew install lychee` or `cargo install lychee --locked`.
 
-Config: `lychee.toml` (scopes markdown only; skips generated `docs/llm*.txt` and localhost URLs).
+Config: `lychee.toml` (scopes markdown only; skips generated `docs/llm*.txt`, localhost URLs, and `deepwiki.com` badge URLs that return HTTP 429 in CI).
 
 ## Pre-push (context-aware)
 
