@@ -44,6 +44,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [component-resolution.md](component-resolution.md) | Path→component longest-match resolve and identity lookup (RFC-0027 ComponentResolver) |
 | [context-switch.md](context-switch.md) | Implementing `metagit context switch` / `metagit_context_switch` bootstrap (pack + prompt + objective) |
 | [derived-projects-skills-surface.md](derived-projects-skills-surface.md) | Creating derived surgical projects and inventorying layered skills for agents |
+| [imprint-agent-map.md](imprint-agent-map.md) | Implementing parent-project imprints, the committed agent map, or web sync failure detail |
 | [add-cli-command.md](add-cli-command.md) | Adding or extending a Click CLI command while keeping core logic in `src/metagit/core/*` |
 | [add-prompt-catalog-kind.md](add-prompt-catalog-kind.md) | Adding a new built-in `metagit prompt` kind (catalog + template + tests) |
 | [add-managed-repo-search.md](add-managed-repo-search.md) | Extending or debugging managed-only repo search (CLI, MCP `metagit_repo_search`, local JSON API) |

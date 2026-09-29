@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-09-18
+last_updated: 2026-09-28
 ---
 
 # Session Bootstrap
@@ -123,6 +123,7 @@ Then read this file fully before doing anything else in this session.
 - **Web Config Studio unsaved edits:** `SchemaTreeService._navigate_parent(..., mutate=True)` materializes null list/object parents before REMOVE/APPEND; React `SchemaTree` sends cumulative `pendingOps` on each PATCH so preview removes work before disk save.
 
 **Not yet built:**
+- **Imprint, agent map, and sync failure detail (design accepted 2026-09-28):** one parent project imprints one child project (shared cache under `.metagit/imprints/`, read-time resolve, pins and `overrides.yml`); committed `agent-map/` plus an `AGENTS.md` fence for models that cannot run Metagit; web sync dialog lists per-repo failures. Spec [docs/superpowers/specs/2026-09-28-imprint-agent-map-sync-failures-design.md](../docs/superpowers/specs/2026-09-28-imprint-agent-map-sync-failures-design.md). Pattern `.mex/patterns/imprint-agent-map.md`. Ship order: sync dialog, agent map, imprint.
 - **Agent reliability follow-ons** — secrets redaction middleware; policy enforcement at mutation points; `init --agent-optimized`; federation (0023), plugins (0024), workspace index (0025). MVPs for 0017/0019–0022 + quickstart are on PR [#89](https://github.com/metagit-ai/metagit-cli/pull/89). Index [2026-08-27-agent-reliability-series-index.md](../docs/superpowers/specs/2026-08-27-agent-reliability-series-index.md).
 - **RFC-0016–0018 implementation** (Org Catalog Backend, Agentic Workload Harness, Pluggable Ontology Layer) — designs proposed; plans pending. RFC-0015 central state plane shipped on `feat/rfc-0015-central-state-plane` (merge pending). Run-evidence completion is part of **0017**, not a new 0016.
 - **`task repomix:profile` automation:** bundled profiles + CLI `metagit context repomix` ship in code; repo Taskfile wrappers may remain future scope (see design note in `docs/superpowers/specs/2026-05-21-context-packs-phase2-design.md`).
