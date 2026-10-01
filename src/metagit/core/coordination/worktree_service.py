@@ -16,6 +16,8 @@ from metagit.core.coordination.lease_service import LeaseService
 from metagit.core.coordination.manifest_service import AgentManifestService
 from metagit.core.coordination.models import (
     AgentExecutionManifest,
+    WorktreeGcResult,
+    WorktreeGcSkip,
     WorktreeListResult,
     WorktreeRecord,
     WorktreeStatusResult,
@@ -267,7 +269,20 @@ class WorktreeService:
         if target is None:
             return ValueError("worktree not found")
 
-        self._remove_git_worktree(target.path, force=force)
+        if not force:
+            reasons = _preservation_reasons(target.path)
+            if reasons:
+                detail = "; ".join(reasons)
+                return ValueError(
+                    f"refusing to destroy worktree {target.worktree_id} at {target.path}: {detail}. "
+                    "Pass --force to remove it anyway.",
+                )
+
+        # The policy check above is the safety gate. git worktree remove still
+        # needs --force to drop metagit's own .metagit-agent.json and ignored files.
+        removed = self._remove_git_worktree(target.path, force=True)
+        if isinstance(removed, Exception):
+            return removed
         now = self._now()
         updated_holder: list[WorktreeRecord] = []
 
@@ -299,8 +314,13 @@ class WorktreeService:
         )
         return record
 
-    def gc(self) -> list[WorktreeRecord] | Exception:
-        """Destroy active records whose lease expired or path is missing."""
+    def gc(self, *, force: bool = False, dry_run: bool = False) -> WorktreeGcResult | Exception:
+        """Destroy active records whose lease expired or path is missing.
+
+        Skips a checkout that still has uncommitted changes, untracked
+        non-ignored files, or unpushed commits unless ``force`` is set.
+        ``dry_run`` reports the same decisions and changes nothing.
+        """
         rows = self._store.load()
         if isinstance(rows, Exception):
             return rows
@@ -309,16 +329,42 @@ class WorktreeService:
             return lease_list
         active_lease_ids = {item.lease_id for item in lease_list.leases if item.status == "active"}
         destroyed: list[WorktreeRecord] = []
+        skipped: list[WorktreeGcSkip] = []
         for row in rows:
             if row.status != "active":
                 continue
             path_missing = not Path(row.path).exists()
             lease_gone = row.lease_id not in active_lease_ids
-            if path_missing or lease_gone:
-                result = self.destroy(worktree_id=row.worktree_id, force=True)
-                if not isinstance(result, Exception):
-                    destroyed.append(result)
-        return destroyed
+            if not path_missing and not lease_gone:
+                continue
+            reasons = [] if path_missing else _preservation_reasons(row.path)
+            if reasons and not force:
+                detail = "; ".join(reasons)
+                skipped.append(
+                    WorktreeGcSkip(
+                        worktree_id=row.worktree_id,
+                        path=row.path,
+                        reasons=reasons,
+                        message=(f"skipped {row.worktree_id}: {detail}. Pass --force to remove it anyway."),
+                    ),
+                )
+                continue
+            if dry_run:
+                destroyed.append(row)
+                continue
+            result = self.destroy(worktree_id=row.worktree_id, force=force or bool(reasons))
+            if isinstance(result, Exception):
+                skipped.append(
+                    WorktreeGcSkip(
+                        worktree_id=row.worktree_id,
+                        path=row.path,
+                        reasons=[str(result)],
+                        message=str(result),
+                    ),
+                )
+                continue
+            destroyed.append(result)
+        return WorktreeGcResult(dry_run=dry_run, destroyed=destroyed, skipped=skipped)
 
     def status(
         self,
@@ -366,10 +412,10 @@ class WorktreeService:
     def manifest(self, agent_id: str) -> AgentExecutionManifest | Exception:
         return self._manifests.show(agent_id)
 
-    def _remove_git_worktree(self, path: str, *, force: bool) -> None:
+    def _remove_git_worktree(self, path: str, *, force: bool) -> None | Exception:
         checkout = Path(path)
         if not checkout.exists():
-            return
+            return None
         try:
             linked = Repo(str(checkout))
             git_dir = Path(linked.git.rev_parse("--git-common-dir"))
@@ -377,14 +423,63 @@ class WorktreeService:
                 git_dir = (checkout / git_dir).resolve()
             main_root = git_dir.parent
             main_repo = Repo(str(main_root))
-            args = ["remove", str(checkout)]
-            if force:
-                args = ["remove", "--force", str(checkout)]
+            args = ["remove", "--force", str(checkout)] if force else ["remove", str(checkout)]
             main_repo.git.worktree(*args)
-            return
-        except (GitCommandError, OSError, ValueError):
-            pass
+            return None
+        except (GitCommandError, OSError, ValueError) as exc:
+            if not force:
+                return Exception(
+                    f"refusing to destroy worktree at {path}: {exc}. Pass --force to remove it anyway.",
+                )
         shutil.rmtree(checkout, ignore_errors=True)
+        return None
+
+
+def _preservation_reasons(path: str) -> list[str]:
+    """Reasons a checkout should not be deleted. Empty when it is safe."""
+    checkout = Path(path)
+    if not checkout.exists():
+        return []
+    try:
+        repo = Repo(str(checkout))
+    except (GitCommandError, OSError, ValueError) as exc:
+        return [f"could not inspect worktree ({exc})"]
+    reasons: list[str] = []
+    if repo.is_dirty(untracked_files=False):
+        reasons.append("uncommitted changes")
+    # `.metagit-agent.json` is written by worktree create. It is coordination
+    # metadata, not user work, and must not block gc of an otherwise clean tree.
+    untracked = [name for name in repo.untracked_files if name != ".metagit-agent.json"]
+    if untracked:
+        shown = ", ".join(untracked[:8])
+        reasons.append(f"untracked files: {shown}")
+    unpushed = _unpushed_commit_count(repo)
+    if unpushed:
+        reasons.append(f"{unpushed} unpushed commit(s)")
+    return reasons
+
+
+def _unpushed_commit_count(repo: Repo) -> int:
+    """Commits on HEAD that are not on any remote.
+
+    A repository with no remotes returns 0. Removing the worktree keeps the
+    branch, and there is no remote those commits could be missing from.
+    """
+    try:
+        if not list(repo.remotes):
+            return 0
+    except (GitCommandError, OSError, ValueError):
+        return 0
+    try:
+        count = repo.git.rev_list("--count", "@{upstream}..HEAD")
+        return int(count)
+    except (GitCommandError, ValueError):
+        pass
+    try:
+        count = repo.git.rev_list("--count", "HEAD", "--not", "--remotes")
+        return int(count)
+    except (GitCommandError, ValueError):
+        return 0
 
 
 __all__ = ["WorktreeService"]

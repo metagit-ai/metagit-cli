@@ -34,6 +34,8 @@ class LeaseService:
         clock_fn: Callable[[], datetime] | None = None,
         event_store: AclEventStore | None = None,
         repo_lock: RepoLockRegistry | None = None,
+        allowed_branch_prefixes: list[str] | None = None,
+        branch_pattern: str | None = None,
     ) -> None:
         self._session_root = str(Path(session_root).expanduser().resolve())
         self._sync_root = str(Path(sync_root or session_root).expanduser().resolve())
@@ -47,6 +49,8 @@ class LeaseService:
             definition_path=self._definition_path,
             now_fn=self._now,
             event_store=self._events,
+            allowed_branch_prefixes=allowed_branch_prefixes,
+            branch_pattern=branch_pattern,
         )
         self._repo_lock = repo_lock or RepoLockRegistry(self._session_root, now_fn=self._now)
         self._store: JsonListStore[Lease] = JsonListStore(

@@ -306,6 +306,24 @@ class MergeConfig(BaseModel):
     )
 
 
+class CoordinationConfig(BaseModel):
+    """ACL branch naming. Defaults keep the historical ``agent/`` scheme."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    branch_pattern: str = Field(
+        default="agent/{task_id}[-{slug}]",
+        description=(
+            "Template for names allocated without --name. "
+            "{task_id} is required. Bracket groups such as [-{slug}] are omitted when slug is empty."
+        ),
+    )
+    allowed_branch_prefixes: list[str] = Field(
+        default_factory=lambda: ["agent/"],
+        description="Branch names must start with one of these prefixes. Default is agent/.",
+    )
+
+
 class EverRoomConfig(BaseModel):
     """Optional local EverRoom Gateway connection defaults.
 
@@ -379,6 +397,10 @@ class AppConfig(BaseModel):
         description="Workspace coordination state backend (objectives, handoffs, approvals)",
     )
     merge: MergeConfig = Field(default_factory=MergeConfig, description="Merge orchestrator settings")
+    coordination: CoordinationConfig = Field(
+        default_factory=CoordinationConfig,
+        description="ACL branch naming. Defaults preserve agent/ allocations.",
+    )
     everroom: EverRoomConfig = Field(
         default_factory=EverRoomConfig,
         description="Optional EverRoom Gateway defaults for campaign context",

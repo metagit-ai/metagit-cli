@@ -9,9 +9,17 @@ title: Merge Orchestrator
 RFC-0011 adds a local merge queue for agent branches, integration branches,
 opt-in validators, conflict records, and CLI/MCP parity.
 
-The orchestrator is deliberately local. It records intent and attempts merges in
-an existing checkout; it does not push, force-push, allocate ACL resources, or
+The orchestrator is deliberately local. It records intent and attempts merges
+in a temporary worktree that it creates and then removes. It does not check
+out `repo_path`, and it does not push, force-push, allocate ACL resources, or
 replace CI.
+
+`integrate` and `promote` refuse when the target branch is already checked out
+in any worktree, including the main clone. No flag overrides that refusal;
+switch that checkout off the branch first. On success the target ref moves and
+every other checkout's HEAD, index, and files stay as they were. Configured
+validators run in a detached worktree of the merge commit, not in the caller's
+tree.
 
 ## Model
 

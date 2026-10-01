@@ -392,7 +392,7 @@ class AosService:
                 unique.append(cmd)
         return findings, unique
 
-    def _default_fix(self) -> list[str]:
+    def _default_fix(self) -> list[str] | Exception:
         fixed: list[str] = []
         try:
             from metagit.core.coordination.lease_service import LeaseService
@@ -406,10 +406,10 @@ class AosService:
             for lease_id in expired:
                 fixed.append(f"lease_expired:{lease_id}")
 
-        destroyed = WorktreeService(self._session_root).gc()
-        if isinstance(destroyed, Exception):
-            return destroyed
-        for row in destroyed:
+        collected = WorktreeService(self._session_root).gc()
+        if isinstance(collected, Exception):
+            return collected
+        for row in collected.destroyed:
             fixed.append(f"worktree_destroyed:{row.worktree_id}")
         return fixed
 

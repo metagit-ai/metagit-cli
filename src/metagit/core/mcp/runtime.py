@@ -3293,10 +3293,15 @@ class MetagitMcpRuntime:
         root = status.root_path
         definition = str(Path(root) / ".metagit.yml")
         worktrees_path: str | None = None
+        allowed_branch_prefixes: list[str] | None = None
+        branch_pattern: str | None = None
         try:
             app_cfg = AppConfig.load()
-            if isinstance(app_cfg, AppConfig) and app_cfg.workspace:
-                worktrees_path = app_cfg.workspace.worktrees_path
+            if isinstance(app_cfg, AppConfig):
+                if app_cfg.workspace:
+                    worktrees_path = app_cfg.workspace.worktrees_path
+                allowed_branch_prefixes = list(app_cfg.coordination.allowed_branch_prefixes)
+                branch_pattern = app_cfg.coordination.branch_pattern
         except Exception:  # noqa: BLE001 — fall back to defaults
             worktrees_path = None
 
@@ -3319,7 +3324,13 @@ class MetagitMcpRuntime:
             return {"ok": True, "result": result}
 
         if name == "metagit_branch_allocate":
-            service = BranchService(root, sync_root=root, definition_path=definition)
+            service = BranchService(
+                root,
+                sync_root=root,
+                definition_path=definition,
+                allowed_branch_prefixes=allowed_branch_prefixes,
+                branch_pattern=branch_pattern,
+            )
             return _unwrap(
                 service.allocate(
                     repository=_require("repository"),
@@ -3352,7 +3363,13 @@ class MetagitMcpRuntime:
                 ),
             )
         if name == "metagit_lease_acquire":
-            service = LeaseService(root, sync_root=root, definition_path=definition)
+            service = LeaseService(
+                root,
+                sync_root=root,
+                definition_path=definition,
+                allowed_branch_prefixes=allowed_branch_prefixes,
+                branch_pattern=branch_pattern,
+            )
             return _unwrap(
                 service.acquire(
                     repository=_require("repository"),

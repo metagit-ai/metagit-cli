@@ -27,7 +27,12 @@ def branch_group(ctx: click.Context) -> None:
 @click.option("--agent-id", required=True)
 @click.option("--task-id", required=True)
 @click.option("--description", default=None, help="Optional short branch suffix")
-@click.option("--name", "branch_name", default=None, help="Explicit agent/* branch name")
+@click.option(
+    "--name",
+    "branch_name",
+    default=None,
+    help="Explicit branch name; must match coordination.allowed_branch_prefixes (default agent/)",
+)
 @click.option("--base", default=None, help="Base ref/commit for the new branch")
 @click.option("--integration-branch", default=None)
 @click.option("--no-git", is_flag=True, help="Record allocation without creating a git branch")
@@ -53,6 +58,8 @@ def branch_allocate(
         session_root,
         sync_root=sync_root,
         definition_path=definition,
+        allowed_branch_prefixes=list(roots.coordination.allowed_branch_prefixes),
+        branch_pattern=roots.coordination.branch_pattern,
     )
     result = raise_if_error(
         service.allocate(

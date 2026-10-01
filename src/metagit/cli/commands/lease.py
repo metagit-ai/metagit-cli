@@ -51,7 +51,13 @@ def lease_acquire(
     """Acquire a branch lease for an agent."""
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
-    service = LeaseService(session_root, sync_root=sync_root, definition_path=definition)
+    service = LeaseService(
+        session_root,
+        sync_root=sync_root,
+        definition_path=definition,
+        allowed_branch_prefixes=list(roots.coordination.allowed_branch_prefixes),
+        branch_pattern=roots.coordination.branch_pattern,
+    )
     result = raise_if_error(
         service.acquire(
             repository=repository,

@@ -41,6 +41,13 @@ Under the session/manifest root:
 .worktrees/<agent-id>/<project>/<repo>/   # default; configurable
 ```
 
+Branch names default to `agent/<task-id>[-<slug>]`. Appconfig
+`coordination.allowed_branch_prefixes` (default `["agent/"]`) is what
+`branch allocate --name` checks. `coordination.branch_pattern` (default
+`agent/{task_id}[-{slug}]`) is used when `--name` is omitted. Bracket groups
+in the pattern are dropped when there is no description slug. A refused name
+tells you to set `coordination.allowed_branch_prefixes`.
+
 Checkout directory is controlled by appconfig `workspace.worktrees_path`
 (default `.worktrees`, env `METAGIT_WORKSPACE_WORKTREES_PATH`). Relative values
 resolve from the manifest/session root. The path basename (and the same name
@@ -69,6 +76,8 @@ metagit worktree status --agent-id agent-1 --json
 metagit worktree manifest agent-1
 metagit worktree destroy --worktree-id <id> --force
 metagit worktree gc
+metagit worktree gc --dry-run
+metagit worktree gc --force
 
 # Advisory file claims
 metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'backend/auth/*'
@@ -78,6 +87,14 @@ metagit claim check --repository platform/core --component api
 metagit claim list --repository project/repo --json
 metagit claim release --claim-id <id> --agent-id agent-1
 ```
+
+`worktree gc` removes active checkouts whose lease has expired or whose path
+is already gone. It skips a checkout that has uncommitted changes, untracked
+non-ignored files other than `.metagit-agent.json`, or commits that are not on
+a remote, and the skip message
+names `--force`. `worktree destroy` refuses the same way unless `--force` is
+passed. `--dry-run` only reports. A repository with no remotes is not treated
+as unpushed: removing the worktree leaves the branch in place.
 
 ## MCP tools
 

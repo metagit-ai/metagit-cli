@@ -172,6 +172,28 @@ class WorktreeStatusResult(BaseModel):
     worktrees: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class WorktreeGcSkip(BaseModel):
+    """A worktree gc left in place, and why."""
+
+    worktree_id: str
+    path: str
+    reasons: list[str] = Field(default_factory=list)
+    message: str
+
+
+class WorktreeGcResult(BaseModel):
+    """Worktrees destroyed or skipped by gc.
+
+    When ``dry_run`` is true, ``destroyed`` lists records that would be removed
+    and nothing on disk has changed. Those records stay ``active``.
+    """
+
+    ok: bool = True
+    dry_run: bool = False
+    destroyed: list[WorktreeRecord] = Field(default_factory=list)
+    skipped: list[WorktreeGcSkip] = Field(default_factory=list)
+
+
 __all__ = [
     "AclEvent",
     "AclEventType",
@@ -188,6 +210,8 @@ __all__ = [
     "LeaseListResult",
     "LeaseStatus",
     "RepoAgentPresence",
+    "WorktreeGcResult",
+    "WorktreeGcSkip",
     "WorktreeListResult",
     "WorktreeRecord",
     "WorktreeStatus",

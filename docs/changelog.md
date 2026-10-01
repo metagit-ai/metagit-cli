@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+### Added
+- AppConfig `coordination.branch_pattern` (default `agent/{task_id}[-{slug}]`) and `coordination.allowed_branch_prefixes` (default `["agent/"]`). `branch allocate --name` checks the prefix list. Docs: [agent-coordination.md](reference/agent-coordination.md).
 
+### Fixed
+- `merge integrate` and `merge promote` merge in a temporary worktree and no longer check out the target in `repo_path`. They refuse when that branch is already checked out somewhere. Docs: [merge-orchestrator.md](reference/merge-orchestrator.md).
+- `worktree gc` and `worktree destroy` skip checkouts with uncommitted changes, untracked non-ignored files, or unpushed commits. `--force` overrides the skip; `gc --dry-run` only reports.
 
 ## [0.35.0] - 2026-09-18
 

@@ -8,7 +8,7 @@ import re
 import uuid
 
 from metagit.core.merge.events import MergeEventStore
-from metagit.core.merge.git_ops import attempt_merge
+from metagit.core.merge.git_ops import attempt_merge, detached_worktree
 from metagit.core.merge.models import MergeConflict, MergeRequest, MergeValidation
 from metagit.core.merge.store import MergeStore
 from metagit.core.merge.validators import run_validators
@@ -84,7 +84,7 @@ class MergeOrchestrator:
             return event if isinstance(event, Exception) else request
 
         if result.ok:
-            validation = self.run_validators(request.repo_path)
+            validation = self._validate_merged_tree(request.repo_path, result.commit_sha)
             request.status = "succeeded"
             request.commit_sha = result.commit_sha
             request.conflict = None
@@ -142,6 +142,17 @@ class MergeOrchestrator:
     def run_validators(self, repo_path: str) -> MergeValidation:
         """Run configured merge validators for a repository path."""
         return run_validators(repo_path, self._validators)
+
+    def _validate_merged_tree(self, repo_path: str, commit_sha: str | None) -> MergeValidation:
+        """Run validators against the merge commit, not the caller's checkout.
+
+        Empty validator lists do not need a tree. Configured commands run in a
+        detached worktree of ``commit_sha`` so they see the merge result.
+        """
+        if not self._validators or not commit_sha:
+            return self.run_validators(repo_path)
+        with detached_worktree(repo_path, commit_sha) as checkout:
+            return self.run_validators(checkout)
 
     def promote(self, merge_id: str, into_branch: str) -> MergeRequest | Exception:
         """Promote a successful integration branch into another branch."""

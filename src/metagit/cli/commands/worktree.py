@@ -104,20 +104,25 @@ def worktree_destroy(
 
 @worktree_group.command("gc")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--force", is_flag=True, help="Remove checkouts that still have unsaved or unpushed work")
+@click.option("--dry-run", is_flag=True, help="Report what would be destroyed or skipped")
 @click.option("--json", "as_json", is_flag=True)
 @click.pass_context
-def worktree_gc(ctx: click.Context, definition_path: str, as_json: bool) -> None:
+def worktree_gc(ctx: click.Context, definition_path: str, force: bool, dry_run: bool, as_json: bool) -> None:
     """Garbage-collect worktrees with expired leases or missing paths."""
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(
         session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
     )
-    result = raise_if_error(service.gc())
+    result = raise_if_error(service.gc(force=force, dry_run=dry_run))
     if as_json:
-        emit_json({"ok": True, "destroyed": [row.model_dump(mode="json") for row in result]})
+        emit_json(result)
         return
-    click.echo(f"gc destroyed {len(result)} worktree(s)")
+    verb = "would destroy" if dry_run else "destroyed"
+    click.echo(f"gc {verb} {len(result.destroyed)} worktree(s); skipped {len(result.skipped)}")
+    for row in result.skipped:
+        click.echo(row.message)
 
 
 @worktree_group.command("status")
