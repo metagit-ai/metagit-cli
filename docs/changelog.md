@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.36.0] - 2026-10-02
+
+
+
 ### Added
 - AppConfig `coordination.branch_pattern` (default `agent/{task_id}[-{slug}]`) and `coordination.allowed_branch_prefixes` (default `["agent/"]`). `branch allocate --name` checks the prefix list. Docs: [agent-coordination.md](reference/agent-coordination.md).
 - AppConfig `coordination.worktree_per_task` (default false) allows one active worktree per task. `--repository .` and `self` target the definition repo for branch, lease, worktree, claim, and merge. `worktree adopt` registers an existing checkout. `coordination.worktree.post_create` runs gitignored symlink/copy hooks or a shell-less command after create. Docs: [agent-coordination.md](reference/agent-coordination.md).
