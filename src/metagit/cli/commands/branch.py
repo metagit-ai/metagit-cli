@@ -23,7 +23,7 @@ def branch_group(ctx: click.Context) -> None:
 
 @branch_group.command("allocate")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
-@click.option("--repository", required=True, help="project/repo")
+@click.option("--repository", required=True, help="project/repo, or . / self for the definition repo")
 @click.option("--agent-id", required=True)
 @click.option("--task-id", required=True)
 @click.option("--description", default=None, help="Optional short branch suffix")

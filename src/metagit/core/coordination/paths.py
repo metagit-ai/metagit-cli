@@ -77,10 +77,28 @@ def worktree_checkout_path(
     repo: str,
     *,
     worktrees_path: str | None = None,
+    task_id: str | None = None,
 ) -> Path:
-    """Filesystem path for an agent worktree checkout."""
+    """Filesystem path for an agent worktree checkout.
+
+    ``task_id`` is included only when the caller opted into per-task worktrees.
+    """
     root = resolve_worktrees_root(resolve_session_root(session_root), worktrees_path)
-    return Path(root) / agent_id / project / repo
+    checkout = Path(root) / agent_id / project / repo
+    if task_id:
+        checkout = checkout / _task_path_segment(task_id)
+    return checkout
+
+
+def _task_path_segment(task_id: str) -> str:
+    cleaned = []
+    for char in task_id.strip():
+        if char.isalnum() or char in {"-", "_", "."}:
+            cleaned.append(char)
+        elif cleaned and cleaned[-1] != "-":
+            cleaned.append("-")
+    segment = "".join(cleaned).strip("-") or "task"
+    return segment[:80]
 
 
 __all__ = [

@@ -39,7 +39,7 @@ def claim_group(ctx: click.Context) -> None:
 
 @claim_group.command("declare")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
-@click.option("--repository", required=True)
+@click.option("--repository", required=True, help="project/repo, or . / self for the definition repo")
 @click.option("--agent-id", required=True)
 @click.option("--pattern", "patterns", multiple=True, required=False)
 @click.option("--component", default=None, help="Catalogued component name; defaults patterns to its path")
@@ -93,7 +93,7 @@ def claim_declare(
 
 @claim_group.command("check")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
-@click.option("--repository", required=True)
+@click.option("--repository", required=True, help="project/repo, or . / self for the definition repo")
 @click.option("--pattern", "patterns", multiple=True, required=False)
 @click.option("--component", default=None, help="Catalogued component name; defaults patterns to its path")
 @click.option("--agent-id", default=None, help="Ignore this agent's own claims")

@@ -19,6 +19,7 @@ from metagit.core.coordination.models import (
     FileClaim,
 )
 from metagit.core.coordination.paths import claims_file
+from metagit.core.coordination.repo_paths import canonical_repository_ref
 from metagit.core.coordination.store import JsonListStore
 from metagit.core.workspace.context_models import utc_now_iso
 
@@ -81,6 +82,7 @@ class ClaimService:
         if isinstance(rows, Exception):
             return rows
         if repository:
+            repository = canonical_repository_ref(repository)
             rows = [row for row in rows if row.repository == repository]
         if agent_id:
             rows = [row for row in rows if row.agent_id == agent_id]
@@ -97,6 +99,7 @@ class ClaimService:
         component: str | None = None,
         config: MetagitConfig | None = None,
     ) -> ClaimCheckResult | Exception:
+        repository = canonical_repository_ref(repository)
         resolved = self._resolve_claim_patterns(
             repository=repository,
             patterns=patterns,
@@ -187,6 +190,7 @@ class ClaimService:
         component: str | None = None,
         config: MetagitConfig | None = None,
     ) -> FileClaim | ClaimCheckResult | Exception:
+        repository = canonical_repository_ref(repository)
         resolved = self._resolve_claim_patterns(
             repository=repository,
             patterns=patterns,

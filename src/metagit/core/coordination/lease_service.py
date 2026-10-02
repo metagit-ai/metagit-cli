@@ -13,6 +13,7 @@ from metagit.core.coordination.event_store import AclEventStore
 from metagit.core.coordination.models import Lease, LeaseListResult
 from metagit.core.coordination.paths import leases_file
 from metagit.core.coordination.repo_lock_service import RepoLockRegistry
+from metagit.core.coordination.repo_paths import canonical_repository_ref
 from metagit.core.coordination.store import JsonListStore
 from metagit.core.coordination.ttl import parse_ttl_seconds
 from metagit.core.workspace.context_models import utc_now_iso
@@ -94,6 +95,7 @@ class LeaseService:
         integration_branch: Optional[str] = None,
         base: Optional[str] = None,
     ) -> Lease | Exception:
+        repository = canonical_repository_ref(repository)
         rows = self._expire_leases()
         if isinstance(rows, Exception):
             return rows

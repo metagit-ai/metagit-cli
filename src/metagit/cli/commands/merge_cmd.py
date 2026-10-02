@@ -21,7 +21,7 @@ def merge_group(ctx: click.Context) -> None:
 
 @merge_group.command("enqueue")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
-@click.option("--repository", required=True)
+@click.option("--repository", required=True, help="project/repo, or . / self for the definition repo")
 @click.option("--branch", "source_branch", required=True)
 @click.option("--into", "target_branch", required=True)
 @click.option("--node-id", default=None)

@@ -7,6 +7,7 @@ import os
 import re
 import uuid
 
+from metagit.core.coordination.repo_paths import canonical_repository_ref, resolve_repo_filesystem_path
 from metagit.core.merge.events import MergeEventStore
 from metagit.core.merge.git_ops import attempt_merge, detached_worktree
 from metagit.core.merge.models import MergeConflict, MergeRequest, MergeValidation
@@ -213,6 +214,16 @@ class MergeOrchestrator:
     def _resolve_repo_path(self, repository: str, repo_path: str | None) -> str | Exception:
         if repo_path:
             return repo_path
+        if canonical_repository_ref(repository) == ".":
+            resolved = resolve_repo_filesystem_path(
+                session_root=self._session_root,
+                sync_root=self._session_root,
+                repository=".",
+                definition_path=os.path.join(self._session_root, ".metagit.yml"),
+            )
+            if isinstance(resolved, Exception):
+                return resolved
+            return str(resolved)
         parts = repository.split("/")
         if len(parts) != 2:
             return ValueError("repository must be project/repo")

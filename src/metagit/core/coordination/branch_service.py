@@ -21,6 +21,7 @@ from metagit.core.coordination.event_store import AclEventStore
 from metagit.core.coordination.models import BranchAllocation, BranchListResult
 from metagit.core.coordination.paths import branches_file
 from metagit.core.coordination.repo_paths import (
+    canonical_repository_ref,
     resolve_repo_filesystem_path,
     slugify_branch_suffix,
 )
@@ -84,6 +85,7 @@ class BranchService:
         integration_branch: Optional[str] = None,
         create_git_branch: bool = True,
     ) -> BranchAllocation | Exception:
+        repository = canonical_repository_ref(repository)
         if branch_name:
             name = branch_name
         else:

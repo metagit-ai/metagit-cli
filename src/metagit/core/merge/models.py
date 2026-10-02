@@ -37,9 +37,11 @@ def _validate_nonempty(value: str, *, label: str) -> str:
 
 def _validate_repository(value: str) -> str:
     stripped = value.strip()
+    if stripped in {".", "self"}:
+        return "."
     parts = stripped.split("/")
     if len(parts) != 2 or not all(part.strip() for part in parts):
-        raise ValueError("repository must be project/repo")
+        raise ValueError("repository must be project/repo, or . / self for the definition repo")
     return stripped
 
 

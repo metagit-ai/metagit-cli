@@ -3295,6 +3295,8 @@ class MetagitMcpRuntime:
         worktrees_path: str | None = None
         allowed_branch_prefixes: list[str] | None = None
         branch_pattern: str | None = None
+        worktree_per_task = False
+        post_create: list[Any] = []
         try:
             app_cfg = AppConfig.load()
             if isinstance(app_cfg, AppConfig):
@@ -3302,6 +3304,8 @@ class MetagitMcpRuntime:
                     worktrees_path = app_cfg.workspace.worktrees_path
                 allowed_branch_prefixes = list(app_cfg.coordination.allowed_branch_prefixes)
                 branch_pattern = app_cfg.coordination.branch_pattern
+                worktree_per_task = app_cfg.coordination.worktree_per_task
+                post_create = list(app_cfg.coordination.worktree.post_create)
         except Exception:  # noqa: BLE001 — fall back to defaults
             worktrees_path = None
 
@@ -3417,6 +3421,8 @@ class MetagitMcpRuntime:
                 sync_root=root,
                 definition_path=definition,
                 worktrees_path=worktrees_path,
+                worktree_per_task=worktree_per_task,
+                post_create=post_create,
             )
             claims_raw = arguments.get("claims")
             claims = [str(item) for item in claims_raw] if isinstance(claims_raw, list) else None
@@ -3439,6 +3445,8 @@ class MetagitMcpRuntime:
                 sync_root=root,
                 definition_path=definition,
                 worktrees_path=worktrees_path,
+                worktree_per_task=worktree_per_task,
+                post_create=post_create,
             )
             return _unwrap(
                 service.destroy(
@@ -3454,6 +3462,8 @@ class MetagitMcpRuntime:
                 sync_root=root,
                 definition_path=definition,
                 worktrees_path=worktrees_path,
+                worktree_per_task=worktree_per_task,
+                post_create=post_create,
             )
             return _unwrap(
                 service.status(
@@ -3467,6 +3477,8 @@ class MetagitMcpRuntime:
                 sync_root=root,
                 definition_path=definition,
                 worktrees_path=worktrees_path,
+                worktree_per_task=worktree_per_task,
+                post_create=post_create,
             )
             return _unwrap(
                 service.list(
