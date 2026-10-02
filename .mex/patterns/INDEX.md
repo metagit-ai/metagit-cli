@@ -27,6 +27,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [agent-reliability-series.md](agent-reliability-series.md) | Navigating or extending RFC-0019+ agent reliability / AOS hardening (do not reuse 0016–0018) |
 | [central-state-plane-series.md](central-state-plane-series.md) | Designing or implementing RFC-0015–0018 central state plane / org catalog / harness / ontology |
 | [agent-coordination-acl.md](agent-coordination-acl.md) | Implementing or extending RFC-0007 ACL branch/lease/worktree/claim primitives |
+| [session-worktree-coordination.md](session-worktree-coordination.md) | Isolated merge integrate/promote, safe worktree gc, and opt-in branch prefixes |
 | [agent-scheduler.md](agent-scheduler.md) | Implementing or extending RFC-0012 schedule scoring, policy, CLI/MCP, and events |
 | [aos-composition.md](aos-composition.md) | Implementing or operating RFC-0013 AOS status/doctor/next composition façade |
 | [appconfig-path-resolution.md](appconfig-path-resolution.md) | CLI AppConfig file lookup when local metagit.config.yaml is missing; never use workspace.path as config_path |

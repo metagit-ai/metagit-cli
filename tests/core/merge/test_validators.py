@@ -99,9 +99,12 @@ def test_promote_merges_integration_branch_after_success(tmp_path: Path) -> None
   assert integrated.validation is not None
   assert integrated.validation.ok is True
 
+  repo = Repo(repo_path)
+  repo.git.checkout("-b", "hold")
   promoted = orchestrator.promote(request.merge_id, "main")
   repo = Repo(repo_path)
 
   assert not isinstance(promoted, Exception)
-  assert repo.active_branch.name == "main"
-  assert (repo_path / "feature.txt").read_text(encoding="utf-8") == "feature\n"
+  assert repo.active_branch.name == "hold"
+  assert not (repo_path / "feature.txt").exists()
+  assert repo.git.show("main:feature.txt").rstrip("\r\n") == "feature"

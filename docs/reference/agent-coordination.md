@@ -41,6 +41,28 @@ Under the session/manifest root:
 .worktrees/<agent-id>/<project>/<repo>/   # default; configurable
 ```
 
+Branch names default to `agent/<task-id>[-<slug>]`. Appconfig
+`coordination.allowed_branch_prefixes` (default `["agent/"]`) is what
+`branch allocate --name` checks. `coordination.branch_pattern` (default
+`agent/{task_id}[-{slug}]`) is used when `--name` is omitted. Bracket groups
+in the pattern are dropped when there is no description slug. A refused name
+tells you to set `coordination.allowed_branch_prefixes`.
+
+`coordination.worktree_per_task` (default false) keeps one active worktree per
+agent per repo. Set it to true to allow one checkout per task; the path then
+includes the task id. A second checkout while the flag is false names
+`coordination.worktree_per_task`.
+
+`--repository .` and `--repository self` mean the git repository that holds
+the metagit definition. Stored records use `.`.
+
+`coordination.worktree.post_create` runs after `worktree create` and before the
+record is saved. Each entry is exactly one of `symlink`, `copy`, or `run`.
+Symlink and copy paths must be relative and gitignored. A tracked path is
+refused and the message names `coordination.worktree.post_create`. `run` is
+split with `shlex` and executed in the new worktree without a shell. `worktree
+adopt` does not run these hooks.
+
 Checkout directory is controlled by appconfig `workspace.worktrees_path`
 (default `.worktrees`, env `METAGIT_WORKSPACE_WORKTREES_PATH`). Relative values
 resolve from the manifest/session root. The path basename (and the same name
@@ -65,10 +87,13 @@ metagit lease list --repository project/repo --json
 
 # Isolated worktree (requires active lease)
 metagit worktree create --repository project/repo --agent-id agent-1 --task-id 412 --branch agent/412-auth
+metagit worktree adopt --repository project/repo --path /path/to/existing --agent-id agent-1 --task-id 412
 metagit worktree status --agent-id agent-1 --json
 metagit worktree manifest agent-1
 metagit worktree destroy --worktree-id <id> --force
 metagit worktree gc
+metagit worktree gc --dry-run
+metagit worktree gc --force
 
 # Advisory file claims
 metagit claim declare --repository project/repo --agent-id agent-1 --pattern 'backend/auth/*'
@@ -78,6 +103,14 @@ metagit claim check --repository platform/core --component api
 metagit claim list --repository project/repo --json
 metagit claim release --claim-id <id> --agent-id agent-1
 ```
+
+`worktree gc` removes active checkouts whose lease has expired or whose path
+is already gone. It skips a checkout that has uncommitted changes, untracked
+non-ignored files other than `.metagit-agent.json`, or commits that are not on
+a remote, and the skip message
+names `--force`. `worktree destroy` refuses the same way unless `--force` is
+passed. `--dry-run` only reports. A repository with no remotes is not treated
+as unpushed: removing the worktree leaves the branch in place.
 
 ## MCP tools
 

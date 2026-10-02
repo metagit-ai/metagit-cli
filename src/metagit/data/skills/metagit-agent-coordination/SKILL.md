@@ -106,6 +106,11 @@ metagit claim declare \
 metagit worktree manifest agent-1
 ```
 
+`--repository .` (or `self`) targets the git repo that holds `.metagit.yml`.
+`worktree adopt` registers a checkout that already exists and does not run
+`coordination.worktree.post_create`. Symlink and copy hooks only accept
+gitignored paths.
+
 Or allocate + lease in one step with `--allocate` on `lease acquire`.
 
 ## Paths

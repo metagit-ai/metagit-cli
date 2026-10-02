@@ -5,7 +5,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from metagit import DATA_PATH
 from metagit.core.appconfig.paths import default_user_appconfig_path
@@ -304,6 +304,78 @@ class MergeConfig(BaseModel):
         default_factory=list,
         description="Opt-in shell command strings that must pass before merge promotion",
     )
+    regenerate: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Path glob to command. When every conflicted path matches a glob, "
+            "the merge takes the target side and runs the commands in the temporary worktree."
+        ),
+    )
+
+
+class WorktreePostCreateHook(BaseModel):
+    """One action run after ``worktree create``. Exactly one field is set."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True, serialize_by_alias=True)
+
+    symlink: Optional[str] = Field(
+        default=None, description="Repo-relative gitignored path to symlink into the worktree"
+    )
+    copy_path: Optional[str] = Field(
+        default=None,
+        alias="copy",
+        description="Repo-relative gitignored path to copy into the worktree",
+    )
+    run: Optional[str] = Field(default=None, description="Command to run in the new worktree, without a shell")
+
+    @model_validator(mode="after")
+    def exactly_one_action(self) -> "WorktreePostCreateHook":
+        chosen = [name for name in ("symlink", "copy_path", "run") if getattr(self, name)]
+        if len(chosen) != 1:
+            raise ValueError(
+                "coordination.worktree.post_create entry needs exactly one of symlink, copy, or run",
+            )
+        return self
+
+
+class WorktreeCoordinationConfig(BaseModel):
+    """Opt-in actions after a metagit-created worktree exists."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    post_create: list[WorktreePostCreateHook] = Field(
+        default_factory=list,
+        description="Hooks run in the new worktree. symlink and copy paths must be gitignored.",
+    )
+
+
+class CoordinationConfig(BaseModel):
+    """ACL branch naming and opt-in worktree layout. Defaults keep the historical agent/ scheme."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    branch_pattern: str = Field(
+        default="agent/{task_id}[-{slug}]",
+        description=(
+            "Template for names allocated without --name. "
+            "{task_id} is required. Bracket groups such as [-{slug}] are omitted when slug is empty."
+        ),
+    )
+    allowed_branch_prefixes: list[str] = Field(
+        default_factory=lambda: ["agent/"],
+        description="Branch names must start with one of these prefixes. Default is agent/.",
+    )
+    worktree_per_task: bool = Field(
+        default=False,
+        description=(
+            "When true, one agent may hold an active worktree per task in a repo, "
+            "and the checkout path includes the task id. Default keeps one worktree per agent per repo."
+        ),
+    )
+    worktree: WorktreeCoordinationConfig = Field(
+        default_factory=WorktreeCoordinationConfig,
+        description="Opt-in worktree create hooks.",
+    )
 
 
 class EverRoomConfig(BaseModel):
@@ -379,6 +451,10 @@ class AppConfig(BaseModel):
         description="Workspace coordination state backend (objectives, handoffs, approvals)",
     )
     merge: MergeConfig = Field(default_factory=MergeConfig, description="Merge orchestrator settings")
+    coordination: CoordinationConfig = Field(
+        default_factory=CoordinationConfig,
+        description="ACL branch naming. Defaults preserve agent/ allocations.",
+    )
     everroom: EverRoomConfig = Field(
         default_factory=EverRoomConfig,
         description="Optional EverRoom Gateway defaults for campaign context",

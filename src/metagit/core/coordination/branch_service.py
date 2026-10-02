@@ -10,12 +10,20 @@ from typing import Callable, Optional
 from git import Repo
 from git.exc import GitCommandError
 
+from metagit.core.coordination.branch_names import (
+    DEFAULT_ALLOWED_BRANCH_PREFIXES,
+    DEFAULT_BRANCH_PATTERN,
+    branch_name_allowed,
+    branch_prefix_refusal,
+    render_branch_name,
+)
 from metagit.core.coordination.event_store import AclEventStore
 from metagit.core.coordination.models import BranchAllocation, BranchListResult
 from metagit.core.coordination.paths import branches_file
 from metagit.core.coordination.repo_paths import (
-    build_agent_branch_name,
+    canonical_repository_ref,
     resolve_repo_filesystem_path,
+    slugify_branch_suffix,
 )
 from metagit.core.coordination.store import JsonListStore
 from metagit.core.workspace.context_models import utc_now_iso
@@ -32,6 +40,8 @@ class BranchService:
         definition_path: str | None = None,
         now_fn: Callable[[], str] | None = None,
         event_store: AclEventStore | None = None,
+        allowed_branch_prefixes: list[str] | None = None,
+        branch_pattern: str | None = None,
     ) -> None:
         self._session_root = str(Path(session_root).expanduser().resolve())
         self._sync_root = str(
@@ -40,6 +50,8 @@ class BranchService:
         self._definition_path = definition_path
         self._now = now_fn or utc_now_iso
         self._events = event_store or AclEventStore(self._session_root)
+        self._allowed_branch_prefixes = list(allowed_branch_prefixes or DEFAULT_ALLOWED_BRANCH_PREFIXES)
+        self._branch_pattern = branch_pattern or DEFAULT_BRANCH_PATTERN
         self._store: JsonListStore[BranchAllocation] = JsonListStore(
             branches_file(self._session_root),
             key="branches",
@@ -73,9 +85,18 @@ class BranchService:
         integration_branch: Optional[str] = None,
         create_git_branch: bool = True,
     ) -> BranchAllocation | Exception:
-        name = branch_name or build_agent_branch_name(task_id, description)
-        if not name.startswith("agent/"):
-            return ValueError(f"branch name must start with agent/: {name!r}")
+        repository = canonical_repository_ref(repository)
+        if branch_name:
+            name = branch_name
+        else:
+            slug = slugify_branch_suffix(description) if description else ""
+            name = render_branch_name(
+                self._branch_pattern,
+                task_id=task_id,
+                slug=slug or None,
+            )
+        if not branch_name_allowed(name, self._allowed_branch_prefixes):
+            return ValueError(branch_prefix_refusal(name, self._allowed_branch_prefixes))
 
         existing = self._store.load()
         if isinstance(existing, Exception):

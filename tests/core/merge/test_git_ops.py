@@ -48,14 +48,20 @@ def test_attempt_merge_returns_success_commit_sha(tmp_path) -> None:
     _commit_file(repo, "feature.txt", "feature\n", "add feature")
     repo.create_head("integration/test", repo.heads.main)
 
+    caller_head = repo.head.commit.hexsha
+    caller_branch = repo.active_branch.name
+    caller_file = (tmp_path / "feature.txt").read_bytes()
+
     result = attempt_merge(str(tmp_path), "agent/change", "integration/test")
 
     assert not isinstance(result, Exception)
     assert result.ok is True
-    assert result.commit_sha == repo.head.commit.hexsha
     assert result.conflict is None
-    assert repo.active_branch.name == "integration/test"
-    assert (tmp_path / "feature.txt").read_text(encoding="utf-8") == "feature\n"
+    assert repo.active_branch.name == caller_branch
+    assert repo.head.commit.hexsha == caller_head
+    assert (tmp_path / "feature.txt").read_bytes() == caller_file
+    assert result.commit_sha == repo.heads["integration/test"].commit.hexsha
+    assert repo.git.show("integration/test:feature.txt").rstrip("\r\n") == "feature"
 
 
 def test_attempt_merge_aborts_conflict_and_returns_conflict_files(tmp_path) -> None:
@@ -68,6 +74,9 @@ def test_attempt_merge_aborts_conflict_and_returns_conflict_files(tmp_path) -> N
     repo.head.reference = repo.heads["integration/test"]
     repo.head.reset(index=True, working_tree=True)
     target_sha = _commit_file(repo, "shared.txt", "integration\n", "integration edit")
+    repo.head.reference = repo.heads.main
+    repo.head.reset(index=True, working_tree=True)
+    caller_head = repo.head.commit.hexsha
 
     result = attempt_merge(str(tmp_path), "agent/change", "integration/test")
 
@@ -76,7 +85,8 @@ def test_attempt_merge_aborts_conflict_and_returns_conflict_files(tmp_path) -> N
     assert result.conflict is not None
     assert result.conflict.files == ["shared.txt"]
     assert result.commit_sha is None
-    assert repo.active_branch.name == "integration/test"
-    assert repo.head.commit.hexsha == target_sha
+    assert repo.active_branch.name == "main"
+    assert repo.head.commit.hexsha == caller_head
+    assert repo.heads["integration/test"].commit.hexsha == target_sha
     assert not (tmp_path / ".git" / "MERGE_HEAD").exists()
-    assert (tmp_path / "shared.txt").read_text(encoding="utf-8") == "integration\n"
+    assert not (tmp_path / "shared.txt").exists()

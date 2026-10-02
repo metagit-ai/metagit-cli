@@ -113,6 +113,7 @@ def test_merge_enqueue_integrate_status_and_promote_json() -> None:
     assert integrate.exit_code == 0, integrate.output
     integrated = json.loads(integrate.output)
     assert integrated["status"] == "succeeded"
+    Repo(repo_path).git.checkout("-b", "hold")
 
     status = runner.invoke(
       cli,
@@ -151,5 +152,7 @@ def test_merge_enqueue_integrate_status_and_promote_json() -> None:
     assert promote.exit_code == 0, promote.output
     promoted = json.loads(promote.output)
     assert promoted["status"] == "succeeded"
-    assert Repo(repo_path).active_branch.name == "main"
-    assert (repo_path / "feature.txt").read_text(encoding="utf-8") == "feature\n"
+    promoted_repo = Repo(repo_path)
+    assert promoted_repo.active_branch.name == "hold"
+    assert not (repo_path / "feature.txt").exists()
+    assert promoted_repo.git.show("main:feature.txt").rstrip("\r\n") == "feature"

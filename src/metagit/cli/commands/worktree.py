@@ -21,7 +21,7 @@ def worktree_group(ctx: click.Context) -> None:
 
 @worktree_group.command("create")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
-@click.option("--repository", required=True, help="project/repo")
+@click.option("--repository", required=True, help="project/repo, or . / self for the definition repo")
 @click.option("--agent-id", required=True)
 @click.option("--task-id", required=True)
 @click.option("--branch", required=True)
@@ -46,7 +46,12 @@ def worktree_create(
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(
-        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+        session_root,
+        sync_root=sync_root,
+        definition_path=definition,
+        worktrees_path=roots.worktrees_path,
+        worktree_per_task=roots.coordination.worktree_per_task,
+        post_create=list(roots.coordination.worktree.post_create),
     )
     result = raise_if_error(
         service.create(
@@ -65,11 +70,57 @@ def worktree_create(
     click.echo(f"{result.worktree_id}\t{result.path}\t{result.branch}\t{result.status}")
 
 
+@worktree_group.command("adopt")
+@click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--repository", required=True, help="project/repo, or . / self for the definition repo")
+@click.option("--path", "checkout_path", required=True, help="Existing worktree path from git worktree list")
+@click.option("--agent-id", required=True)
+@click.option("--task-id", required=True)
+@click.option("--branch", default=None, help="Expected branch. Detached worktrees are refused.")
+@click.option("--json", "as_json", is_flag=True)
+@click.pass_context
+def worktree_adopt(
+    ctx: click.Context,
+    definition_path: str,
+    repository: str,
+    checkout_path: str,
+    agent_id: str,
+    task_id: str,
+    branch: Optional[str],
+    as_json: bool,
+) -> None:
+    """Register an existing git worktree without creating another checkout."""
+    roots = resolve_acl_roots(ctx, definition_path)
+    session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
+    service = WorktreeService(
+        session_root,
+        sync_root=sync_root,
+        definition_path=definition,
+        worktrees_path=roots.worktrees_path,
+        worktree_per_task=roots.coordination.worktree_per_task,
+        post_create=list(roots.coordination.worktree.post_create),
+    )
+    result = raise_if_error(
+        service.adopt(
+            repository=repository,
+            agent_id=agent_id,
+            task_id=task_id,
+            path=checkout_path,
+            branch=branch,
+        ),
+    )
+    if as_json:
+        emit_json(result)
+        return
+    click.echo(f"{result.worktree_id}\t{result.path}\t{result.branch}\t{result.status}")
+
+
 @worktree_group.command("destroy")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
 @click.option("--worktree-id", default=None)
 @click.option("--agent-id", default=None)
-@click.option("--repository", default=None)
+@click.option("--repository", default=None, help="project/repo, or . / self for the definition repo")
+@click.option("--task-id", default=None, help="Required when the agent has more than one worktree in the repo")
 @click.option("--force", is_flag=True)
 @click.option("--json", "as_json", is_flag=True)
 @click.pass_context
@@ -79,6 +130,7 @@ def worktree_destroy(
     worktree_id: Optional[str],
     agent_id: Optional[str],
     repository: Optional[str],
+    task_id: Optional[str],
     force: bool,
     as_json: bool,
 ) -> None:
@@ -86,13 +138,19 @@ def worktree_destroy(
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(
-        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+        session_root,
+        sync_root=sync_root,
+        definition_path=definition,
+        worktrees_path=roots.worktrees_path,
+        worktree_per_task=roots.coordination.worktree_per_task,
+        post_create=list(roots.coordination.worktree.post_create),
     )
     result = raise_if_error(
         service.destroy(
             worktree_id=worktree_id,
             agent_id=agent_id,
             repository=repository,
+            task_id=task_id,
             force=force,
         ),
     )
@@ -104,20 +162,30 @@ def worktree_destroy(
 
 @worktree_group.command("gc")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--force", is_flag=True, help="Remove checkouts that still have unsaved or unpushed work")
+@click.option("--dry-run", is_flag=True, help="Report what would be destroyed or skipped")
 @click.option("--json", "as_json", is_flag=True)
 @click.pass_context
-def worktree_gc(ctx: click.Context, definition_path: str, as_json: bool) -> None:
+def worktree_gc(ctx: click.Context, definition_path: str, force: bool, dry_run: bool, as_json: bool) -> None:
     """Garbage-collect worktrees with expired leases or missing paths."""
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(
-        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+        session_root,
+        sync_root=sync_root,
+        definition_path=definition,
+        worktrees_path=roots.worktrees_path,
+        worktree_per_task=roots.coordination.worktree_per_task,
+        post_create=list(roots.coordination.worktree.post_create),
     )
-    result = raise_if_error(service.gc())
+    result = raise_if_error(service.gc(force=force, dry_run=dry_run))
     if as_json:
-        emit_json({"ok": True, "destroyed": [row.model_dump(mode="json") for row in result]})
+        emit_json(result)
         return
-    click.echo(f"gc destroyed {len(result)} worktree(s)")
+    verb = "would destroy" if dry_run else "destroyed"
+    click.echo(f"gc {verb} {len(result.destroyed)} worktree(s); skipped {len(result.skipped)}")
+    for row in result.skipped:
+        click.echo(row.message)
 
 
 @worktree_group.command("status")
@@ -137,7 +205,12 @@ def worktree_status(
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(
-        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+        session_root,
+        sync_root=sync_root,
+        definition_path=definition,
+        worktrees_path=roots.worktrees_path,
+        worktree_per_task=roots.coordination.worktree_per_task,
+        post_create=list(roots.coordination.worktree.post_create),
     )
     result = raise_if_error(service.status(worktree_id=worktree_id, agent_id=agent_id))
     if as_json:
@@ -171,7 +244,12 @@ def worktree_list(
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(
-        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+        session_root,
+        sync_root=sync_root,
+        definition_path=definition,
+        worktrees_path=roots.worktrees_path,
+        worktree_per_task=roots.coordination.worktree_per_task,
+        post_create=list(roots.coordination.worktree.post_create),
     )
     result = raise_if_error(
         service.list(repository=repository, agent_id=agent_id, status=status),
@@ -204,7 +282,12 @@ def worktree_manifest(
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(
-        session_root, sync_root=sync_root, definition_path=definition, worktrees_path=roots.worktrees_path
+        session_root,
+        sync_root=sync_root,
+        definition_path=definition,
+        worktrees_path=roots.worktrees_path,
+        worktree_per_task=roots.coordination.worktree_per_task,
+        post_create=list(roots.coordination.worktree.post_create),
     )
     result = raise_if_error(service.manifest(agent_id))
     emit_json(result)

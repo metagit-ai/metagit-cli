@@ -82,8 +82,10 @@ def test_integrate_clean_branch_succeeds_and_emits_event(tmp_path) -> None:
     events = MergeEventStore(str(tmp_path / "session")).list_events()
 
     assert not isinstance(integrated, Exception)
+    fresh = Repo(repo_path)
     assert integrated.status == "succeeded"
-    assert integrated.commit_sha == Repo(repo_path).head.commit.hexsha
+    assert integrated.commit_sha == fresh.heads["integration/test"].commit.hexsha
+    assert fresh.active_branch.name == "agent/change"
     assert integrated.conflict is None
     assert not isinstance(events, Exception)
     assert [event.type for event in events] == ["MergeEnqueued", "MergeSucceeded"]
@@ -100,6 +102,9 @@ def test_integrate_conflict_records_hints_and_aborts_merge(tmp_path) -> None:
     repo.head.reference = repo.heads["integration/test"]
     repo.head.reset(index=True, working_tree=True)
     target_sha = _commit_file(repo, "shared.txt", "integration\n", "integration edit")
+    repo.head.reference = repo.heads.main
+    repo.head.reset(index=True, working_tree=True)
+    caller_head = repo.head.commit.hexsha
     orchestrator = MergeOrchestrator(str(tmp_path / "session"))
     request = orchestrator.enqueue(
         "project/repo",
@@ -126,8 +131,9 @@ def test_integrate_conflict_records_hints_and_aborts_merge(tmp_path) -> None:
         "metagit worktree create --branch integration/test",
         "metagit claim declare --path shared.txt --agent agent-1",
     ]
-    assert fresh_repo.active_branch.name == "integration/test"
-    assert fresh_repo.head.commit.hexsha == target_sha
+    assert fresh_repo.active_branch.name == "main"
+    assert fresh_repo.head.commit.hexsha == caller_head
+    assert fresh_repo.heads["integration/test"].commit.hexsha == target_sha
     assert not (repo_path / ".git" / "MERGE_HEAD").exists()
     assert not isinstance(events, Exception)
     assert [event.type for event in events] == ["MergeEnqueued", "ConflictDetected"]

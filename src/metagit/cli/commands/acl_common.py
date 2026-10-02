@@ -10,6 +10,7 @@ from typing import Any, NamedTuple, Optional
 import click
 
 from metagit.core.appconfig import load_config as load_appconfig
+from metagit.core.appconfig.models import CoordinationConfig
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.workspace.root_resolver import (
@@ -26,6 +27,7 @@ class AclRoots(NamedTuple):
     sync_root: str
     definition_path: str
     worktrees_path: Optional[str]
+    coordination: CoordinationConfig
 
 
 def emit_json(payload: Any) -> None:
@@ -57,6 +59,7 @@ def resolve_acl_roots(
     session_root = resolve_session_root(definition_root)
     sync_root = session_root
     worktrees_path: Optional[str] = None
+    coordination = CoordinationConfig()
 
     manager = MetagitConfigManager(config_path=definition_path)
     config = manager.load_config()
@@ -65,16 +68,19 @@ def resolve_acl_roots(
         config_path = ctx.obj.get("config_path")
     if config_path:
         appconfig = load_appconfig(config_path)
-        if not isinstance(appconfig, Exception) and appconfig.workspace:
-            worktrees_path = appconfig.workspace.worktrees_path
-            if isinstance(config, MetagitConfig) and appconfig.workspace.path:
-                sync_root = resolve_sync_root(definition_root, appconfig.workspace.path)
+        if not isinstance(appconfig, Exception):
+            coordination = appconfig.coordination
+            if appconfig.workspace:
+                worktrees_path = appconfig.workspace.worktrees_path
+                if isinstance(config, MetagitConfig) and appconfig.workspace.path:
+                    sync_root = resolve_sync_root(definition_root, appconfig.workspace.path)
 
     return AclRoots(
         session_root=session_root,
         sync_root=sync_root,
         definition_path=definition_path,
         worktrees_path=worktrees_path,
+        coordination=coordination,
     )
 
 
