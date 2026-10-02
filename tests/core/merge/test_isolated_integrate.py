@@ -72,7 +72,7 @@ def test_integrate_leaves_other_worktree_byte_identical_and_moves_target(tmp_pat
     assert result.ok is True
     assert _fingerprint(worktree) == before
     assert repo.heads.daily.commit.hexsha != daily_before
-    assert repo.git.show("daily:feature.txt").rstrip("\n") == "from-b"
+    assert repo.git.show("daily:feature.txt").rstrip("\r\n") == "from-b"
     assert Repo(worktree).active_branch.name == "branch-a"
 
 

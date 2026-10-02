@@ -155,4 +155,4 @@ def test_merge_enqueue_integrate_status_and_promote_json() -> None:
     promoted_repo = Repo(repo_path)
     assert promoted_repo.active_branch.name == "hold"
     assert not (repo_path / "feature.txt").exists()
-    assert promoted_repo.git.show("main:feature.txt").rstrip("\n") == "feature"
+    assert promoted_repo.git.show("main:feature.txt").rstrip("\r\n") == "feature"

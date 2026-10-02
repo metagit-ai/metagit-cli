@@ -107,4 +107,4 @@ def test_promote_merges_integration_branch_after_success(tmp_path: Path) -> None
   assert not isinstance(promoted, Exception)
   assert repo.active_branch.name == "hold"
   assert not (repo_path / "feature.txt").exists()
-  assert repo.git.show("main:feature.txt").rstrip("\n") == "feature"
+  assert repo.git.show("main:feature.txt").rstrip("\r\n") == "feature"

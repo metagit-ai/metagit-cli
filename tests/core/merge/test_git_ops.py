@@ -61,7 +61,7 @@ def test_attempt_merge_returns_success_commit_sha(tmp_path) -> None:
     assert repo.head.commit.hexsha == caller_head
     assert (tmp_path / "feature.txt").read_bytes() == caller_file
     assert result.commit_sha == repo.heads["integration/test"].commit.hexsha
-    assert repo.git.show("integration/test:feature.txt").rstrip("\n") == "feature"
+    assert repo.git.show("integration/test:feature.txt").rstrip("\r\n") == "feature"
 
 
 def test_attempt_merge_aborts_conflict_and_returns_conflict_files(tmp_path) -> None:

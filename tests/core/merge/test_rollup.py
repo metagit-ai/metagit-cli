@@ -61,7 +61,7 @@ def test_rollup_rebuilds_a_mapped_generated_file(tmp_path: Path) -> None:
     assert result.conflicted == []
     assert result.failed == []
     blob = repo.git.show(f"daily:{_INDEX}")
-    assert blob.rstrip("\n") == _RENDERED.rstrip("\n")
+    assert blob.rstrip("\r\n") == _RENDERED.rstrip("\r\n")
     assert repo.head.commit.hexsha == caller_head
     assert repo.active_branch.name == caller_branch
 
@@ -91,4 +91,4 @@ def test_rollup_stops_when_an_unmapped_file_conflicts(tmp_path: Path) -> None:
     assert repo.head.commit.hexsha == caller_head
     assert repo.active_branch.name == main
     readme = repo.git.show("daily:README.md")
-    assert readme.rstrip("\n") == "session-a-readme"
+    assert readme.rstrip("\r\n") == "session-a-readme"
