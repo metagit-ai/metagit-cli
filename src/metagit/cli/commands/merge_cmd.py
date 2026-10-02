@@ -9,6 +9,8 @@ import click
 
 from metagit.cli.commands.acl_common import emit_json, raise_if_error, resolve_acl_roots
 from metagit.core.merge import MergeOrchestrator, MergeRequest, merge_validators_from_config
+from metagit.core.merge.models import MergeRollupResult
+from metagit.core.merge.validators import merge_regenerate_from_config
 
 
 @click.group(name="merge")
@@ -149,12 +151,59 @@ def merge_promote(
     _emit_request(result, as_json)
 
 
+@merge_group.command("rollup")
+@click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
+@click.option("--repository", required=True, help="project/repo, or . / self for the definition repo")
+@click.option("--into", "into_branch", required=True, help="Integration branch to create or extend")
+@click.option("--base", required=True, help="Start point used when --into does not exist")
+@click.option(
+    "--branches",
+    multiple=True,
+    required=True,
+    help="Branch name, glob, or comma-separated list. Repeat to add more.",
+)
+@click.option("--repo-path", default=None)
+@click.option("--json", "as_json", is_flag=True)
+@click.pass_context
+def merge_rollup(
+    ctx: click.Context,
+    definition_path: str,
+    repository: str,
+    into_branch: str,
+    base: str,
+    branches: tuple[str, ...],
+    repo_path: str | None,
+    as_json: bool,
+) -> None:
+    """Merge branches into one integration branch. Does not push or open a pull request."""
+    service = _service(ctx, definition_path)
+    result = raise_if_error(
+        service.rollup(
+            repository,
+            into_branch,
+            base,
+            list(branches),
+            repo_path=repo_path,
+        )
+    )
+    assert isinstance(result, MergeRollupResult)
+    if as_json:
+        emit_json(result)
+        return
+    click.echo(
+        f"merged={','.join(result.merged) or '-'}\t"
+        f"skipped={','.join(result.skipped) or '-'}\t"
+        f"conflicted={','.join(item.branch for item in result.conflicted) or '-'}"
+    )
+
+
 def _service(ctx: click.Context, definition_path: str) -> MergeOrchestrator:
     roots = resolve_acl_roots(ctx, definition_path)
     config = ctx.obj.get("config") if ctx.obj else None
     return MergeOrchestrator(
         roots.session_root,
         validators=merge_validators_from_config(config),
+        regenerate=merge_regenerate_from_config(config),
     )
 
 

@@ -3567,7 +3567,14 @@ class MetagitMcpRuntime:
     ) -> dict[str, Any]:
         if not status.root_path:
             raise InvalidToolArgumentsError("merge tools require an active workspace")
-        service = MergeOrchestrator(status.root_path)
+        regenerate: dict[str, str] = {}
+        try:
+            app_cfg = AppConfig.load()
+            if isinstance(app_cfg, AppConfig):
+                regenerate = dict(app_cfg.merge.regenerate)
+        except Exception:  # noqa: BLE001 — fall back to no generated-file rebuilds
+            regenerate = {}
+        service = MergeOrchestrator(status.root_path, regenerate=regenerate)
 
         def _require(key: str) -> str:
             value = str(arguments.get(key, "")).strip()

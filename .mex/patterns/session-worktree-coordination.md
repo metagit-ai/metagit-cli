@@ -25,11 +25,13 @@ Changing `branch allocate`, `merge integrate` / `promote`, or `worktree gc` / `d
 8. `.` and `self` resolve to the definition repo. Stored repository is `.`. Checkout path segments are `self/self`.
 9. `worktree adopt` only registers a path from `git worktree list`. It does not run `post_create`. An empty `lease_id` is not an expired lease.
 10. `post_create` symlink and copy paths must be gitignored. The refusal names `coordination.worktree.post_create`.
+11. `merge.regenerate` runs only when every conflicted path matches a glob. Rebuild inside the temporary worktree. An unmapped path stays a conflict.
+12. `merge rollup` does not push. Skip branches already in `--into`. Stop at the first unmapped conflict or git error. Validator failures go in `failed`, not `conflicted`.
 
 ## Verify
 
 ```bash
-uv run pytest tests/core/coordination/test_branch_prefixes.py tests/core/coordination/test_worktree_gc_safety.py tests/core/coordination/test_session_worktree_p2.py tests/core/merge/test_isolated_integrate.py tests/core/merge/test_git_ops.py -q
+uv run pytest tests/core/coordination/test_branch_prefixes.py tests/core/coordination/test_worktree_gc_safety.py tests/core/coordination/test_session_worktree_p2.py tests/core/merge/test_isolated_integrate.py tests/core/merge/test_git_ops.py tests/core/merge/test_rollup.py -q
 ```
 
 Design: `docs/superpowers/specs/2026-10-01-session-worktree-coordination-design.md`.

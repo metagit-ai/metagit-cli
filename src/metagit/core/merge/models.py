@@ -180,6 +180,33 @@ class MergeQueue(BaseModel):
     merges: list[MergeQueueEntry] = Field(default_factory=list)
 
 
+class MergeRollupConflict(BaseModel):
+    """A rollup stop where the incoming branch conflicted with the integration branch."""
+
+    branch: str
+    into: str
+    files: list[str] = Field(min_length=1)
+    message: str
+
+
+class MergeRollupFailure(BaseModel):
+    """A rollup stop that is not a content conflict."""
+
+    branch: str
+    into: str
+    message: str
+
+
+class MergeRollupResult(BaseModel):
+    """Machine-readable summary of ``merge rollup``."""
+
+    into: str
+    merged: list[str] = Field(default_factory=list)
+    skipped: list[str] = Field(default_factory=list)
+    conflicted: list[MergeRollupConflict] = Field(default_factory=list)
+    failed: list[MergeRollupFailure] = Field(default_factory=list)
+
+
 class MergeEvent(BaseModel):
     """Typed merge orchestrator lifecycle event."""
 
@@ -196,6 +223,9 @@ __all__ = [
     "MergeQueue",
     "MergeQueueEntry",
     "MergeRequest",
+    "MergeRollupConflict",
+    "MergeRollupFailure",
+    "MergeRollupResult",
     "MergeStatus",
     "MergeValidation",
     "MergeValidationCommand",

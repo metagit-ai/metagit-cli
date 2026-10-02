@@ -71,6 +71,14 @@ metagit merge retry --merge-id <merge-id> --json
 
 # Explicitly promote the validated integration branch into another branch
 metagit merge promote --merge-id <merge-id> --into main --json
+
+# Roll several branches into one integration branch. Does not push.
+metagit merge rollup \
+  --repository project/repo \
+  --into integration/day \
+  --base main \
+  --branches 'agent/*' \
+  --json
 ```
 
 Use `--definition path/to/.metagit.yml` when running outside the manifest root.
@@ -95,6 +103,28 @@ marks the request `validation_failed` and blocks `promote`.
 
 Empty validators still record a successful validation result so downstream
 adapters can distinguish "validated successfully" from "not integrated yet".
+
+## Generated files
+
+`merge.regenerate` maps a path glob to a command. When every conflicted path
+matches, the merge keeps the integration-branch side, runs each matching
+command in the temporary worktree, stages the result, and completes the merge
+commit. A conflict in any unmapped path is still a conflict. Commands are
+split with `shlex` and run without a shell.
+
+```yaml
+merge:
+  regenerate:
+    knowledge/*/_index.md: task improvements:render
+```
+
+`merge rollup` creates `--into` from `--base` when the branch is missing,
+merges `--branches` in order, and runs validators after each successful merge.
+A branch already contained in `--into` is skipped. The first unmapped conflict
+or git error stops the rollup. The JSON summary has `merged`, `skipped`,
+`conflicted`, and `failed`. A `conflicted` row names both the incoming branch
+and the integration branch. A validator failure is recorded in `failed` and is
+not a content conflict. Push and opening a pull request stay outside metagit.
 
 ## MCP Tools
 

@@ -6,11 +6,21 @@ from __future__ import annotations
 import os
 import re
 import uuid
+from pathlib import PurePosixPath
+
+from git import GitCommandError, Repo
 
 from metagit.core.coordination.repo_paths import canonical_repository_ref, resolve_repo_filesystem_path
 from metagit.core.merge.events import MergeEventStore
-from metagit.core.merge.git_ops import attempt_merge, detached_worktree
-from metagit.core.merge.models import MergeConflict, MergeRequest, MergeValidation
+from metagit.core.merge.git_ops import attempt_merge, detached_worktree, ensure_branch
+from metagit.core.merge.models import (
+    MergeConflict,
+    MergeRequest,
+    MergeRollupConflict,
+    MergeRollupFailure,
+    MergeRollupResult,
+    MergeValidation,
+)
 from metagit.core.merge.store import MergeStore
 from metagit.core.merge.validators import run_validators
 from metagit.core.workspace.context_models import utc_now_iso
@@ -19,9 +29,15 @@ from metagit.core.workspace.context_models import utc_now_iso
 class MergeOrchestrator:
     """Coordinate local merge queue records and GitPython merge attempts."""
 
-    def __init__(self, session_root: str, validators: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        session_root: str,
+        validators: list[str] | None = None,
+        regenerate: dict[str, str] | None = None,
+    ) -> None:
         self._session_root = session_root
         self._validators = list(validators or [])
+        self._regenerate = dict(regenerate or {})
         self.store = MergeStore(session_root)
         self._events = MergeEventStore(session_root)
 
@@ -73,7 +89,12 @@ class MergeOrchestrator:
         if isinstance(saved, Exception):
             return saved
 
-        result = attempt_merge(request.repo_path, request.source_branch, request.target_branch)
+        result = attempt_merge(
+            request.repo_path,
+            request.source_branch,
+            request.target_branch,
+            regenerate=self._regenerate,
+        )
         if isinstance(result, Exception):
             request.status = "failed"
             request.error_message = str(result)
@@ -184,7 +205,12 @@ class MergeOrchestrator:
                 return event
             return ValueError("validation failed; promote blocked")
 
-        result = attempt_merge(request.repo_path, request.target_branch, into_branch)
+        result = attempt_merge(
+            request.repo_path,
+            request.target_branch,
+            into_branch,
+            regenerate=self._regenerate,
+        )
         if isinstance(result, Exception):
             return result
         if not result.ok:
@@ -202,6 +228,77 @@ class MergeOrchestrator:
             self._event_payload(request) | {"promoted_into": into_branch},
         )
         return event if isinstance(event, Exception) else request
+
+    def rollup(
+        self,
+        repository: str,
+        into: str,
+        base: str,
+        branches: list[str],
+        *,
+        repo_path: str | None = None,
+    ) -> MergeRollupResult | Exception:
+        """Merge branches into ``into`` in order, rebuilding mapped generated files.
+
+        Creates ``into`` from ``base`` when it is missing, without checking it out.
+        Skips a branch already contained in ``into``. Stops at the first conflict
+        or git error. Does not push.
+        """
+        resolved = self._resolve_repo_path(repository, repo_path)
+        if isinstance(resolved, Exception):
+            return resolved
+        created = ensure_branch(resolved, into, base)
+        if isinstance(created, Exception):
+            return created
+        try:
+            repo = Repo(resolved)
+            names = [head.name for head in repo.heads]
+        except (GitCommandError, OSError, ValueError) as exc:
+            return Exception(f"failed to read branches in {resolved}: {exc}")
+        selected = _expand_branch_tokens(names, branches)
+        if isinstance(selected, Exception):
+            return selected
+        caller_head = repo.head.commit.hexsha
+        caller_branch = None if repo.head.is_detached else repo.active_branch.name
+        summary = MergeRollupResult(into=into)
+        for branch in selected:
+            if _is_ancestor(repo, branch, into):
+                summary.skipped.append(branch)
+                continue
+            result = attempt_merge(resolved, branch, into, regenerate=self._regenerate)
+            if isinstance(result, Exception):
+                summary.failed.append(MergeRollupFailure(branch=branch, into=into, message=str(result)))
+                break
+            if not result.ok:
+                conflict = result.conflict
+                summary.conflicted.append(
+                    MergeRollupConflict(
+                        branch=branch,
+                        into=into,
+                        files=list(conflict.files) if conflict is not None else ["unknown"],
+                        message=conflict.message if conflict is not None else "merge failed",
+                    ),
+                )
+                break
+            validation = self._validate_merged_tree(resolved, result.commit_sha)
+            if not validation.ok:
+                summary.failed.append(
+                    MergeRollupFailure(
+                        branch=branch,
+                        into=into,
+                        message="merge validators failed",
+                    ),
+                )
+                break
+            summary.merged.append(branch)
+        fresh = Repo(resolved)
+        moved_head = fresh.head.commit.hexsha != caller_head
+        moved_branch = caller_branch is not None and (
+            fresh.head.is_detached or fresh.active_branch.name != caller_branch
+        )
+        if moved_head or moved_branch:
+            return Exception(f"rollup moved the checkout at {resolved}")
+        return summary
 
     def status(self, repository: str | None = None) -> list[MergeRequest] | Exception:
         rows = self.store.list_merges()
@@ -270,6 +367,32 @@ class MergeOrchestrator:
         if request.conflict is not None:
             payload["conflict"] = request.conflict.model_dump(mode="json")
         return payload
+
+
+def _expand_branch_tokens(names: list[str], tokens: list[str]) -> list[str] | Exception:
+    selected: list[str] = []
+    known = set(names)
+    for token in tokens:
+        parts = [part.strip() for part in token.split(",") if part.strip()]
+        for part in parts:
+            if any(char in part for char in "*?[]"):
+                matched = sorted(name for name in names if PurePosixPath(name).match(part))
+                if not matched:
+                    return ValueError(f"no branches matched {part!r}")
+                selected.extend(matched)
+                continue
+            if part not in known:
+                return ValueError(f"branch not found: {part}")
+            selected.append(part)
+    return selected
+
+
+def _is_ancestor(repo: Repo, branch: str, into: str) -> bool:
+    try:
+        repo.git.merge_base("--is-ancestor", branch, into)
+    except GitCommandError:
+        return False
+    return True
 
 
 __all__ = ["MergeOrchestrator"]

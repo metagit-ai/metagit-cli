@@ -304,6 +304,13 @@ class MergeConfig(BaseModel):
         default_factory=list,
         description="Opt-in shell command strings that must pass before merge promotion",
     )
+    regenerate: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Path glob to command. When every conflicted path matches a glob, "
+            "the merge takes the target side and runs the commands in the temporary worktree."
+        ),
+    )
 
 
 class WorktreePostCreateHook(BaseModel):

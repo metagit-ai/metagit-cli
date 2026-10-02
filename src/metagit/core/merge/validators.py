@@ -49,6 +49,15 @@ def run_validators(repo_path: str, commands: list[str]) -> MergeValidation:
     return MergeValidation(ok=True, commands=results)
 
 
+def merge_regenerate_from_config(config: object | None) -> dict[str, str]:
+    """Extract the generated-file rebuild map from an app config object."""
+    merge_config = getattr(config, "merge", None)
+    regenerate = getattr(merge_config, "regenerate", None)
+    if not isinstance(regenerate, dict):
+        return {}
+    return {str(pattern): str(command) for pattern, command in regenerate.items() if str(pattern).strip()}
+
+
 def merge_validators_from_config(config: object | None) -> list[str]:
     """Extract configured merge validators from an app config object."""
     merge_config = getattr(config, "merge", None)
@@ -58,4 +67,4 @@ def merge_validators_from_config(config: object | None) -> list[str]:
     return [item for item in validators if item.strip()]
 
 
-__all__ = ["merge_validators_from_config", "run_validators"]
+__all__ = ["merge_regenerate_from_config", "merge_validators_from_config", "run_validators"]
