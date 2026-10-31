@@ -149,3 +149,46 @@ def _patch_repos_items(workspace_project: dict[str, Any]) -> None:
 def _add_agent_prompt_alias(properties: dict[str, Any]) -> None:
     if "agent_instructions" in properties and "agent_prompt" not in properties:
         properties["agent_prompt"] = copy.deepcopy(AGENT_PROMPT_PROPERTY)
+
+
+def generate_fragment_schema() -> dict[str, Any]:
+    """JSON Schema for a manifest fragment (projects and graph lists, not a full root)."""
+    full = generate_json_schema(MetagitConfig)
+    properties = full.get("properties", {})
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "MetagitManifestFragment",
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "includes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Nested fragment paths or globs, relative to this file",
+            },
+            "workspace": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "description": {"type": "string"},
+                    "agent_instructions": {"type": "string"},
+                    "projects": {
+                        "type": "array",
+                        "items": {"$ref": "#/$defs/WorkspaceProject"},
+                    },
+                },
+            },
+            "graph": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "nodes": {"type": "array", "items": {"$ref": "#/$defs/GraphNode"}},
+                    "relationships": {"type": "array", "items": {"$ref": "#/$defs/GraphRelationship"}},
+                    "metadata": {"type": "object", "additionalProperties": True},
+                },
+            },
+            "documentation": copy.deepcopy(properties.get("documentation", {"type": "array"})),
+            "taskers": copy.deepcopy(properties.get("taskers", {"type": "array"})),
+        },
+        "$defs": copy.deepcopy(full.get("$defs", {})),
+    }

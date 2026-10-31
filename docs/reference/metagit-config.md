@@ -28,7 +28,10 @@ Hermes-oriented examples readable.
 JSON Schema for editors and CI:
 
 - [metagit_config.schema.json](schemas/metagit_config.schema.json)
+- [metagit_fragment.schema.json](schemas/metagit_fragment.schema.json) (`metagit config schema --fragment`)
 - [metagit_appconfig.schema.json](schemas/metagit_appconfig.schema.json)
+
+Large umbrellas can keep one project per file with a root `includes:` list. See [Splitting a large manifest](splitting-manifests.md).
 
 ## Validate your manifest
 

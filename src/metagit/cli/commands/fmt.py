@@ -20,7 +20,11 @@ def _format_targets(
     service = ConfigFormatService()
     results: list[FormatFileResult | Exception] = []
     if metagit_path is not None:
-        results.append(service.format_metagit(metagit_path, include_defaults=include_defaults))
+        formatted = service.format_manifest_files(metagit_path, include_defaults=include_defaults)
+        if isinstance(formatted, Exception):
+            results.append(formatted)
+        else:
+            results.extend(formatted)
     if appconfig_path is not None:
         results.append(service.format_appconfig(appconfig_path, include_defaults=include_defaults))
     return results
@@ -159,6 +163,10 @@ def fmt_cmd(
             logger.error(f"Failed to format config: {item}")
             ctx.abort()
         formatted.append(item)
+
+    metagit_results = [item for item in formatted if item.target == "metagit"]
+    if stdout and len(metagit_results) > 1:
+        raise click.ClickException("--stdout cannot print a split manifest; omit --stdout to format each file")
 
     code = _emit_results(formatted, check=check, stdout=stdout, logger=logger)
     if code:

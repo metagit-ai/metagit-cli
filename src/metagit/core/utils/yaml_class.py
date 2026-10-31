@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 """
-yaml class that can load yaml files with includes and envvars and check for duplicate keys.
+yaml class that can load yaml files with envvars and check for duplicate keys.
+
+Manifest composition uses ``includes:`` paths in ``metagit.core.config.include_loader``.
+The ``!include`` YAML tag is not supported.
 """
 
 import functools
-import json
 import os
 from typing import Any, Union
 
@@ -47,8 +49,7 @@ class ExtLoaderMeta(type):
         try:
             cls = super().__new__(metacls, __name__, __bases__, __dict__)
 
-            # register the include constructors on the class
-            cls.add_constructor("!include", cls.construct_include)
+            # register constructors on the class
             cls.add_constructor("!envvar", cls.construct_envvar)
             return cls
         except Exception as e:
@@ -66,31 +67,6 @@ class ExtLoader(yaml.Loader, metaclass=ExtLoaderMeta):
         except AttributeError:
             self._root = os.path.curdir
         super().__init__(stream)
-
-    def construct_include(self, node: yaml.Node) -> Union[Any, Exception]:
-        """Include file referenced at node."""
-        try:
-            file_name = os.path.abspath(os.path.join(self._root, self.construct_scalar(node)))
-            extension = os.path.splitext(file_name)[1].lstrip(".")
-            with open(file_name) as f:
-                if extension in ("yaml", "yml"):
-                    data = yaml.load(  # nosec B506 — trusted workspace includes; custom Loader tags
-                        f, Loader=yaml.FullLoader
-                    )
-                elif extension in ("json",):
-                    data = json.load(f)
-                else:
-                    includedata = []
-                    line = f.readline()
-                    cnt = 0
-                    while line:
-                        includedata.append(line.strip())
-                        line = f.readline()
-                        cnt += 1
-                    data = "".join(includedata) if cnt == 1 else '"' + "\\n".join(includedata) + '"'
-            return data
-        except Exception as e:
-            return e
 
     def construct_envvar(self, node: yaml.Node) -> Union[str, None, Exception]:
         """Expand env variable at node"""

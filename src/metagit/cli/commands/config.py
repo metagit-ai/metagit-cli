@@ -81,8 +81,21 @@ def config(ctx: click.Context, config_path: str) -> None:
     default=False,
     help="Allow dumping a large umbrella manifest (over the repo threshold)",
 )
+@click.option(
+    "--source",
+    "show_source",
+    is_flag=True,
+    default=False,
+    help="Print the root manifest file. The default for a split manifest is the merged document.",
+)
 @click.pass_context
-def config_show(ctx: click.Context, normalized: bool, as_json: bool, confirm_full: bool) -> None:
+def config_show(
+    ctx: click.Context,
+    normalized: bool,
+    as_json: bool,
+    confirm_full: bool,
+    show_source: bool,
+) -> None:
     """Show metagit configuration (source file by default)."""
     logger = ctx.obj["logger"]
     try:
@@ -110,7 +123,10 @@ def config_show(ctx: click.Context, normalized: bool, as_json: bool, confirm_ful
             return
 
         path = Path(config_path)
-        if not normalized and path.is_file():
+        from metagit.core.config.include_loader import manifest_declares_includes
+
+        split = path.is_file() and manifest_declares_includes(path)
+        if show_source or (not normalized and path.is_file() and not split):
             raw = path.read_text(encoding="utf-8")
             click.echo(raw, nl=raw.endswith("\n"))
             return
@@ -182,15 +198,18 @@ def config_create(
     help="Path to the configuration file",
     default=None,
 )
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print a JSON report including fragment sources")
 @click.pass_context
-def config_validate(ctx: click.Context, config_path: Union[str, None] = None) -> None:
+def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as_json: bool = False) -> None:
     """Validate metagit configuration"""
+    from metagit.core.config.include_loader import ManifestComposeError
+
     logger = ctx.obj["logger"]
     target_path = config_path or ctx.obj["config_path"]
     # Loading is the only step whose failures are "failed to load"; the validation
     # blocks below abort with their own reasons and must not be reworded by that handler.
+    config_manager = MetagitConfigManager(config_path=target_path)
     try:
-        config_manager = MetagitConfigManager(config_path=target_path)
         result = config_manager.load_config()
         if isinstance(result, Exception):
             raise result
@@ -201,23 +220,61 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None) ->
         ).list_validation_issues()
         graph_issues = validate_graph_relationships(result)
         component_issues = validate_components(result, definition_root=definition_root)
+    except ManifestComposeError as exc:
+        if as_json:
+            emit_json({"ok": False, "errors": exc.errors, "sources": exc.sources})
+            ctx.exit(1)
+        logger.error(str(exc))
+        ctx.abort()
+        return
     except Exception as e:
+        if as_json:
+            emit_json(
+                {
+                    "ok": False,
+                    "errors": [{"message": str(e), "file": None, "line": None}],
+                    "sources": _manifest_sources(config_manager),
+                }
+            )
+            ctx.exit(1)
         logger.error(f"Failed to load metagit configuration file: {e}")
         logger.debug(f"Error: {e}")
         ctx.abort()
         return
 
+    errors: list[dict[str, object]] = []
     if profile_issues:
         for issue in profile_issues:
             location = issue.component or issue.repo or issue.project or issue.scope
-            logger.error(f"agent_profile ({location}): {issue.message}")
+            message = f"agent_profile ({location}): {issue.message}"
+            errors.append({"message": message, "file": None, "line": None})
+            if not as_json:
+                logger.error(message)
     for issue in graph_issues:
-        logger.error(issue)
+        errors.append({"message": issue, "file": None, "line": None})
+        if not as_json:
+            logger.error(issue)
     for issue in component_issues:
-        logger.error(issue)
-    if profile_issues or graph_issues or component_issues:
+        errors.append({"message": issue, "file": None, "line": None})
+        if not as_json:
+            logger.error(issue)
+    if errors:
+        if as_json:
+            emit_json({"ok": False, "errors": errors, "sources": _manifest_sources(config_manager)})
+            ctx.exit(1)
         ctx.abort()
+    if as_json:
+        emit_json({"ok": True, "errors": [], "sources": _manifest_sources(config_manager)})
+        return
     logger.success(f"Configuration file {target_path} is valid")
+
+
+def _manifest_sources(manager: MetagitConfigManager) -> list[dict[str, str]]:
+    """List root and fragment paths for validate --json."""
+    sources: list[dict[str, str]] = []
+    for index, path in enumerate(manager.resolved_files):
+        sources.append({"path": str(path), "role": "root" if index == 0 else "fragment"})
+    return sources
 
 
 @config.command("providers")
@@ -451,6 +508,14 @@ def config_info(ctx: click.Context) -> None:
                     value=len(project.repos) if project.repos else 0,
                     console=True,
                 )
+        if len(config_manager.resolved_files) > 1:
+            logger.config_element(
+                name="manifest_files",
+                value=len(config_manager.resolved_files),
+                console=True,
+            )
+            for item in config_manager.resolved_files:
+                logger.config_element(name="manifest_file", value=str(item), console=True)
     else:
         logger.echo("No project config file found!")
         logger.echo("Create a new config file with 'metagit config create' or 'metagit init'")
@@ -1040,20 +1105,103 @@ def _emit_graph_suggest_summary(
     help="Path to output the JSON schema file",
     default="metagit_config.schema.json",
 )
+@click.option(
+    "--fragment",
+    is_flag=True,
+    default=False,
+    help="Emit the schema for a manifest fragment instead of the root manifest",
+)
 @click.pass_context
-def config_schema(ctx: click.Context, output_path: str) -> None:
+def config_schema(ctx: click.Context, output_path: str, fragment: bool) -> None:
     """
     Generate a JSON schema for the MetagitConfig class and write it to a file.
     """
     from metagit.core.config.models import MetagitConfig
-    from metagit.core.config.schema_generator import generate_json_schema
+    from metagit.core.config.schema_generator import generate_fragment_schema, generate_json_schema
 
     logger = ctx.obj["logger"]
     try:
-        schema = generate_json_schema(MetagitConfig)
+        schema = generate_fragment_schema() if fragment else generate_json_schema(MetagitConfig)
+        if fragment and output_path == "metagit_config.schema.json":
+            output_path = "metagit_fragment.schema.json"
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(schema, f, indent=2)
         logger.success(f"JSON schema written to {output_path}")
     except Exception as e:
         logger.error(f"Failed to generate JSON schema: {e}")
         ctx.abort()
+
+
+@config.command("flatten")
+@click.option("--output", "output_path", default=None, help="Write the merged manifest to this path")
+@click.option(
+    "--in-place",
+    is_flag=True,
+    default=False,
+    help="Replace the root manifest with the merged document and drop includes",
+)
+@click.pass_context
+def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool) -> None:
+    """Print the composed manifest as one YAML document."""
+    from metagit.core.config.include_writer import flatten_manifest
+
+    logger = ctx.obj["logger"]
+    if output_path and in_place:
+        raise click.ClickException("Use only one of --output or --in-place")
+    target = Path(ctx.obj["config_path"])
+    rendered = flatten_manifest(
+        target,
+        output=Path(output_path) if output_path else None,
+        in_place=in_place,
+    )
+    if isinstance(rendered, Exception):
+        logger.error(f"Failed to flatten manifest: {rendered}")
+        ctx.abort()
+        return
+    if output_path or in_place:
+        destination = output_path or str(target)
+        logger.success(f"Flattened manifest written to {destination}")
+        return
+    click.echo(rendered, nl=rendered.endswith("\n"))
+
+
+@config.command("split")
+@click.option(
+    "--by",
+    "split_by",
+    type=click.Choice(["project", "graph", "all"], case_sensitive=False),
+    required=True,
+    help="Split projects, graph lists, or both",
+)
+@click.option(
+    "--dir",
+    "directory",
+    default=".metagit.d",
+    show_default=True,
+    help="Directory under the manifest root for fragment files",
+)
+@click.option("--dry-run", is_flag=True, default=False, help="Print the planned files and write nothing")
+@click.pass_context
+def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: bool) -> None:
+    """Move projects and graph lists into per-file fragments."""
+    from metagit.core.config.include_writer import split_manifest
+
+    logger = ctx.obj["logger"]
+    plan = split_manifest(
+        Path(ctx.obj["config_path"]),
+        by=split_by.strip().lower(),
+        directory=Path(directory),
+        dry_run=dry_run,
+    )
+    if isinstance(plan, Exception):
+        logger.error(f"Failed to split manifest: {plan}")
+        ctx.abort()
+        return
+    if not plan.files:
+        logger.success("Manifest is already split; nothing to do")
+        return
+    for item in plan.files:
+        prefix = "would write" if dry_run else "wrote"
+        click.echo(f"{prefix} {item}")
+    if dry_run:
+        logger.success("Dry run; no files were written")

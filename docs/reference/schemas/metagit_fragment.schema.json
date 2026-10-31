@@ -1,0 +1,2911 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MetagitManifestFragment",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "includes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Nested fragment paths or globs, relative to this file"
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "agent_instructions": {
+          "type": "string"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WorkspaceProject"
+          }
+        }
+      }
+    },
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphNode"
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphRelationship"
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "documentation": {
+      "anyOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Markdown path or http(s) URL shorthand"
+              },
+              {
+                "$ref": "#/$defs/DocumentationSource"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Documentation sources: bare strings (path or URL) or objects with kind, path/url, tags, and metadata for knowledge-graph ingestion",
+      "title": "Documentation"
+    },
+    "taskers": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Tasker"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Task management tools employed by the project.",
+      "title": "Taskers"
+    }
+  },
+  "$defs": {
+    "AgentProfile": {
+      "additionalProperties": false,
+      "description": "Structured agent posture declared at workspace, project, or repo scope.",
+      "properties": {
+        "tier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional tier label (e.g. full, minimal); mirrors tags.agent_tier when unset",
+          "title": "Tier"
+        },
+        "skills": {
+          "description": "Bundled skill ids to install for agents working in this scope",
+          "items": {
+            "type": "string"
+          },
+          "title": "Skills",
+          "type": "array"
+        },
+        "mcp": {
+          "description": "MCP server ids to configure (references only, never inline payloads)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Mcp",
+          "type": "array"
+        },
+        "rules": {
+          "description": "Rule ids to materialize into vendor rule directories",
+          "items": {
+            "type": "string"
+          },
+          "title": "Rules",
+          "type": "array"
+        },
+        "vendors": {
+          "description": "Vendor runtimes this profile targets (empty = all supported vendors)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Vendors",
+          "type": "array"
+        },
+        "inherit": {
+          "default": true,
+          "description": "When true, merge with parent scope profile; when false, use verbatim",
+          "title": "Inherit",
+          "type": "boolean"
+        }
+      },
+      "title": "AgentProfile",
+      "type": "object"
+    },
+    "AlertingChannel": {
+      "additionalProperties": false,
+      "description": "Model for alerting channel.",
+      "properties": {
+        "name": {
+          "description": "Alerting channel name",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/AlertingChannelType",
+          "description": "Alerting channel type"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Alerting channel URL",
+          "title": "Url"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "url"
+      ],
+      "title": "AlertingChannel",
+      "type": "object"
+    },
+    "AlertingChannelType": {
+      "description": "Enumeration of alerting channel types.",
+      "enum": [
+        "slack",
+        "teams",
+        "email",
+        "sms",
+        "webhook",
+        "custom",
+        "unknown",
+        "other"
+      ],
+      "title": "AlertingChannelType",
+      "type": "string"
+    },
+    "Artifact": {
+      "additionalProperties": false,
+      "description": "Model for generated artifacts.",
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/ArtifactType",
+          "description": "Artifact type"
+        },
+        "definition": {
+          "description": "Artifact definition",
+          "title": "Definition",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Artifact location",
+          "title": "Location"
+        },
+        "version_strategy": {
+          "$ref": "#/$defs/VersionStrategy",
+          "description": "Version strategy"
+        }
+      },
+      "required": [
+        "type",
+        "definition",
+        "location",
+        "version_strategy"
+      ],
+      "title": "Artifact",
+      "type": "object"
+    },
+    "ArtifactType": {
+      "description": "Enumeration of artifact types.",
+      "enum": [
+        "docker",
+        "github_release",
+        "helm_chart",
+        "npm_package",
+        "static_website",
+        "python_package",
+        "node_package",
+        "ruby_package",
+        "java_package",
+        "c_package",
+        "cpp_package",
+        "csharp_package",
+        "go_package",
+        "rust_package",
+        "php_package",
+        "dotnet_package",
+        "elixir_package",
+        "haskell_package",
+        "custom",
+        "none",
+        "unknown",
+        "other",
+        "plugin",
+        "template",
+        "config",
+        "binary",
+        "archive"
+      ],
+      "title": "ArtifactType",
+      "type": "string"
+    },
+    "BranchNaming": {
+      "additionalProperties": false,
+      "description": "Model for branch naming patterns.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/BranchStrategy",
+          "description": "Branch strategy"
+        },
+        "pattern": {
+          "description": "Branch naming pattern",
+          "title": "Pattern",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "pattern"
+      ],
+      "title": "BranchNaming",
+      "type": "object"
+    },
+    "BranchStrategy": {
+      "description": "Enumeration of branch strategies.",
+      "enum": [
+        "trunk",
+        "gitflow",
+        "githubflow",
+        "gitlabflow",
+        "fork",
+        "none",
+        "custom",
+        "unknown"
+      ],
+      "title": "BranchStrategy",
+      "type": "string"
+    },
+    "CICD": {
+      "additionalProperties": false,
+      "description": "Model for CI/CD configuration.",
+      "properties": {
+        "platform": {
+          "$ref": "#/$defs/CICDPlatform",
+          "description": "CI/CD platform"
+        },
+        "pipelines": {
+          "description": "List of pipelines",
+          "items": {
+            "$ref": "#/$defs/Pipeline"
+          },
+          "title": "Pipelines",
+          "type": "array"
+        }
+      },
+      "required": [
+        "platform",
+        "pipelines"
+      ],
+      "title": "CICD",
+      "type": "object"
+    },
+    "CICDPlatform": {
+      "description": "Enumeration of CI/CD platforms.",
+      "enum": [
+        "GitHub",
+        "GitLab",
+        "CircleCI",
+        "Jenkins",
+        "jx",
+        "tekton",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "CICDPlatform",
+      "type": "string"
+    },
+    "CiProvider": {
+      "description": "CI platform that owns pipeline execution for a repository.",
+      "enum": [
+        "github",
+        "gitlab",
+        "azure_devops",
+        "other",
+        "none",
+        "unknown"
+      ],
+      "title": "CiProvider",
+      "type": "string"
+    },
+    "CiTargetStatus": {
+      "description": "Lifecycle of a resolved CI target binding.",
+      "enum": [
+        "detected",
+        "declared",
+        "overridden"
+      ],
+      "title": "CiTargetStatus",
+      "type": "string"
+    },
+    "Component": {
+      "additionalProperties": false,
+      "description": "Semantic unit inside a repository (or application manifest path).",
+      "properties": {
+        "name": {
+          "description": "Stable component name within the repository",
+          "title": "Name",
+          "type": "string"
+        },
+        "path": {
+          "description": "Repository-relative filesystem path",
+          "title": "Path",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description of the component",
+          "title": "Description"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Architectural kind (open string). Recommended: application, service, library, package, infrastructure, worker, cli, plugin, documentation, data, tool, unknown",
+          "title": "Kind"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Programming language",
+          "title": "Language"
+        },
+        "language_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Language version",
+          "title": "Language Version"
+        },
+        "package_manager": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Package manager",
+          "title": "Package Manager"
+        },
+        "frameworks": {
+          "description": "Frameworks used by the component",
+          "items": {
+            "type": "string"
+          },
+          "title": "Frameworks",
+          "type": "array"
+        },
+        "commands": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/ComponentCommand"
+              }
+            ]
+          },
+          "description": "Optional executable commands (install, lint, test, build, \u2026)",
+          "title": "Commands",
+          "type": "object"
+        },
+        "depends_on": {
+          "description": "Local component names or qualified ComponentRef objects",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/ComponentRef"
+              }
+            ]
+          },
+          "title": "Depends On",
+          "type": "array"
+        },
+        "produces": {
+          "description": "Artifact names this component produces",
+          "items": {
+            "type": "string"
+          },
+          "title": "Produces",
+          "type": "array"
+        },
+        "deploys_to": {
+          "description": "Environment or target names",
+          "items": {
+            "type": "string"
+          },
+          "title": "Deploys To",
+          "type": "array"
+        },
+        "skills": {
+          "description": "Capability tags (not agent_profile.skills install ids)",
+          "items": {
+            "type": "string"
+          },
+          "title": "Skills",
+          "type": "array"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags",
+          "title": "Tags",
+          "type": "object"
+        },
+        "agent_instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional instructions for agents working in this component",
+          "title": "Agent Instructions"
+        },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured agent posture for this component"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+          "title": "Agent Prompt"
+        }
+      },
+      "required": [
+        "name",
+        "path"
+      ],
+      "title": "Component",
+      "type": "object"
+    },
+    "ComponentCommand": {
+      "additionalProperties": false,
+      "description": "Named executable command declared on a component.",
+      "properties": {
+        "command": {
+          "description": "Shell command to run",
+          "title": "Command",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "title": "ComponentCommand",
+      "type": "object"
+    },
+    "ComponentRef": {
+      "additionalProperties": false,
+      "description": "Qualified component dependency reference.",
+      "properties": {
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Workspace project name",
+          "title": "Project"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repository name",
+          "title": "Repo"
+        },
+        "component": {
+          "description": "Component name",
+          "title": "Component",
+          "type": "string"
+        }
+      },
+      "required": [
+        "component"
+      ],
+      "title": "ComponentRef",
+      "type": "object"
+    },
+    "Dashboard": {
+      "additionalProperties": false,
+      "description": "Model for monitoring dashboard.",
+      "properties": {
+        "name": {
+          "description": "Dashboard name",
+          "title": "Name",
+          "type": "string"
+        },
+        "tool": {
+          "description": "Dashboard tool",
+          "title": "Tool",
+          "type": "string"
+        },
+        "url": {
+          "description": "Dashboard URL",
+          "format": "uri",
+          "maxLength": 2083,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "tool",
+        "url"
+      ],
+      "title": "Dashboard",
+      "type": "object"
+    },
+    "Dependency": {
+      "additionalProperties": false,
+      "description": "External dependency (docker image, helm chart, terraform module, etc.).",
+      "properties": {
+        "name": {
+          "description": "Friendly name for the path or project",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description of the path or project",
+          "title": "Description"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reference in the current project for the target project, used in dependencies",
+          "title": "Ref"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Local project path",
+          "title": "Path"
+        },
+        "branches": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project branches",
+          "title": "Branches"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Remote git URL (ssh or https)",
+          "title": "Url"
+        },
+        "sync": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sync setting",
+          "title": "Sync"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Programming language",
+          "title": "Language"
+        },
+        "language_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Language version",
+          "title": "Language Version"
+        },
+        "package_manager": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Package manager used by the project",
+          "title": "Package Manager"
+        },
+        "frameworks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Frameworks used by the project",
+          "title": "Frameworks"
+        },
+        "source_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider used to discover this repository",
+          "title": "Source Provider"
+        },
+        "source_namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source namespace identifier (org/user/group)",
+          "title": "Source Namespace"
+        },
+        "source_repo_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider-native repository identifier",
+          "title": "Source Repo Id"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declarative source id from workspace.projects[].sources[]",
+          "title": "Source Id"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags for managed repo search and filtering",
+          "title": "Tags",
+          "type": "object"
+        },
+        "protected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "If true, reconcile mode must not remove this repository automatically",
+          "title": "Protected"
+        },
+        "agent_instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional instructions for subagents operating in this repo or path",
+          "title": "Agent Instructions"
+        },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured agent posture for this repo (skills, MCP, rules, vendors)"
+        },
+        "derived_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DerivedFromRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When set, this entry was copied into a derived project; identity fields can be refreshed from the named source"
+        },
+        "ci": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RepoCiTarget"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)"
+        },
+        "components": {
+          "description": "Optional semantic components declared inside this repository",
+          "items": {
+            "$ref": "#/$defs/Component"
+          },
+          "title": "Components",
+          "type": "array"
+        },
+        "kind": {
+          "$ref": "#/$defs/DependencyKind",
+          "default": "unknown",
+          "description": "Dependency kind. Distinct from workspace repo entries; use tags on ProjectPath for managed repos."
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Dependency",
+      "type": "object"
+    },
+    "DependencyKind": {
+      "description": "Enumeration of dependency kinds.",
+      "enum": [
+        "docker_image",
+        "repository",
+        "unknown",
+        "other"
+      ],
+      "title": "DependencyKind",
+      "type": "string"
+    },
+    "Deployment": {
+      "additionalProperties": false,
+      "description": "Model for deployment configuration.",
+      "properties": {
+        "strategy": {
+          "$ref": "#/$defs/DeploymentStrategy",
+          "description": "Deployment strategy"
+        },
+        "environments": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Environment"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deployment environments",
+          "title": "Environments"
+        },
+        "infrastructure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Infrastructure"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Infrastructure configuration"
+        }
+      },
+      "required": [
+        "strategy"
+      ],
+      "title": "Deployment",
+      "type": "object"
+    },
+    "DeploymentStrategy": {
+      "description": "Enumeration of deployment strategies.",
+      "enum": [
+        "blue/green",
+        "rolling",
+        "manual",
+        "gitops",
+        "pipeline",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "DeploymentStrategy",
+      "type": "string"
+    },
+    "DerivedFromRef": {
+      "additionalProperties": false,
+      "description": "Provenance pointer from a derived repo entry back to its source project/repo.",
+      "properties": {
+        "project": {
+          "description": "Source workspace project name",
+          "title": "Project",
+          "type": "string"
+        },
+        "repo": {
+          "description": "Source repository name within that project",
+          "title": "Repo",
+          "type": "string"
+        },
+        "refreshed_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ISO-8601 timestamp of the last identity refresh from the source",
+          "title": "Refreshed At"
+        }
+      },
+      "required": [
+        "project",
+        "repo"
+      ],
+      "title": "DerivedFromRef",
+      "type": "object"
+    },
+    "DerivedProjectConfig": {
+      "additionalProperties": false,
+      "description": "Marks a workspace project as a derived surgical working set.",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "When true, this project is treated as a derived working set",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "sources": {
+          "description": "Provenance roots allowed for refresh/include operations",
+          "items": {
+            "$ref": "#/$defs/DerivedSourceScope"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "title": "DerivedProjectConfig",
+      "type": "object"
+    },
+    "DerivedSourceScope": {
+      "additionalProperties": false,
+      "description": "Intent record for which source project(s) a derived project may pull from.",
+      "properties": {
+        "project": {
+          "description": "Source workspace project name",
+          "title": "Project",
+          "type": "string"
+        },
+        "repos": {
+          "description": "Optional allow-list of source repo names recorded at create time; empty means membership is whatever repos[] currently holds",
+          "items": {
+            "type": "string"
+          },
+          "title": "Repos",
+          "type": "array"
+        },
+        "components": {
+          "description": "Optional allow-list of source component names from that repo; empty means the whole source repo",
+          "items": {
+            "type": "string"
+          },
+          "title": "Components",
+          "type": "array"
+        }
+      },
+      "required": [
+        "project"
+      ],
+      "title": "DerivedSourceScope",
+      "type": "object"
+    },
+    "DocumentationSource": {
+      "additionalProperties": false,
+      "description": "One documentation source for agents and knowledge-graph ingestion.",
+      "properties": {
+        "kind": {
+          "description": "Source type (markdown, web, confluence, sharepoint, wiki, api, other)",
+          "title": "Kind",
+          "type": "string"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repo-relative or absolute path to a documentation file",
+          "title": "Path"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Remote documentation URL",
+          "title": "Url"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human-readable title",
+          "title": "Title"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short summary for indexing and graph nodes",
+          "title": "Description"
+        },
+        "tags": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Flat string tags keyed by name"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Tag names (legacy maps normalized to lists at load time)"
+            }
+          ],
+          "description": "Flat metadata tags as a map or list of tag names",
+          "title": "Tags"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible key-value payload for downstream graph ingestors",
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "DocumentationSource",
+      "type": "object"
+    },
+    "Environment": {
+      "additionalProperties": false,
+      "description": "Model for deployment environment.",
+      "properties": {
+        "name": {
+          "description": "Environment name",
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Environment URL",
+          "title": "Url"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Environment",
+      "type": "object"
+    },
+    "GraphEndpoint": {
+      "additionalProperties": false,
+      "description": "Endpoint for a manual cross-repo relationship.",
+      "properties": {
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Workspace project name",
+          "title": "Project"
+        },
+        "repo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repository name under the project",
+          "title": "Repo"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional file or directory path within the repo",
+          "title": "Path"
+        },
+        "component": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional catalogued component name within the repo",
+          "title": "Component"
+        },
+        "identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Canonical repository identity (github://org/repo) when the endpoint is not a local checkout",
+          "title": "Identity"
+        }
+      },
+      "title": "GraphEndpoint",
+      "type": "object"
+    },
+    "GraphNode": {
+      "additionalProperties": false,
+      "description": "Curated Git-managed knowledge about a repository node, including external ones.",
+      "properties": {
+        "identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Canonical identity such as github://org/repo",
+          "title": "Identity"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repository name",
+          "title": "Name"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source provider (github, gitlab, \u2026)",
+          "title": "Provider"
+        },
+        "organization": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider organization or namespace",
+          "title": "Organization"
+        },
+        "classification": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Durable classification (domain, lifecycle, \u2026)",
+          "title": "Classification",
+          "type": "object"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Curated tags",
+          "title": "Tags",
+          "type": "object"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible curated payload",
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "title": "GraphNode",
+      "type": "object"
+    },
+    "GraphRelationship": {
+      "additionalProperties": false,
+      "description": "Manually declared edge between workspace projects or repos.",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Stable identifier for exports and graph merges",
+          "title": "Id"
+        },
+        "from": {
+          "$ref": "#/$defs/GraphEndpoint",
+          "description": "Relationship source"
+        },
+        "to": {
+          "$ref": "#/$defs/GraphEndpoint",
+          "description": "Relationship target"
+        },
+        "type": {
+          "default": "depends_on",
+          "description": "Relationship type (depends_on, documents, consumes, owns, related, \u2026)",
+          "title": "Type",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short label for graph UIs",
+          "title": "Label"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Longer explanation for agents and exports",
+          "title": "Description"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat tags for filtering graph exports",
+          "title": "Tags",
+          "type": "object"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible payload for GitNexus or other graph ingestors",
+          "title": "Metadata",
+          "type": "object"
+        },
+        "status": {
+          "default": "active",
+          "description": "Lifecycle state of this relationship",
+          "enum": [
+            "active",
+            "deprecated",
+            "proposed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "provenance": {
+          "default": "manual",
+          "description": "Origin of this relationship (hand-authored, promoted from a suggestion, imported, inferred from observations, or GitHub-derived)",
+          "enum": [
+            "manual",
+            "promoted",
+            "imported",
+            "inferred",
+            "github"
+          ],
+          "title": "Provenance",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "title": "GraphRelationship",
+      "type": "object"
+    },
+    "Hosting": {
+      "description": "Enumeration of hosting options.",
+      "enum": [
+        "EC2",
+        "VMware",
+        "Oracle",
+        "Kubernetes",
+        "Vercel",
+        "ECS",
+        "AWS Lambda",
+        "AWS Fargate",
+        "AWS EKS",
+        "AWS ECS",
+        "AWS ECS Fargate",
+        "AWS ECS Fargate Spot",
+        "AWS ECS Fargate Spot Spot",
+        "Elastic Beanstalk",
+        "Azure App Service",
+        "Azure Functions",
+        "Azure Container Instances",
+        "Azure Container Apps",
+        "Azure Container Apps Environment",
+        "Azure Container Apps Environment Service",
+        "Azure Container Apps Environment Service Service",
+        "custom",
+        "none",
+        "unknown"
+      ],
+      "title": "Hosting",
+      "type": "string"
+    },
+    "Infrastructure": {
+      "additionalProperties": false,
+      "description": "Model for infrastructure configuration.",
+      "properties": {
+        "provisioning_tool": {
+          "$ref": "#/$defs/ProvisioningTool",
+          "description": "Provisioning tool"
+        },
+        "hosting": {
+          "$ref": "#/$defs/Hosting",
+          "description": "Hosting platform"
+        }
+      },
+      "required": [
+        "provisioning_tool",
+        "hosting"
+      ],
+      "title": "Infrastructure",
+      "type": "object"
+    },
+    "License": {
+      "additionalProperties": false,
+      "description": "Model for project license information.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/LicenseKind",
+          "description": "License type"
+        },
+        "file": {
+          "default": "",
+          "description": "License file path",
+          "title": "File",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "License",
+      "type": "object"
+    },
+    "LicenseKind": {
+      "description": "Enumeration of license kinds.",
+      "enum": [
+        "None",
+        "MIT",
+        "Apache-2.0",
+        "GPL-3.0",
+        "BSD-3-Clause",
+        "proprietary",
+        "custom",
+        "unknown"
+      ],
+      "title": "LicenseKind",
+      "type": "string"
+    },
+    "LoggingProvider": {
+      "description": "Enumeration of logging providers.",
+      "enum": [
+        "console",
+        "cloudwatch",
+        "elk",
+        "sentry",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "LoggingProvider",
+      "type": "string"
+    },
+    "Maintainer": {
+      "additionalProperties": false,
+      "description": "Model for project maintainer information.",
+      "properties": {
+        "name": {
+          "description": "Maintainer name",
+          "title": "Name",
+          "type": "string"
+        },
+        "email": {
+          "description": "Maintainer email",
+          "title": "Email",
+          "type": "string"
+        },
+        "role": {
+          "description": "Maintainer role",
+          "title": "Role",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "email",
+        "role"
+      ],
+      "title": "Maintainer",
+      "type": "object"
+    },
+    "MonitoringProvider": {
+      "description": "Enumeration of monitoring providers.",
+      "enum": [
+        "prometheus",
+        "datadog",
+        "grafana",
+        "sentry",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "MonitoringProvider",
+      "type": "string"
+    },
+    "Observability": {
+      "additionalProperties": false,
+      "description": "Model for observability configuration.",
+      "properties": {
+        "logging_provider": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LoggingProvider"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Logging provider"
+        },
+        "monitoring_providers": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MonitoringProvider"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Monitoring providers",
+          "title": "Monitoring Providers"
+        },
+        "alerting_channels": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/AlertingChannel"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alerting channels",
+          "title": "Alerting Channels"
+        },
+        "dashboards": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/Dashboard"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Monitoring dashboards",
+          "title": "Dashboards"
+        }
+      },
+      "title": "Observability",
+      "type": "object"
+    },
+    "Pipeline": {
+      "additionalProperties": false,
+      "description": "Model for CI/CD pipeline.",
+      "properties": {
+        "name": {
+          "description": "Pipeline name",
+          "title": "Name",
+          "type": "string"
+        },
+        "ref": {
+          "description": "Pipeline reference",
+          "title": "Ref",
+          "type": "string"
+        },
+        "variables": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pipeline variables",
+          "title": "Variables"
+        }
+      },
+      "required": [
+        "name",
+        "ref"
+      ],
+      "title": "Pipeline",
+      "type": "object"
+    },
+    "ProjectDedupeOverride": {
+      "additionalProperties": false,
+      "description": "Per-project override of app-config ``workspace.dedupe``.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When set, overrides workspace.dedupe.enabled from metagit.config.yaml for sync and layout under this project only",
+          "title": "Enabled"
+        }
+      },
+      "title": "ProjectDedupeOverride",
+      "type": "object"
+    },
+    "ProjectKind": {
+      "description": "Enumeration of project kinds.",
+      "enum": [
+        "monorepo",
+        "umbrella",
+        "application",
+        "gitops",
+        "infrastructure",
+        "service",
+        "library",
+        "website",
+        "other",
+        "docker_image",
+        "repository",
+        "cli"
+      ],
+      "title": "ProjectKind",
+      "type": "string"
+    },
+    "ProjectPath": {
+      "additionalProperties": false,
+      "description": "Model for project path, dependency, component, or workspace project information.",
+      "properties": {
+        "name": {
+          "description": "Friendly name for the path or project",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short description of the path or project",
+          "title": "Description"
+        },
+        "ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Reference in the current project for the target project, used in dependencies",
+          "title": "Ref"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Local project path",
+          "title": "Path"
+        },
+        "branches": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project branches",
+          "title": "Branches"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "format": "uri",
+              "maxLength": 2083,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Remote git URL (ssh or https)",
+          "title": "Url"
+        },
+        "sync": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sync setting",
+          "title": "Sync"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Programming language",
+          "title": "Language"
+        },
+        "language_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Language version",
+          "title": "Language Version"
+        },
+        "package_manager": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Package manager used by the project",
+          "title": "Package Manager"
+        },
+        "frameworks": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Frameworks used by the project",
+          "title": "Frameworks"
+        },
+        "source_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider used to discover this repository",
+          "title": "Source Provider"
+        },
+        "source_namespace": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source namespace identifier (org/user/group)",
+          "title": "Source Namespace"
+        },
+        "source_repo_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider-native repository identifier",
+          "title": "Source Repo Id"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Declarative source id from workspace.projects[].sources[]",
+          "title": "Source Id"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags for managed repo search and filtering",
+          "title": "Tags",
+          "type": "object"
+        },
+        "protected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "If true, reconcile mode must not remove this repository automatically",
+          "title": "Protected"
+        },
+        "agent_instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional instructions for subagents operating in this repo or path",
+          "title": "Agent Instructions"
+        },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured agent posture for this repo (skills, MCP, rules, vendors)"
+        },
+        "derived_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DerivedFromRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When set, this entry was copied into a derived project; identity fields can be refreshed from the named source"
+        },
+        "ci": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RepoCiTarget"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Durable CI topology for agents: platform, config paths, and provider locators (e.g. Azure DevOps org/project/repo)"
+        },
+        "components": {
+          "description": "Optional semantic components declared inside this repository",
+          "items": {
+            "$ref": "#/$defs/Component"
+          },
+          "title": "Components",
+          "type": "array"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+          "title": "Agent Prompt"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "ProjectPath",
+      "type": "object"
+    },
+    "ProjectSource": {
+      "description": "Declarative provider import scope stored on ``workspace.projects[]``.",
+      "properties": {
+        "id": {
+          "description": "Stable slug unique within the project",
+          "title": "Id",
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/$defs/SourceProvider",
+          "description": "Source provider"
+        },
+        "org": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub organization",
+          "title": "Org"
+        },
+        "user": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub user",
+          "title": "User"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitLab group path",
+          "title": "Group"
+        },
+        "organization": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps organization",
+          "title": "Organization"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps project filter",
+          "title": "Project"
+        },
+        "mode": {
+          "$ref": "#/$defs/SourceSyncMode",
+          "default": "additive",
+          "description": "additive or reconcile (discover is CLI-only)"
+        },
+        "recursive": {
+          "default": true,
+          "description": "Recurse into nested scopes when supported",
+          "title": "Recursive",
+          "type": "boolean"
+        },
+        "ensure": {
+          "default": true,
+          "description": "Skip metadata updates for existing URLs",
+          "title": "Ensure",
+          "type": "boolean"
+        },
+        "refresh_metadata": {
+          "default": false,
+          "description": "With ensure, still refresh description/tags",
+          "title": "Refresh Metadata",
+          "type": "boolean"
+        },
+        "enrich_topics": {
+          "default": true,
+          "description": "Merge provider topics into repo tags",
+          "title": "Enrich Topics",
+          "type": "boolean"
+        },
+        "include_archived": {
+          "default": false,
+          "description": "Include archived repositories",
+          "title": "Include Archived",
+          "type": "boolean"
+        },
+        "include_forks": {
+          "default": false,
+          "description": "Include forked repositories",
+          "title": "Include Forks",
+          "type": "boolean"
+        },
+        "path_prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional namespace/repo prefix",
+          "title": "Path Prefix"
+        },
+        "include_patterns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Include Patterns",
+          "type": "array"
+        },
+        "ignore_patterns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ignore Patterns",
+          "type": "array"
+        },
+        "name_strategy": {
+          "default": "namespaced",
+          "enum": [
+            "short",
+            "namespaced"
+          ],
+          "title": "Name Strategy",
+          "type": "string"
+        },
+        "enabled": {
+          "default": true,
+          "description": "When false, skip during manifest sync",
+          "title": "Enabled",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "provider"
+      ],
+      "title": "ProjectSource",
+      "type": "object"
+    },
+    "ProvisioningTool": {
+      "description": "Enumeration of provisioning tools.",
+      "enum": [
+        "Terraform",
+        "CloudFormation",
+        "CDKTF",
+        "AWS CDK",
+        "Bicep",
+        "custom",
+        "none",
+        "unknown",
+        "other"
+      ],
+      "title": "ProvisioningTool",
+      "type": "string"
+    },
+    "RepoCiTarget": {
+      "additionalProperties": false,
+      "description": "Where CI/CD lives for a managed repository (agent-facing topology).",
+      "properties": {
+        "provider": {
+          "$ref": "#/$defs/CiProvider",
+          "description": "CI platform identifier"
+        },
+        "config_paths": {
+          "description": "Repo-relative CI configuration file paths",
+          "items": {
+            "type": "string"
+          },
+          "title": "Config Paths",
+          "type": "array"
+        },
+        "host": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "API or web host (e.g. dev.azure.com or self-hosted ADO)",
+          "title": "Host"
+        },
+        "organization": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps organization",
+          "title": "Organization"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps project (may differ from git project)",
+          "title": "Project"
+        },
+        "repository": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Azure DevOps repository name",
+          "title": "Repository"
+        },
+        "definition_ids": {
+          "description": "Optional ADO pipeline/build definition ids for overrides",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "title": "Definition Ids",
+          "type": "array"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub owner/org",
+          "title": "Owner"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub repository name",
+          "title": "Name"
+        },
+        "project_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitLab project path with namespace",
+          "title": "Project Path"
+        },
+        "status": {
+          "$ref": "#/$defs/CiTargetStatus",
+          "default": "detected",
+          "description": "detected from files/remote; declared or overridden by humans/agents"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ISO-8601 timestamp of last detect or explicit set",
+          "title": "Updated At"
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "title": "RepoCiTarget",
+      "type": "object"
+    },
+    "RoutingConfig": {
+      "description": "Routing class catalog and run ledger storage settings.",
+      "properties": {
+        "catalog": {
+          "default": "knowledge/requests/entries",
+          "description": "Directory containing one YAML file per request class",
+          "title": "Catalog",
+          "type": "string"
+        },
+        "runs": {
+          "default": "knowledge/requests/runs",
+          "description": "Directory containing one YAML file per execution run",
+          "title": "Runs",
+          "type": "string"
+        },
+        "id_prefix": {
+          "default": "REQ",
+          "description": "Prefix used when creating request-class identifiers",
+          "title": "Id Prefix",
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "#/$defs/RoutingPolicy"
+        }
+      },
+      "title": "RoutingConfig",
+      "type": "object"
+    },
+    "RoutingPolicy": {
+      "description": "Promotion policy for routing class tier evaluation.",
+      "properties": {
+        "promote_after_clean": {
+          "default": 5,
+          "description": "Consecutive landed runs needed for promotion",
+          "title": "Promote After Clean",
+          "type": "integer"
+        },
+        "demote_on": {
+          "description": "Outcomes that trigger immediate demotion",
+          "items": {
+            "enum": [
+              "bounced",
+              "noop"
+            ],
+            "type": "string"
+          },
+          "title": "Demote On",
+          "type": "array"
+        },
+        "retain_success_days": {
+          "default": 60,
+          "description": "Window for retaining landed run detail before optional roll-up",
+          "title": "Retain Success Days",
+          "type": "integer"
+        }
+      },
+      "title": "RoutingPolicy",
+      "type": "object"
+    },
+    "Secret": {
+      "additionalProperties": false,
+      "description": "Model for secret definitions.",
+      "properties": {
+        "name": {
+          "description": "Secret name",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/SecretKind",
+          "description": "Secret type"
+        },
+        "ref": {
+          "description": "Secret reference",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "ref"
+      ],
+      "title": "Secret",
+      "type": "object"
+    },
+    "SecretKind": {
+      "description": "Enumeration of secret kinds.",
+      "enum": [
+        "remote_jwt",
+        "remote_api_key",
+        "generated_string",
+        "custom",
+        "dynamic",
+        "private_key",
+        "public_key",
+        "secret_key",
+        "api_key",
+        "access_token",
+        "refresh_token",
+        "password",
+        "database_password",
+        "unknown",
+        "other"
+      ],
+      "title": "SecretKind",
+      "type": "string"
+    },
+    "SourceProvider": {
+      "description": "Supported source providers for recursive discovery.",
+      "enum": [
+        "github",
+        "gitlab",
+        "azure_devops"
+      ],
+      "title": "SourceProvider",
+      "type": "string"
+    },
+    "SourceSyncMode": {
+      "description": "Supported sync planning modes.",
+      "enum": [
+        "discover",
+        "additive",
+        "reconcile"
+      ],
+      "title": "SourceSyncMode",
+      "type": "string"
+    },
+    "Tasker": {
+      "additionalProperties": false,
+      "description": "Model for task management tools.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/TaskerKind",
+          "description": "Tasker type"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "Tasker",
+      "type": "object"
+    },
+    "TaskerKind": {
+      "description": "Enumeration of tasker kinds.",
+      "enum": [
+        "Taskfile",
+        "Makefile",
+        "Jest",
+        "NPM",
+        "Atmos",
+        "custom",
+        "none",
+        "mise_tasks"
+      ],
+      "title": "TaskerKind",
+      "type": "string"
+    },
+    "Variable": {
+      "additionalProperties": false,
+      "description": "Model for variable definitions.",
+      "properties": {
+        "name": {
+          "description": "Variable name",
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/VariableKind",
+          "description": "Variable type"
+        },
+        "ref": {
+          "description": "Variable reference",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "ref"
+      ],
+      "title": "Variable",
+      "type": "object"
+    },
+    "VariableKind": {
+      "description": "Enumeration of variable kinds.",
+      "enum": [
+        "string",
+        "integer",
+        "boolean",
+        "custom",
+        "unknown",
+        "other"
+      ],
+      "title": "VariableKind",
+      "type": "string"
+    },
+    "VersionStrategy": {
+      "description": "Enumeration of version strategies.",
+      "enum": [
+        "semver",
+        "none",
+        "custom",
+        "unknown",
+        "other"
+      ],
+      "title": "VersionStrategy",
+      "type": "string"
+    },
+    "Workspace": {
+      "additionalProperties": false,
+      "description": "Model for workspace configuration.",
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human-readable description of this workspace",
+          "title": "Description"
+        },
+        "agent_instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional instructions for agents working in this workspace",
+          "title": "Agent Instructions"
+        },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Workspace-wide structured agent posture inherited by projects and repos"
+        },
+        "projects": {
+          "description": "Workspace projects",
+          "items": {
+            "$ref": "#/$defs/WorkspaceProject"
+          },
+          "title": "Projects",
+          "type": "array"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+          "title": "Agent Prompt"
+        }
+      },
+      "required": [
+        "projects"
+      ],
+      "title": "Workspace",
+      "type": "object"
+    },
+    "WorkspaceGraph": {
+      "additionalProperties": false,
+      "description": "Top-level manual graph data on a .metagit.yml manifest.",
+      "properties": {
+        "relationships": {
+          "description": "Manually entered cross-repo or cross-project edges",
+          "items": {
+            "$ref": "#/$defs/GraphRelationship"
+          },
+          "title": "Relationships",
+          "type": "array"
+        },
+        "nodes": {
+          "description": "Optional curated repository nodes that may not be locally materialized",
+          "items": {
+            "$ref": "#/$defs/GraphNode"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Graph-level metadata for export pipelines",
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "title": "WorkspaceGraph",
+      "type": "object"
+    },
+    "WorkspaceProject": {
+      "additionalProperties": false,
+      "description": "Model for workspace project.",
+      "properties": {
+        "name": {
+          "description": "Workspace project name",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Human-readable description of this workspace project",
+          "title": "Description"
+        },
+        "agent_instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional instructions for agents working in this workspace project",
+          "title": "Agent Instructions"
+        },
+        "agent_profile": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentProfile"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Structured agent posture (skills, MCP, rules) inherited by repos unless overridden"
+        },
+        "dedupe": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProjectDedupeOverride"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional override of app-config workspace.dedupe for this project (currently supports enabled only)"
+        },
+        "protected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "If true, catalog and layout mutations on this project and its repos require force",
+          "title": "Protected"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Flat metadata tags inherited by repos unless overridden",
+          "title": "Tags",
+          "type": "object"
+        },
+        "documentation": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/DocumentationSource"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Documentation sources for this workspace project group (paths, URLs, graph metadata)",
+          "title": "Documentation"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible key-value payload for exports and tooling",
+          "title": "Metadata",
+          "type": "object"
+        },
+        "sources": {
+          "description": "Declarative provider import scopes for this project",
+          "items": {
+            "$ref": "#/$defs/ProjectSource"
+          },
+          "title": "Sources",
+          "type": "array"
+        },
+        "derived": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DerivedProjectConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "When set, this project is a derived surgical subset of other workspace projects in the same umbrella manifest"
+        },
+        "repos": {
+          "description": "Repository list",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectPath"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProjectPath"
+                },
+                "description": "Nested repo list (flattened when YAML anchors expand)"
+              }
+            ]
+          },
+          "title": "Repos",
+          "type": "array"
+        },
+        "agent_prompt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Alias for agent_instructions (legacy/agent host compatibility)",
+          "title": "Agent Prompt"
+        }
+      },
+      "required": [
+        "name",
+        "repos"
+      ],
+      "title": "WorkspaceProject",
+      "type": "object"
+    }
+  }
+}
