@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-
+### Added
+- Multi-file manifests. A root `.metagit.yml` may list `includes:` (relative paths or globs). Fragments contribute `workspace.projects`, `graph.nodes`, and `graph.relationships`; the merged model is one `MetagitConfig`. `metagit config split`, `metagit config flatten`, `metagit config validate --json` (with `sources`), and `metagit config schema --fragment` operate on that layout. Saves write back to the originating fragment and leave untouched files byte- and mtime-identical. Docs: [splitting-manifests.md](reference/splitting-manifests.md).
+- Older metagit releases reject `includes` with `Extra inputs are not permitted`. A manifest that uses includes needs this release or newer. Single-file manifests are unchanged.
 
 ## [0.36.0] - 2026-10-02
 

@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-10-02
+last_updated: 2026-10-31
 ---
 
 # Session Bootstrap
@@ -27,6 +27,7 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **Split manifests (2026-10-31):** Root `.metagit.yml` `includes:` composes project and graph fragments (`include_loader` / `include_writer`). Saves partition back to the originating file. CLI `config split|flatten`, `config validate --json` sources, `config schema --fragment`. Single-file manifests stay on the previous load/save path. Docs [docs/reference/splitting-manifests.md](../docs/reference/splitting-manifests.md); pattern `.mex/patterns/split-manifest-includes.md`.
 - **Session-worktree coordination (2026-10-02):** One PR on `feat/coordination-session-worktree-p3` against `main` (P1 isolated merge and safe gc, P2 per-task worktrees / `.` / `self` / adopt / post-create, P3 `merge.regenerate` and `merge rollup`). Windows `git show` comparisons strip `\r`. Design [docs/superpowers/specs/2026-10-01-session-worktree-coordination-design.md](../docs/superpowers/specs/2026-10-01-session-worktree-coordination-design.md).
 - **Context reduction + board-linked campaigns (2026-09-18, `cursor/context-reduction-large-umbrella-3004`):** Large umbrellas stay on disk. Catalog/map/pack/digest/campaign JSON is paged; `summary.workspace` is omitted unless `--include-workspace`; full-manifest dumps refuse above 80 repos unless `--confirm-full` / `confirm=1`. Prompt `large-workspace`. Campaign `work_item` refs + `campaign board-sync` / MCP `metagit_campaign_status` + `metagit_campaign_board_sync` (ADO WIT parent Feature + paged User Stories). Docs [docs/reference/context-reduction.md](../docs/reference/context-reduction.md); design [docs/superpowers/specs/2026-09-18-context-reduction-large-workspace-campaigns-design.md](../docs/superpowers/specs/2026-09-18-context-reduction-large-workspace-campaigns-design.md); pattern `.mex/patterns/context-reduction-large-workspace.md`. Modalities `context_reduction`, `campaign_board_link`.
 - **AppConfig file fallback (2026-09-18, `cursor/fix-appconfig-default-path-e8cf`):** Missing local `metagit.config.yaml` no longer sets `ctx.obj["config_path"]` to `workspace.path` (`./.metagit`). Lookup is local `.yml`, then `~/.config/metagit/config.yml` (XDG-aware), then bundled default. Pattern `.mex/patterns/appconfig-path-resolution.md`.

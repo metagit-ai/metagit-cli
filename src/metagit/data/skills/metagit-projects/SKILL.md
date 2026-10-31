@@ -188,5 +188,6 @@ After project-management actions, report:
 
 - Do not clone, delete, or overwrite sync directories without explicit user approval.
 - Do not edit `.metagit.yml` without validating afterward (`metagit config validate`).
+- When the manifest uses `includes:`, change the project fragment (`.metagit.d/projects/<slug>.yml`) instead of the root. Catalog add and remove write that fragment.
 - Prefer reusing configured repos over creating duplicate checkouts.
 - Keep unrelated experiments in separate `workspace.projects` entries when the user wants clear boundaries.

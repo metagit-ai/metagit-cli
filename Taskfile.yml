@@ -323,10 +323,12 @@ tasks:
       - |
         uv pip install -e .
         uv run metagit config schema --output-path ./schemas/metagit_config.schema.json
+        uv run metagit config schema --fragment --output-path ./schemas/metagit_fragment.schema.json
         uv run metagit appconfig schema --output-path ./schemas/metagit_appconfig.schema.json
         uv run metagit agent schema --output-path ./schemas/agent_template.schema.json
         mkdir -p docs/reference/schemas
         cp ./schemas/metagit_config.schema.json docs/reference/schemas/metagit_config.schema.json
+        cp ./schemas/metagit_fragment.schema.json docs/reference/schemas/metagit_fragment.schema.json
         cp ./schemas/metagit_appconfig.schema.json docs/reference/schemas/metagit_appconfig.schema.json
         cp ./schemas/agent_template.schema.json docs/reference/schemas/agent_template.schema.json
         uv run metagit config example --output docs/reference/metagit-config.full-example.yml

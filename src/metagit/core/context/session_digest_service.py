@@ -31,7 +31,13 @@ def _manifest_mtime_utc(config_path: str) -> Optional[datetime]:
     path = Path(config_path)
     if not path.is_file():
         return None
-    return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+    from metagit.cli.config_path import manifest_watch_paths
+
+    watched = manifest_watch_paths(path)
+    mtimes = [item.stat().st_mtime for item in watched if item.is_file()]
+    if not mtimes:
+        mtimes = [path.stat().st_mtime]
+    return datetime.fromtimestamp(max(mtimes), tz=timezone.utc)
 
 
 class SessionDigestService:

@@ -1210,9 +1210,104 @@
           "default": null,
           "description": "Optional catalogued component name within the repo",
           "title": "Component"
+        },
+        "identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Canonical repository identity (github://org/repo) when the endpoint is not a local checkout",
+          "title": "Identity"
         }
       },
       "title": "GraphEndpoint",
+      "type": "object"
+    },
+    "GraphNode": {
+      "additionalProperties": false,
+      "description": "Curated Git-managed knowledge about a repository node, including external ones.",
+      "properties": {
+        "identity": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Canonical identity such as github://org/repo",
+          "title": "Identity"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Repository name",
+          "title": "Name"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source provider (github, gitlab, \u2026)",
+          "title": "Provider"
+        },
+        "organization": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider organization or namespace",
+          "title": "Organization"
+        },
+        "classification": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Durable classification (domain, lifecycle, \u2026)",
+          "title": "Classification",
+          "type": "object"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Curated tags",
+          "title": "Tags",
+          "type": "object"
+        },
+        "metadata": {
+          "additionalProperties": true,
+          "description": "Extensible curated payload",
+          "title": "Metadata",
+          "type": "object"
+        }
+      },
+      "title": "GraphNode",
       "type": "object"
     },
     "GraphRelationship": {
@@ -1299,11 +1394,13 @@
         },
         "provenance": {
           "default": "manual",
-          "description": "Origin of this relationship (hand-authored, promoted from a suggestion, or imported)",
+          "description": "Origin of this relationship (hand-authored, promoted from a suggestion, imported, inferred from observations, or GitHub-derived)",
           "enum": [
             "manual",
             "promoted",
-            "imported"
+            "imported",
+            "inferred",
+            "github"
           ],
           "title": "Provenance",
           "type": "string"
@@ -2537,6 +2634,14 @@
           "title": "Relationships",
           "type": "array"
         },
+        "nodes": {
+          "description": "Optional curated repository nodes that may not be locally materialized",
+          "items": {
+            "$ref": "#/$defs/GraphNode"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
         "metadata": {
           "additionalProperties": true,
           "description": "Graph-level metadata for export pipelines",
@@ -2774,6 +2879,22 @@
       ],
       "default": "application",
       "description": "Project kind. This is used to determine the type of project and the best way to manage it."
+    },
+    "includes": {
+      "anyOf": [
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Relative paths or globs of manifest fragments, resolved from the directory of the file that lists them. Fragments may supply workspace.projects and graph nodes or relationships. Older Metagit releases reject this key.",
+      "title": "Includes"
     },
     "documentation": {
       "anyOf": [

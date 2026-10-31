@@ -31,6 +31,8 @@ metagit config validate -c .metagit.yml
 
 Existing manifest: `metagit config validate -c .metagit.yml`. Patch with `metagit config patch` — do not regenerate from detect dumps.
 
+`metagit init` writes one file. Split an existing umbrella with `metagit config split --by all --dir .metagit.d` when concurrent edits collide on `.metagit.yml`. After a split, edit the fragment, not the root.
+
 ## Optional enrichment (file-backed)
 
 Only after init, and only if catalog fields are still empty:

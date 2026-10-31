@@ -9,8 +9,15 @@ from pathlib import Path
 from typing import Optional, Union
 
 from git import Repo
+from pydantic import ValidationError
 
 from metagit.core.config.graph_models import graph_relationships_payload
+from metagit.core.config.include_loader import (
+    ManifestSourceMap,
+    load_composed_manifest,
+    manifest_declares_includes,
+    map_validation_error,
+)
 from metagit.core.config.models import MetagitConfig
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 from metagit.core.utils.yaml_class import yaml
@@ -38,6 +45,10 @@ class MetagitConfigManager:
         """
         self.config_path: str = config_path or Path(".metagit.yml")
         self._config: Optional[MetagitConfig] = metagit_config
+        self.source_map: ManifestSourceMap | None = None
+        self.resolved_files: list[Path] = []
+        self._baseline_signatures: dict[str, str] | None = None
+        self._loaded_root: str | None = None
 
     @property
     def config(self) -> Union[MetagitConfig, None, Exception]:
@@ -62,13 +73,40 @@ class MetagitConfigManager:
             ValidationError: If the configuration doesn't match the expected schema
         """
         try:
-            if not Path(self.config_path).exists():
+            config_file = Path(self.config_path)
+            if not config_file.exists():
                 return FileNotFoundError(f"Configuration file not found: {self.config_path}")
+
+            self.source_map = None
+            self.resolved_files = []
+            self._baseline_signatures = None
+            self._loaded_root = None
+
+            if manifest_declares_includes(config_file):
+                composed = load_composed_manifest(config_file)
+                if isinstance(composed, Exception):
+                    return composed
+                try:
+                    self._config = MetagitConfig(**composed.data)
+                except ValidationError as exc:
+                    return map_validation_error(exc, composed.source_map)
+                self.source_map = composed.source_map
+                self.resolved_files = [Path(item) for item in composed.source_map.resolved_files]
+                self._loaded_root = str(config_file.resolve())
+                from metagit.core.config.include_writer import signatures_for
+
+                signed = signatures_for(self._config, self.source_map)
+                if isinstance(signed, Exception):
+                    return signed
+                _updated, signatures = signed
+                self._baseline_signatures = signatures
+                return self._config
 
             with open(self.config_path, "r", encoding="utf-8") as f:
                 yaml_data = yaml.safe_load(f)
 
             self._config = MetagitConfig(**yaml_data)
+            self.resolved_files = [config_file.resolve()]
             return self._config
         except Exception as e:
             return e
@@ -155,6 +193,28 @@ class MetagitConfigManager:
                 return ValueError("No configuration to save. Load a config first or provide one.")
 
             save_path = Path(output_path or self.config_path)
+            partitioned = self._partitioned_save_state(save_path)
+            if isinstance(partitioned, Exception):
+                return partitioned
+            if partitioned is not None:
+                source_map, baseline = partitioned
+                from metagit.core.config.include_writer import save_partitioned
+
+                saved = save_partitioned(
+                    config_to_save,
+                    source_map,
+                    baseline,
+                    auto_format=auto_format,
+                )
+                if isinstance(saved, Exception):
+                    return saved
+                updated_map, signatures = saved
+                self.source_map = updated_map
+                self._baseline_signatures = signatures
+                self.resolved_files = [Path(item) for item in updated_map.resolved_files]
+                self._loaded_root = str(save_path.resolve())
+                self._config = config_to_save
+                return None
             if auto_format:
                 from metagit.core.config.format_service import ConfigFormatService
 
@@ -180,6 +240,26 @@ class MetagitConfigManager:
             return None
         except Exception as e:
             return e
+
+    def _partitioned_save_state(
+        self,
+        save_path: Path,
+    ) -> tuple[ManifestSourceMap, dict[str, str] | None] | None | Exception:
+        """Return the source map to write, or None when the destination is one file."""
+        if (
+            self.source_map is not None
+            and self._loaded_root is not None
+            and save_path.resolve() == Path(self._loaded_root).resolve()
+        ):
+            return self.source_map, self._baseline_signatures
+        if save_path.is_file() and manifest_declares_includes(save_path):
+            from metagit.core.config.include_writer import load_baseline
+
+            loaded = load_baseline(save_path)
+            if isinstance(loaded, Exception):
+                return loaded
+            return loaded
+        return None
 
 
 def create_metagit_config(

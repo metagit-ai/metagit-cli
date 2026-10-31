@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/metagit-ai/metagit-cli/refs/heads/main/schemas/metagit_fragment.schema.json
+workspace:
+  projects:
+    - name: alpha  # keep-me
+      description: original
+      repos: []

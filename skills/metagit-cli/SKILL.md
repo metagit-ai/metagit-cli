@@ -73,6 +73,12 @@ Use this table first when changing a workspace manifest from the CLI. Prefer **c
 | **Enable** optional block | `metagit config patch … --op enable --path <path> --save` |
 | **Add list item** | `metagit config patch … --op append --path <list.path> --save` then `set` on `[index].field` |
 | **Remove list item** | `metagit config patch … --op remove --path <list.path>[index] --save` |
+| **Split** into per-project files | `metagit config split -c .metagit.yml --by all --dir .metagit.d` |
+| **Preview** a split | `metagit config split -c .metagit.yml --by all --dry-run` |
+| **Flatten** includes to one file | `metagit config flatten -c .metagit.yml` |
+| **Show** the root file when split | `metagit config show -c .metagit.yml --source` |
+
+When `.metagit.yml` contains `includes:`, edit the fragment that owns the project or graph entry (`.metagit.d/projects/<name>.yml`, or the graph fragment). Do not paste a merged manifest over the root. `metagit config validate` reports errors as `fragment:line`. `metagit fmt -c .metagit.yml` formats the root and every fragment. Older metagit releases reject `includes` (`Extra inputs are not permitted`).
 
 ### Catalog shortcuts (projects & repos)
 

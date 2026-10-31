@@ -1,0 +1,8 @@
+name: umbrella
+kind: umbrella
+description: shared umbrella
+includes:
+  - .metagit.d/projects/alpha.yml
+  - .metagit.d/projects/beta.yml
+workspace:
+  description: projects live in their own files

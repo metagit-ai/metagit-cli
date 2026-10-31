@@ -757,6 +757,14 @@ class MetagitConfig(BaseModel):
         default=ProjectKind.APPLICATION,
         description="Project kind. This is used to determine the type of project and the best way to manage it.",
     )
+    includes: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Relative paths or globs of manifest fragments, resolved from the directory of the file "
+            "that lists them. Fragments may supply workspace.projects and graph nodes or relationships. "
+            "Older Metagit releases reject this key."
+        ),
+    )
     documentation: Optional[List[DocumentationSource]] = Field(
         None,
         description=(

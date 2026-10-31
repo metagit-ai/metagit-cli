@@ -27,9 +27,20 @@ def detect_cli_config_file(path: str) -> ConfigKind:
         return "invalid"
     if "config" in data and isinstance(data["config"], dict):
         return "appconfig"
-    if any(key in data for key in ("name", "kind", "workspace")):
+    if any(key in data for key in ("name", "kind", "workspace", "includes")):
         return "manifest"
     return "invalid"
+
+
+def manifest_watch_paths(path: Path | str) -> list[Path]:
+    """Return the manifest root plus composed fragments for mtime checks and hashes.
+
+    Kind detection above reads only the root file. Callers that watch or hash the
+    manifest must use this list so a fragment edit is visible.
+    """
+    from metagit.core.config.include_loader import resolved_manifest_files
+
+    return resolved_manifest_files(Path(path))
 
 
 def _as_config_path(path: Path | str) -> str:

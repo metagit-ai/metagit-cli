@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from metagit.core.appconfig.models import WorkspaceDedupeConfig
@@ -45,6 +46,18 @@ from metagit.core.mcp.services.session_store import SessionStore
 from metagit.core.prompt.models import PromptKind, PromptScope
 from metagit.core.prompt.service import PromptService, PromptServiceError
 from metagit.core.state.resolver import describe_state_backend, resolve_backend
+
+
+def _manifest_source_paths(config_path: str) -> list[str]:
+    """Return fragment paths when the manifest is split. Single-file manifests stay unchanged."""
+    if not config_path:
+        return []
+    from metagit.core.config.include_loader import resolved_manifest_files
+
+    files = resolved_manifest_files(Path(config_path))
+    if len(files) <= 1:
+        return []
+    return [str(item) for item in files]
 
 
 @dataclass(frozen=True)
@@ -253,7 +266,11 @@ class ResourceService:
             repo_count=repo_count,
             projects=projects,
         )
-        return self._json(uri, summary.model_dump(mode="json"))
+        payload = summary.model_dump(mode="json")
+        sources = _manifest_source_paths(context.config_path)
+        if sources:
+            payload["sources"] = sources
+        return self._json(uri, payload)
 
     def _read_repos_status(
         self,
