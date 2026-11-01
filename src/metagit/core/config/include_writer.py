@@ -32,8 +32,11 @@ from metagit.core.config.schema_urls import (
     METAGIT_CONFIG_SCHEMA_URL,
     METAGIT_FRAGMENT_SCHEMA_URL,
 )
+from metagit.core.config.yaml_edit_diff import diff_payloads
+from metagit.core.config.yaml_edit_types import YamlEdit
 from metagit.core.config.yaml_order import order_payload
 from metagit.core.config.yaml_roundtrip import build_roundtrip_yaml, format_yaml_document
+from metagit.core.config.yaml_save import splice_files
 from metagit.core.utils.yaml_class import yaml as plain_yaml
 
 _PROJECT_PREFIX = "workspace.projects["
@@ -59,29 +62,56 @@ def save_partitioned(
     include_defaults: bool = False,
     auto_format: bool = True,
 ) -> tuple[ManifestSourceMap, dict[str, str]] | Exception:
-    """Write each originating file. Skip files whose partition did not change."""
+    """Write each originating file. Skip files whose partition did not change.
+
+    A file that exists is spliced: only the nodes that differ from what is on disk
+    are rewritten. A file that does not exist is rendered whole. Every new text is
+    built before any file is written. ``baseline`` is the signature set recorded at
+    load; the comparison now runs against the files on disk instead.
+    """
+    _ = baseline
     try:
         payload = build_metagit_payload(config, include_defaults=include_defaults)
+        disk = _load_disk_state(Path(source_map.root_path))
+        if isinstance(disk, Exception):
+            return disk
         parts = partition_payload(payload, source_map)
         if isinstance(parts, Exception):
             return parts
+        before_parts = _disk_partitions(disk, include_defaults=include_defaults)
+        if isinstance(before_parts, Exception):
+            return before_parts
+        before_signatures = _signatures(before_parts)
         signatures = _signatures(parts)
-        stored = baseline or {}
         pending: list[tuple[Path, str]] = []
+        edits_by_file: dict[str, list[YamlEdit]] = {}
+        originals: dict[str, str] = {}
         for path, part in parts.items():
             target = Path(path)
-            if stored.get(path) == signatures.get(path) and target.is_file():
+            if not target.is_file() or disk is None:
+                rendered = _render_part(
+                    target,
+                    part,
+                    source_map=source_map,
+                    include_defaults=include_defaults,
+                    auto_format=auto_format,
+                )
+                original = target.read_text(encoding="utf-8") if target.is_file() else ""
+                if rendered != original:
+                    pending.append((target, rendered))
                 continue
-            rendered = _render_part(
-                target,
-                part,
-                source_map=source_map,
-                include_defaults=include_defaults,
-                auto_format=auto_format,
-            )
-            original = target.read_text(encoding="utf-8") if target.is_file() else ""
-            if rendered != original:
-                pending.append((target, rendered))
+            if before_signatures.get(path) == signatures.get(path):
+                continue
+            edits = diff_payloads(before_parts.get(path, {}), part)
+            if isinstance(edits, Exception):
+                return edits
+            if edits:
+                edits_by_file[path] = edits
+                originals[path] = target.read_text(encoding="utf-8")
+        spliced = splice_files(edits_by_file, originals)
+        if isinstance(spliced, Exception):
+            return spliced
+        pending.extend((Path(path), text) for path, text in spliced.items())
         for target, rendered in pending:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(rendered, encoding="utf-8")
@@ -89,6 +119,31 @@ def save_partitioned(
         return source_map, signatures
     except Exception as exc:
         return exc
+
+
+def _load_disk_state(root: Path) -> tuple[MetagitConfig, ManifestSourceMap] | None | Exception:
+    """Load the manifest as it is on disk, or None when the root file is missing."""
+    if not root.is_file():
+        return None
+    composed = load_composed_manifest(root)
+    if isinstance(composed, Exception):
+        return composed
+    try:
+        return MetagitConfig(**composed.data), composed.source_map
+    except ValidationError as exc:
+        return map_validation_error(exc, composed.source_map)
+
+
+def _disk_partitions(
+    disk: tuple[MetagitConfig, ManifestSourceMap] | None,
+    *,
+    include_defaults: bool,
+) -> dict[str, dict[str, Any]] | Exception:
+    """Partition the on-disk manifest the same way a save partitions the new one."""
+    if disk is None:
+        return {}
+    model, disk_map = disk
+    return partition_payload(build_metagit_payload(model, include_defaults=include_defaults), disk_map)
 
 
 def load_baseline(path: Path) -> tuple[ManifestSourceMap, dict[str, str]] | Exception:

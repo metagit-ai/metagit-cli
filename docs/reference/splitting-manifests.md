@@ -79,6 +79,8 @@ metagit config schema --fragment --output-path schemas/metagit_fragment.schema.j
 
 Loads merge into one `MetagitConfig`. Saves write each entry back to the file it came from. A save that changes one project rewrites only that fragment; every other file keeps its bytes and mtime. A new project goes to `<first include directory>/<slug>.yml` when each existing project already has its own file, and the root `includes` list gains that path when a glob does not already match it. Otherwise the new project stays in the root. Deleting a project removes it from its fragment and leaves `projects: []` rather than deleting the file. Renaming a project removes the old entry and adds the new one. `metagit fmt` formats every included file.
 
+A save of a file that already exists rewrites only the nodes that changed in the owning fragment. Untouched scalars keep their original style, comments, and bytes, and a repo that moves between fragments moves as its original text. A save that cannot splice, such as an edit inside a flow-style mapping, returns an error and writes no file. A file that does not exist yet is rendered whole. `metagit fmt` is the command that restyles a file.
+
 Watchers, the session digest mtime, and MCP config summaries use the root plus every resolved fragment (`MetagitConfigManager.resolved_files`). Atlas staleness already hashes the files in the repo, so a fragment edit invalidates that fingerprint.
 
 `workspace.projects[].sources[]` is unrelated. It syncs repositories from a provider. It does not compose the manifest.
