@@ -12,7 +12,6 @@ import pytest
 import metagit.core.context  # noqa: F401  (loads before catalog to avoid a partial-init cycle)
 from metagit.core.atlas.models import AtlasConfig
 from metagit.core.atlas.service import AtlasService
-from metagit.core.config.format_service import ConfigFormatService
 from metagit.core.config.include_writer import flatten_manifest, split_manifest
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.patch_service import ConfigPatchService
@@ -156,16 +155,15 @@ def test_single_file_save_stays_byte_stable(tmp_path: Path) -> None:
     manifest.write_text(
         "name: demo\nkind: umbrella\nworkspace:\n  projects:\n    - name: alpha\n      repos: []\n", encoding="utf-8"
     )
+    original = manifest.read_bytes()
     manager = MetagitConfigManager(manifest)
     loaded = manager.load_config()
     assert not isinstance(loaded, Exception)
     assert manager.source_map is None
     assert manager.save_config() is None
-    rendered = ConfigFormatService().render_metagit(loaded, original_text=manifest.read_text(encoding="utf-8"))
-    assert manifest.read_text(encoding="utf-8") == rendered
-    first = manifest.read_bytes()
+    assert manifest.read_bytes() == original
     assert manager.save_config() is None
-    assert manifest.read_bytes() == first
+    assert manifest.read_bytes() == original
     assert "includes:" not in manifest.read_text(encoding="utf-8")
 
 

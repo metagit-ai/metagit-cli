@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+### Changed
+- Saving an existing manifest or fragment now splices only the nodes that changed, so untouched scalars keep their original bytes, comments, and style (no more `|-` rewrapping of unedited descriptions). A no-op save does not write the file, `--no-format` uses the same splice, a save that cannot splice (for example a flow-style mapping around the edited key) returns an error and writes no file, and a new file still uses the full renderer. `metagit fmt` remains the restyle command.
 
 
 ## [0.37.0] - 2026-10-31

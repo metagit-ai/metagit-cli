@@ -215,14 +215,20 @@ class MetagitConfigManager:
                 self._loaded_root = str(save_path.resolve())
                 self._config = config_to_save
                 return None
+            if save_path.is_file():
+                # An existing file keeps its bytes; only the edited nodes are spliced.
+                from metagit.core.config.yaml_save import splice_manifest_file
+
+                spliced = splice_manifest_file(config_to_save, save_path)
+                if isinstance(spliced, Exception):
+                    return spliced
+                if spliced is not None:
+                    save_path.write_text(spliced, encoding="utf-8")
+                return None
             if auto_format:
                 from metagit.core.config.format_service import ConfigFormatService
 
-                original_text = save_path.read_text(encoding="utf-8") if save_path.is_file() else ""
-                formatted = ConfigFormatService().render_metagit(
-                    config_to_save,
-                    original_text=original_text,
-                )
+                formatted = ConfigFormatService().render_metagit(config_to_save, original_text="")
                 save_path.write_text(formatted, encoding="utf-8")
                 return None
 

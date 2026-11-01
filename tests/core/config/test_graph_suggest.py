@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import yaml
+
 from metagit.core.config.graph_suggest import GraphRelationshipSuggestService
 from metagit.core.config.graph_validation import validate_graph_relationships
 from metagit.core.config.manager import MetagitConfigManager
@@ -95,12 +97,13 @@ def _applyable_fixture(tmp_path: Path) -> tuple[MetagitConfig, str, Path]:
             repos.append(repo_payload)
         projects.append({"name": project.name, "repos": repos})
     manifest.write_text(
-        json.dumps(
+        yaml.safe_dump(
             {
                 "name": "workspace",
                 "kind": "application",
                 "workspace": {"projects": projects},
-            }
+            },
+            sort_keys=False,
         ),
         encoding="utf-8",
     )

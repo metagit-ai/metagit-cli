@@ -18,7 +18,7 @@ last_updated: 2026-10-31
 # Split manifest includes
 
 ## Context
-A root `.metagit.yml` may list `includes` of relative paths or globs. `include_loader` merges `workspace.projects`, `graph.nodes`, and `graph.relationships`. `include_writer` partitions a later save back onto those files. Manifests with no `includes` key stay on the original single-file load and save path.
+A root `.metagit.yml` may list `includes` of relative paths or globs. `include_loader` merges `workspace.projects`, `graph.nodes`, and `graph.relationships`. `include_writer` partitions a later save back onto those files. An existing manifest, split or single-file, is spliced: only changed nodes are rewritten. A missing destination file still uses the full renderer. `metagit fmt` is the command that restyles a whole file.
 
 ## Steps
 1. Load with `MetagitConfigManager.load_config`. When the file declares `includes`, the manager sets `source_map` and `resolved_files`. `includes` is stripped from the merged model so `model_dump` matches a single-file manifest.
@@ -30,7 +30,7 @@ A root `.metagit.yml` may list `includes` of relative paths or globs. `include_l
 ## Gotchas
 - Do not call `yaml.safe_load` on the root and treat that as the full manifest. `cli/config_path.py` uses `manifest_watch_paths`.
 - `!include` is not a manifest feature. It was removed from `ExtLoader`.
-- Signature skip on save compares model partitions, not formatter bytes. `metagit fmt` still renders every file.
+- Signature skip on save decides which fragment files are opened. Inside a file that is opened, the splice rewrites only the edited nodes. `metagit fmt` still renders every file it is asked to format.
 - A second reference to the same resolved path is an error, including a diamond. Depth above 3 is an error. The root is depth 0.
 - Older clients reject `includes` because `MetagitConfig` uses `extra = "forbid"`.
 
