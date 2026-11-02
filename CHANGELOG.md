@@ -6,6 +6,7 @@
 - `metagit config flatten` merges the raw YAML of a split manifest (values and comments stay as written). `--normalized` keeps the previous model re-serialization. `metagit.manifest.load_composed` returns that composed mapping.
 - `metagit config diff <A> <B> [--raw|--model] [--json]` lists differing paths (`value`, `added`, `removed`, `type`, `whitespace-only`). Each side may be a manifest path or a git spec such as `HEAD:.metagit.yml`. `config validate --json` includes `content_sha256` of the composed document. `config split` refuses to write when the planned composition would change that document; `--dry-run` reports the check.
 - `config set`, `patch`, and `preview` accept `[name=]` (projects, repos, documentation) and `[id=]` (graph nodes and relationships). `set` also accepts `[n]` and `.n`. A missing or ambiguous selector lists the candidates. Docs: [config-paths.md](docs/reference/config-paths.md).
+- `project repo move -n NAME --to-project TARGET` infers the source project when exactly one project holds the repo. An ambiguous name lists the projects and exits without a traceback. Other `project repo` commands that need a project say so and point at `-p/--project`.
 
 ## [0.37.1] - 2026-11-01
 

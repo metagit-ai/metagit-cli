@@ -34,6 +34,25 @@ from metagit.core.workspace.protection import project_is_protected, repo_is_prot
 from metagit.core.workspace.root_resolver import reserved_project_names
 
 
+def _required_text(value: str | None) -> str | None:
+    """Return a stripped string, or None when the caller omitted it."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _projects_holding_repo(config: MetagitConfig, repo_name: str) -> list[str]:
+    """Project names that contain a repository entry named ``repo_name``."""
+    if not config.workspace:
+        return []
+    found: list[str] = []
+    for project in config.workspace.projects:
+        if find_repo(project, repo_name) is not None:
+            found.append(project.name)
+    return found
+
+
 class WorkspaceLayoutService:
     """Rename/move workspace catalog entries and aligned sync folders."""
 
@@ -210,9 +229,18 @@ class WorkspaceLayoutService:
         force: bool = False,
     ) -> LayoutMutationResult:
         """Rename a repository entry and its sync mount when present."""
-        project_key = project_name.strip()
-        source = from_name.strip()
-        target = to_name.strip()
+        project_key = _required_text(project_name)
+        source = _required_text(from_name)
+        target = _required_text(to_name)
+        if project_key is None or source is None or target is None:
+            return self._error(
+                "rename",
+                "repo",
+                project_key or "",
+                repo_name=source,
+                kind="project_required",
+                message="No project selected. Pass -p/--project.",
+            )
         err = validate_layout_name(source, label="from_name") or validate_layout_name(target, label="to_name")
         if err:
             return self._error(
@@ -394,7 +422,7 @@ class WorkspaceLayoutService:
         workspace_path: str,
         *,
         repo_name: str,
-        from_project: str,
+        from_project: str | None,
         to_project: str,
         dedupe: Optional[WorkspaceDedupeConfig] = None,
         dry_run: bool = False,
@@ -402,9 +430,43 @@ class WorkspaceLayoutService:
         force: bool = False,
     ) -> LayoutMutationResult:
         """Move a repository entry from one project to another."""
-        source_project_name = from_project.strip()
-        target_project_name = to_project.strip()
-        repo_key = repo_name.strip()
+        repo_key = _required_text(repo_name)
+        target_project_name = _required_text(to_project)
+        source_project_name = _required_text(from_project)
+        if repo_key is None or target_project_name is None:
+            return self._error(
+                "move",
+                "repo",
+                source_project_name or "",
+                repo_name=repo_key,
+                kind="invalid_name",
+                message="repo name and --to-project are required",
+            )
+        if source_project_name is None:
+            holders = _projects_holding_repo(config, repo_key)
+            if len(holders) == 1:
+                source_project_name = holders[0]
+            elif not holders:
+                return self._error(
+                    "move",
+                    "repo",
+                    "",
+                    repo_name=repo_key,
+                    kind="not_found",
+                    message=f"repo '{repo_key}' is not in any project. Pass -p/--project.",
+                )
+            else:
+                listed = ", ".join(holders)
+                return self._error(
+                    "move",
+                    "repo",
+                    "",
+                    repo_name=repo_key,
+                    kind="ambiguous_project",
+                    message=(
+                        f"repo '{repo_key}' is in more than one project: {listed}. Pass -p/--project."
+                    ),
+                )
         if source_project_name == "local" or target_project_name == "local":
             return self._error(
                 "move",
