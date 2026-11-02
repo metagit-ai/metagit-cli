@@ -33,6 +33,7 @@ A root `.metagit.yml` may list `includes` of relative paths or globs. `include_l
 - Signature skip on save decides which fragment files are opened. Inside a file that is opened, the splice rewrites only the edited nodes. `metagit fmt` still renders every file it is asked to format.
 - A second reference to the same resolved path is an error, including a diamond. Depth above 3 is an error. The root is depth 0.
 - Older clients reject `includes` because `MetagitConfig` uses `extra = "forbid"`.
+- Split copies each list item's original YAML and only reindents it. `fmt` must leave a long single-line scalar as one line. An inner newline is a `value` diff, not `whitespace-only`.
 
 ## Verify
 - [ ] `tests/core/config/test_include_loader.py` and `tests/core/config/test_include_roundtrip.py` pass.

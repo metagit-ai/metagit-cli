@@ -280,6 +280,10 @@ def _source_represents_payload(source_value: Any, payload_value: Any) -> bool:
     if isinstance(payload_value, str):
         if str(source_value) != payload_value:
             return False
+        # A long single-line scalar is already formatted. Turning it into a
+        # literal block inserts newlines into the value.
+        if "\n" not in payload_value:
+            return True
         style = getattr(source_value, "style", None)
         if style in {">", "|", '"', "'"}:
             return True
@@ -304,6 +308,8 @@ def _plain(value: Any) -> Any:
 
 def _normalize_value(value: Any) -> Any:
     if isinstance(value, str):
+        if "\n" not in value:
+            return value
         formatted = format_yaml_string(value)
         if should_use_literal_block(value):
             return LiteralScalarString(formatted)

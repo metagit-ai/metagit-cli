@@ -14,6 +14,7 @@ from metagit.cli.json_output import (
     exit_on_catalog_mutation,
     exit_on_layout_mutation,
 )
+from metagit.cli.manifest_flags import LazyManifestGroup, help_in_pending_args
 from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
@@ -86,7 +87,7 @@ def _layout_ctx(ctx: click.Context) -> tuple[MetagitConfig, str, str, AppConfig]
     return local_config, config_path, workspace_root, app_config
 
 
-@click.group(name="workspace", invoke_without_command=True)
+@click.group(name="workspace", invoke_without_command=True, cls=LazyManifestGroup)
 @click.option(
     "--config",
     "config_path",
@@ -100,6 +101,8 @@ def workspace(ctx: click.Context, config_path: str) -> None:
     logger = ctx.obj["logger"]
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
+        return
+    if help_in_pending_args(ctx):
         return
 
     ctx.obj["config_path"] = config_path

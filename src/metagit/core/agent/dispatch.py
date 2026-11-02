@@ -396,7 +396,7 @@ class AgentDispatchService:
         project: str | None,
         repo: str | None,
     ) -> dict[str, object]:
-        if self._config is None or not project or not repo:
+        if self._config is None or not project:
             return {
                 "required_profile_skills": [],
                 "missing_profile_skills": [],
@@ -406,7 +406,11 @@ class AgentDispatchService:
             config=self._config,
             definition_root=self._manifest_root,
         )
-        effective = profile_service.effective_profile(project_name=project, repo_name=repo)
+        effective = (
+            profile_service.effective_profile(project_name=project, repo_name=repo)
+            if repo
+            else profile_service.effective_profile_for_project(project_name=project)
+        )
         if effective is None or not effective.skills:
             return {
                 "required_profile_skills": [],
@@ -428,9 +432,10 @@ class AgentDispatchService:
             if skill in bundled:
                 required.append(skill)
         missing = list(required)
-        apply_command = (
-            f"metagit agent apply --vendor {vendor} --project {project} --repo {repo} --root ." if missing else None
-        )
+        apply_command = None
+        if missing:
+            repo_arg = f" --repo {repo}" if repo else ""
+            apply_command = f"metagit agent apply --vendor {vendor} --project {project}{repo_arg} --root ."
         return {
             "required_profile_skills": required,
             "missing_profile_skills": missing,

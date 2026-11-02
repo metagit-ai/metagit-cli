@@ -65,6 +65,59 @@ def _workspace(tmp_path: Path) -> tuple[Path, Path, Path]:
     return feature, dirty, tmp_path / ".metagit.yml"
 
 
+def _checkout_with_worktree(root: Path) -> Path:
+    repo = root / "billing" / "api"
+    repo.mkdir(parents=True)
+    _git(repo, "init", "-b", "main")
+    _git(repo, "-c", "user.email=test@example.com", "-c", "user.name=Test", "commit", "--allow-empty", "-m", "init")
+    linked = root / "billing" / "api-feature"
+    _git(repo, "worktree", "add", "-b", "feature", str(linked))
+    return linked
+
+
+def test_discover_uses_workspace_path_env(tmp_path: Path, monkeypatch) -> None:
+    manifest_dir = tmp_path / "manifest"
+    workspace = tmp_path / "sync-root"
+    manifest_dir.mkdir()
+    linked = _checkout_with_worktree(workspace)
+    manifest = manifest_dir / ".metagit.yml"
+    manifest.write_text(
+        "name: umbrella\nkind: umbrella\nworkspace:\n  projects:\n    - name: billing\n      repos:\n        - name: api\n          url: https://github.com/acme/api.git\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("METAGIT_WORKSPACE_PATH", str(workspace))
+    runner = CliRunner()
+    listed = runner.invoke(
+        cli,
+        ["--config", DEFAULT_CONFIG, "worktree", "list", "--discover", "-c", str(manifest), "--json"],
+    )
+    assert listed.exit_code == 0, listed.output
+    payload = json.loads(listed.output)
+    paths = {Path(item["path"]).resolve() for item in payload["worktrees"]}
+    assert linked.resolve() in paths
+
+
+def test_discover_uses_default_metagit_workspace(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("METAGIT_WORKSPACE_PATH", raising=False)
+    manifest_dir = tmp_path / "manifest"
+    manifest_dir.mkdir()
+    linked = _checkout_with_worktree(manifest_dir / ".metagit")
+    manifest = manifest_dir / ".metagit.yml"
+    manifest.write_text(
+        "name: umbrella\nkind: umbrella\nworkspace:\n  projects:\n    - name: billing\n      repos:\n        - name: api\n          url: https://github.com/acme/api.git\n",
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+    listed = runner.invoke(
+        cli,
+        ["--config", DEFAULT_CONFIG, "worktree", "list", "--discover", "-c", str(manifest), "--json"],
+    )
+    assert listed.exit_code == 0, listed.output
+    payload = json.loads(listed.output)
+    paths = {Path(item["path"]).resolve() for item in payload["worktrees"]}
+    assert linked.resolve() in paths
+
+
 def test_discover_lists_plain_worktrees_and_gc_skips_dirty(tmp_path: Path, monkeypatch) -> None:
     feature, dirty, manifest = _workspace(tmp_path)
     heads = {"feature": _sha(feature), "dirty": _sha(dirty)}

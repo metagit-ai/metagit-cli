@@ -34,12 +34,14 @@ from metagit.core.config.models import MetagitConfig
 from metagit.core.config.schema_urls import (
     METAGIT_CONFIG_SCHEMA_URL,
     METAGIT_FRAGMENT_SCHEMA_URL,
+    schema_language_server_comment,
 )
 from metagit.core.config.yaml_edit_diff import diff_payloads
-from metagit.core.config.yaml_edit_types import YamlEdit
+from metagit.core.config.yaml_edit_types import ItemRef, YamlEdit
 from metagit.core.config.yaml_order import order_payload
 from metagit.core.config.yaml_roundtrip import build_roundtrip_yaml, format_yaml_document
 from metagit.core.config.yaml_save import splice_files
+from metagit.core.config.yaml_splice import _reindent_item, list_item_text
 from metagit.core.utils.yaml_class import yaml as plain_yaml
 
 _PROJECT_PREFIX = "workspace.projects["
@@ -315,19 +317,34 @@ def _split_manifest_unchecked(
             target_dir.resolve().relative_to(root.parent.resolve())
         except ValueError:
             return ManifestComposeError(f"split directory escapes the manifest root: {directory}")
+        original_text = root.read_text(encoding="utf-8")
         yaml = build_roundtrip_yaml()
-        document = yaml.load(root.read_text(encoding="utf-8"))
+        document = yaml.load(original_text)
         if not isinstance(document, CommentedMap):
             return ManifestComposeError("manifest must be a YAML mapping")
         planned: list[Path] = []
         changed = False
         if by in {"project", "all"}:
-            outcome = _split_projects(document, root=root, directory=target_dir, dry_run=dry_run, planned=planned)
+            outcome = _split_projects(
+                document,
+                root=root,
+                directory=target_dir,
+                dry_run=dry_run,
+                planned=planned,
+                source_text=original_text,
+            )
             if isinstance(outcome, Exception):
                 return outcome
             changed = changed or outcome
         if by in {"graph", "all"}:
-            outcome = _split_graph(document, root=root, directory=target_dir, dry_run=dry_run, planned=planned)
+            outcome = _split_graph(
+                document,
+                root=root,
+                directory=target_dir,
+                dry_run=dry_run,
+                planned=planned,
+                source_text=original_text,
+            )
             if isinstance(outcome, Exception):
                 return outcome
             changed = changed or outcome
@@ -697,13 +714,14 @@ def _split_projects(
     directory: Path,
     dry_run: bool,
     planned: list[Path],
+    source_text: str,
 ) -> bool | Exception:
     workspace = document.get("workspace")
     projects = workspace.get("projects") if isinstance(workspace, CommentedMap) else None
     if not isinstance(projects, CommentedSeq) or len(projects) == 0:
         return False
     slugs: dict[str, str] = {}
-    destinations: list[tuple[Any, Path]] = []
+    destinations: list[tuple[Any, Path, tuple[str, str, ItemRef]]] = []
     for item in projects:
         if not isinstance(item, CommentedMap) or item.get("name") is None:
             return ManifestComposeError("cannot split a project that has no name")
@@ -725,15 +743,21 @@ def _split_projects(
             return ManifestComposeError(
                 f"fragment collision for project {name!r}: {destination.name} already contains {existing[0]!r}"
             )
-        destinations.append((item, destination))
+        destinations.append((item, destination, ("workspace", "projects", ItemRef("name", name))))
         planned.append(destination)
     if dry_run:
         return False
     changed = False
-    for item, destination in destinations:
+    for item, destination, item_path in destinations:
         if _fragment_project_names(destination) == [str(item.get("name"))]:
             continue
-        failure = _write_list_fragment(destination, section="workspace", key="projects", items=[copy.deepcopy(item)])
+        failure = _write_preserved_fragment(
+            destination,
+            source_text=source_text,
+            section="workspace",
+            key="projects",
+            item_paths=[item_path],
+        )
         if failure is not None:
             return failure
         changed = True
@@ -741,7 +765,9 @@ def _split_projects(
     if len(workspace) == 0:
         document.pop("workspace")
     relative = directory.resolve().relative_to(root.parent.resolve()).as_posix()
-    _append_includes(document, [f"{relative}/projects/{destination.name}" for _item, destination in destinations])
+    _append_includes(
+        document, [f"{relative}/projects/{destination.name}" for _item, destination, _path in destinations]
+    )
     return True if changed or "includes" in document else changed
 
 
@@ -752,6 +778,7 @@ def _split_graph(
     directory: Path,
     dry_run: bool,
     planned: list[Path],
+    source_text: str,
 ) -> bool | Exception:
     graph = document.get("graph")
     if not isinstance(graph, CommentedMap):
@@ -772,9 +799,19 @@ def _split_graph(
     relative_paths: list[str] = []
     relative_dir = directory.resolve().relative_to(root.parent.resolve()).as_posix()
     for key, destination in present:
-        items = [copy.deepcopy(item) for item in graph.get(key)]
+        kind = "node" if key == "nodes" else "relationship"
+        identity = node_key if key == "nodes" else relationship_key
+        item_paths = [
+            ("graph", key, ItemRef(kind, identity(item))) for item in graph.get(key) if isinstance(item, CommentedMap)
+        ]
         if not destination.is_file():
-            failure = _write_list_fragment(destination, section="graph", key=key, items=items)
+            failure = _write_preserved_fragment(
+                destination,
+                source_text=source_text,
+                section="graph",
+                key=key,
+                item_paths=item_paths,
+            )
             if failure is not None:
                 return failure
         graph.pop(key)
@@ -805,20 +842,29 @@ def _fragment_project_names(path: Path) -> list[str] | Exception:
     ]
 
 
-def _write_list_fragment(path: Path, *, section: str, key: str, items: list[Any]) -> Exception | None:
-    try:
-        sequence = CommentedSeq()
-        for item in items:
-            sequence.append(item)
-        body_section = CommentedMap()
-        body_section[key] = sequence
-        body = CommentedMap()
-        body[section] = body_section
-        from metagit.core.config.schema_urls import schema_language_server_directive
+def _write_preserved_fragment(
+    path: Path,
+    *,
+    source_text: str,
+    section: str,
+    key: str,
+    item_paths: list[tuple[str, str, ItemRef]],
+) -> Exception | None:
+    """Write one fragment by reindenting the original list-item text.
 
-        body.yaml_set_start_comment(f"{schema_language_server_directive(METAGIT_FRAGMENT_SCHEMA_URL)}\n")
+    Scalar style and text stay as they were in the source. Only the indent changes.
+    """
+    try:
+        blocks: list[str] = []
+        for item_path in item_paths:
+            raw = list_item_text(source_text, item_path)
+            if isinstance(raw, Exception):
+                return raw
+            blocks.append("\n".join(_reindent_item(raw, 4)))
+        header = schema_language_server_comment(METAGIT_FRAGMENT_SCHEMA_URL)
+        text = f"{header}\n{section}:\n  {key}:\n" + "\n".join(blocks) + "\n"
         path.parent.mkdir(parents=True, exist_ok=True)
-        _dump_roundtrip(build_roundtrip_yaml(), body, path)
+        path.write_text(text, encoding="utf-8")
         return None
     except Exception as exc:
         return exc

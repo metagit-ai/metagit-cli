@@ -88,6 +88,13 @@ class AgentProfileService:
             component_name=component_name,
         )
 
+    def effective_profile_for_project(self, *, project_name: str) -> Optional[EffectiveAgentProfile]:
+        """Return the workspace and project profile when no repository is selected."""
+        project = find_project(self._config, project_name)
+        if project is None:
+            return None
+        return self._merge_for_project(project=project)
+
     def list_validation_issues(self) -> list[AgentProfileValidationIssue]:
         """Validate every declared agent_profile reference against bundled catalogs."""
         issues: list[AgentProfileValidationIssue] = []
@@ -302,6 +309,32 @@ class AgentProfileService:
             destination_root.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, dest)
         return details, applied
+
+    def _merge_for_project(self, *, project: WorkspaceProject) -> Optional[EffectiveAgentProfile]:
+        layers: list[AgentProfileLayer] = []
+        merged: Optional[AgentProfile] = None
+        if self._config.workspace and self._config.workspace.agent_profile is not None:
+            workspace_profile = self._config.workspace.agent_profile
+            layers.append(AgentProfileLayer(scope="workspace", profile=workspace_profile))
+            merged = _merge_profiles(merged, workspace_profile)
+        if project.agent_profile is not None:
+            layers.append(AgentProfileLayer(scope="project", profile=project.agent_profile))
+            merged = _merge_profiles(merged, project.agent_profile)
+        if merged is None:
+            tier = project.tags.get("agent_tier")
+            if not tier:
+                return None
+            merged = AgentProfile(tier=tier, inherit=False)
+        return EffectiveAgentProfile(
+            project_name=project.name,
+            repo_name="",
+            tier=merged.tier or project.tags.get("agent_tier"),
+            skills=list(merged.skills),
+            mcp=list(merged.mcp),
+            rules=list(merged.rules),
+            vendors=list(merged.vendors),
+            layers=layers,
+        )
 
     def _merge_for_repo(
         self,

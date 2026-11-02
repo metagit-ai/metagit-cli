@@ -13,6 +13,7 @@ from metagit.cli.json_output import (
     exit_on_catalog_mutation,
     exit_on_layout_mutation,
 )
+from metagit.cli.manifest_flags import LazyManifestGroup, help_in_pending_args
 from metagit.cli.shell_completion import complete_repos
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.models import MetagitConfig
@@ -33,14 +34,14 @@ from metagit.core.workspace.layout_service import WorkspaceLayoutService
 from metagit.core.workspace.root_resolver import resolve_definition_root, resolve_workspace_root
 
 
-@click.group(name="repo")
+@click.group(name="repo", cls=LazyManifestGroup)
 @click.pass_context
 def repo(ctx: click.Context) -> None:
     """Repository subcommands"""
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         return
-    if ctx.invoked_subcommand == "move":
+    if help_in_pending_args(ctx) or ctx.invoked_subcommand == "move":
         return
     project = ctx.obj.get("project")
     if isinstance(project, str) and project.strip():

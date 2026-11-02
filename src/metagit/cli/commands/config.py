@@ -233,7 +233,11 @@ def config_validate(
         component_issues = validate_components(result, definition_root=definition_root)
         from metagit.core.config.duplicate_repos import find_duplicate_repo_warnings
 
-        repo_warnings = find_duplicate_repo_warnings(result, config_manager.source_map)
+        repo_warnings = find_duplicate_repo_warnings(
+            result,
+            config_manager.source_map,
+            fallback_file=str(target_path),
+        )
     except ManifestComposeError as exc:
         if as_json:
             emit_json(_validate_payload(ok=False, errors=exc.errors, sources=exc.sources, path=target_path))

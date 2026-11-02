@@ -286,7 +286,7 @@ def agent_preview(
     "--project",
     "-p",
     default=None,
-    help="Workspace project name for repo- or project-scoped dispatch.",
+    help="Workspace project name. With -p and no -n, local_skills come from the workspace and project profiles.",
 )
 @click.option(
     "--repo",
