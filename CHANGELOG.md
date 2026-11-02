@@ -13,6 +13,7 @@
 - `config validate` warns when a repository URL is listed in more than one project, when a graph node names a project repository, and when a relationship reaches that repository by `identity` instead of `project` and `repo`. `--json` includes the source fragment and path. `--strict` treats the warnings as errors.
 - `agent_profile.skill_sources` lists directories, relative to the manifest, that contain `<name>/SKILL.md`. Those skills validate and show up on `agent dispatch-plan --json` as `local_skills` with `source_path`. They are not copied into target repos. An unknown skill lists the directories that were searched. `agent profile show` and `agent dispatch-plan` accept a manifest file as `--root` and walk parent directories for `.metagit.yml`. A manifest load failure is reported instead of a later dispatch error.
 - Manifest-reading commands accept `-c` / `--config` and the `METAGIT_CONFIG` environment variable. `--config-path`, `--definition`, and `--metagit-path` remain as hidden aliases that print a deprecation notice. Unknown commands and options suggest a close match. See `docs/reference/manifest-path.md`.
+- `repo list --all --json`, `graph nodes --json`, and `graph relationships --json` read the composed manifest. Repository records use `project`, `name`, `url`, `kind`, and `source`. See `docs/reference/composed-manifest.md`.
 
 ## [0.37.1] - 2026-11-01
 

@@ -9,6 +9,7 @@ import click
 
 from metagit.cli.json_output import emit_json
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.config.composed_view import list_repos
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.repo.materialize import RepoMaterializeService
 from metagit.core.workspace.root_resolver import resolve_workspace_root
@@ -20,6 +21,27 @@ def repo_group(ctx: click.Context) -> None:
     """Repository operations that are not bound to an already materialized checkout."""
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
+
+
+@repo_group.command("list")
+@click.option("--all", "list_all", is_flag=True, help="List every repository in the composed manifest")
+@click.option("--config", "-c", "config_path", default=".metagit.yml", help="Path to .metagit.yml")
+@click.option("--json", "as_json", is_flag=True, help="Print JSON records")
+@click.pass_context
+def repo_list(ctx: click.Context, list_all: bool, config_path: str, as_json: bool) -> None:
+    """List repositories from the composed manifest."""
+    _ = ctx
+    if not list_all:
+        raise click.ClickException("Pass --all to list every repository. Example: metagit repo list --all --json")
+    try:
+        records = list_repos(Path(config_path))
+    except Exception as exc:
+        raise click.ClickException(str(exc).splitlines()[0]) from exc
+    if as_json:
+        emit_json(records)
+        return
+    for record in records:
+        click.echo(f"{record['project']}/{record['name']} {record.get('url') or ''}".rstrip())
 
 
 @repo_group.command("materialize")
