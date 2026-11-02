@@ -10,6 +10,7 @@
 - `config split --glob` writes `includes` as `.metagit.d/projects/*.yml` and `.metagit.d/graph/*.yml`, and warns when filename order would reorder projects. `project add` on that layout creates the new fragment and leaves the root file unchanged.
 - `config split` writes fragments that already pass `metagit fmt -t metagit --check`. `fmt` keeps aliases, explicit defaults, and scalar text when the parsed value is unchanged, and no longer injects relationship `status` or `provenance` that were not in the file.
 - `config patch --json` omits the schema `tree` unless `--tree` is passed.
+- `config validate` warns when a repository URL is listed in more than one project, when a graph node names a project repository, and when a relationship reaches that repository by `identity` instead of `project` and `repo`. `--json` includes the source fragment and path. `--strict` treats the warnings as errors.
 
 ## [0.37.1] - 2026-11-01
 

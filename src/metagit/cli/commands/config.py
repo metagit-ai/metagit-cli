@@ -199,8 +199,19 @@ def config_create(
     default=None,
 )
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print a JSON report including fragment sources")
+@click.option(
+    "--strict",
+    is_flag=True,
+    default=False,
+    help="Treat duplicate-repo warnings as errors",
+)
 @click.pass_context
-def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as_json: bool = False) -> None:
+def config_validate(
+    ctx: click.Context,
+    config_path: Union[str, None] = None,
+    as_json: bool = False,
+    strict: bool = False,
+) -> None:
     """Validate metagit configuration"""
     from metagit.core.config.include_loader import ManifestComposeError
 
@@ -220,6 +231,9 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
         ).list_validation_issues()
         graph_issues = validate_graph_relationships(result)
         component_issues = validate_components(result, definition_root=definition_root)
+        from metagit.core.config.duplicate_repos import find_duplicate_repo_warnings
+
+        repo_warnings = find_duplicate_repo_warnings(result, config_manager.source_map)
     except ManifestComposeError as exc:
         if as_json:
             emit_json(_validate_payload(ok=False, errors=exc.errors, sources=exc.sources, path=target_path))
@@ -259,12 +273,21 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
         errors.append({"message": issue, "file": None, "line": None})
         if not as_json:
             logger.error(issue)
+    if strict:
+        errors.extend(repo_warnings)
+    for item in repo_warnings:
+        if as_json:
+            continue
+        click.echo(f"warning: {item['message']}", err=True)
+        for location in item.get("locations", []):
+            click.echo(f"  {location.get('file')}: {location.get('path')}", err=True)
     if errors:
         if as_json:
             emit_json(
                 _validate_payload(
                     ok=False,
                     errors=errors,
+                    warnings=repo_warnings,
                     sources=_manifest_sources(config_manager),
                     path=target_path,
                 )
@@ -276,6 +299,7 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
             _validate_payload(
                 ok=True,
                 errors=[],
+                warnings=repo_warnings,
                 sources=_manifest_sources(config_manager),
                 path=target_path,
             )
@@ -290,6 +314,7 @@ def _validate_payload(
     errors: list[dict[str, object]],
     sources: list[dict[str, str]],
     path: str,
+    warnings: list[dict[str, object]] | None = None,
 ) -> dict[str, object]:
     """JSON body for ``config validate``, including the composed content hash."""
     from metagit.core.config.manifest_diff import content_sha256
@@ -299,7 +324,13 @@ def _validate_payload(
         digest = content_sha256(path)
     except Exception:
         digest = None
-    return {"ok": ok, "errors": errors, "sources": sources, "content_sha256": digest}
+    return {
+        "ok": ok,
+        "errors": errors,
+        "warnings": warnings or [],
+        "sources": sources,
+        "content_sha256": digest,
+    }
 
 
 def _manifest_sources(manager: MetagitConfigManager) -> list[dict[str, str]]:
