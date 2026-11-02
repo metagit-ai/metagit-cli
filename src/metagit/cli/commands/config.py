@@ -761,7 +761,7 @@ def config_patch(
         operations,
         save=save,
         auto_format=not no_format,
-        include_tree=include_tree or as_json,
+        include_tree=include_tree,
     )
     if isinstance(result, Exception):
         logger.error(f"Failed to patch config: {result}")

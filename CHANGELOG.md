@@ -9,6 +9,7 @@
 - `project repo move -n NAME --to-project TARGET` infers the source project when exactly one project holds the repo. An ambiguous name lists the projects and exits without a traceback. Other `project repo` commands that need a project say so and point at `-p/--project`.
 - `config split --glob` writes `includes` as `.metagit.d/projects/*.yml` and `.metagit.d/graph/*.yml`, and warns when filename order would reorder projects. `project add` on that layout creates the new fragment and leaves the root file unchanged.
 - `config split` writes fragments that already pass `metagit fmt -t metagit --check`. `fmt` keeps aliases, explicit defaults, and scalar text when the parsed value is unchanged, and no longer injects relationship `status` or `provenance` that were not in the file.
+- `config patch --json` omits the schema `tree` unless `--tree` is passed.
 
 ## [0.37.1] - 2026-11-01
 

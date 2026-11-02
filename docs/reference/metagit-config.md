@@ -67,6 +67,7 @@ metagit config patch --file ops.json --save
 ```
 
 `ops.json` may be `{"operations": [...]}` or a bare array of operation objects.
+`metagit config patch --json` prints the patch result without a `tree` key. Pass `--tree` to include the updated schema tree.
 
 Do not deploy the generated exemplar verbatim; copy sections you need and replace placeholders.
 
