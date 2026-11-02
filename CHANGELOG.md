@@ -4,6 +4,7 @@
 
 ### Fixed
 - `config split` keeps each scalar's original style and text when it moves a node into a fragment, and `fmt` no longer turns a long single-line scalar into a `|-` block. An inner newline is a `value` difference in `config diff`; `whitespace-only` is only leading or trailing whitespace.
+- `worktree list --discover` and `worktree gc --merged` look for synced checkouts under the workspace path (`METAGIT_WORKSPACE_PATH` or app config, default `./.metagit` beside the manifest). An explicit repo `path` is used when one is set.
 
 ## [0.38.0] - 2026-11-02
 

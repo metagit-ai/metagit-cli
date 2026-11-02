@@ -1,6 +1,6 @@
 # Discovering worktrees
 
-`metagit worktree list --discover` walks synced repositories in the composed manifest and reports every git worktree, including one created with `git worktree add`. Each record has the owning repo, branch, whether the tree is dirty or clean, how many commits it is ahead of its upstream, and `primary` for the repository's main checkout.
+`metagit worktree list --discover` walks synced repositories in the composed manifest and reports every git worktree, including one created with `git worktree add`. A repo with `path` is read from that path. Otherwise the checkout is `<workspace>/<project>/<repo>`, where the workspace path is `METAGIT_WORKSPACE_PATH` or the app config path and defaults to `./.metagit` next to the manifest. Each record has the owning repo, branch, whether the tree is dirty or clean, how many commits it is ahead of its upstream, and `primary` for the repository's main checkout.
 
 ```bash
 metagit worktree list --discover -c .metagit.yml

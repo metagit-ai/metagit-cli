@@ -9,6 +9,8 @@ import subprocess
 from pathlib import Path
 from typing import Any, Callable
 
+from metagit.core.workspace.root_resolver import resolve_sync_root
+from metagit.core.workspace.workspace_dedupe import project_mount_path
 from metagit.manifest import load_composed
 
 PullRequestLookup = Callable[[str, str, str], dict[str, str] | None]
@@ -19,10 +21,11 @@ def discover_worktrees(
     *,
     pr_lookup: PullRequestLookup | None = None,
     include_pr: bool = False,
+    workspace_path: str | None = None,
 ) -> list[dict[str, Any]]:
     """Return every git worktree under synced repositories, including the primary checkout."""
     records: list[dict[str, Any]] = []
-    for repo_name, checkout in _synced_checkouts(manifest):
+    for repo_name, checkout in _synced_checkouts(manifest, workspace_path=workspace_path):
         for worktree in _git_worktrees(checkout):
             path = Path(worktree["path"])
             branch = worktree.get("branch")
@@ -48,6 +51,7 @@ def gc_merged_worktrees(
     *,
     dry_run: bool,
     pr_lookup: PullRequestLookup | None = None,
+    workspace_path: str | None = None,
 ) -> dict[str, Any]:
     """Remove clean worktrees whose HEAD is the head of a merged or closed pull request.
 
@@ -57,7 +61,12 @@ def gc_merged_worktrees(
     lookup = pr_lookup or default_pr_lookup
     remove: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
-    for record in discover_worktrees(manifest, pr_lookup=lookup, include_pr=True):
+    for record in discover_worktrees(
+        manifest,
+        pr_lookup=lookup,
+        include_pr=True,
+        workspace_path=workspace_path,
+    ):
         reason = _skip_reason(record)
         if reason is not None:
             skipped.append({"path": record["path"], "reason": reason})
@@ -102,8 +111,15 @@ def default_pr_lookup(repo_name: str, remote_url: str, branch: str) -> dict[str,
     return {"state": state, "head_sha": sha}
 
 
-def _synced_checkouts(manifest: Path) -> list[tuple[str, Path]]:
+def _synced_checkouts(manifest: Path, *, workspace_path: str | None = None) -> list[tuple[str, Path]]:
+    """Return synced checkouts at the same paths ``project sync`` clones into.
+
+    An explicit repo ``path`` is that checkout. Otherwise the repo lives under
+    the workspace path (``METAGIT_WORKSPACE_PATH`` or app config, default
+    ``./.metagit`` relative to the manifest).
+    """
     root = manifest.expanduser().resolve().parent
+    sync_root = Path(_sync_root(root, workspace_path))
     data = load_composed(manifest)
     workspace = data.get("workspace") if isinstance(data.get("workspace"), dict) else {}
     found: list[tuple[str, Path]] = []
@@ -113,16 +129,37 @@ def _synced_checkouts(manifest: Path) -> list[tuple[str, Path]]:
         for repo in project.get("repos") or []:
             if not isinstance(repo, dict) or not repo.get("name") or repo.get("sync") is False:
                 continue
-            raw = repo.get("path")
-            if raw:
-                candidate = Path(str(raw)).expanduser()
-                if not candidate.is_absolute():
-                    candidate = root / candidate
-            else:
-                candidate = root / str(project["name"]) / str(repo["name"])
-            if (candidate / ".git").is_dir():
+            candidate = _checkout_path(
+                root,
+                sync_root,
+                project_name=str(project["name"]),
+                repo_name=str(repo["name"]),
+                configured_path=str(repo["path"]) if repo.get("path") else None,
+            )
+            if (candidate / ".git").exists():
                 found.append((f"{project['name']}/{repo['name']}", candidate.resolve()))
     return found
+
+
+def _sync_root(definition_root: Path, workspace_path: str | None) -> str:
+    configured = workspace_path or os.environ.get("METAGIT_WORKSPACE_PATH") or "./.metagit"
+    return resolve_sync_root(str(definition_root), configured)
+
+
+def _checkout_path(
+    definition_root: Path,
+    sync_root: Path,
+    *,
+    project_name: str,
+    repo_name: str,
+    configured_path: str | None,
+) -> Path:
+    if configured_path:
+        candidate = Path(configured_path).expanduser()
+        if candidate.is_absolute():
+            return candidate
+        return definition_root / candidate
+    return project_mount_path(sync_root, project_name, repo_name)
 
 
 def _git_worktrees(checkout: Path) -> list[dict[str, str]]:

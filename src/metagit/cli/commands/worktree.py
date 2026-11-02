@@ -17,6 +17,14 @@ from metagit.core.workspace.worktree_discover import (
 )
 
 
+def _workspace_path(ctx: click.Context) -> str | None:
+    """Workspace path from the loaded app config, including ``METAGIT_WORKSPACE_PATH``."""
+    config = ctx.obj.get("config") if isinstance(ctx.obj, dict) else None
+    workspace = getattr(config, "workspace", None)
+    path = getattr(workspace, "path", None)
+    return str(path) if path else None
+
+
 @click.group(name="worktree")
 @click.pass_context
 def worktree_group(ctx: click.Context) -> None:
@@ -184,7 +192,12 @@ def worktree_gc(
     """Garbage-collect worktrees with expired leases or missing paths."""
     if merged:
         try:
-            result = gc_merged_worktrees(Path(definition_path), dry_run=dry_run, pr_lookup=default_pr_lookup)
+            result = gc_merged_worktrees(
+                Path(definition_path),
+                dry_run=dry_run,
+                pr_lookup=default_pr_lookup,
+                workspace_path=_workspace_path(ctx),
+            )
         except Exception as exc:
             raise click.ClickException(str(exc).splitlines()[0]) from exc
         if as_json:
@@ -278,6 +291,7 @@ def worktree_list(
                 Path(definition_path),
                 pr_lookup=default_pr_lookup if include_pr else None,
                 include_pr=include_pr,
+                workspace_path=_workspace_path(ctx),
             )
         except Exception as exc:
             raise click.ClickException(str(exc).splitlines()[0]) from exc
