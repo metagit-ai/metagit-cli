@@ -232,12 +232,24 @@ class SchemaTreeService:
             return True
         return bool(field_info.is_required() and value is not None)
 
+    def _bind_path(self, data: Any, path: str) -> str:
+        """Rewrite ``[name=]`` and ``[id=]`` selectors to a single ``[index]``."""
+        if "[name=" not in path and "[id=" not in path:
+            return path
+        from metagit.core.config.path_selector import PathSelectorError, format_segments, resolve_segments
+
+        try:
+            return format_segments(resolve_segments(data, path))
+        except PathSelectorError as exc:
+            raise KeyError(str(exc)) from exc
+
     def _disable_at_path(
         self,
         data: dict[str, Any],
         model_class: type[BaseModel],
         path: str,
     ) -> None:
+        path = self._bind_path(data, path)
         segments = self._parse_path(path)
         parent, model_at_parent, leaf = self._navigate_parent(
             data,
@@ -260,6 +272,7 @@ class SchemaTreeService:
         model_class: type[BaseModel],
         path: str,
     ) -> None:
+        path = self._bind_path(data, path)
         segments = self._parse_path(path)
         parent, model_at_parent, leaf = self._navigate_parent(
             data,
@@ -276,6 +289,7 @@ class SchemaTreeService:
         model_class: type[BaseModel],
         path: str,
     ) -> None:
+        path = self._bind_path(data, path)
         segments = self._parse_path(path)
         parent, model_at_parent, leaf = self._navigate_parent(
             data,
@@ -300,6 +314,7 @@ class SchemaTreeService:
         model_class: type[BaseModel],
         path: str,
     ) -> None:
+        path = self._bind_path(data, path)
         segments = self._parse_path(path)
         if not segments or not isinstance(segments[-1], int):
             raise KeyError(f"{path} must end with a list index")
@@ -389,6 +404,7 @@ class SchemaTreeService:
         return parent, current_class, leaf
 
     def _set_at_path(self, data: dict[str, Any], path: str, value: Any) -> None:
+        path = self._bind_path(data, path)
         segments = self._parse_path(path)
         parent: Any = data
         index = 0

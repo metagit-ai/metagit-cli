@@ -57,6 +57,8 @@ metagit config split -c .metagit.yml --by all --dir .metagit.d
 # Compare two manifests, or a file with a git spec. --model compares the
 # loaded model; the default --raw compares composed YAML.
 metagit config diff .metagit.yml HEAD:.metagit.yml --raw
+
+`config set` / `patch` / `preview` paths accept `[name=]` and `[id=]`. See [config-paths.md](config-paths.md).
 metagit config validate -c .metagit.yml --json   # includes content_sha256
 
 # Merged view (default) vs the root file only

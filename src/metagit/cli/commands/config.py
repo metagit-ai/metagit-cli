@@ -478,16 +478,13 @@ def config_set(ctx: click.Context, key: str, value: str) -> None:
         if isinstance(current_config, Exception):
             raise current_config
 
-        # Helper to set nested attributes
-        def set_nested_attr(obj, attr_path, val):
-            parts = attr_path.split(".")
-            for i, part in enumerate(parts):
-                if i == len(parts) - 1:
-                    setattr(obj, part, val)
-                else:
-                    obj = getattr(obj, part)
+        from metagit.core.config.path_selector import PathSelectorError, set_path
 
-        set_nested_attr(current_config, key, value)
+        try:
+            set_path(current_config, key, value)
+        except PathSelectorError as exc:
+            click.echo(str(exc), err=True)
+            ctx.exit(1)
 
         # Save the updated configuration
         result = config_manager.save_config(current_config)
@@ -496,6 +493,8 @@ def config_set(ctx: click.Context, key: str, value: str) -> None:
 
         logger.success(f"Configuration key '{key}' set to '{value}' in {config_path}")
 
+    except click.exceptions.Exit:
+        raise
     except Exception as e:
         logger.error(f"Failed to set configuration key '{key}': {e}")
         logger.debug(f"Error: {e}")
