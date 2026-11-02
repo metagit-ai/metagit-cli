@@ -11,6 +11,8 @@ from typing import Optional
 from metagit.core.agent.paths import AGENT_SUPPORTED_TARGETS
 from metagit.core.agent.profile_catalog import (
     bundled_rules_root,
+    declared_skill_sources,
+    local_skill_file,
     validate_profile_references,
 )
 from metagit.core.component.catalog import ComponentCatalog
@@ -218,11 +220,21 @@ class AgentProfileService:
         cwd = Path.cwd()
         try:
             os.chdir(repo_path)
-            if effective.skills:
+            bundled_skills = [
+                name
+                for name in effective.skills
+                if local_skill_file(
+                    name,
+                    definition_root=self._definition_root,
+                    skill_sources=declared_skill_sources(self._config),
+                )
+                is None
+            ]
+            if bundled_skills:
                 skill_results = install_skills_for_targets(
                     [vendor],
                     scope,
-                    effective.skills,
+                    bundled_skills,
                     dry_run=dry_run,
                 )
                 install_results.extend(skill_results)
@@ -359,6 +371,8 @@ class AgentProfileService:
             skills=profile.skills,
             mcp=profile.mcp,
             rules=profile.rules,
+            definition_root=self._definition_root,
+            skill_sources=declared_skill_sources(self._config),
         ):
             field = "skills"
             if message.startswith("unknown mcp"):
