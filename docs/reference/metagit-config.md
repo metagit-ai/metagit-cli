@@ -35,8 +35,10 @@ Large umbrellas can keep one project per file with a root `includes:` list. See 
 
 ## Validate your manifest
 
+Manifest-reading commands take `-c` / `--config`, or the `METAGIT_CONFIG` environment variable. See [Manifest path](manifest-path.md).
+
 ```bash
-metagit config validate --config-path .metagit.yml
+metagit config validate -c .metagit.yml
 metagit config validate --config-path .metagit.yml --json
 metagit config validate --config-path .metagit.yml --strict
 ```
