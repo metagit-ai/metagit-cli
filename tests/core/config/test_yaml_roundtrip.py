@@ -10,7 +10,7 @@ from metagit.core.config.schema_urls import (
     METAGIT_CONFIG_SCHEMA_URL,
     schema_language_server_comment,
 )
-from metagit.core.config.yaml_roundtrip import format_yaml_document
+from metagit.core.config.yaml_roundtrip import build_roundtrip_yaml, format_yaml_document
 
 
 def test_format_yaml_document_preserves_inline_comments() -> None:
@@ -116,9 +116,7 @@ description: |
 """
     ordered = {
         "name": "demo",
-        "description": (
-            "Line one of the description.\nLine two of the description."
-        ),
+        "description": ("Line one of the description.\nLine two of the description."),
     }
     rendered = format_yaml_document(
         original,
@@ -131,7 +129,7 @@ description: |
     assert "  Line two of the description." in rendered
 
 
-def test_format_yaml_document_uses_literal_block_for_long_description() -> None:
+def test_format_yaml_document_keeps_long_single_line_scalar() -> None:
     long_text = "A" * 105
     original = f"name: demo\ndescription: {long_text}\n"
     ordered = {"name": "demo", "description": long_text}
@@ -141,8 +139,10 @@ def test_format_yaml_document_uses_literal_block_for_long_description() -> None:
         MetagitConfig,
         schema_url=METAGIT_CONFIG_SCHEMA_URL,
     )
-    assert "description: |" in rendered
+    assert "description: |" not in rendered
     assert long_text in rendered
+    loaded = build_roundtrip_yaml().load(rendered)
+    assert str(loaded["description"]) == long_text
 
 
 def test_format_appconfig_wraps_config_and_adds_schema_comment() -> None:

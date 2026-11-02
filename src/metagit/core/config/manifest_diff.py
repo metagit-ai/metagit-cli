@@ -132,9 +132,14 @@ def _missing_pair(left: Any, right: Any) -> bool:
 
 
 def _whitespace_only(left: Any, right: Any) -> bool:
+    """True only when the strings differ by leading or trailing whitespace.
+
+    A newline added or removed inside the string is a value change. Collapsing
+    every whitespace run hid those edits as ``whitespace-only``.
+    """
     if not isinstance(left, str) or not isinstance(right, str) or left == right:
         return False
-    return "".join(left.split()) == "".join(right.split())
+    return left.strip() == right.strip()
 
 
 def _infer_cwd(left: str, right: str) -> Path:
