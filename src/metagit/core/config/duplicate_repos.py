@@ -133,7 +133,9 @@ def _nodes_naming_project_repos(
                 f"graph node {node_id} names repo {match['project']}/{match['repo']}, which a project already declares",
                 [
                     {
-                        "file": _location_file(source_map, node_identity(node_key({"identity": node.identity, "name": node.name}))),
+                        "file": _location_file(
+                            source_map, node_identity(node_key({"identity": node.identity, "name": node.name}))
+                        ),
                         "path": f"graph.nodes[id={node_id}]",
                     },
                     match,
@@ -181,10 +183,7 @@ def _relationships_using_identity(
 
 
 def _warning(code: str, message: str, locations: list[dict[str, Any]]) -> dict[str, Any]:
-    rendered = [
-        {"file": item.get("file"), "path": item.get("path")}
-        for item in locations
-    ]
+    rendered = [{"file": item.get("file"), "path": item.get("path")} for item in locations]
     return {"code": code, "message": message, "locations": rendered}
 
 

@@ -278,7 +278,12 @@ def _is_empty_default(value: Any) -> bool:
 def _source_represents_payload(source_value: Any, payload_value: Any) -> bool:
     """True when the on-disk node already has the formatted value, style included."""
     if isinstance(payload_value, str):
-        return str(source_value) == payload_value
+        if str(source_value) != payload_value:
+            return False
+        style = getattr(source_value, "style", None)
+        if style in {">", "|", '"', "'"}:
+            return True
+        return not should_use_literal_block(payload_value)
     if isinstance(payload_value, list) and not isinstance(source_value, (list, CommentedSeq)):
         from metagit.core.config.documentation_models import normalize_documentation_tags
 

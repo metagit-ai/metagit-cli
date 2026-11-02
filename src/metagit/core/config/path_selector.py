@@ -168,8 +168,7 @@ def _selector_message(items: list[Any], selector: Selector, indexes: list[int], 
         return f"no {label} entry with {selector.field}={selector.value!r}. Candidates: {candidates}"
     matched = ", ".join(_candidate(items[index], index) for index in indexes)
     return (
-        f"{label} {selector.field}={selector.value!r} matched more than one entry: {matched}. "
-        f"Candidates: {candidates}"
+        f"{label} {selector.field}={selector.value!r} matched more than one entry: {matched}. Candidates: {candidates}"
     )
 
 

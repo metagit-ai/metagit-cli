@@ -8,7 +8,6 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Any, Callable
-from urllib.request import Request, urlopen
 
 from metagit.manifest import load_composed
 
@@ -78,12 +77,19 @@ def default_pr_lookup(repo_name: str, remote_url: str, branch: str) -> dict[str,
     slug = _github_slug(remote_url)
     if slug is None:
         return None
+    query = f"repos/{slug}/pulls?head={slug.split('/')[0]}:{branch}&state=all&per_page=5"
+    completed = subprocess.run(
+        ["gh", "api", query],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "GH_TOKEN": token},
+    )
+    if completed.returncode != 0:
+        return None
     try:
-        url = f"https://api.github.com/repos/{slug}/pulls?head={slug.split('/')[0]}:{branch}&state=all&per_page=5"
-        request = Request(url, headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"})
-        with urlopen(request, timeout=10) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except Exception:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
         return None
     if not isinstance(payload, list) or not payload:
         return None

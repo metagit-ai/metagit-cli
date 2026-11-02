@@ -162,8 +162,6 @@ def _install_option_suggestions(command: click.Command) -> None:
             matches = difflib.get_close_matches(exc.option_name, names, n=3, cutoff=0.55)
             if not matches:
                 raise
-            raise click.UsageError(
-                f"No such option {exc.option_name!r}. Did you mean: {', '.join(matches)}?"
-            ) from exc
+            raise click.UsageError(f"No such option {exc.option_name!r}. Did you mean: {', '.join(matches)}?") from exc
 
     command.parse_args = parse_args  # type: ignore[method-assign]

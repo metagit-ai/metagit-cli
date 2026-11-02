@@ -95,9 +95,7 @@ def validate_profile_references(
             searched = ", ".join(str((definition_root / source).resolve()) for source in sources)
         else:
             searched = "(none)"
-        errors.append(
-            f"unknown skill(s): {', '.join(unknown_skills)}. Searched: {searched}. Available: {available}"
-        )
+        errors.append(f"unknown skill(s): {', '.join(unknown_skills)}. Searched: {searched}. Available: {available}")
 
     unknown_mcp = sorted({name for name in mcp if name not in KNOWN_MCP_SERVERS})
     if unknown_mcp:

@@ -463,9 +463,7 @@ class WorkspaceLayoutService:
                     "",
                     repo_name=repo_key,
                     kind="ambiguous_project",
-                    message=(
-                        f"repo '{repo_key}' is in more than one project: {listed}. Pass -p/--project."
-                    ),
+                    message=(f"repo '{repo_key}' is in more than one project: {listed}. Pass -p/--project."),
                 )
         if source_project_name == "local" or target_project_name == "local":
             return self._error(

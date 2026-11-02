@@ -16,7 +16,7 @@ edges:
     condition: when implementing MCP runtime, tool schemas, resource handlers, or protocol behavior
   - target: patterns/INDEX.md
     condition: when starting a task — check the pattern index for a matching pattern file
-last_updated: 2026-10-31
+last_updated: 2026-11-02
 ---
 
 # Session Bootstrap
@@ -27,6 +27,7 @@ Then read this file fully before doing anything else in this session.
 
 ## Current Project State
 **Working:**
+- **0.38.0 manifest fidelity (2026-11-02, `feat/release-0.38.0`):** Raw `config flatten` and `load_composed`, `config diff` plus `content_sha256`, name/id path selectors, repo move without `-p`, `config split --glob`, fmt-clean split output, `patch --json` tree only with `--tree`, duplicate-repo validate warnings, `agent_profile.skill_sources`, one `-c/--config` plus `METAGIT_CONFIG`, composed `repo list` / `graph nodes` / `graph relationships`, and `worktree list --discover` / `gc --merged`. Docs under `docs/reference/`. Pattern `.mex/patterns/split-manifest-includes.md`.
 - **Split manifests (2026-10-31):** Root `.metagit.yml` `includes:` composes project and graph fragments (`include_loader` / `include_writer`). Saves partition back to the originating file. CLI `config split|flatten`, `config validate --json` sources, `config schema --fragment`. An existing single-file manifest is spliced too (only changed spans are rewritten); a missing file still uses the full renderer. Docs [docs/reference/splitting-manifests.md](../docs/reference/splitting-manifests.md); pattern `.mex/patterns/split-manifest-includes.md`.
 - **YAML round-trip fidelity (2026-10-31, `feat/yaml-roundtrip-fidelity`):** implemented. `MetagitConfigManager.save_config` and `save_partitioned` splice an existing file instead of dumping it: the on-disk manifest is the baseline, `yaml_edit_diff.diff_payloads` yields edits, `yaml_splice.apply_yaml_edits` rewrites only those spans (`yaml_save` wires aliases, cross-file repo moves via `list_item_text`, and all-or-nothing rendering). No-op saves do not open the file for write; flow-style ancestors abort with an error and write nothing; a missing path still uses `render_metagit` / `_render_part` / `yaml.dump`. `fmt` stays the full-file restyle. Test fixtures that write manifests must be block-style YAML, not JSON. Spec [docs/superpowers/specs/2026-10-31-yaml-roundtrip-fidelity-design.md](../docs/superpowers/specs/2026-10-31-yaml-roundtrip-fidelity-design.md).
 - **Session-worktree coordination (2026-10-02):** One PR on `feat/coordination-session-worktree-p3` against `main` (P1 isolated merge and safe gc, P2 per-task worktrees / `.` / `self` / adopt / post-create, P3 `merge.regenerate` and `merge rollup`). Windows `git show` comparisons strip `\r`. Design [docs/superpowers/specs/2026-10-01-session-worktree-coordination-design.md](../docs/superpowers/specs/2026-10-01-session-worktree-coordination-design.md).
