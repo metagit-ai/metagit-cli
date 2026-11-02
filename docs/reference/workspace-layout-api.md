@@ -46,6 +46,8 @@ Same as catalog mutations:
 metagit workspace project rename alpha apps --dry-run --json
 metagit workspace repo rename -p alpha svc-a svc-b --json
 metagit workspace repo move -p alpha -n svc-a --to-project beta --json
+
+`metagit project repo move -n svc-a --to-project beta` infers `-p` when exactly one project holds that repo. If several do, it lists them and exits without a traceback. Other `project repo` commands still require `-p/--project`.
 ```
 
 ## MCP tools

@@ -2,7 +2,19 @@
 
 ## Unreleased
 
-
+### Added
+- `metagit config flatten` merges the raw YAML of a split manifest (values and comments stay as written). `--normalized` keeps the previous model re-serialization. `metagit.manifest.load_composed` returns that composed mapping.
+- `metagit config diff <A> <B> [--raw|--model] [--json]` lists differing paths (`value`, `added`, `removed`, `type`, `whitespace-only`). Each side may be a manifest path or a git spec such as `HEAD:.metagit.yml`. `config validate --json` includes `content_sha256` of the composed document. `config split` refuses to write when the planned composition would change that document; `--dry-run` reports the check.
+- `config set`, `patch`, and `preview` accept `[name=]` (projects, repos, documentation) and `[id=]` (graph nodes and relationships). `set` also accepts `[n]` and `.n`. A missing or ambiguous selector lists the candidates. Docs: [config-paths.md](reference/config-paths.md).
+- `project repo move -n NAME --to-project TARGET` infers the source project when exactly one project holds the repo. An ambiguous name lists the projects and exits without a traceback. Other `project repo` commands that need a project say so and point at `-p/--project`.
+- `config split --glob` writes `includes` as `.metagit.d/projects/*.yml` and `.metagit.d/graph/*.yml`, and warns when filename order would reorder projects. `project add` on that layout creates the new fragment and leaves the root file unchanged.
+- `config split` writes fragments that already pass `metagit fmt -t metagit --check`. `fmt` keeps aliases, explicit defaults, and scalar text when the parsed value is unchanged, and no longer injects relationship `status` or `provenance` that were not in the file.
+- `config patch --json` omits the schema `tree` unless `--tree` is passed.
+- `config validate` warns when a repository URL is listed in more than one project, when a graph node names a project repository, and when a relationship reaches that repository by `identity` instead of `project` and `repo`. `--json` includes the source fragment and path. `--strict` treats the warnings as errors.
+- `agent_profile.skill_sources` lists directories, relative to the manifest, that contain `<name>/SKILL.md`. Those skills validate and show up on `agent dispatch-plan --json` as `local_skills` with `source_path`. They are not copied into target repos. An unknown skill lists the directories that were searched. `agent profile show` and `agent dispatch-plan` accept a manifest file as `--root` and walk parent directories for `.metagit.yml`. A manifest load failure is reported instead of a later dispatch error.
+- Manifest-reading commands accept `-c` / `--config` and the `METAGIT_CONFIG` environment variable. `--config-path`, `--definition`, and `--metagit-path` remain as hidden aliases that print a deprecation notice. Unknown commands and options suggest a close match. See `docs/reference/manifest-path.md`.
+- `repo list --all --json`, `graph nodes --json`, and `graph relationships --json` read the composed manifest. Repository records use `project`, `name`, `url`, `kind`, and `source`. See `docs/reference/composed-manifest.md`.
+- `worktree list --discover` lists git worktrees in synced repositories, including checkouts created with `git worktree add`. `worktree gc --merged` removes clean worktrees whose pull request merged or closed, skips dirty trees, and never uses `git worktree remove --force`. See `docs/reference/worktree-discover.md`.
 
 ## [0.37.1] - 2026-11-01
 

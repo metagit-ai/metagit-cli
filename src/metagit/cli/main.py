@@ -64,6 +64,7 @@ from metagit.cli.commands.web import web
 from metagit.cli.commands.workspace import workspace
 from metagit.cli.commands.worktree import worktree_group
 from metagit.cli.config_path import detect_cli_config_file, resolve_cli_bootstrap
+from metagit.cli.manifest_flags import install_manifest_flags
 from metagit.core.appconfig import resolve_agent_mode
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
@@ -187,6 +188,8 @@ cli.add_command(fmt_cmd, name="format")
 cli.add_command(tui_cmd, name="tui")
 cli.add_command(nav_cmd, name="nav")
 cli.add_command(nav_cmd, name="navigate")
+
+install_manifest_flags(cli)
 
 
 def main() -> None:

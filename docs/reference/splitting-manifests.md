@@ -31,7 +31,7 @@ A fragment is a YAML mapping. v1 allows:
 
 A fragment must not set `name`, `kind`, or any other root scalar. The same project name, graph node id, or relationship tuple in two files is an error that names both `file:line` locations. Nested includes are limited to depth 3, cannot cycle, and cannot name the same file twice. Paths must stay inside the root manifest's directory: absolute paths, URLs, `..` escapes, and symlinks that resolve outside that directory are rejected. A glob that matches nothing is fine. A literal path that is missing is not.
 
-Globs expand in lexicographic order of the POSIX path relative to the root. `metagit config split` writes an explicit ordered list instead of a glob so project order stays the order it had in the original file.
+Globs expand in lexicographic order of the POSIX path relative to the root. `metagit config split` writes an explicit ordered list so project order stays the order it had in the original file. `metagit config split --glob` writes `includes: [.metagit.d/projects/*.yml, .metagit.d/graph/*.yml]` instead, and warns when filename order would reorder projects. On that layout, `project add` creates `<dir>/<slug>.yml` and leaves the root file unchanged.
 
 ## Example layout
 
@@ -49,8 +49,17 @@ For the 17-project umbrella, one file per project under `.metagit.d/projects/` p
 
 ```bash
 # Preview, then split projects and graph. Writes nothing with --dry-run.
+# Split composes the planned files first and refuses to write when that
+# document would differ from the input. --dry-run prints `fidelity: ok`.
 metagit config split -c .metagit.yml --by all --dir .metagit.d --dry-run
 metagit config split -c .metagit.yml --by all --dir .metagit.d
+
+# Compare two manifests, or a file with a git spec. --model compares the
+# loaded model; the default --raw compares composed YAML.
+metagit config diff .metagit.yml HEAD:.metagit.yml --raw
+
+`config set` / `patch` / `preview` paths accept `[name=]` and `[id=]`. See [config-paths.md](config-paths.md).
+metagit config validate -c .metagit.yml --json   # includes content_sha256
 
 # Merged view (default) vs the root file only
 metagit config show -c .metagit.yml
@@ -62,12 +71,16 @@ metagit config validate -c .metagit.yml --json
 # Format the root and every fragment
 metagit fmt -c .metagit.yml
 
-# One file again. --in-place strips includes from the root and leaves fragment files on disk.
+# One file again. The default merges the raw YAML (aliases, explicit defaults,
+# tag mappings, and scalar text stay as written). --normalized re-serializes
+# the loaded model. --in-place strips includes from the root and leaves
+# fragment files on disk.
 metagit config flatten -c .metagit.yml
 metagit config flatten -c .metagit.yml --in-place
+metagit config flatten -c .metagit.yml --normalized
 ```
 
-`--by` is `project`, `graph`, or `all`. Project files are `<dir>/projects/<slug>.yml`. A slug collision is an error. Graph nodes and relationships go to `<dir>/graph/nodes.yml` and `relationships.yml`. Running split again on an already-split manifest changes nothing.
+`--by` is `project`, `graph`, or `all`. Project files are `<dir>/projects/<slug>.yml`. A slug collision is an error. Graph nodes and relationships go to `<dir>/graph/nodes.yml` and `relationships.yml`. Running split again on an already-split manifest changes nothing. The files split writes already pass `metagit fmt -t metagit --check`. `fmt` keeps an alias, an explicit default, and a scalar's style when the parsed value does not change, and it does not add relationship `status` or `provenance` that were not already in the file.
 
 Editor schema for a fragment:
 

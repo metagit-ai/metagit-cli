@@ -3,12 +3,18 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
 import click
 
 from metagit.cli.commands.acl_common import emit_json, raise_if_error, resolve_acl_roots
 from metagit.core.coordination.worktree_service import WorktreeService
+from metagit.core.workspace.worktree_discover import (
+    default_pr_lookup,
+    discover_worktrees,
+    gc_merged_worktrees,
+)
 
 
 @click.group(name="worktree")
@@ -163,11 +169,32 @@ def worktree_destroy(
 @worktree_group.command("gc")
 @click.option("--definition", "definition_path", default=".metagit.yml", show_default=True)
 @click.option("--force", is_flag=True, help="Remove checkouts that still have unsaved or unpushed work")
+@click.option("--merged", is_flag=True, help="Remove clean discovered worktrees whose pull request merged or closed")
 @click.option("--dry-run", is_flag=True, help="Report what would be destroyed or skipped")
 @click.option("--json", "as_json", is_flag=True)
 @click.pass_context
-def worktree_gc(ctx: click.Context, definition_path: str, force: bool, dry_run: bool, as_json: bool) -> None:
+def worktree_gc(
+    ctx: click.Context,
+    definition_path: str,
+    force: bool,
+    merged: bool,
+    dry_run: bool,
+    as_json: bool,
+) -> None:
     """Garbage-collect worktrees with expired leases or missing paths."""
+    if merged:
+        try:
+            result = gc_merged_worktrees(Path(definition_path), dry_run=dry_run, pr_lookup=default_pr_lookup)
+        except Exception as exc:
+            raise click.ClickException(str(exc).splitlines()[0]) from exc
+        if as_json:
+            emit_json(result)
+            return
+        verb = "would remove" if dry_run else "removed"
+        click.echo(f"gc {verb} {len(result['remove'])} worktree(s); skipped {len(result['skipped'])}")
+        for row in result["remove"]:
+            click.echo(row["path"])
+        return
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(
@@ -230,6 +257,8 @@ def worktree_status(
 @click.option("--repository", default=None)
 @click.option("--agent-id", default=None)
 @click.option("--status", default=None)
+@click.option("--discover", is_flag=True, help="Walk synced repositories and list every git worktree")
+@click.option("--pr", "include_pr", is_flag=True, help="Include pull request state when a forge token is set")
 @click.option("--json", "as_json", is_flag=True)
 @click.pass_context
 def worktree_list(
@@ -238,9 +267,33 @@ def worktree_list(
     repository: Optional[str],
     agent_id: Optional[str],
     status: Optional[str],
+    discover: bool,
+    include_pr: bool,
     as_json: bool,
 ) -> None:
     """List worktree records."""
+    if discover:
+        try:
+            records = discover_worktrees(
+                Path(definition_path),
+                pr_lookup=default_pr_lookup if include_pr else None,
+                include_pr=include_pr,
+            )
+        except Exception as exc:
+            raise click.ClickException(str(exc).splitlines()[0]) from exc
+        for record in records:
+            record.pop("checkout", None)
+        if as_json:
+            emit_json({"worktrees": records})
+            return
+        if not records:
+            click.echo("No worktrees.")
+            return
+        for record in records:
+            state = "dirty" if record["dirty"] else "clean"
+            ahead = record["ahead"] if record["ahead"] is not None else "-"
+            click.echo(f"{record['repo']}\t{record['branch']}\t{state}\tahead={ahead}\t{record['path']}")
+        return
     roots = resolve_acl_roots(ctx, definition_path)
     session_root, sync_root, definition = roots.session_root, roots.sync_root, roots.definition_path
     service = WorktreeService(

@@ -13,6 +13,7 @@ from metagit.core.agent.models import (
     AgentDispatchPlan,
     AgentScopeLevel,
     AgentTemplateManifest,
+    ResolvedLocalSkill,
 )
 from metagit.core.agent.paths import (
     AGENT_SUPPORTED_TARGETS,
@@ -412,8 +413,20 @@ class AgentDispatchService:
                 "missing_profile_skills": [],
                 "profile_apply_command": None,
             }
+        from metagit.core.agent.profile_catalog import declared_skill_sources, local_skill_file
+
+        sources = declared_skill_sources(self._config)
         bundled = set(list_bundled_skills())
-        required = [skill for skill in effective.skills if skill in bundled]
+        local: list[ResolvedLocalSkill] = []
+        required: list[str] = []
+        root = self._manifest_root or Path.cwd()
+        for skill in effective.skills:
+            found = local_skill_file(skill, definition_root=root, skill_sources=sources)
+            if found is not None:
+                local.append(ResolvedLocalSkill(name=skill, source_path=str(found)))
+                continue
+            if skill in bundled:
+                required.append(skill)
         missing = list(required)
         apply_command = (
             f"metagit agent apply --vendor {vendor} --project {project} --repo {repo} --root ." if missing else None
@@ -421,6 +434,7 @@ class AgentDispatchService:
         return {
             "required_profile_skills": required,
             "missing_profile_skills": missing,
+            "local_skills": local,
             "profile_apply_command": apply_command,
         }
 

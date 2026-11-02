@@ -19,7 +19,11 @@ class AgentProfile(BaseModel):
     )
     skills: list[str] = Field(
         default_factory=list,
-        description="Bundled skill ids to install for agents working in this scope",
+        description="Skill ids to install for agents working in this scope",
+    )
+    skill_sources: list[str] = Field(
+        default_factory=list,
+        description="Directories relative to the manifest. A skill resolves when <dir>/<name>/SKILL.md exists",
     )
     mcp: list[str] = Field(
         default_factory=list,

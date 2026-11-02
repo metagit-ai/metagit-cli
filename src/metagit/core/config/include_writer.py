@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import copy
 import json
-from dataclasses import dataclass
+import shutil
+import tempfile
+from dataclasses import dataclass, field
 from io import StringIO
 from pathlib import Path
 from typing import Any
@@ -25,6 +27,7 @@ from metagit.core.config.include_loader import (
     project_identity,
     relationship_identity,
     relationship_key,
+    resolved_manifest_files,
     slugify_name,
 )
 from metagit.core.config.models import MetagitConfig
@@ -52,6 +55,7 @@ class SplitPlan:
     files: list[str]
     dry_run: bool
     changed: bool
+    warnings: list[str] = field(default_factory=list)
 
 
 def save_partitioned(
@@ -227,8 +231,81 @@ def split_manifest(
     by: str,
     directory: Path,
     dry_run: bool,
+    glob_layout: bool = False,
 ) -> SplitPlan | Exception:
-    """Move projects and/or graph lists out of a single manifest into fragments."""
+    """Move projects and/or graph lists out of a single manifest into fragments.
+
+    The planned fragments are composed and compared to the input first. A
+    difference aborts before any file is written. ``glob_layout`` writes
+    ``includes`` as directory globs instead of one path per file.
+    """
+    root = path.expanduser().resolve()
+    if not root.is_file():
+        return FileNotFoundError(f"Configuration file not found: {root}")
+    warnings = _glob_order_warnings(root) if glob_layout else []
+    fidelity = _assert_split_fidelity(root, by=by, directory=directory, glob_layout=glob_layout)
+    if isinstance(fidelity, Exception):
+        return fidelity
+    plan = _split_manifest_unchecked(
+        root,
+        by=by,
+        directory=directory,
+        dry_run=dry_run,
+        glob_layout=glob_layout,
+    )
+    if isinstance(plan, Exception):
+        return plan
+    plan.warnings.extend(warnings)
+    return plan
+
+
+def _assert_split_fidelity(
+    root: Path,
+    *,
+    by: str,
+    directory: Path,
+    glob_layout: bool = False,
+) -> Exception | None:
+    """Split a copy and refuse when the composed document would change."""
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest_root = Path(tmp)
+            files = resolved_manifest_files(root) or [root]
+            for item in files:
+                relative = item.resolve().relative_to(root.parent.resolve())
+                target = dest_root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(item, target)
+            planned = _split_manifest_unchecked(
+                dest_root / root.name,
+                by=by,
+                directory=directory,
+                dry_run=False,
+                glob_layout=glob_layout,
+            )
+            if isinstance(planned, Exception):
+                return planned
+            diffs = _fidelity_diffs(root, dest_root / root.name, order_insensitive=glob_layout)
+            if isinstance(diffs, Exception):
+                return diffs
+            if not diffs:
+                return None
+            shown = ", ".join(f"{item.path} ({item.kind})" for item in diffs[:40])
+            extra = "" if len(diffs) <= 40 else f" (+{len(diffs) - 40} more)"
+            return ManifestComposeError(f"split would change the manifest ({len(diffs)} path(s)): {shown}{extra}")
+    except Exception as exc:
+        return exc
+
+
+def _split_manifest_unchecked(
+    path: Path,
+    *,
+    by: str,
+    directory: Path,
+    dry_run: bool,
+    glob_layout: bool = False,
+) -> SplitPlan | Exception:
+    """Split ``path`` without the fidelity check. ``path`` is already resolved."""
     try:
         root = path.expanduser().resolve()
         if not root.is_file():
@@ -254,8 +331,15 @@ def split_manifest(
             if isinstance(outcome, Exception):
                 return outcome
             changed = changed or outcome
+        if glob_layout and changed and not dry_run:
+            collapsed = _collapse_include_globs(document, directory=target_dir, root=root)
+            if isinstance(collapsed, Exception):
+                return collapsed
         if changed and not dry_run:
             _dump_roundtrip(yaml, document, root)
+            formatted = _format_written_manifest(root)
+            if isinstance(formatted, Exception):
+                return formatted
         return SplitPlan(
             root=str(root),
             files=[str(item) for item in planned],
@@ -271,10 +355,14 @@ def flatten_manifest(
     *,
     output: Path | None = None,
     in_place: bool = False,
+    normalized: bool = False,
 ) -> str | Exception:
     """Return the merged manifest as one YAML document.
 
-    A manifest without ``includes`` is returned unchanged and is not rewritten.
+    The default merges the raw YAML documents so aliases, explicit defaults, tag
+    mappings, and scalar text stay as written. ``normalized`` re-serializes the
+    pydantic model (the previous behaviour). A manifest without ``includes`` is
+    returned unchanged and is not rewritten.
     """
     try:
         root = path.expanduser().resolve()
@@ -287,20 +375,42 @@ def flatten_manifest(
                 output.parent.mkdir(parents=True, exist_ok=True)
                 output.write_text(original, encoding="utf-8")
             return original
-        manager = MetagitConfigManager(config_path=root)
-        loaded = manager.load_config()
-        if isinstance(loaded, Exception):
-            return loaded
-        from metagit.core.config.format_service import ConfigFormatService
+        if normalized:
+            manager = MetagitConfigManager(config_path=root)
+            loaded = manager.load_config()
+            if isinstance(loaded, Exception):
+                return loaded
+            from metagit.core.config.format_service import ConfigFormatService
 
-        rendered = ConfigFormatService().render_metagit(loaded, original_text="")
+            rendered = ConfigFormatService().render_metagit(loaded, original_text="")
+        else:
+            from metagit.core.config.raw_compose import render_raw_composed
+
+            rendered = render_raw_composed(root)
+            if isinstance(rendered, Exception):
+                return rendered
         destination = root if in_place else output
         if destination is not None:
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(rendered, encoding="utf-8")
+            if in_place:
+                _drop_includes_key(destination)
+                rendered = destination.read_text(encoding="utf-8")
         return rendered
     except Exception as exc:
         return exc
+
+
+def _drop_includes_key(path: Path) -> None:
+    """``render_raw_composed`` already omits includes; this keeps in-place callers honest."""
+    text = path.read_text(encoding="utf-8")
+    if "includes:" not in text:
+        return
+    yaml = build_roundtrip_yaml()
+    document = yaml.load(text)
+    if isinstance(document, CommentedMap) and "includes" in document:
+        del document["includes"]
+        _dump_roundtrip(yaml, document, path)
 
 
 def _partition_workspace(
@@ -714,6 +824,106 @@ def _write_list_fragment(path: Path, *, section: str, key: str, items: list[Any]
         return exc
 
 
+def _fidelity_diffs(left: Path, right: Path, *, order_insensitive: bool) -> list[Any] | Exception:
+    """Diff two manifests. Glob layout compares projects and graph lists by identity."""
+    from metagit.core.config.manifest_diff import composed_diff, diff_values
+    from metagit.manifest import load_composed
+
+    if not order_insensitive:
+        return composed_diff(left, right)
+    try:
+        return diff_values(_sort_named_lists(load_composed(left)), _sort_named_lists(load_composed(right)))
+    except Exception as exc:
+        return exc
+
+
+def _sort_named_lists(data: dict[str, Any]) -> dict[str, Any]:
+    """Sort appended lists so a glob's lexicographic load order can be compared."""
+    cloned = copy.deepcopy(data)
+    workspace = cloned.get("workspace")
+    if isinstance(workspace, dict) and isinstance(workspace.get("projects"), list):
+        workspace["projects"] = sorted(workspace["projects"], key=_named_sort_key)
+        for project in workspace["projects"]:
+            if isinstance(project, dict) and isinstance(project.get("repos"), list):
+                project["repos"] = sorted(project["repos"], key=_named_sort_key)
+    graph = cloned.get("graph")
+    if isinstance(graph, dict):
+        if isinstance(graph.get("nodes"), list):
+            graph["nodes"] = sorted(graph["nodes"], key=_named_sort_key)
+        if isinstance(graph.get("relationships"), list):
+            graph["relationships"] = sorted(graph["relationships"], key=_named_sort_key)
+    return cloned
+
+
+def _named_sort_key(item: Any) -> str:
+    if not isinstance(item, dict):
+        return str(item)
+    for key in ("name", "id", "identity", "title"):
+        if item.get(key) is not None:
+            return str(item.get(key))
+    return json.dumps(item, sort_keys=True, default=str)
+
+
+def _glob_order_warnings(root: Path) -> list[str]:
+    """Warn when lexicographic fragment names would not match project order."""
+    try:
+        document = build_roundtrip_yaml().load(root.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    if not isinstance(document, CommentedMap):
+        return []
+    workspace = document.get("workspace")
+    projects = workspace.get("projects") if isinstance(workspace, CommentedMap) else None
+    if not isinstance(projects, CommentedSeq):
+        return []
+    pairs: list[tuple[str, str]] = []
+    for item in projects:
+        if not isinstance(item, CommentedMap) or item.get("name") is None:
+            continue
+        name = str(item.get("name"))
+        try:
+            pairs.append((slugify_name(name), name))
+        except ValueError:
+            return []
+    if [slug for slug, _name in pairs] == sorted(slug for slug, _name in pairs):
+        return []
+    current = ", ".join(name for _slug, name in pairs)
+    ordered = ", ".join(name for _slug, name in sorted(pairs))
+    return [
+        "glob include order is lexicographic by filename and would reorder projects "
+        f"(current: {current}; file order: {ordered})"
+    ]
+
+
+def _collapse_include_globs(document: CommentedMap, *, directory: Path, root: Path) -> Exception | None:
+    """Replace per-file includes under ``directory`` with ``projects/*.yml`` and ``graph/*.yml``."""
+    try:
+        relative = directory.resolve().relative_to(root.parent.resolve()).as_posix()
+    except ValueError as exc:
+        return ManifestComposeError(str(exc))
+    existing = [str(item) for item in document.get("includes") or []]
+    kept: list[str] = []
+    saw_projects = False
+    saw_graph = False
+    project_prefix = f"{relative}/projects/"
+    graph_prefix = f"{relative}/graph/"
+    for item in existing:
+        if item.startswith(project_prefix) and item.endswith(".yml"):
+            saw_projects = True
+            continue
+        if item.startswith(graph_prefix) and item.endswith(".yml"):
+            saw_graph = True
+            continue
+        kept.append(item)
+    if saw_projects:
+        kept.append(f"{project_prefix}*.yml")
+    if saw_graph:
+        kept.append(f"{graph_prefix}*.yml")
+    if "includes" in document or kept:
+        document["includes"] = kept
+    return None
+
+
 def _append_includes(document: CommentedMap, patterns: list[str]) -> None:
     existing = [str(item) for item in document.get("includes") or []]
     for pattern in patterns:
@@ -723,6 +933,20 @@ def _append_includes(document: CommentedMap, patterns: list[str]) -> None:
         document["includes"] = existing
         return
     document.insert(0, "includes", existing)
+
+
+def _format_written_manifest(root: Path) -> Exception | None:
+    """Rewrite split output with ``fmt`` so ``fmt --check`` is a no-op."""
+    from metagit.core.config.format_service import ConfigFormatService
+
+    results = ConfigFormatService().format_manifest_files(root)
+    if isinstance(results, Exception):
+        return results
+    for item in results:
+        if item.error:
+            return RuntimeError(item.error)
+        Path(item.path).write_text(item.formatted, encoding="utf-8")
+    return None
 
 
 def _dump_roundtrip(yaml: Any, document: CommentedMap, path: Path) -> None:

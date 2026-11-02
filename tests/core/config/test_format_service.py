@@ -71,6 +71,42 @@ def test_format_metagit_writes_ordered_file(tmp_path: Path) -> None:
     assert roundtrip["workspace"]["projects"][0]["repos"][0]["name"] == "billing"
 
 
+def test_fmt_preserves_parsed_values(tmp_path: Path) -> None:
+    config_path = tmp_path / ".metagit.yml"
+    original = """\
+name: demo
+description: |
+  line one
+  line two
+kind: umbrella
+workspace:
+  projects:
+    - name: billing
+      description: >-
+        folded
+        text
+      repos:
+        - name: api
+          url: https://github.com/acme/api.git
+graph:
+  relationships:
+    - id: edge
+      from_endpoint:
+        project: billing
+        repo: api
+      to:
+        project: billing
+        repo: api
+      type: depends_on
+"""
+    config_path.write_text(original, encoding="utf-8")
+    before = yaml.safe_load(original)
+    result = ConfigFormatService().format_metagit(config_path)
+    assert not isinstance(result, Exception)
+    after = yaml.safe_load(result.formatted)
+    assert after == before
+
+
 def test_fmt_check_reports_changes(tmp_path: Path, monkeypatch) -> None:
     config_path = tmp_path / ".metagit.yml"
     config_path.write_text(_minimal_metagit_yaml(), encoding="utf-8")

@@ -7,6 +7,8 @@ from io import StringIO
 from typing import Any
 
 from pydantic import BaseModel
+from pydantic.fields import FieldInfo
+from pydantic_core import PydanticUndefined
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarstring import LiteralScalarString
@@ -109,12 +111,15 @@ def _merge_map(
         source_key = find_source_key(source, field_name, field_info)
         if source_key is not None:
             consumed_source_keys.add(source_key)
+        elif _is_field_default(field_info, payload_value):
+            continue
         source_value = source.get(source_key) if source_key is not None else None
+        written_key = source_key if source_key is not None else target_key
         child_model = nested_model(field_info.annotation)
 
         if child_model is not None and isinstance(payload_value, dict):
             source_map = source_value if isinstance(source_value, CommentedMap) else CommentedMap()
-            merged[target_key] = _merge_map(
+            merged[written_key] = _merge_map(
                 source_map,
                 payload_value,
                 child_model,
@@ -122,22 +127,24 @@ def _merge_map(
             )
         elif child_model is not None and isinstance(payload_value, list):
             source_list = source_value if isinstance(source_value, CommentedSeq) else CommentedSeq()
-            merged[target_key] = _merge_list(
+            merged[written_key] = _merge_list(
                 source_list,
                 payload_value,
                 child_model,
                 strip_absent_model_fields=strip_absent_model_fields,
             )
+        elif source_key is not None and _source_represents_payload(source_value, payload_value):
+            merged[written_key] = source_value
         else:
-            merged[target_key] = _normalize_value(payload_value)
+            merged[written_key] = _normalize_value(payload_value)
 
         if source_key is not None:
-            _copy_map_key_comment(source, merged, source_key, target_key)
+            _copy_map_key_comment(source, merged, source_key, written_key)
 
     for key, value in source.items():
         if key in consumed_source_keys or key in merged:
             continue
-        if strip_absent_model_fields and key in model_field_names:
+        if strip_absent_model_fields and key in model_field_names and _is_empty_default(value):
             continue
         merged[key] = value
         _copy_map_key_comment(source, merged, key, key)
@@ -247,6 +254,52 @@ def _list_item_identity(item: Any) -> str | None:
         if definition is not None and item_type is not None:
             return f"artifact:{definition}:{item_type}"
     return None
+
+
+def _is_field_default(field_info: FieldInfo, value: Any) -> bool:
+    """True when ``value`` is the schema default, so formatting must not inject it."""
+    if field_info.default_factory is not None:
+        try:
+            return value == field_info.default_factory()
+        except TypeError:
+            return False
+    if field_info.default is PydanticUndefined:
+        return False
+    return value == field_info.default
+
+
+def _is_empty_default(value: Any) -> bool:
+    """True for the empty values ``fmt`` already omits when they match a default."""
+    if value is None or value is False or value == "":
+        return True
+    return isinstance(value, (list, dict)) and len(value) == 0
+
+
+def _source_represents_payload(source_value: Any, payload_value: Any) -> bool:
+    """True when the on-disk node already has the formatted value, style included."""
+    if isinstance(payload_value, str):
+        if str(source_value) != payload_value:
+            return False
+        style = getattr(source_value, "style", None)
+        if style in {">", "|", '"', "'"}:
+            return True
+        return not should_use_literal_block(payload_value)
+    if isinstance(payload_value, list) and not isinstance(source_value, (list, CommentedSeq)):
+        from metagit.core.config.documentation_models import normalize_documentation_tags
+
+        try:
+            return normalize_documentation_tags(source_value) == list(payload_value)
+        except (TypeError, ValueError):
+            return False
+    return _plain(source_value) == _plain(payload_value)
+
+
+def _plain(value: Any) -> Any:
+    if isinstance(value, CommentedMap):
+        return {str(key): _plain(item) for key, item in value.items()}
+    if isinstance(value, (list, CommentedSeq)):
+        return [_plain(item) for item in value]
+    return value
 
 
 def _normalize_value(value: Any) -> Any:

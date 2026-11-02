@@ -286,6 +286,15 @@ class AgentDispatchHandoff(BaseModel):
     )
 
 
+class ResolvedLocalSkill(BaseModel):
+    """A skill resolved from ``agent_profile.skill_sources`` rather than the bundled catalog."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    source_path: str
+
+
 class AgentDispatchPlan(BaseModel):
     """Machine-readable dispatch envelope for overseer orchestration."""
 
@@ -306,4 +315,5 @@ class AgentDispatchPlan(BaseModel):
     recommended_skills: list[str] = Field(default_factory=list)
     required_profile_skills: list[str] = Field(default_factory=list)
     missing_profile_skills: list[str] = Field(default_factory=list)
+    local_skills: list[ResolvedLocalSkill] = Field(default_factory=list)
     profile_apply_command: str | None = None

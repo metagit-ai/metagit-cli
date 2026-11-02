@@ -40,6 +40,18 @@ def repo(ctx: click.Context) -> None:
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         return
+    if ctx.invoked_subcommand == "move":
+        return
+    project = ctx.obj.get("project")
+    if isinstance(project, str) and project.strip():
+        return
+    config = ctx.obj.get("local_config")
+    names: list[str] = []
+    workspace = getattr(config, "workspace", None)
+    if workspace is not None:
+        names = [item.name for item in workspace.projects]
+    listed = ", ".join(names) if names else "(none)"
+    raise click.ClickException(f"No project selected. Pass -p/--project. Projects: {listed}")
 
 
 def execute_repo_select(

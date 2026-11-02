@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Optional
 
@@ -35,9 +34,27 @@ def _parse_tag_filters(tag_values: tuple[str, ...]) -> dict[str, str] | None:
     return parsed
 
 
+def _find_manifest(root: str) -> Path:
+    """Resolve a manifest file, walking parents when ``root`` is a nested directory."""
+    candidate = Path(root).expanduser()
+    if candidate.is_file():
+        return candidate.resolve()
+    start = candidate.resolve() if candidate.exists() else candidate
+    if not start.is_dir():
+        start = start.parent
+    for parent in [start, *start.parents]:
+        found = parent / ".metagit.yml"
+        if found.is_file():
+            return found.resolve()
+    raise click.ClickException(
+        f"No .metagit.yml found from {candidate}. Pass --root or -c/--definition with the manifest path."
+    )
+
+
 def _profile_service(root: str, *, config_path: str | None = None) -> AgentProfileService:
-    manifest_root = _require_manifest_root(root)
-    manager = MetagitConfigManager(config_path=os.path.join(root, ".metagit.yml"))
+    manifest = _find_manifest(root)
+    manifest_root = manifest.parent
+    manager = MetagitConfigManager(config_path=str(manifest))
     config = manager.load_config()
     if isinstance(config, Exception):
         raise click.ClickException(str(config))
@@ -68,13 +85,7 @@ def _service_for_root(root: Optional[str]) -> AgentService:
 
 
 def _require_manifest_root(root: str) -> Path:
-    manifest_root = _resolve_manifest_root(root)
-    if manifest_root is None:
-        raise click.ClickException("Invalid manifest root")
-    manifest_path = manifest_root / ".metagit.yml"
-    if not manifest_path.is_file():
-        raise click.ClickException(f"No .metagit.yml found under manifest root: {manifest_root}")
-    return manifest_root
+    return _find_manifest(root).parent
 
 
 @click.group(name="agent", invoke_without_command=True)

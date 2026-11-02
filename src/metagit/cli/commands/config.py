@@ -199,8 +199,19 @@ def config_create(
     default=None,
 )
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print a JSON report including fragment sources")
+@click.option(
+    "--strict",
+    is_flag=True,
+    default=False,
+    help="Treat duplicate-repo warnings as errors",
+)
 @click.pass_context
-def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as_json: bool = False) -> None:
+def config_validate(
+    ctx: click.Context,
+    config_path: Union[str, None] = None,
+    as_json: bool = False,
+    strict: bool = False,
+) -> None:
     """Validate metagit configuration"""
     from metagit.core.config.include_loader import ManifestComposeError
 
@@ -220,9 +231,12 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
         ).list_validation_issues()
         graph_issues = validate_graph_relationships(result)
         component_issues = validate_components(result, definition_root=definition_root)
+        from metagit.core.config.duplicate_repos import find_duplicate_repo_warnings
+
+        repo_warnings = find_duplicate_repo_warnings(result, config_manager.source_map)
     except ManifestComposeError as exc:
         if as_json:
-            emit_json({"ok": False, "errors": exc.errors, "sources": exc.sources})
+            emit_json(_validate_payload(ok=False, errors=exc.errors, sources=exc.sources, path=target_path))
             ctx.exit(1)
         logger.error(str(exc))
         ctx.abort()
@@ -230,11 +244,12 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
     except Exception as e:
         if as_json:
             emit_json(
-                {
-                    "ok": False,
-                    "errors": [{"message": str(e), "file": None, "line": None}],
-                    "sources": _manifest_sources(config_manager),
-                }
+                _validate_payload(
+                    ok=False,
+                    errors=[{"message": str(e), "file": None, "line": None}],
+                    sources=_manifest_sources(config_manager),
+                    path=target_path,
+                )
             )
             ctx.exit(1)
         logger.error(f"Failed to load metagit configuration file: {e}")
@@ -258,15 +273,64 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
         errors.append({"message": issue, "file": None, "line": None})
         if not as_json:
             logger.error(issue)
+    if strict:
+        errors.extend(repo_warnings)
+    for item in repo_warnings:
+        if as_json:
+            continue
+        click.echo(f"warning: {item['message']}", err=True)
+        for location in item.get("locations", []):
+            click.echo(f"  {location.get('file')}: {location.get('path')}", err=True)
     if errors:
         if as_json:
-            emit_json({"ok": False, "errors": errors, "sources": _manifest_sources(config_manager)})
+            emit_json(
+                _validate_payload(
+                    ok=False,
+                    errors=errors,
+                    warnings=repo_warnings,
+                    sources=_manifest_sources(config_manager),
+                    path=target_path,
+                )
+            )
             ctx.exit(1)
         ctx.abort()
     if as_json:
-        emit_json({"ok": True, "errors": [], "sources": _manifest_sources(config_manager)})
+        emit_json(
+            _validate_payload(
+                ok=True,
+                errors=[],
+                warnings=repo_warnings,
+                sources=_manifest_sources(config_manager),
+                path=target_path,
+            )
+        )
         return
     logger.success(f"Configuration file {target_path} is valid")
+
+
+def _validate_payload(
+    *,
+    ok: bool,
+    errors: list[dict[str, object]],
+    sources: list[dict[str, str]],
+    path: str,
+    warnings: list[dict[str, object]] | None = None,
+) -> dict[str, object]:
+    """JSON body for ``config validate``, including the composed content hash."""
+    from metagit.core.config.manifest_diff import content_sha256
+
+    digest: str | None
+    try:
+        digest = content_sha256(path)
+    except Exception:
+        digest = None
+    return {
+        "ok": ok,
+        "errors": errors,
+        "warnings": warnings or [],
+        "sources": sources,
+        "content_sha256": digest,
+    }
 
 
 def _manifest_sources(manager: MetagitConfigManager) -> list[dict[str, str]]:
@@ -445,16 +509,13 @@ def config_set(ctx: click.Context, key: str, value: str) -> None:
         if isinstance(current_config, Exception):
             raise current_config
 
-        # Helper to set nested attributes
-        def set_nested_attr(obj, attr_path, val):
-            parts = attr_path.split(".")
-            for i, part in enumerate(parts):
-                if i == len(parts) - 1:
-                    setattr(obj, part, val)
-                else:
-                    obj = getattr(obj, part)
+        from metagit.core.config.path_selector import PathSelectorError, set_path
 
-        set_nested_attr(current_config, key, value)
+        try:
+            set_path(current_config, key, value)
+        except PathSelectorError as exc:
+            click.echo(str(exc), err=True)
+            ctx.exit(1)
 
         # Save the updated configuration
         result = config_manager.save_config(current_config)
@@ -463,6 +524,8 @@ def config_set(ctx: click.Context, key: str, value: str) -> None:
 
         logger.success(f"Configuration key '{key}' set to '{value}' in {config_path}")
 
+    except click.exceptions.Exit:
+        raise
     except Exception as e:
         logger.error(f"Failed to set configuration key '{key}': {e}")
         logger.debug(f"Error: {e}")
@@ -729,7 +792,7 @@ def config_patch(
         operations,
         save=save,
         auto_format=not no_format,
-        include_tree=include_tree or as_json,
+        include_tree=include_tree,
     )
     if isinstance(result, Exception):
         logger.error(f"Failed to patch config: {result}")
@@ -1132,6 +1195,40 @@ def config_schema(ctx: click.Context, output_path: str, fragment: bool) -> None:
         ctx.abort()
 
 
+@config.command("diff")
+@click.argument("left")
+@click.argument("right")
+@click.option(
+    "--raw/--model",
+    "raw",
+    default=True,
+    help="Compare composed YAML (--raw, default) or the loaded model (--model)",
+)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.pass_context
+def config_diff(ctx: click.Context, left: str, right: str, raw: bool, as_json: bool) -> None:
+    """Show paths that differ between two manifests or git specs such as ``HEAD:.metagit.yml``."""
+    from metagit.core.config.manifest_diff import diff_manifests
+
+    logger = ctx.obj["logger"]
+    try:
+        differences = diff_manifests(left, right, mode="raw" if raw else "model")
+    except Exception as exc:
+        logger.error(str(exc).splitlines()[0])
+        ctx.exit(1)
+        return
+    payload = {"count": len(differences), "differences": [item.to_dict() for item in differences]}
+    if as_json:
+        emit_json(payload)
+    elif differences:
+        for item in differences:
+            click.echo(f"{item.path} ({item.kind})")
+    else:
+        click.echo("0 differences")
+    if differences:
+        ctx.exit(1)
+
+
 @config.command("flatten")
 @click.option("--output", "output_path", default=None, help="Write the merged manifest to this path")
 @click.option(
@@ -1140,8 +1237,14 @@ def config_schema(ctx: click.Context, output_path: str, fragment: bool) -> None:
     default=False,
     help="Replace the root manifest with the merged document and drop includes",
 )
+@click.option(
+    "--normalized",
+    is_flag=True,
+    default=False,
+    help="Re-serialize the loaded model instead of merging the raw YAML",
+)
 @click.pass_context
-def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool) -> None:
+def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool, normalized: bool) -> None:
     """Print the composed manifest as one YAML document."""
     from metagit.core.config.include_writer import flatten_manifest
 
@@ -1153,6 +1256,7 @@ def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool) 
         target,
         output=Path(output_path) if output_path else None,
         in_place=in_place,
+        normalized=normalized,
     )
     if isinstance(rendered, Exception):
         logger.error(f"Failed to flatten manifest: {rendered}")
@@ -1181,8 +1285,15 @@ def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool) 
     help="Directory under the manifest root for fragment files",
 )
 @click.option("--dry-run", is_flag=True, default=False, help="Print the planned files and write nothing")
+@click.option(
+    "--glob",
+    "glob_layout",
+    is_flag=True,
+    default=False,
+    help="Write includes as projects/*.yml and graph/*.yml globs",
+)
 @click.pass_context
-def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: bool) -> None:
+def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: bool, glob_layout: bool) -> None:
     """Move projects and graph lists into per-file fragments."""
     from metagit.core.config.include_writer import split_manifest
 
@@ -1192,6 +1303,7 @@ def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: boo
         by=split_by.strip().lower(),
         directory=Path(directory),
         dry_run=dry_run,
+        glob_layout=glob_layout,
     )
     if isinstance(plan, Exception):
         logger.error(f"Failed to split manifest: {plan}")
@@ -1203,5 +1315,8 @@ def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: boo
     for item in plan.files:
         prefix = "would write" if dry_run else "wrote"
         click.echo(f"{prefix} {item}")
+    for warning in plan.warnings:
+        click.echo(f"warning: {warning}", err=True)
     if dry_run:
+        click.echo("fidelity: ok")
         logger.success("Dry run; no files were written")

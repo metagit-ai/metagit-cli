@@ -35,9 +35,15 @@ Large umbrellas can keep one project per file with a root `includes:` list. See 
 
 ## Validate your manifest
 
+Manifest-reading commands take `-c` / `--config`, or the `METAGIT_CONFIG` environment variable. See [Manifest path](manifest-path.md).
+
 ```bash
-metagit config validate --config-path .metagit.yml
+metagit config validate -c .metagit.yml
+metagit config validate --config-path .metagit.yml --json
+metagit config validate --config-path .metagit.yml --strict
 ```
+
+`validate` warns when the same repository URL is listed under more than one project (host, owner, and name, ignoring case and a trailing `.git`, with SSH and HTTPS treated as the same), when a graph node names a repository a project already declares, and when a relationship reaches that repository by `identity` instead of `project` and `repo`. `--json` reports each warning with `code`, `message`, and `locations` (`file` is the source fragment, `path` is the manifest path). `--strict` turns those warnings into errors.
 
 Workspace repos may declare nested `components[]` (name + repository-relative path). Application manifests map existing `paths[]` into the same catalog. See [Components](../concepts/components.md).
 
@@ -67,6 +73,7 @@ metagit config patch --file ops.json --save
 ```
 
 `ops.json` may be `{"operations": [...]}` or a bare array of operation objects.
+`metagit config patch --json` prints the patch result without a `tree` key. Pass `--tree` to include the updated schema tree.
 
 Do not deploy the generated exemplar verbatim; copy sections you need and replace placeholders.
 

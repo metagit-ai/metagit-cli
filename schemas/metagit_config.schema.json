@@ -18,11 +18,19 @@
           "title": "Tier"
         },
         "skills": {
-          "description": "Bundled skill ids to install for agents working in this scope",
+          "description": "Skill ids to install for agents working in this scope",
           "items": {
             "type": "string"
           },
           "title": "Skills",
+          "type": "array"
+        },
+        "skill_sources": {
+          "description": "Directories relative to the manifest. A skill resolves when <dir>/<name>/SKILL.md exists",
+          "items": {
+            "type": "string"
+          },
+          "title": "Skill Sources",
           "type": "array"
         },
         "mcp": {

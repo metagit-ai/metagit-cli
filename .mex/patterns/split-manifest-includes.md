@@ -12,7 +12,7 @@ edges:
     condition: when creating a new single-file manifest before any split
   - target: context/architecture.md
     condition: when tracing load and save through MetagitConfigManager
-last_updated: 2026-10-31
+last_updated: 2026-11-02
 ---
 
 # Split manifest includes
@@ -24,7 +24,7 @@ A root `.metagit.yml` may list `includes` of relative paths or globs. `include_l
 1. Load with `MetagitConfigManager.load_config`. When the file declares `includes`, the manager sets `source_map` and `resolved_files`. `includes` is stripped from the merged model so `model_dump` matches a single-file manifest.
 2. Save with `save_config`. If the destination file declares `includes`, the save reloads a source map from disk even when the manager was built with an in-memory config. That is what keeps catalog, layout, promote, and patch from flattening fragments.
 3. New projects go to `<first include directory>/<slug>.yml` only when every current project already lives alone in its file. Otherwise they stay in the root. An emptied fragment stays as an empty list.
-4. Split with `split_manifest` / `metagit config split`. It writes explicit ordered include paths, not a glob, so list order is preserved. Flatten with `flatten_manifest`.
+4. Split with `split_manifest` / `metagit config split`. The default writes explicit ordered include paths so list order is preserved. `--glob` writes directory globs and warns when filename order would reorder projects. Flatten with `flatten_manifest`: the default merges raw YAML (`load_composed` / `render_raw_composed`); `--normalized` re-serializes the model. Split refuses to write when the composed document would change, and the files it writes already pass `fmt --check`.
 5. Point watchers and digest mtimes at `manifest_watch_paths` / `resolved_files`, not only the root.
 
 ## Gotchas

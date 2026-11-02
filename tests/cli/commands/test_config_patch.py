@@ -24,6 +24,50 @@ def _minimal_metagit(path: Path) -> None:
     )
 
 
+def test_config_patch_json_omits_tree_unless_requested() -> None:
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        _minimal_metagit(Path(".metagit.yml"))
+        bare = runner.invoke(
+            cli,
+            [
+                "config",
+                "-c",
+                ".metagit.yml",
+                "patch",
+                "--op",
+                "set",
+                "--path",
+                "name",
+                "--value",
+                "renamed",
+                "--json",
+            ],
+        )
+        assert bare.exit_code == 0, bare.output
+        payload = json.loads(bare.output)
+        assert "tree" not in payload
+        with_tree = runner.invoke(
+            cli,
+            [
+                "config",
+                "-c",
+                ".metagit.yml",
+                "patch",
+                "--op",
+                "set",
+                "--path",
+                "name",
+                "--value",
+                "renamed",
+                "--json",
+                "--tree",
+            ],
+        )
+        assert with_tree.exit_code == 0, with_tree.output
+        assert "tree" in json.loads(with_tree.output)
+
+
 def test_config_patch_single_op_save() -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():

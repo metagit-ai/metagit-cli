@@ -35,13 +35,16 @@ workspace:
 | Field | Purpose |
 |-------|---------|
 | `tier` | Label (e.g. `full`); wins over `tags.agent_tier` when set |
-| `skills` | Bundled skill ids (`metagit skills list`) |
+| `skills` | Skill ids. Bundled ids (`metagit skills list`) or a name under `skill_sources` |
+| `skill_sources` | Directories relative to the manifest. `<dir>/<name>/SKILL.md` resolves that name. The bundled catalog is the fallback |
 | `mcp` | MCP server ids (bundled catalog; `metagit` today) |
 | `rules` | Bundled rule ids under `data/agent-rules/` when present |
 | `vendors` | Limit apply to these runtimes; empty = all supported vendors |
 | `inherit` | Merge parent scope (default `true`); `false` = verbatim profile |
 
 **Inheritance:** workspace → project → repo. Child merges lists and overrides `tier`; `inherit: false` replaces the merged profile.
+
+`agent dispatch-plan --json` lists skills resolved from `skill_sources` as `local_skills`, each with `name` and `source_path`. Those skills are not copied into target repositories. An unknown name fails validation, and the message lists the directories that were searched. `agent profile show` and `agent dispatch-plan` accept a manifest file as `--root` and walk parent directories for `.metagit.yml`. A manifest that fails to load is reported directly. Pass `-c/--definition` when the definition path is not `.metagit.yml` under that root.
 
 ## CLI
 

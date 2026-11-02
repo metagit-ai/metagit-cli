@@ -376,10 +376,12 @@ class AgentService:
             config_path = Path(definition_path)
             if not config_path.is_absolute():
                 config_path = self.manifest_root / definition_path
-            if config_path.is_file():
-                loaded = MetagitConfigManager(config_path=config_path).load_config()
-                if not isinstance(loaded, Exception):
-                    resolved_config = loaded
+            if not config_path.is_file():
+                raise click.ClickException(f"Manifest not found: {config_path}. Pass -c/--definition.")
+            loaded = MetagitConfigManager(config_path=config_path).load_config()
+            if isinstance(loaded, Exception):
+                raise click.ClickException(f"Failed to load {config_path}: {loaded}")
+            resolved_config = loaded
         dispatch = AgentDispatchService(
             registry=self.registry,
             manifest_root=self.manifest_root or Path.cwd(),
