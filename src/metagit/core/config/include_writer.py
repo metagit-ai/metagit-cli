@@ -271,10 +271,14 @@ def flatten_manifest(
     *,
     output: Path | None = None,
     in_place: bool = False,
+    normalized: bool = False,
 ) -> str | Exception:
     """Return the merged manifest as one YAML document.
 
-    A manifest without ``includes`` is returned unchanged and is not rewritten.
+    The default merges the raw YAML documents so aliases, explicit defaults, tag
+    mappings, and scalar text stay as written. ``normalized`` re-serializes the
+    pydantic model (the previous behaviour). A manifest without ``includes`` is
+    returned unchanged and is not rewritten.
     """
     try:
         root = path.expanduser().resolve()
@@ -287,20 +291,42 @@ def flatten_manifest(
                 output.parent.mkdir(parents=True, exist_ok=True)
                 output.write_text(original, encoding="utf-8")
             return original
-        manager = MetagitConfigManager(config_path=root)
-        loaded = manager.load_config()
-        if isinstance(loaded, Exception):
-            return loaded
-        from metagit.core.config.format_service import ConfigFormatService
+        if normalized:
+            manager = MetagitConfigManager(config_path=root)
+            loaded = manager.load_config()
+            if isinstance(loaded, Exception):
+                return loaded
+            from metagit.core.config.format_service import ConfigFormatService
 
-        rendered = ConfigFormatService().render_metagit(loaded, original_text="")
+            rendered = ConfigFormatService().render_metagit(loaded, original_text="")
+        else:
+            from metagit.core.config.raw_compose import render_raw_composed
+
+            rendered = render_raw_composed(root)
+            if isinstance(rendered, Exception):
+                return rendered
         destination = root if in_place else output
         if destination is not None:
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(rendered, encoding="utf-8")
+            if in_place:
+                _drop_includes_key(destination)
+                rendered = destination.read_text(encoding="utf-8")
         return rendered
     except Exception as exc:
         return exc
+
+
+def _drop_includes_key(path: Path) -> None:
+    """``render_raw_composed`` already omits includes; this keeps in-place callers honest."""
+    text = path.read_text(encoding="utf-8")
+    if "includes:" not in text:
+        return
+    yaml = build_roundtrip_yaml()
+    document = yaml.load(text)
+    if isinstance(document, CommentedMap) and "includes" in document:
+        del document["includes"]
+        _dump_roundtrip(yaml, document, path)
 
 
 def _partition_workspace(

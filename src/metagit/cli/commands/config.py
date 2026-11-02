@@ -1140,8 +1140,14 @@ def config_schema(ctx: click.Context, output_path: str, fragment: bool) -> None:
     default=False,
     help="Replace the root manifest with the merged document and drop includes",
 )
+@click.option(
+    "--normalized",
+    is_flag=True,
+    default=False,
+    help="Re-serialize the loaded model instead of merging the raw YAML",
+)
 @click.pass_context
-def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool) -> None:
+def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool, normalized: bool) -> None:
     """Print the composed manifest as one YAML document."""
     from metagit.core.config.include_writer import flatten_manifest
 
@@ -1153,6 +1159,7 @@ def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool) 
         target,
         output=Path(output_path) if output_path else None,
         in_place=in_place,
+        normalized=normalized,
     )
     if isinstance(rendered, Exception):
         logger.error(f"Failed to flatten manifest: {rendered}")

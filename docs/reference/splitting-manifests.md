@@ -62,9 +62,13 @@ metagit config validate -c .metagit.yml --json
 # Format the root and every fragment
 metagit fmt -c .metagit.yml
 
-# One file again. --in-place strips includes from the root and leaves fragment files on disk.
+# One file again. The default merges the raw YAML (aliases, explicit defaults,
+# tag mappings, and scalar text stay as written). --normalized re-serializes
+# the loaded model. --in-place strips includes from the root and leaves
+# fragment files on disk.
 metagit config flatten -c .metagit.yml
 metagit config flatten -c .metagit.yml --in-place
+metagit config flatten -c .metagit.yml --normalized
 ```
 
 `--by` is `project`, `graph`, or `all`. Project files are `<dir>/projects/<slug>.yml`. A slug collision is an error. Graph nodes and relationships go to `<dir>/graph/nodes.yml` and `relationships.yml`. Running split again on an already-split manifest changes nothing.

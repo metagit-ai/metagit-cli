@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-
+### Added
+- `metagit config flatten` merges the raw YAML of a split manifest (values and comments stay as written). `--normalized` keeps the previous model re-serialization. `metagit.manifest.load_composed` returns that composed mapping.
 
 ## [0.37.1] - 2026-11-01
 
