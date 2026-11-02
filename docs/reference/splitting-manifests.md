@@ -49,8 +49,15 @@ For the 17-project umbrella, one file per project under `.metagit.d/projects/` p
 
 ```bash
 # Preview, then split projects and graph. Writes nothing with --dry-run.
+# Split composes the planned files first and refuses to write when that
+# document would differ from the input. --dry-run prints `fidelity: ok`.
 metagit config split -c .metagit.yml --by all --dir .metagit.d --dry-run
 metagit config split -c .metagit.yml --by all --dir .metagit.d
+
+# Compare two manifests, or a file with a git spec. --model compares the
+# loaded model; the default --raw compares composed YAML.
+metagit config diff .metagit.yml HEAD:.metagit.yml --raw
+metagit config validate -c .metagit.yml --json   # includes content_sha256
 
 # Merged view (default) vs the root file only
 metagit config show -c .metagit.yml

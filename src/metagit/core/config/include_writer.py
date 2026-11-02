@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import copy
 import json
+import shutil
+import tempfile
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
@@ -25,6 +27,7 @@ from metagit.core.config.include_loader import (
     project_identity,
     relationship_identity,
     relationship_key,
+    resolved_manifest_files,
     slugify_name,
 )
 from metagit.core.config.models import MetagitConfig
@@ -228,7 +231,61 @@ def split_manifest(
     directory: Path,
     dry_run: bool,
 ) -> SplitPlan | Exception:
-    """Move projects and/or graph lists out of a single manifest into fragments."""
+    """Move projects and/or graph lists out of a single manifest into fragments.
+
+    The planned fragments are composed and compared to the input first. A
+    difference aborts before any file is written.
+    """
+    root = path.expanduser().resolve()
+    if not root.is_file():
+        return FileNotFoundError(f"Configuration file not found: {root}")
+    fidelity = _assert_split_fidelity(root, by=by, directory=directory)
+    if isinstance(fidelity, Exception):
+        return fidelity
+    return _split_manifest_unchecked(root, by=by, directory=directory, dry_run=dry_run)
+
+
+def _assert_split_fidelity(root: Path, *, by: str, directory: Path) -> Exception | None:
+    """Split a copy and refuse when the composed document would change."""
+    from metagit.core.config.manifest_diff import composed_diff
+
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest_root = Path(tmp)
+            files = resolved_manifest_files(root) or [root]
+            for item in files:
+                relative = item.resolve().relative_to(root.parent.resolve())
+                target = dest_root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(item, target)
+            planned = _split_manifest_unchecked(
+                dest_root / root.name,
+                by=by,
+                directory=directory,
+                dry_run=False,
+            )
+            if isinstance(planned, Exception):
+                return planned
+            diffs = composed_diff(root, dest_root / root.name)
+            if isinstance(diffs, Exception):
+                return diffs
+            if not diffs:
+                return None
+            shown = ", ".join(f"{item.path} ({item.kind})" for item in diffs[:40])
+            extra = "" if len(diffs) <= 40 else f" (+{len(diffs) - 40} more)"
+            return ManifestComposeError(f"split would change the manifest ({len(diffs)} path(s)): {shown}{extra}")
+    except Exception as exc:
+        return exc
+
+
+def _split_manifest_unchecked(
+    path: Path,
+    *,
+    by: str,
+    directory: Path,
+    dry_run: bool,
+) -> SplitPlan | Exception:
+    """Split ``path`` without the fidelity check. ``path`` is already resolved."""
     try:
         root = path.expanduser().resolve()
         if not root.is_file():

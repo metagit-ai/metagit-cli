@@ -222,7 +222,7 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
         component_issues = validate_components(result, definition_root=definition_root)
     except ManifestComposeError as exc:
         if as_json:
-            emit_json({"ok": False, "errors": exc.errors, "sources": exc.sources})
+            emit_json(_validate_payload(ok=False, errors=exc.errors, sources=exc.sources, path=target_path))
             ctx.exit(1)
         logger.error(str(exc))
         ctx.abort()
@@ -230,11 +230,12 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
     except Exception as e:
         if as_json:
             emit_json(
-                {
-                    "ok": False,
-                    "errors": [{"message": str(e), "file": None, "line": None}],
-                    "sources": _manifest_sources(config_manager),
-                }
+                _validate_payload(
+                    ok=False,
+                    errors=[{"message": str(e), "file": None, "line": None}],
+                    sources=_manifest_sources(config_manager),
+                    path=target_path,
+                )
             )
             ctx.exit(1)
         logger.error(f"Failed to load metagit configuration file: {e}")
@@ -260,13 +261,45 @@ def config_validate(ctx: click.Context, config_path: Union[str, None] = None, as
             logger.error(issue)
     if errors:
         if as_json:
-            emit_json({"ok": False, "errors": errors, "sources": _manifest_sources(config_manager)})
+            emit_json(
+                _validate_payload(
+                    ok=False,
+                    errors=errors,
+                    sources=_manifest_sources(config_manager),
+                    path=target_path,
+                )
+            )
             ctx.exit(1)
         ctx.abort()
     if as_json:
-        emit_json({"ok": True, "errors": [], "sources": _manifest_sources(config_manager)})
+        emit_json(
+            _validate_payload(
+                ok=True,
+                errors=[],
+                sources=_manifest_sources(config_manager),
+                path=target_path,
+            )
+        )
         return
     logger.success(f"Configuration file {target_path} is valid")
+
+
+def _validate_payload(
+    *,
+    ok: bool,
+    errors: list[dict[str, object]],
+    sources: list[dict[str, str]],
+    path: str,
+) -> dict[str, object]:
+    """JSON body for ``config validate``, including the composed content hash."""
+    from metagit.core.config.manifest_diff import content_sha256
+
+    digest: str | None
+    try:
+        digest = content_sha256(path)
+    except Exception:
+        digest = None
+    return {"ok": ok, "errors": errors, "sources": sources, "content_sha256": digest}
 
 
 def _manifest_sources(manager: MetagitConfigManager) -> list[dict[str, str]]:
@@ -1132,6 +1165,40 @@ def config_schema(ctx: click.Context, output_path: str, fragment: bool) -> None:
         ctx.abort()
 
 
+@config.command("diff")
+@click.argument("left")
+@click.argument("right")
+@click.option(
+    "--raw/--model",
+    "raw",
+    default=True,
+    help="Compare composed YAML (--raw, default) or the loaded model (--model)",
+)
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.pass_context
+def config_diff(ctx: click.Context, left: str, right: str, raw: bool, as_json: bool) -> None:
+    """Show paths that differ between two manifests or git specs such as ``HEAD:.metagit.yml``."""
+    from metagit.core.config.manifest_diff import diff_manifests
+
+    logger = ctx.obj["logger"]
+    try:
+        differences = diff_manifests(left, right, mode="raw" if raw else "model")
+    except Exception as exc:
+        logger.error(str(exc).splitlines()[0])
+        ctx.exit(1)
+        return
+    payload = {"count": len(differences), "differences": [item.to_dict() for item in differences]}
+    if as_json:
+        emit_json(payload)
+    elif differences:
+        for item in differences:
+            click.echo(f"{item.path} ({item.kind})")
+    else:
+        click.echo("0 differences")
+    if differences:
+        ctx.exit(1)
+
+
 @config.command("flatten")
 @click.option("--output", "output_path", default=None, help="Write the merged manifest to this path")
 @click.option(
@@ -1211,4 +1278,5 @@ def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: boo
         prefix = "would write" if dry_run else "wrote"
         click.echo(f"{prefix} {item}")
     if dry_run:
+        click.echo("fidelity: ok")
         logger.success("Dry run; no files were written")
