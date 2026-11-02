@@ -31,7 +31,7 @@ A fragment is a YAML mapping. v1 allows:
 
 A fragment must not set `name`, `kind`, or any other root scalar. The same project name, graph node id, or relationship tuple in two files is an error that names both `file:line` locations. Nested includes are limited to depth 3, cannot cycle, and cannot name the same file twice. Paths must stay inside the root manifest's directory: absolute paths, URLs, `..` escapes, and symlinks that resolve outside that directory are rejected. A glob that matches nothing is fine. A literal path that is missing is not.
 
-Globs expand in lexicographic order of the POSIX path relative to the root. `metagit config split` writes an explicit ordered list instead of a glob so project order stays the order it had in the original file.
+Globs expand in lexicographic order of the POSIX path relative to the root. `metagit config split` writes an explicit ordered list so project order stays the order it had in the original file. `metagit config split --glob` writes `includes: [.metagit.d/projects/*.yml, .metagit.d/graph/*.yml]` instead, and warns when filename order would reorder projects. On that layout, `project add` creates `<dir>/<slug>.yml` and leaves the root file unchanged.
 
 ## Example layout
 

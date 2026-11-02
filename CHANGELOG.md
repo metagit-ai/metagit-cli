@@ -7,6 +7,7 @@
 - `metagit config diff <A> <B> [--raw|--model] [--json]` lists differing paths (`value`, `added`, `removed`, `type`, `whitespace-only`). Each side may be a manifest path or a git spec such as `HEAD:.metagit.yml`. `config validate --json` includes `content_sha256` of the composed document. `config split` refuses to write when the planned composition would change that document; `--dry-run` reports the check.
 - `config set`, `patch`, and `preview` accept `[name=]` (projects, repos, documentation) and `[id=]` (graph nodes and relationships). `set` also accepts `[n]` and `.n`. A missing or ambiguous selector lists the candidates. Docs: [config-paths.md](docs/reference/config-paths.md).
 - `project repo move -n NAME --to-project TARGET` infers the source project when exactly one project holds the repo. An ambiguous name lists the projects and exits without a traceback. Other `project repo` commands that need a project say so and point at `-p/--project`.
+- `config split --glob` writes `includes` as `.metagit.d/projects/*.yml` and `.metagit.d/graph/*.yml`, and warns when filename order would reorder projects. `project add` on that layout creates the new fragment and leaves the root file unchanged.
 
 ## [0.37.1] - 2026-11-01
 

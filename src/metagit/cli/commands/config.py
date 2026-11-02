@@ -1254,8 +1254,15 @@ def config_flatten(ctx: click.Context, output_path: str | None, in_place: bool, 
     help="Directory under the manifest root for fragment files",
 )
 @click.option("--dry-run", is_flag=True, default=False, help="Print the planned files and write nothing")
+@click.option(
+    "--glob",
+    "glob_layout",
+    is_flag=True,
+    default=False,
+    help="Write includes as projects/*.yml and graph/*.yml globs",
+)
 @click.pass_context
-def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: bool) -> None:
+def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: bool, glob_layout: bool) -> None:
     """Move projects and graph lists into per-file fragments."""
     from metagit.core.config.include_writer import split_manifest
 
@@ -1265,6 +1272,7 @@ def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: boo
         by=split_by.strip().lower(),
         directory=Path(directory),
         dry_run=dry_run,
+        glob_layout=glob_layout,
     )
     if isinstance(plan, Exception):
         logger.error(f"Failed to split manifest: {plan}")
@@ -1276,6 +1284,8 @@ def config_split(ctx: click.Context, split_by: str, directory: str, dry_run: boo
     for item in plan.files:
         prefix = "would write" if dry_run else "wrote"
         click.echo(f"{prefix} {item}")
+    for warning in plan.warnings:
+        click.echo(f"warning: {warning}", err=True)
     if dry_run:
         click.echo("fidelity: ok")
         logger.success("Dry run; no files were written")
