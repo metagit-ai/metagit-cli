@@ -44,7 +44,7 @@ workspace:
 
 **Inheritance:** workspace → project → repo. Child merges lists and overrides `tier`; `inherit: false` replaces the merged profile.
 
-`agent dispatch-plan --json` lists skills resolved from `skill_sources` as `local_skills`, each with `name` and `source_path`. Those skills are not copied into target repositories. An unknown name fails validation, and the message lists the directories that were searched. `agent profile show` and `agent dispatch-plan` accept a manifest file as `--root` and walk parent directories for `.metagit.yml`. A manifest that fails to load is reported directly. Pass `-c/--definition` when the definition path is not `.metagit.yml` under that root.
+`agent dispatch-plan --json` lists skills resolved from `skill_sources` as `local_skills`, each with `name` and `source_path`. `-p` without `-n` fills `local_skills` from the workspace and project profiles. A repository is still required for a repo-scoped template. Those skills are not copied into target repositories. An unknown name fails validation, and the message lists the directories that were searched. `agent profile show` and `agent dispatch-plan` accept a manifest file as `--root` and walk parent directories for `.metagit.yml`. A manifest that fails to load is reported directly. Pass `-c/--definition` when the definition path is not `.metagit.yml` under that root.
 
 ## CLI
 

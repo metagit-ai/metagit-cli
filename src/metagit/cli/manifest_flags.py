@@ -12,6 +12,45 @@ _MANIFEST_LONG_OPTS = frozenset({"--definition", "--config-path", "--metagit-pat
 _ENV = "METAGIT_CONFIG"
 
 
+class LazyManifestGroup(click.Group):
+    """Remember child arguments before Click clears them for the group callback."""
+
+    def invoke(self, ctx: click.Context) -> object:
+        ctx.meta["metagit_pending_args"] = [*ctx._protected_args, *ctx.args]
+        return super().invoke(ctx)
+
+
+def pending_args(ctx: click.Context) -> list[str]:
+    """Return arguments Click has not parsed yet, without the subcommand name."""
+    saved = ctx.meta.get("metagit_pending_args")
+    protected = list(saved) if isinstance(saved, list) else [*ctx._protected_args, *ctx.args]
+    if ctx.invoked_subcommand and protected and protected[0] == ctx.invoked_subcommand:
+        protected = protected[1:]
+    return protected
+
+
+def help_in_pending_args(ctx: click.Context) -> bool:
+    """True when a later token asks for help, before this group loads a manifest."""
+    return any(arg in {"-h", "--help"} for arg in pending_args(ctx))
+
+
+def manifest_path_from_pending_args(ctx: click.Context) -> str | None:
+    """Return the last ``-c`` / ``--config`` still waiting on a child command."""
+    args = pending_args(ctx)
+    found: str | None = None
+    index = 0
+    while index < len(args):
+        arg = args[index]
+        if arg in {"-c", "--config"} and index + 1 < len(args):
+            found = args[index + 1]
+            index += 2
+            continue
+        if arg.startswith("--config="):
+            found = arg.split("=", 1)[1]
+        index += 1
+    return found
+
+
 def install_manifest_flags(root: click.Group) -> None:
     """Normalize manifest path options and add did-you-mean errors.
 
@@ -33,7 +72,7 @@ def _visit(command: click.Command, *, is_root: bool, inherit_config: bool) -> No
         if inherit_config and not found and not _has_short_c(command):
             _add_context_config_option(command)
     if isinstance(command, click.Group):
-        child_inherit = inherit_config or command.name == "config"
+        child_inherit = inherit_config or command.name in {"config", "project"}
         for child in list(command.commands.values()):
             _visit(child, is_root=False, inherit_config=child_inherit)
 

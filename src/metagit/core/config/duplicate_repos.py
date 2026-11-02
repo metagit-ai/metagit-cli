@@ -45,13 +45,14 @@ def canonical_repo_key(value: str) -> str | None:
 def find_duplicate_repo_warnings(
     config: MetagitConfig,
     source_map: ManifestSourceMap | None,
+    fallback_file: str | None = None,
 ) -> list[dict[str, Any]]:
     """Return duplicate-repo warnings with fragment path and manifest path."""
-    declared = _declared_repos(config, source_map)
+    declared = _declared_repos(config, source_map, fallback_file)
     warnings: list[dict[str, Any]] = []
     warnings.extend(_duplicate_urls(declared))
-    warnings.extend(_nodes_naming_project_repos(config, source_map, declared))
-    warnings.extend(_relationships_using_identity(config, source_map, declared))
+    warnings.extend(_nodes_naming_project_repos(config, source_map, declared, fallback_file))
+    warnings.extend(_relationships_using_identity(config, source_map, declared, fallback_file))
     return warnings
 
 
@@ -66,12 +67,13 @@ def _host_owner_name(host: str, path: str) -> str | None:
 def _declared_repos(
     config: MetagitConfig,
     source_map: ManifestSourceMap | None,
+    fallback_file: str | None = None,
 ) -> list[dict[str, Any]]:
     if config.workspace is None:
         return []
     found: list[dict[str, Any]] = []
     for project in config.workspace.projects:
-        project_file = _location_file(source_map, project_identity(project.name))
+        project_file = _location_file(source_map, project_identity(project.name), fallback_file)
         for repo in project.repos:
             url = str(repo.url) if repo.url is not None else ""
             key = canonical_repo_key(url) if url else None
@@ -114,6 +116,7 @@ def _nodes_naming_project_repos(
     config: MetagitConfig,
     source_map: ManifestSourceMap | None,
     declared: list[dict[str, Any]],
+    fallback_file: str | None = None,
 ) -> list[dict[str, Any]]:
     if config.graph is None:
         return []
@@ -134,7 +137,9 @@ def _nodes_naming_project_repos(
                 [
                     {
                         "file": _location_file(
-                            source_map, node_identity(node_key({"identity": node.identity, "name": node.name}))
+                            source_map,
+                            node_identity(node_key({"identity": node.identity, "name": node.name})),
+                            fallback_file,
                         ),
                         "path": f"graph.nodes[id={node_id}]",
                     },
@@ -149,6 +154,7 @@ def _relationships_using_identity(
     config: MetagitConfig,
     source_map: ManifestSourceMap | None,
     declared: list[dict[str, Any]],
+    fallback_file: str | None = None,
 ) -> list[dict[str, Any]]:
     if config.graph is None:
         return []
@@ -172,7 +178,7 @@ def _relationships_using_identity(
                     ),
                     [
                         {
-                            "file": _location_file(source_map, relationship_identity(str(ident))),
+                            "file": _location_file(source_map, relationship_identity(str(ident)), fallback_file),
                             "path": f"graph.relationships[id={ident}].{side}.identity",
                         },
                         match,
@@ -187,10 +193,14 @@ def _warning(code: str, message: str, locations: list[dict[str, Any]]) -> dict[s
     return {"code": code, "message": message, "locations": rendered}
 
 
-def _location_file(source_map: ManifestSourceMap | None, ident: str) -> str | None:
+def _location_file(
+    source_map: ManifestSourceMap | None,
+    ident: str,
+    fallback_file: str | None = None,
+) -> str | None:
     if source_map is None:
-        return None
+        return fallback_file
     located = source_map.locations.get(ident)
     if located is None:
-        return None
+        return fallback_file
     return located.path

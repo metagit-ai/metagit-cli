@@ -17,6 +17,11 @@ from metagit.cli.json_output import (
     exit_on_catalog_mutation,
     exit_on_layout_mutation,
 )
+from metagit.cli.manifest_flags import (
+    LazyManifestGroup,
+    help_in_pending_args,
+    manifest_path_from_pending_args,
+)
 from metagit.cli.shell_completion import complete_projects, complete_repos
 from metagit.core.appconfig import AppConfig
 from metagit.core.config.manager import MetagitConfigManager
@@ -35,8 +40,13 @@ from metagit.core.workspace.models import WorkspaceProject
 from metagit.core.workspace.root_resolver import resolve_session_root, resolve_workspace_root
 
 
-@click.group(name="project", invoke_without_command=True)
-@click.option("--config", "-c", default=".metagit.yml", help="Path to the metagit definition file")
+@click.group(name="project", invoke_without_command=True, cls=LazyManifestGroup)
+@click.option(
+    "--config",
+    "-c",
+    default=".metagit.yml",
+    help="Path to the metagit definition file. Also accepted after a project subcommand.",
+)
 @click.option(
     "--project",
     "-p",
@@ -52,7 +62,10 @@ def project(ctx: click.Context, config: str, project: str = None) -> None:
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
         return
+    if help_in_pending_args(ctx):
+        return
     app_config: AppConfig = ctx.obj["config"]
+    config = manifest_path_from_pending_args(ctx) or config
     ctx.obj["config_path"] = config
     ctx.obj["explicit_project"] = project
     try:
