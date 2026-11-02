@@ -66,7 +66,9 @@ def test_local_skill_validates_and_dispatch_lists_path(tmp_path: Path) -> None:
     payload = json.loads(planned.output)
     local = payload["local_skills"]
     assert local[0]["name"] == "my-skill"
-    assert local[0]["source_path"].endswith("my-skill/SKILL.md")
+    source = Path(local[0]["source_path"])
+    assert source.parent.name == "my-skill"
+    assert source.name == "SKILL.md"
     assert "my-skill" not in payload["required_profile_skills"]
 
 

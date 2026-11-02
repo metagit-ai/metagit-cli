@@ -96,9 +96,9 @@ def test_discover_lists_plain_worktrees_and_gc_skips_dirty(tmp_path: Path, monke
     )
     assert preview.exit_code == 0, preview.output
     planned = json.loads(preview.output)
-    planned_paths = {item["path"] for item in planned["remove"]}
-    assert str(feature.resolve()) in planned_paths or str(feature) in planned_paths
-    assert all(item["path"] != str(dirty) and not item["path"].endswith("/dirty") for item in planned["remove"])
+    planned_paths = {Path(item["path"]).resolve() for item in planned["remove"]}
+    assert feature.resolve() in planned_paths
+    assert dirty.resolve() not in planned_paths
     assert feature.is_dir()
     assert dirty.is_dir()
 
