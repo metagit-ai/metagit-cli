@@ -267,8 +267,6 @@ def _assert_split_fidelity(
     glob_layout: bool = False,
 ) -> Exception | None:
     """Split a copy and refuse when the composed document would change."""
-    from metagit.core.config.manifest_diff import composed_diff
-
     try:
         with tempfile.TemporaryDirectory() as tmp:
             dest_root = Path(tmp)
@@ -339,6 +337,9 @@ def _split_manifest_unchecked(
                 return collapsed
         if changed and not dry_run:
             _dump_roundtrip(yaml, document, root)
+            formatted = _format_written_manifest(root)
+            if isinstance(formatted, Exception):
+                return formatted
         return SplitPlan(
             root=str(root),
             files=[str(item) for item in planned],
@@ -932,6 +933,20 @@ def _append_includes(document: CommentedMap, patterns: list[str]) -> None:
         document["includes"] = existing
         return
     document.insert(0, "includes", existing)
+
+
+def _format_written_manifest(root: Path) -> Exception | None:
+    """Rewrite split output with ``fmt`` so ``fmt --check`` is a no-op."""
+    from metagit.core.config.format_service import ConfigFormatService
+
+    results = ConfigFormatService().format_manifest_files(root)
+    if isinstance(results, Exception):
+        return results
+    for item in results:
+        if item.error:
+            return RuntimeError(item.error)
+        Path(item.path).write_text(item.formatted, encoding="utf-8")
+    return None
 
 
 def _dump_roundtrip(yaml: Any, document: CommentedMap, path: Path) -> None:

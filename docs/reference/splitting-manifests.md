@@ -80,7 +80,7 @@ metagit config flatten -c .metagit.yml --in-place
 metagit config flatten -c .metagit.yml --normalized
 ```
 
-`--by` is `project`, `graph`, or `all`. Project files are `<dir>/projects/<slug>.yml`. A slug collision is an error. Graph nodes and relationships go to `<dir>/graph/nodes.yml` and `relationships.yml`. Running split again on an already-split manifest changes nothing.
+`--by` is `project`, `graph`, or `all`. Project files are `<dir>/projects/<slug>.yml`. A slug collision is an error. Graph nodes and relationships go to `<dir>/graph/nodes.yml` and `relationships.yml`. Running split again on an already-split manifest changes nothing. The files split writes already pass `metagit fmt -t metagit --check`. `fmt` keeps an alias, an explicit default, and a scalar's style when the parsed value does not change, and it does not add relationship `status` or `provenance` that were not already in the file.
 
 Editor schema for a fragment:
 
