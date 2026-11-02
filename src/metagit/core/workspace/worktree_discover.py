@@ -3,11 +3,14 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, Callable
+from urllib.parse import urlparse
 
 from metagit.core.workspace.root_resolver import resolve_sync_root
 from metagit.core.workspace.workspace_dedupe import project_mount_path
@@ -25,7 +28,7 @@ def discover_worktrees(
 ) -> list[dict[str, Any]]:
     """Return every git worktree under synced repositories, including the primary checkout."""
     records: list[dict[str, Any]] = []
-    for repo_name, checkout in _synced_checkouts(manifest, workspace_path=workspace_path):
+    for repo_name, checkout, manifest_url in _synced_checkouts(manifest, workspace_path=workspace_path):
         for worktree in _git_worktrees(checkout):
             path = Path(worktree["path"])
             branch = worktree.get("branch")
@@ -38,10 +41,17 @@ def discover_worktrees(
                 "primary": path.resolve() == checkout.resolve(),
                 "checkout": str(checkout.resolve()),
                 "pr": None,
+                "pr_reason": None,
             }
             if include_pr and pr_lookup is not None and branch:
                 remote = _remote_url(checkout)
-                record["pr"] = pr_lookup(repo_name, remote or "", branch)
+                outcome = _invoke_pr_lookup(pr_lookup, repo_name, remote or "", branch, manifest_url)
+                if isinstance(outcome, dict) and outcome.get("state"):
+                    record["pr"] = outcome
+                elif isinstance(outcome, dict) and outcome.get("reason"):
+                    record["pr_reason"] = str(outcome["reason"])
+                else:
+                    record["pr_reason"] = "no pull request"
             records.append(record)
     return records
 
@@ -77,15 +87,29 @@ def gc_merged_worktrees(
     return {"dry_run": dry_run, "remove": remove, "skipped": skipped}
 
 
-def default_pr_lookup(repo_name: str, remote_url: str, branch: str) -> dict[str, str] | None:
-    """Look up a pull request when a GitHub token is set. Otherwise return None."""
+def default_pr_lookup(
+    repo_name: str,
+    remote_url: str,
+    branch: str,
+    manifest_url: str | None = None,
+) -> dict[str, str] | None:
+    """Look up a pull request when a GitHub token is set.
+
+    The manifest repo ``url`` is the canonical address. The checkout remote is
+    the fallback, and an SSH host alias is resolved with ``ssh -G``. A miss is
+    ``no pull request``, ``forge not supported``, or ``lookup failed``.
+    """
     _ = repo_name
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    if not token or not remote_url or not branch:
+    if not token or not branch:
         return None
-    slug = _github_slug(remote_url)
+    if not remote_url and not manifest_url:
+        return {"reason": "no pull request"}
+    slug, failure = _github_slug_from(manifest_url, remote_url)
+    if failure:
+        return {"reason": failure}
     if slug is None:
-        return None
+        return {"reason": "no pull request"}
     query = f"repos/{slug}/pulls?head={slug.split('/')[0]}:{branch}&state=all&per_page=5"
     completed = subprocess.run(
         ["gh", "api", query],
@@ -95,13 +119,13 @@ def default_pr_lookup(repo_name: str, remote_url: str, branch: str) -> dict[str,
         env={**os.environ, "GH_TOKEN": token},
     )
     if completed.returncode != 0:
-        return None
+        return {"reason": "lookup failed"}
     try:
         payload = json.loads(completed.stdout)
     except json.JSONDecodeError:
-        return None
+        return {"reason": "lookup failed"}
     if not isinstance(payload, list) or not payload:
-        return None
+        return {"reason": "no pull request"}
     pull = payload[0]
     state = "merged" if pull.get("merged_at") else str(pull.get("state") or "")
     head = pull.get("head") if isinstance(pull.get("head"), dict) else {}
@@ -111,7 +135,11 @@ def default_pr_lookup(repo_name: str, remote_url: str, branch: str) -> dict[str,
     return {"state": state, "head_sha": sha}
 
 
-def _synced_checkouts(manifest: Path, *, workspace_path: str | None = None) -> list[tuple[str, Path]]:
+def _synced_checkouts(
+    manifest: Path,
+    *,
+    workspace_path: str | None = None,
+) -> list[tuple[str, Path, str | None]]:
     """Return synced checkouts at the same paths ``project sync`` clones into.
 
     An explicit repo ``path`` is that checkout. Otherwise the repo lives under
@@ -137,7 +165,8 @@ def _synced_checkouts(manifest: Path, *, workspace_path: str | None = None) -> l
                 configured_path=str(repo["path"]) if repo.get("path") else None,
             )
             if (candidate / ".git").exists():
-                found.append((f"{project['name']}/{repo['name']}", candidate.resolve()))
+                url = str(repo.get("url") or "") or None
+                found.append((f"{project['name']}/{repo['name']}", candidate.resolve(), url))
     return found
 
 
@@ -220,7 +249,8 @@ def _skip_reason(record: dict[str, Any]) -> str | None:
         return "dirty"
     pull = record.get("pr")
     if not isinstance(pull, dict):
-        return "no pull request"
+        reason = record.get("pr_reason")
+        return str(reason) if reason else "no pull request"
     state = str(pull.get("state") or "")
     if state not in {"merged", "closed"}:
         return f"pull request is {state or 'unknown'}"
@@ -236,21 +266,89 @@ def _remove_worktree(checkout: Path, path: Path) -> None:
         raise RuntimeError(completed.stderr.strip() or f"could not remove worktree {path}")
 
 
-def _github_slug(remote_url: str) -> str | None:
-    text = remote_url[:-4] if remote_url.endswith(".git") else remote_url
-    if "github.com" not in text.lower():
+def _invoke_pr_lookup(
+    lookup: PullRequestLookup,
+    repo_name: str,
+    remote_url: str,
+    branch: str,
+    manifest_url: str | None,
+) -> dict[str, str] | None:
+    """Pass the manifest URL when the lookup accepts it."""
+    try:
+        parameters = inspect.signature(lookup).parameters
+    except (TypeError, ValueError):
+        parameters = {}
+    if "manifest_url" in parameters:
+        return lookup(repo_name, remote_url, branch, manifest_url=manifest_url)  # type: ignore[call-arg]
+    return lookup(repo_name, remote_url, branch)
+
+
+def _github_slug_from(manifest_url: str | None, remote_url: str | None) -> tuple[str | None, str | None]:
+    """Return ``(owner/repo, failure)``. Prefer the manifest URL."""
+    saw_other = False
+    failed = False
+    for candidate in (manifest_url, remote_url):
+        if not candidate:
+            continue
+        parsed = _parse_git_remote(candidate)
+        if parsed is None:
+            continue
+        host, path = parsed
+        hostname, error = _canonical_hostname(host)
+        if error:
+            failed = True
+            continue
+        if hostname == "github.com":
+            parts = [part for part in path.split("/") if part]
+            if len(parts) >= 2:
+                return f"{parts[-2]}/{parts[-1]}", None
+            continue
+        saw_other = True
+    if saw_other:
+        return None, "forge not supported"
+    if failed:
+        return None, "lookup failed"
+    return None, None
+
+
+def _parse_git_remote(url: str) -> tuple[str, str] | None:
+    text = url.strip()
+    if text.lower().endswith(".git"):
+        text = text[: -len(".git")]
+    if "://" in text:
+        parsed = urlparse(text)
+        if parsed.hostname and parsed.path:
+            return parsed.hostname, parsed.path.strip("/")
         return None
-    if ":" in text and "github.com:" in text:
-        path = text.split("github.com:", 1)[1]
-    else:
-        marker = text.lower().find("github.com/")
-        if marker < 0:
-            return None
-        path = text[marker + len("github.com/") :]
-    parts = [part for part in path.strip("/").split("/") if part]
-    if len(parts) < 2:
+    match = re.match(r"^(?:ssh://)?(?:[^@/]+@)?(?P<host>[^:/]+)[:/](?P<path>.+)$", text)
+    if not match:
         return None
-    return f"{parts[-2]}/{parts[-1]}"
+    return match.group("host"), match.group("path").strip("/")
+
+
+def _canonical_hostname(host: str) -> tuple[str | None, str | None]:
+    """Return ``(hostname, error)``. Aliases without a dot go through ``ssh -G``."""
+    lowered = host.lower().rstrip(".")
+    if lowered in {"github.com", "www.github.com", "ssh.github.com"}:
+        return "github.com", None
+    if "." in lowered:
+        return lowered, None
+    completed = subprocess.run(
+        ["ssh", "-G", host],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode != 0:
+        return None, "lookup failed"
+    hostname = ""
+    for line in completed.stdout.splitlines():
+        if line.startswith("hostname "):
+            hostname = line.split(None, 1)[1].strip()
+            break
+    if not hostname:
+        return None, "lookup failed"
+    return hostname.lower(), None
 
 
 def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
