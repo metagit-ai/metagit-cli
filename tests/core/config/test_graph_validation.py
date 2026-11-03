@@ -133,6 +133,20 @@ def test_component_get_value_error_is_reported() -> None:
     assert any("invalid" in i.lower() or "expected" in i.lower() for i in issues)
 
 
+def test_project_qualified_repo_must_exist_in_that_project() -> None:
+    cfg = _config_with_rel(
+        id="edge",
+        from_endpoint=GraphEndpoint(project="alpha", repo="worker"),
+    )
+    issues = validate_graph_relationships(cfg)
+    assert issues
+    assert any(
+        "graph.relationships[id=edge].from: repo 'worker' is not in project 'alpha' "
+        "(it is declared in 'beta')" in issue
+        for issue in issues
+    )
+
+
 def test_path_only_endpoint_still_valid() -> None:
     cfg = _config_with_rel(
         from_endpoint=GraphEndpoint(path="apps/web"),

@@ -78,11 +78,10 @@ def test_patch_append_workspace_project(tmp_path: Path) -> None:
         "metagit",
         str(config_path),
         [
-            ConfigOperation(op=ConfigOpKind.APPEND, path="workspace.projects"),
             ConfigOperation(
-                op=ConfigOpKind.SET,
-                path="workspace.projects[0].name",
-                value="new-project",
+                op=ConfigOpKind.APPEND,
+                path="workspace.projects",
+                value={"name": "new-project", "repos": []},
             ),
         ],
         save=True,

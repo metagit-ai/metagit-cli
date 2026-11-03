@@ -4,6 +4,23 @@
 
 
 
+## [0.38.2] - 2026-11-02
+
+
+
+### Fixed
+- `project repo move`, `project repo rename`, and `project rename` rewrite `graph.relationships` endpoints and `graph.nodes` identities that encode `project/name` in the same save as the catalog change. URL identities such as `github://org/name` stay. `--dry-run` and `--json` list each rewrite (`graph.relationships[id=<id>].from_endpoint.project: platform -> zz-probe`). A split manifest writes that rewrite into the fragment that owns the relationship. The 0.38.1 notes did not actually do this. Verify: `metagit project -p platform repo move -n admin-api --to-project zz-probe --manifest-only`, then `config validate`. Endpoints left on the old project: 0.
+- `config validate` rejects a `{project, repo}` endpoint when that repo is not in the named project. It no longer resolves the repo name through the global index. When the name exists in exactly one other project the message is `graph.relationships[id=<id>].from: repo 'admin-api' is not in project 'platform' (it is declared in 'zz-probe')`. Normal and `--strict` both exit 1. Verify: point one moved endpoint back at the old project and run `config validate` and `config validate --strict`.
+- `config set` parses JSON or a YAML flow value when the field is a dict, list, or model. The confirmation prints the path exactly as given, selectors included. A value that does not parse, or a result that fails validation, exits non-zero and does not save. Verify: `config set 'workspace.projects[name=x].repos[name=y].tags' '{"type":"application"}'`, then `config get` that same path.
+- `config patch --op append` appends the supplied value, checked against the list item type. The schema example is only for the web add-row button. A patch runs the same graph and component checks as `config validate` and exits non-zero when the result is invalid. Verify: `config patch --op append --path workspace.projects[name=p].repos --value '{"name":"extra","url":"https://github.com/acme/extra.git"}' --save`.
+- `config patch --file` honours a top-level `"save": true` and rejects unknown top-level keys. Verify: a file `{"save": true, "operations": [...]}` with no `--save` flag writes, and a file with an extra key exits non-zero.
+- Paths printed by validate and duplicate-repo warnings work unchanged with `config get`, `config set`, and `config patch`. `from` is an alias of `from_endpoint`. `graph.nodes[id=]` matches `identity`. Relationship paths use `[id=]`. A bad selector prints one line, including the candidate list, and exits 2. `--json` prints `{"ok": false, "error": "..."}`. Verify: `config get 'graph.relationships[id=edge].from.project'` and `config get 'graph.nodes[id=github://org/name].identity'`.
+- `config diff` matches projects and repos by `name`, relationships by `id`, and nodes by `identity`. A pure reorder is one `order` entry. `--by-index` compares by position. Verify: `config split --by all --glob` on a manifest whose projects are not in filename order, then `config diff` the original against the split. Content differences: 0. `order` entries: 1.
+- `project repo add --tag key=value` (repeatable) sets `tags` on the new repository in the same save. Repository entries have no free-form `metadata` map. Verify: `project repo add -n NAME --url URL --tag type=application --tag team=core`.
+- `project repo move` accepts repeated `-n`, checks every name, then saves once. An unknown name writes nothing. Verify: `project repo move -n a -n b --to-project TARGET --manifest-only`.
+- `merge integrate` regeneration takes the target's deletion when a mapped path is not in the target HEAD (`git rm --cached --ignore-unmatch`) and does not `git add` a path that is gitignored after the regenerate command. Verify: merge a branch that still edits a generated file the target deleted and gitignored, with `merge.regenerate` matching that path. The merge commits and the path stays untracked.
+- `merge integrate` refuses when the target branch is checked out in any worktree. No flag overrides this. The error and `metagit merge --help` say to run `git -C <path> switch --detach` in that checkout first. This rule has been in effect since 0.36.0; the message now names the command.
+
 ## [0.38.1] - 2026-11-02
 
 

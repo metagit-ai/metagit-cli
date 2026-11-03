@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from metagit.core.appconfig.models import WorkspaceDedupeConfig
+from metagit.core.config.graph_rewrite import rewrite_graph_references
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.mcp.services.session_store import SessionStore
@@ -40,6 +41,21 @@ def _required_text(value: str | None) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _restore_moved_config(target: MetagitConfig, backup: MetagitConfig) -> None:
+    """Put workspace and graph back after a failed multi-repo move."""
+    target.workspace = backup.workspace
+    target.graph = backup.graph
+
+
+def _steps_from_results(results: list[LayoutMutationResult]) -> list[LayoutStep]:
+    steps: list[LayoutStep] = []
+    for result in results:
+        data = result.data or {}
+        for step in data.get("disk_steps") or []:
+            steps.append(step if isinstance(step, LayoutStep) else LayoutStep.model_validate(step))
+    return steps
 
 
 def _projects_holding_repo(config: MetagitConfig, repo_name: str) -> list[str]:
@@ -148,6 +164,13 @@ class WorkspaceLayoutService:
                 )
             )
 
+        plan.manifest_changes.extend(
+            rewrite_graph_references(
+                copy.deepcopy(config),
+                project_from=source,
+                project_to=target,
+            )
+        )
         if dry_run:
             return self._success(
                 "rename",
@@ -168,6 +191,7 @@ class WorkspaceLayoutService:
                 message=f"project '{source}' not found",
             )
         working_project.name = target
+        rewrite_graph_references(working, project_from=source, project_to=target)
 
         try:
             if move_disk:
@@ -182,6 +206,7 @@ class WorkspaceLayoutService:
                     message=str(save_err),
                 )
             project.name = target
+            rewrite_graph_references(config, project_from=source, project_to=target)
             if update_sessions:
                 store = SessionStore(workspace_root=str(root))
                 if store.rename_project_session(from_name=source, to_name=target):
@@ -369,6 +394,15 @@ class WorkspaceLayoutService:
                 )
             )
 
+        plan.manifest_changes.extend(
+            rewrite_graph_references(
+                copy.deepcopy(config),
+                project_from=project_key,
+                project_to=project_key,
+                repo_from=source,
+                repo_to=target,
+            )
+        )
         if dry_run:
             return self._success(
                 "rename",
@@ -380,12 +414,21 @@ class WorkspaceLayoutService:
             )
 
         repo.name = target
+        graph_backup = copy.deepcopy(config.graph)
+        rewrite_graph_references(
+            config,
+            project_from=project_key,
+            project_to=project_key,
+            repo_from=source,
+            repo_to=target,
+        )
         try:
             if move_disk:
                 apply_plan(plan, dry_run=False)
             save_err = self._save(config, config_path)
             if save_err:
                 repo.name = source
+                config.graph = graph_backup
                 return self._error(
                     "rename",
                     "repo",
@@ -396,6 +439,7 @@ class WorkspaceLayoutService:
                 )
         except LayoutExecutionError as exc:
             repo.name = source
+            config.graph = graph_backup
             return self._error(
                 "rename",
                 "repo",
@@ -428,9 +472,39 @@ class WorkspaceLayoutService:
         dry_run: bool = False,
         move_disk: bool = True,
         force: bool = False,
+        repo_names: list[str] | None = None,
+        persist: bool = True,
     ) -> LayoutMutationResult:
-        """Move a repository entry from one project to another."""
-        repo_key = _required_text(repo_name)
+        """Move a repository entry from one project to another.
+
+        ``repo_names`` moves every name in one mutation. ``persist`` is false
+        when a caller applies several moves and saves once.
+        """
+        raw_names = repo_names if repo_names is not None else [repo_name]
+        names = [item.strip() for item in raw_names if item and item.strip()]
+        if len(names) != len(set(names)):
+            return self._error(
+                "move",
+                "repo",
+                _required_text(from_project) or "",
+                repo_name=repo_name,
+                kind="invalid_name",
+                message="repo names must be unique",
+            )
+        if len(names) > 1:
+            return self._move_many(
+                config,
+                config_path,
+                workspace_path,
+                repo_names=names,
+                from_project=from_project,
+                to_project=to_project,
+                dedupe=dedupe,
+                dry_run=dry_run,
+                move_disk=move_disk,
+                force=force,
+            )
+        repo_key = _required_text(names[0] if names else repo_name)
         target_project_name = _required_text(to_project)
         source_project_name = _required_text(from_project)
         if repo_key is None or target_project_name is None:
@@ -623,6 +697,15 @@ class WorkspaceLayoutService:
                     )
                 )
 
+        plan.manifest_changes.extend(
+            rewrite_graph_references(
+                copy.deepcopy(config),
+                project_from=source_project_name,
+                project_to=target_project_name,
+                repo_from=repo_key,
+                repo_to=repo_key,
+            )
+        )
         if dry_run:
             return self._success(
                 "move",
@@ -641,6 +724,26 @@ class WorkspaceLayoutService:
         pop_index = next(index for index, item in enumerate(source_project.repos) if item.name == repo_key)
         moved_repo = source_project.repos.pop(pop_index)
         target_project.repos.append(moved_repo)
+        graph_backup = copy.deepcopy(config.graph)
+        rewrite_graph_references(
+            config,
+            project_from=source_project_name,
+            project_to=target_project_name,
+            repo_from=repo_key,
+            repo_to=repo_key,
+        )
+        if not persist:
+            return self._success(
+                "move",
+                "repo",
+                target_project_name,
+                repo_name=repo_key,
+                from_project=source_project_name,
+                to_project=target_project_name,
+                config_path=config_path,
+                plan=plan,
+                manifest_updated=False,
+            )
 
         try:
             if move_disk:
@@ -649,6 +752,7 @@ class WorkspaceLayoutService:
             if save_err:
                 target_project.repos.pop()
                 source_project.repos.append(moved_repo)
+                config.graph = graph_backup
                 return self._error(
                     "move",
                     "repo",
@@ -667,6 +771,7 @@ class WorkspaceLayoutService:
         except LayoutExecutionError as exc:
             target_project.repos = [item for item in target_project.repos if item.name != repo_key]
             source_project.repos.append(moved_repo)
+            config.graph = graph_backup
             return self._error(
                 "move",
                 "repo",
@@ -686,6 +791,142 @@ class WorkspaceLayoutService:
             config_path=config_path,
             plan=plan,
             manifest_updated=True,
+        )
+
+    def _move_many(
+        self,
+        config: MetagitConfig,
+        config_path: str,
+        workspace_path: str,
+        *,
+        repo_names: list[str],
+        from_project: str | None,
+        to_project: str,
+        dedupe: Optional[WorkspaceDedupeConfig],
+        dry_run: bool,
+        move_disk: bool,
+        force: bool,
+    ) -> LayoutMutationResult:
+        """Move every repo, then validate and save once. Unknown names write nothing."""
+        probes: list[LayoutMutationResult] = []
+        for name in repo_names:
+            probe = self.move_repo(
+                config,
+                config_path,
+                workspace_path,
+                repo_name=name,
+                from_project=from_project,
+                to_project=to_project,
+                dedupe=dedupe,
+                dry_run=True,
+                move_disk=move_disk,
+                force=force,
+            )
+            if not probe.ok:
+                return probe
+            probes.append(probe)
+        if dry_run:
+            return self._combined_move(
+                probes,
+                config_path=config_path,
+                to_project=to_project,
+                dry_run=True,
+                manifest_updated=False,
+            )
+
+        backup = copy.deepcopy(config)
+        results: list[LayoutMutationResult] = []
+        for name in repo_names:
+            result = self.move_repo(
+                config,
+                config_path,
+                workspace_path,
+                repo_name=name,
+                from_project=from_project,
+                to_project=to_project,
+                dedupe=dedupe,
+                dry_run=False,
+                move_disk=move_disk,
+                force=force,
+                persist=False,
+            )
+            if not result.ok:
+                _restore_moved_config(config, backup)
+                return result
+            results.append(result)
+        steps = _steps_from_results(results)
+        try:
+            if move_disk and steps:
+                apply_plan(LayoutPlan(operation="move_repo", disk_steps=steps), dry_run=False)
+            save_err = self._save(config, config_path)
+            if save_err:
+                _restore_moved_config(config, backup)
+                return self._error(
+                    "move",
+                    "repo",
+                    _required_text(from_project) or "",
+                    repo_name=", ".join(repo_names),
+                    kind="save_failed",
+                    message=str(save_err),
+                )
+        except LayoutExecutionError as exc:
+            _restore_moved_config(config, backup)
+            return self._error(
+                "move",
+                "repo",
+                _required_text(from_project) or "",
+                repo_name=", ".join(repo_names),
+                kind="disk_failed",
+                message=str(exc),
+            )
+        return self._combined_move(
+            results,
+            config_path=config_path,
+            to_project=to_project,
+            dry_run=False,
+            manifest_updated=True,
+        )
+
+    def _combined_move(
+        self,
+        results: list[LayoutMutationResult],
+        *,
+        config_path: str,
+        to_project: str,
+        dry_run: bool,
+        manifest_updated: bool,
+    ) -> LayoutMutationResult:
+        changes: list[str] = []
+        steps: list[LayoutStep] = []
+        warnings: list[str] = []
+        names: list[str] = []
+        source = None
+        for result in results:
+            if result.repo_name:
+                names.append(result.repo_name)
+            if source is None:
+                source = result.from_project
+            data = result.data or {}
+            changes.extend(str(item) for item in data.get("manifest_changes") or [])
+            warnings.extend(str(item) for item in data.get("warnings") or [])
+            steps.extend(_steps_from_results([result]))
+        plan = LayoutPlan(
+            operation="move_repo",
+            dry_run=dry_run,
+            manifest_changes=changes,
+            disk_steps=steps,
+            warnings=warnings,
+        )
+        return self._success(
+            "move",
+            "repo",
+            to_project,
+            repo_name=", ".join(names),
+            from_project=source,
+            to_project=to_project,
+            config_path=config_path,
+            plan=plan,
+            manifest_updated=manifest_updated,
         )
 
     def _migrate_repo_session_refs(

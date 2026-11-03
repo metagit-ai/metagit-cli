@@ -10,9 +10,11 @@ from typing import Union
 import click
 
 from metagit.cli.config_patch_ops import (
+    ResolvedOperations,
     emit_patch_result,
     emit_preview_result,
     emit_tree_result,
+    emit_usage_error,
     resolve_operations,
 )
 from metagit.cli.json_output import emit_json
@@ -26,7 +28,10 @@ from metagit.core.config.graph_suggest import (
 )
 from metagit.core.config.graph_validation import validate_graph_relationships
 from metagit.core.config.manager import MetagitConfigManager, create_metagit_config
+from metagit.core.config.models import MetagitConfig
 from metagit.core.config.patch_service import ConfigPatchService
+from metagit.core.config.path_selector import PathSelectorError, get_path, set_path
+from metagit.core.config.value_codec import prepare_set_value
 from metagit.core.config.yaml_display import dump_config_dict
 from metagit.core.context.reduction import (
     FULL_MANIFEST_REPO_THRESHOLD,
@@ -498,11 +503,60 @@ def providers(
         ctx.abort()
 
 
+def _set_validation_issues(config: MetagitConfig, config_path: str) -> list[str]:
+    """Return the same structural errors ``config validate`` would."""
+    try:
+        MetagitConfig.model_validate(config.model_dump(mode="python"))
+    except Exception as exc:
+        return [str(exc)]
+    root = Path(config_path).resolve().parent
+    return [
+        *validate_graph_relationships(config),
+        *validate_components(config, definition_root=root),
+    ]
+
+
+def _fail_set(ctx: click.Context, key: str, error: Exception, *, as_json: bool) -> None:
+    """Report a set failure and exit 1 without writing."""
+    message = f"Failed to set configuration key '{key}': {error}"
+    if as_json:
+        click.echo(json.dumps({"ok": False, "error": message}))
+    else:
+        click.echo(message, err=True)
+    ctx.exit(1)
+
+
+@config.command("get")
+@click.argument("key")
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.pass_context
+def config_get(ctx: click.Context, key: str, as_json: bool) -> None:
+    """Print one manifest value. The path is the same one ``set`` and ``patch`` accept."""
+    config_path = ctx.obj["config_path"]
+    current = MetagitConfigManager(config_path=config_path).load_config()
+    if isinstance(current, Exception):
+        click.echo(str(current), err=True)
+        ctx.exit(1)
+    try:
+        found = get_path(current, key)
+    except (PathSelectorError, KeyError) as exc:
+        emit_usage_error(str(exc), as_json=as_json)
+        return
+    if hasattr(found, "model_dump"):
+        click.echo(json.dumps(found.model_dump(mode="json"), indent=2, default=str))
+        return
+    if isinstance(found, (dict, list)):
+        click.echo(json.dumps(found, indent=2, default=str))
+        return
+    click.echo(found)
+
+
 @config.command("set")
 @click.argument("key")
 @click.argument("value")
+@click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
 @click.pass_context
-def config_set(ctx: click.Context, key: str, value: str) -> None:
+def config_set(ctx: click.Context, key: str, value: str, as_json: bool) -> None:
     """Set a specific configuration value."""
     logger = ctx.obj["logger"]
     config_path = ctx.obj["config_path"]
@@ -513,27 +567,40 @@ def config_set(ctx: click.Context, key: str, value: str) -> None:
         if isinstance(current_config, Exception):
             raise current_config
 
-        from metagit.core.config.path_selector import PathSelectorError, set_path
-
+        prepared = prepare_set_value(current_config, key, value)
+        if isinstance(prepared, PathSelectorError):
+            emit_usage_error(str(prepared), as_json=as_json)
+            return
+        if isinstance(prepared, Exception):
+            _fail_set(ctx, key, prepared, as_json=as_json)
+            return
         try:
-            set_path(current_config, key, value)
-        except PathSelectorError as exc:
-            click.echo(str(exc), err=True)
-            ctx.exit(1)
+            set_path(current_config, key, prepared)
+        except (PathSelectorError, KeyError) as exc:
+            emit_usage_error(str(exc), as_json=as_json)
+            return
+        issues = _set_validation_issues(current_config, config_path)
+        if issues:
+            _fail_set(ctx, key, Exception(issues[0]), as_json=as_json)
+            return
 
-        # Save the updated configuration
         result = config_manager.save_config(current_config)
         if isinstance(result, Exception):
-            raise result
+            _fail_set(ctx, key, result, as_json=as_json)
+            return
 
-        logger.success(f"Configuration key '{key}' set to '{value}' in {config_path}")
+        click.echo(f"Configuration key '{key}' set to '{value}' in {config_path}")
 
     except click.exceptions.Exit:
         raise
+    except SystemExit:
+        raise
+    except (PathSelectorError, KeyError) as exc:
+        emit_usage_error(str(exc), as_json=as_json)
     except Exception as e:
         logger.error(f"Failed to set configuration key '{key}': {e}")
         logger.debug(f"Error: {e}")
-        ctx.abort()
+        ctx.exit(1)
 
 
 @config.command("info")
@@ -699,7 +766,7 @@ def config_preview(
     """Preview .metagit.yml after applying draft operations (no save)."""
     logger = ctx.obj["logger"]
     config_path = ctx.obj["config_path"]
-    operations = (
+    resolved = (
         resolve_operations(
             operations_file=operations_file,
             op=op,
@@ -707,17 +774,21 @@ def config_preview(
             value=value,
         )
         if operations_file or op
-        else []
+        else ResolvedOperations([])
     )
-    result = ConfigPatchService().preview(
-        "metagit",
-        config_path,
-        operations,
-        style=style,
-    )
+    try:
+        result = ConfigPatchService().preview(
+            "metagit",
+            config_path,
+            resolved.operations,
+            style=style,
+        )
+    except (KeyError, PathSelectorError) as exc:
+        emit_usage_error(str(exc), as_json=as_json)
+        return
     if isinstance(result, Exception):
         logger.error(f"Failed to preview config: {result}")
-        ctx.abort()
+        ctx.exit(1)
     emit_preview_result(
         result,
         as_json=as_json,
@@ -784,23 +855,27 @@ def config_patch(
     """
     logger = ctx.obj["logger"]
     config_path = ctx.obj["config_path"]
-    operations = resolve_operations(
+    resolved = resolve_operations(
         operations_file=operations_file,
         op=op,
         path=path,
         value=value,
     )
-    result = ConfigPatchService().patch(
-        "metagit",
-        config_path,
-        operations,
-        save=save,
-        auto_format=not no_format,
-        include_tree=include_tree,
-    )
+    try:
+        result = ConfigPatchService().patch(
+            "metagit",
+            config_path,
+            resolved.operations,
+            save=save or resolved.save,
+            auto_format=not no_format,
+            include_tree=include_tree,
+        )
+    except (KeyError, PathSelectorError) as exc:
+        emit_usage_error(str(exc), as_json=as_json)
+        return
     if isinstance(result, Exception):
         logger.error(f"Failed to patch config: {result}")
-        ctx.abort()
+        ctx.exit(1)
     emit_patch_result(result, as_json=as_json, logger=logger)
 
 
@@ -1209,14 +1284,20 @@ def config_schema(ctx: click.Context, output_path: str, fragment: bool) -> None:
     help="Compare composed YAML (--raw, default) or the loaded model (--model)",
 )
 @click.option("--json", "as_json", is_flag=True, default=False, help="Print JSON for agents")
+@click.option(
+    "--by-index",
+    is_flag=True,
+    default=False,
+    help="Compare list items by position instead of name, id, or identity",
+)
 @click.pass_context
-def config_diff(ctx: click.Context, left: str, right: str, raw: bool, as_json: bool) -> None:
+def config_diff(ctx: click.Context, left: str, right: str, raw: bool, as_json: bool, by_index: bool) -> None:
     """Show paths that differ between two manifests or git specs such as ``HEAD:.metagit.yml``."""
     from metagit.core.config.manifest_diff import diff_manifests
 
     logger = ctx.obj["logger"]
     try:
-        differences = diff_manifests(left, right, mode="raw" if raw else "model")
+        differences = diff_manifests(left, right, mode="raw" if raw else "model", by_index=by_index)
     except Exception as exc:
         logger.error(str(exc).splitlines()[0])
         ctx.exit(1)

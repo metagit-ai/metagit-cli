@@ -211,7 +211,7 @@ def repo_rename(
 
 
 @repo.command("move")
-@click.option("--name", "-n", "repo_name", required=True, help="Repository name")
+@click.option("--name", "-n", "repo_names", multiple=True, required=True, help="Repository name (repeatable)")
 @click.option("--to-project", required=True, help="Target workspace project")
 @click.option("--dry-run", is_flag=True, default=False)
 @click.option("--manifest-only", is_flag=True, default=False)
@@ -220,14 +220,14 @@ def repo_rename(
 @click.pass_context
 def repo_move(
     ctx: click.Context,
-    repo_name: str,
+    repo_names: tuple[str, ...],
     to_project: str,
     dry_run: bool,
     manifest_only: bool,
     force: bool,
     as_json: bool,
 ) -> None:
-    """Move a repository to another workspace project."""
+    """Move one or more repositories to another workspace project."""
     project: str = ctx.obj["project"]
     local_config: MetagitConfig = ctx.obj["local_config"]
     config_path: str = ctx.obj["config_path"]
@@ -242,7 +242,8 @@ def repo_move(
         local_config,
         config_path,
         workspace_root,
-        repo_name=repo_name,
+        repo_name=repo_names[0],
+        repo_names=list(repo_names),
         from_project=project,
         to_project=to_project,
         dedupe=dedupe,
@@ -259,6 +260,7 @@ def repo_move(
 @click.option("--ref", help="Reference in the current project for the target project")
 @click.option("--path", help="Local project path")
 @click.option("--url", help="Remote git URL (ssh or https)")
+@click.option("--tag", "tags", multiple=True, help="Tag as key=value (repeatable)")
 @click.option("--sync/--no-sync", default=None, help="Sync setting")
 @click.option("--language", help="Programming language")
 @click.option("--language-version", help="Language version")
@@ -287,6 +289,7 @@ def repo_add(
     ref: Optional[str],
     path: Optional[str],
     url: Optional[str],
+    tags: tuple[str, ...],
     sync: Optional[bool],
     language: Optional[str],
     language_version: Optional[str],
@@ -350,6 +353,7 @@ def repo_add(
                 )
                 return
         else:
+            parsed_tags = _tag_pairs(tags)
             repo_data = {
                 "name": name,
                 "description": description,
@@ -361,6 +365,7 @@ def repo_add(
                 "language_version": language_version,
                 "package_manager": package_manager,
                 "frameworks": list(frameworks) if frameworks else None,
+                "tags": parsed_tags or None,
             }
             repo_data = {k: v for k, v in repo_data.items() if v is not None}
             project_path = ProjectPath(**repo_data)
@@ -618,3 +623,17 @@ def repo_prune(
         click.echo(f"Prune finished (--force): {removed} removed.")
     else:
         click.echo(f"Prune finished: {removed} removed.")
+
+
+def _tag_pairs(pairs: tuple[str, ...]) -> dict[str, str]:
+    """Parse repeatable ``--tag key=value`` options."""
+    tags: dict[str, str] = {}
+    for raw in pairs:
+        if "=" not in raw:
+            raise click.UsageError(f"--tag must be key=value, got {raw!r}")
+        key, value = raw.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise click.UsageError(f"--tag must be key=value, got {raw!r}")
+        tags[key] = value
+    return tags

@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
+import shlex
+import sys
 from pathlib import Path
 
-from git import Repo
+from git import GitCommandError, Repo
 
 from metagit.core.merge.git_ops import attempt_merge, ensure_branch
 
@@ -90,3 +92,47 @@ def test_attempt_merge_aborts_conflict_and_returns_conflict_files(tmp_path) -> N
     assert repo.heads["integration/test"].commit.hexsha == target_sha
     assert not (tmp_path / ".git" / "MERGE_HEAD").exists()
     assert not (tmp_path / "shared.txt").exists()
+
+
+def test_regenerate_takes_a_deleted_gitignored_path(tmp_path: Path) -> None:
+    repo = _repo(tmp_path)
+    _commit_file(repo, "generated/index.txt", "v1\n", "track index")
+    repo.create_head("integration/test", repo.heads.main)
+    repo.head.reference = repo.heads["integration/test"]
+    repo.head.reset(index=True, working_tree=True)
+    repo.git.rm("generated/index.txt")
+    (tmp_path / ".gitignore").write_text("generated/\n", encoding="utf-8")
+    repo.index.add([".gitignore"])
+    repo.index.commit("stop tracking generated index")
+
+    repo.head.reference = repo.heads.main
+    repo.head.reset(index=True, working_tree=True)
+    repo.create_head("agent/change", repo.heads.main)
+    repo.head.reference = repo.heads["agent/change"]
+    repo.head.reset(index=True, working_tree=True)
+    _commit_file(repo, "README.md", "from agent\n", "agent readme")
+    _commit_file(repo, "generated/index.txt", "v2\n", "agent index")
+    repo.head.reference = repo.heads.main
+    repo.head.reset(index=True, working_tree=True)
+
+    script = (
+        "from pathlib import Path; "
+        "Path('generated').mkdir(exist_ok=True); "
+        "Path('generated/index.txt').write_text('rebuilt\\n')"
+    )
+    command = f"{shlex.quote(sys.executable)} -c {shlex.quote(script)}"
+    result = attempt_merge(
+        str(tmp_path),
+        "agent/change",
+        "integration/test",
+        regenerate={"generated/*": command},
+    )
+
+    assert not isinstance(result, Exception), result
+    assert result.ok is True
+    assert repo.git.show("integration/test:README.md").rstrip("\r\n") == "from agent"
+    try:
+        repo.git.show("integration/test:generated/index.txt")
+        raise AssertionError("deleted generated index was added back")
+    except GitCommandError:
+        pass

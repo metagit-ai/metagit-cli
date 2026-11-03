@@ -68,10 +68,15 @@ def exit_on_layout_mutation(
             name = getattr(result, "repo_name", None) or getattr(result, "project_name", "")
             if data.get("dry_run"):
                 click.echo(f"dry-run {entity} {operation}: {name}")
+            else:
+                click.echo(f"{entity} {operation}: {name}")
+            for change in data.get("manifest_changes") or []:
+                if str(change).startswith("graph."):
+                    click.echo(f"  {change}")
+            if data.get("dry_run"):
                 for step in data.get("disk_steps", []):
                     click.echo(f"  {step.get('action')}: {step.get('source')} -> {step.get('target')}")
             else:
-                click.echo(f"{entity} {operation}: {name}")
                 for warning in data.get("warnings", []):
                     click.echo(f"  warning: {warning}")
     if not bool(getattr(result, "ok", True)):
