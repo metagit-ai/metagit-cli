@@ -19,6 +19,17 @@ class Selector:
     value: str
 
 
+_FIELD_ALIASES = {"from": "from_endpoint"}
+
+
+def get_path(root: Any, path: str) -> Any:
+    """Return the value at ``path``."""
+    current: Any = root
+    for segment in resolve_segments(root, path):
+        current = _child(current, segment, path)
+    return current
+
+
 def set_path(root: Any, path: str, value: Any) -> None:
     """Set ``value`` at ``path`` on a model or a plain mapping."""
     segments = resolve_segments(root, path)
@@ -117,19 +128,35 @@ def _parse_bracket(body: str, path: str) -> int | str | Selector:
     return Selector(field, value)
 
 
+def _alias_key(current: Any, segment: str) -> str:
+    """Map the YAML key ``from`` onto the model field ``from_endpoint``."""
+    alias = _FIELD_ALIASES.get(segment)
+    if alias is None:
+        return segment
+    if isinstance(current, dict):
+        if segment not in current and alias in current:
+            return alias
+        return segment
+    if not hasattr(current, segment) and hasattr(current, alias):
+        return alias
+    return segment
+
+
 def _child(current: Any, segment: str | int, path: str) -> Any:
     if isinstance(segment, int):
         if not isinstance(current, list) or segment < 0 or segment >= len(current):
             raise PathSelectorError(f"list index [{segment}] is out of range in {path}")
         return current[segment]
+    key = _alias_key(current, segment)
     if isinstance(current, dict):
-        if segment not in current:
-            raise PathSelectorError(f"path {path!r} has no key {segment!r}")
-        return current[segment]
+        if key not in current:
+            listed = ", ".join(map(str, current)) or "(none)"
+            raise PathSelectorError(f"path {path!r} has no key {segment!r}. Candidates: {listed}")
+        return current[key]
     if isinstance(current, list):
         raise PathSelectorError(f"path {path!r} needs an index before {segment!r}")
     try:
-        return getattr(current, segment)
+        return getattr(current, key)
     except AttributeError as exc:
         raise PathSelectorError(f"path {path!r} has no attribute {segment!r}") from exc
 
@@ -138,10 +165,11 @@ def _assign(parent: Any, leaf: str | int, value: Any) -> None:
     if isinstance(leaf, int):
         parent[leaf] = value
         return
+    key = _alias_key(parent, leaf)
     if isinstance(parent, dict):
-        parent[leaf] = value
+        parent[key] = value
         return
-    setattr(parent, leaf, value)
+    setattr(parent, key, value)
 
 
 def _matching_indexes(items: list[Any], selector: Selector) -> list[int]:
@@ -150,6 +178,8 @@ def _matching_indexes(items: list[Any], selector: Selector) -> list[int]:
         candidate = _read(item, selector.field)
         if candidate is None and selector.field == "name":
             candidate = _read(item, "title")
+        if candidate is None and selector.field == "id":
+            candidate = _read(item, "identity")
         if candidate is not None and str(candidate) == selector.value:
             found.append(index)
     return found

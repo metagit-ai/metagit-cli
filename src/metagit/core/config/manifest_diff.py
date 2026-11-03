@@ -15,7 +15,10 @@ from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.yaml_roundtrip import build_roundtrip_yaml
 from metagit.manifest import load_composed
 
-DiffKind = Literal["value", "added", "removed", "type", "whitespace-only"]
+DiffKind = Literal["value", "added", "removed", "type", "whitespace-only", "order"]
+
+_LIST_KEYS = {"projects": "name", "repos": "name", "relationships": "id", "nodes": "identity"}
+_LIST_SELECTORS = {"projects": "name", "repos": "name", "relationships": "id", "nodes": "id"}
 DiffMode = Literal["raw", "model"]
 
 
@@ -48,10 +51,15 @@ def diff_manifests(
     *,
     mode: DiffMode = "raw",
     cwd: Path | None = None,
+    by_index: bool = False,
 ) -> list[ManifestDifference]:
     """Return differing paths between two manifests or ``rev:path`` git specs."""
     base = cwd or _infer_cwd(left, right)
-    return diff_values(load_manifest_spec(left, mode=mode, cwd=base), load_manifest_spec(right, mode=mode, cwd=base))
+    return diff_values(
+        load_manifest_spec(left, mode=mode, cwd=base),
+        load_manifest_spec(right, mode=mode, cwd=base),
+        by_index=by_index,
+    )
 
 
 def load_manifest_spec(spec: str, *, mode: DiffMode, cwd: Path) -> dict[str, Any]:
@@ -86,7 +94,7 @@ def materialize_manifest_spec(spec: str, *, cwd: Path) -> Path | Exception:
         return FileNotFoundError(f"could not read git spec {spec}{suffix}")
 
 
-def diff_values(left: Any, right: Any, prefix: str = "") -> list[ManifestDifference]:
+def diff_values(left: Any, right: Any, prefix: str = "", *, by_index: bool = False) -> list[ManifestDifference]:
     """Walk two JSON-like trees and classify each difference."""
     if _missing_pair(left, right):
         return []
@@ -108,13 +116,17 @@ def diff_values(left: Any, right: Any, prefix: str = "") -> list[ManifestDiffere
             elif key not in right:
                 found.append(ManifestDifference(child, "removed"))
             else:
-                found.extend(diff_values(left[key], right[key], child))
+                found.extend(diff_values(left[key], right[key], child, by_index=by_index))
         return found
     if isinstance(left, list):
+        if not by_index:
+            keyed = _diff_keyed_lists(left, right, prefix, by_index=by_index)
+            if keyed is not None:
+                return keyed
         found = []
         shared = min(len(left), len(right))
         for index in range(shared):
-            found.extend(diff_values(left[index], right[index], f"{prefix}[{index}]"))
+            found.extend(diff_values(left[index], right[index], f"{prefix}[{index}]", by_index=by_index))
         for index in range(shared, len(left)):
             found.append(ManifestDifference(f"{prefix}[{index}]", "removed"))
         for index in range(shared, len(right)):
@@ -125,6 +137,62 @@ def diff_values(left: Any, right: Any, prefix: str = "") -> list[ManifestDiffere
     if _whitespace_only(left, right):
         return [ManifestDifference(prefix or "$", "whitespace-only")]
     return [ManifestDifference(prefix or "$", "value")]
+
+
+def _list_field(prefix: str) -> str | None:
+    leaf = prefix.rsplit(".", maxsplit=1)[-1]
+    if "[" in leaf:
+        leaf = leaf.split("[", maxsplit=1)[0]
+    return leaf or None
+
+
+def _item_keys(items: list[Any], field: str) -> list[str] | None:
+    keys: list[str] = []
+    for item in items:
+        if not isinstance(item, dict):
+            return None
+        value = item.get(field)
+        if value is None or value == "":
+            return None
+        keys.append(str(value))
+    if len(keys) != len(set(keys)):
+        return None
+    return keys
+
+
+def _diff_keyed_lists(
+    left: list[Any],
+    right: list[Any],
+    prefix: str,
+    *,
+    by_index: bool,
+) -> list[ManifestDifference] | None:
+    """Match list items by name, id, or identity. None means fall back to index."""
+    list_field = _list_field(prefix) or ""
+    field_name = _LIST_KEYS.get(list_field)
+    selector = _LIST_SELECTORS.get(list_field)
+    if field_name is None or selector is None:
+        return None
+    left_keys = _item_keys(left, field_name)
+    right_keys = _item_keys(right, field_name)
+    if left_keys is None or right_keys is None:
+        return None
+    left_by = dict(zip(left_keys, left, strict=True))
+    right_by = dict(zip(right_keys, right, strict=True))
+    found: list[ManifestDifference] = []
+    for key in left_keys:
+        child = f"{prefix}[{selector}={key}]"
+        if key not in right_by:
+            found.append(ManifestDifference(child, "removed"))
+            continue
+        found.extend(diff_values(left_by[key], right_by[key], child, by_index=by_index))
+    for key in right_keys:
+        if key in left_by:
+            continue
+        found.append(ManifestDifference(f"{prefix}[{selector}={key}]", "added"))
+    if not found and left_keys != right_keys:
+        return [ManifestDifference(prefix or "$", "order")]
+    return found
 
 
 def _missing_pair(left: Any, right: Any) -> bool:

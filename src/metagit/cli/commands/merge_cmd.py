@@ -16,7 +16,12 @@ from metagit.core.merge.validators import merge_regenerate_from_config
 @click.group(name="merge")
 @click.pass_context
 def merge_group(ctx: click.Context) -> None:
-    """Manage local merge orchestration records."""
+    """Manage local merge orchestration records.
+
+    ``integrate`` refuses when the target branch is checked out in any
+    worktree. No flag overrides this. Detach that checkout first:
+    ``git -C <path> switch --detach``.
+    """
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())
 
@@ -99,7 +104,11 @@ def merge_integrate(
     repo_path: str | None,
     as_json: bool,
 ) -> None:
-    """Attempt the queued merge."""
+    """Attempt the queued merge.
+
+    Refuses when the target branch is checked out anywhere. No flag overrides
+    this. Detach that checkout first: ``git -C <path> switch --detach``.
+    """
     service = _service(ctx, definition_path)
     _apply_repo_path(service, merge_id, repo_path)
     result = raise_if_error(service.integrate(merge_id))

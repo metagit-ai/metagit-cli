@@ -81,9 +81,10 @@ def attempt_merge(
         return busy
     if busy:
         listed = ", ".join(busy)
+        detach = " ".join(f"`git -C {path} switch --detach`" for path in busy)
         return ValueError(
             f"refusing to merge into {target_branch!r}: it is checked out at {listed}. "
-            "No flag overrides this; switch that checkout off the branch first.",
+            f"No flag overrides this. Detach that checkout first: {detach}.",
         )
     try:
         repo = Repo(repo_path)
@@ -141,7 +142,14 @@ def _maybe_regenerate(repo: Repo, regenerate: dict[str, str] | None) -> MergeGit
     if commands is None:
         return None
     try:
+        absent = [path for path in files if not _exists_in_head(repo, path)]
         for path in files:
+            if path in absent:
+                repo.git.rm("--cached", "--ignore-unmatch", "--", path)
+                worktree_file = Path(repo.working_tree_dir or "") / path
+                if worktree_file.is_file():
+                    worktree_file.unlink()
+                continue
             repo.git.checkout("--ours", "--", path)
             repo.git.add("--", path)
         for command in commands:
@@ -159,6 +167,13 @@ def _maybe_regenerate(repo: Repo, regenerate: dict[str, str] | None) -> MergeGit
                 detail = (completed.stderr or completed.stdout or "").strip()
                 raise Exception(f"merge.regenerate failed ({completed.returncode}): {command}: {detail}")
         for path in files:
+            if _is_ignored(repo, path):
+                continue
+            worktree_file = Path(repo.working_tree_dir or "") / path
+            if path in absent and not worktree_file.exists():
+                continue
+            if not worktree_file.exists():
+                continue
             repo.git.add("--", path)
         repo.git.commit("--no-edit")
     except Exception as exc:  # noqa: BLE001
@@ -166,6 +181,23 @@ def _maybe_regenerate(repo: Repo, regenerate: dict[str, str] | None) -> MergeGit
             repo.git.merge("--abort")
         return exc
     return MergeGitResult(ok=True, commit_sha=repo.head.commit.hexsha)
+
+
+def _exists_in_head(repo: Repo, path: str) -> bool:
+    """True when ``path`` is a blob in the current HEAD (the merge target)."""
+    try:
+        repo.git.cat_file("-e", f"HEAD:{path}")
+        return True
+    except GitCommandError:
+        return False
+
+
+def _is_ignored(repo: Repo, path: str) -> bool:
+    try:
+        repo.git.check_ignore("--", path)
+        return True
+    except GitCommandError:
+        return False
 
 
 def _regenerate_commands(files: list[str], regenerate: dict[str, str]) -> list[str] | None:

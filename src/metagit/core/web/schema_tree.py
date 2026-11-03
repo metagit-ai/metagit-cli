@@ -61,20 +61,36 @@ class SchemaTreeService:
         instance: BaseModel,
         model_class: type[BaseModel],
         ops: list[ConfigOperation],
+        *,
+        allow_default_append: bool = True,
     ) -> tuple[BaseModel, list[dict[str, str]]]:
-        """Apply enable/disable/set ops; return (updated_instance, validation_errors)."""
+        """Apply enable/disable/set ops; return (updated_instance, validation_errors).
+
+        ``allow_default_append`` is only for the web UI add-row button. The CLI
+        and ``--file`` pass false so a missing value is an error.
+        """
         data = instance.model_dump(mode="python")
-        for operation in ops:
-            if operation.op == ConfigOpKind.DISABLE:
-                self._disable_at_path(data, model_class, operation.path)
-            elif operation.op == ConfigOpKind.ENABLE:
-                self._enable_at_path(data, model_class, operation.path)
-            elif operation.op == ConfigOpKind.SET:
-                self._set_at_path(data, operation.path, operation.value)
-            elif operation.op == ConfigOpKind.APPEND:
-                self._append_at_path(data, model_class, operation.path)
-            elif operation.op == ConfigOpKind.REMOVE:
-                self._remove_at_path(data, model_class, operation.path)
+        try:
+            for operation in ops:
+                if operation.op == ConfigOpKind.DISABLE:
+                    self._disable_at_path(data, model_class, operation.path)
+                elif operation.op == ConfigOpKind.ENABLE:
+                    self._enable_at_path(data, model_class, operation.path)
+                elif operation.op == ConfigOpKind.SET:
+                    self._set_at_path(data, operation.path, operation.value)
+                elif operation.op == ConfigOpKind.APPEND:
+                    self._append_at_path(
+                        data,
+                        model_class,
+                        operation.path,
+                        operation.value,
+                        allow_default=allow_default_append,
+                    )
+                elif operation.op == ConfigOpKind.REMOVE:
+                    self._remove_at_path(data, model_class, operation.path)
+        except ValueError as exc:
+            path = operation.path if ops else ""
+            return instance, [{"path": path, "message": str(exc)}]
         return self._validate(model_class, data, original=instance)
 
     def _build_children(
@@ -288,6 +304,9 @@ class SchemaTreeService:
         data: dict[str, Any],
         model_class: type[BaseModel],
         path: str,
+        value: Any = None,
+        *,
+        allow_default: bool = True,
     ) -> None:
         path = self._bind_path(data, path)
         segments = self._parse_path(path)
@@ -306,7 +325,12 @@ class SchemaTreeService:
         if current is None:
             current = []
             parent[field_name] = current
-        current.append(self._default_list_item(annotation))
+        if value is None:
+            if not allow_default:
+                raise ValueError(f"append requires a value for {path}")
+            current.append(self._default_list_item(annotation))
+            return
+        current.append(self._coerce_list_item(annotation, value, path))
 
     def _remove_at_path(
         self,
@@ -589,6 +613,31 @@ class SchemaTreeService:
             return {}
         count = len(field_dump) if isinstance(field_dump, list) else 0
         return {"item_count": count, "can_append": enabled}
+
+    def _coerce_list_item(self, annotation: Any, value: Any, path: str) -> Any:
+        """Validate ``value`` against the list item type."""
+        from metagit.core.config.value_codec import parse_structured
+
+        annotation = self._unwrap_optional(annotation)
+        args = get_args(annotation) if get_origin(annotation) is list else ()
+        item = self._unwrap_optional(args[0]) if args else Any
+        parsed = value
+        if isinstance(value, str) and not (isinstance(item, type) and issubclass(item, str)):
+            loaded = parse_structured(value, path=path)
+            if isinstance(loaded, Exception):
+                raise ValueError(str(loaded))
+            parsed = loaded
+        if isinstance(item, type) and issubclass(item, BaseModel):
+            try:
+                model = item.model_validate(parsed)
+            except ValidationError as exc:
+                err = exc.errors()[0] if exc.errors() else {}
+                loc = ".".join(str(part) for part in err.get("loc", ()))
+                detail = str(err.get("msg", exc))
+                prefix = f"{path}.{loc}" if loc else path
+                raise ValueError(f"{prefix}: {detail}") from exc
+            return model.model_dump(mode="python")
+        return parsed
 
     def _default_list_item(self, annotation: Any) -> Any:
         annotation = self._unwrap_optional(annotation)

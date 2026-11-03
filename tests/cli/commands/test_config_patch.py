@@ -102,11 +102,10 @@ def test_config_patch_operations_file() -> None:
             json.dumps(
                 {
                     "operations": [
-                        {"op": "append", "path": "workspace.projects"},
                         {
-                            "op": "set",
-                            "path": "workspace.projects[0].name",
-                            "value": "from-file",
+                            "op": "append",
+                            "path": "workspace.projects",
+                            "value": {"name": "from-file", "repos": []},
                         },
                     ]
                 }

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,18 @@ def parse_cli_value(raw: str) -> Any:
     return raw
 
 
-def load_operations_file(path: str) -> list[ConfigOperation]:
+_FILE_KEYS = frozenset({"operations", "save", "auto_format"})
+
+
+@dataclass(frozen=True)
+class ResolvedOperations:
+    """Operations plus a save request read from a patch file."""
+
+    operations: list[ConfigOperation]
+    save: bool = False
+
+
+def load_operations_file(path: str) -> ResolvedOperations:
     """Load operations from a JSON file (ConfigPatchRequest or operations array)."""
     file_path = Path(path)
     if not file_path.is_file():
@@ -46,12 +58,16 @@ def load_operations_file(path: str) -> list[ConfigOperation]:
     except json.JSONDecodeError as exc:
         raise click.ClickException(f"Invalid JSON in {path}: {exc}") from exc
     if isinstance(payload, list):
-        return [ConfigOperation.model_validate(item) for item in payload]
+        return ResolvedOperations([ConfigOperation.model_validate(item) for item in payload])
     if isinstance(payload, dict):
-        if "operations" in payload:
-            request = ConfigPatchRequest.model_validate(payload)
-            return list(request.operations)
-        raise click.ClickException(f"{path} must be a JSON array of operations or an object with 'operations'")
+        unknown = sorted(set(payload) - _FILE_KEYS)
+        if unknown:
+            listed = ", ".join(unknown)
+            raise click.ClickException(f"unknown key(s) in {path}: {listed}")
+        if "operations" not in payload:
+            raise click.ClickException(f"{path} must be a JSON array of operations or an object with 'operations'")
+        request = ConfigPatchRequest.model_validate(payload)
+        return ResolvedOperations(list(request.operations), save=bool(request.save))
     raise click.ClickException(f"{path} must contain a JSON object or array")
 
 
@@ -61,7 +77,7 @@ def resolve_operations(
     op: str | None,
     path: str | None,
     value: str | None,
-) -> list[ConfigOperation]:
+) -> ResolvedOperations:
     """Resolve operations from --file or a single --op/--path/--value triplet."""
     if operations_file:
         if op or path or value is not None:
@@ -77,9 +93,20 @@ def resolve_operations(
     parsed_value = parse_cli_value(value) if value is not None else None
     if op_kind == ConfigOpKind.SET and parsed_value is None:
         raise click.ClickException("--op set requires --value")
-    return [
-        ConfigOperation(op=op_kind, path=path, value=parsed_value),
-    ]
+    if op_kind == ConfigOpKind.APPEND and parsed_value is None:
+        raise click.ClickException(f"--op append requires --value for {path}")
+    return ResolvedOperations(
+        [ConfigOperation(op=op_kind, path=path, value=parsed_value)],
+    )
+
+
+def emit_usage_error(message: str, *, as_json: bool) -> None:
+    """Print one path error and exit 2. JSON mode is ``{"ok": false, "error": ...}``."""
+    if as_json:
+        click.echo(json.dumps({"ok": False, "error": message}))
+    else:
+        click.echo(message, err=True)
+    raise SystemExit(2)
 
 
 def emit_patch_result(

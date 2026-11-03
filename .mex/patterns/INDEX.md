@@ -77,6 +77,7 @@ Lookup table for all pattern files in this directory. Check here before starting
 | [skills-install-project-scope.md](skills-install-project-scope.md) | Fixing `skills`/`mcp` `--scope project` so installs use the git repo root from nested cwds |
 | [split-manifest-includes.md](split-manifest-includes.md) | Loading, saving, splitting, flattening, or diffing a `.metagit.yml`, including glob includes and raw composition |
 | [release-0381-defects.md](release-0381-defects.md) | 0.38.1 fixes for split scalar fidelity, worktree discovery, SSH pull-request lookup, and the minor CLI defects |
+| [release-0382-defects.md](release-0382-defects.md) | 0.38.2 fixes for graph rewrite, validate, config set/patch/diff, multi-move, and merge regenerate |
 | [semantic-graph-service.md](semantic-graph-service.md) | Implementing or extending RFC-0010 semantic graph models, JSON store, service queries, and events |
 | [github-gh-auth.md](github-gh-auth.md) | Creating PRs or running `gh` when `GH_TOKEN`/`GITHUB_TOKEN` cause 401 errors |
 | [graph-suggest-maintain.md](graph-suggest-maintain.md) | Maintaining `graph.relationships` — durable fields, validation, ignore-aware suggest scanning, stale review |

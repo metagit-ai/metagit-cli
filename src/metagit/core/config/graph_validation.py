@@ -31,57 +31,73 @@ def _component_name(endpoint: GraphEndpoint) -> str | None:
     return stripped or None
 
 
+def _relationship_label(identifier: str | None, index: int) -> str:
+    if identifier and identifier.strip():
+        return f"id={identifier.strip()}"
+    return str(index)
+
+
+def _declared_elsewhere(project_repos: dict[str, set[str]], project: str, repo: str) -> str:
+    """Hint when the repo name exists in exactly one other project."""
+    others = [name for name, repos in project_repos.items() if name != project and repo in repos]
+    if len(others) == 1:
+        return f" (it is declared in '{others[0]}')"
+    return ""
+
+
+def _repo_not_in_project(prefix: str, endpoint: GraphEndpoint, project_repos: dict[str, set[str]]) -> str:
+    hint = _declared_elsewhere(project_repos, endpoint.project or "", endpoint.repo or "")
+    return f"{prefix}: repo '{endpoint.repo}' is not in project '{endpoint.project}'{hint}"
+
+
 def _validate_endpoint(
     endpoint: GraphEndpoint,
     project_repos: dict[str, set[str]],
     *,
     config: MetagitConfig,
     resolver: RepositoryResolver,
-    index: int,
+    label: str,
     side: str,
 ) -> str | None:
+    prefix = f"graph.relationships[{label}].{side}"
     component = _component_name(endpoint)
     if component is not None:
         if not endpoint.project or not endpoint.repo:
-            return f"graph.relationships[{index}].{side}: component needs project and repo"
+            return f"{prefix}: component needs project and repo"
         if endpoint.project not in project_repos:
-            return f"graph.relationships[{index}].{side}: unknown project '{endpoint.project}'"
+            return f"{prefix}: unknown project '{endpoint.project}'"
         if endpoint.repo not in project_repos[endpoint.project]:
-            return (
-                f"graph.relationships[{index}].{side}: unknown repo '{endpoint.repo}' in project '{endpoint.project}'"
-            )
+            return _repo_not_in_project(prefix, endpoint, project_repos)
         result = ComponentResolver().get(
             config,
             f"{endpoint.project}/{endpoint.repo}/{component}",
         )
         if isinstance(result, ValueError):
-            return f"graph.relationships[{index}].{side}: {result}"
+            return f"{prefix}: {result}"
         if result is None:
-            return f"graph.relationships[{index}].{side}: unknown component '{component}'"
+            return f"{prefix}: unknown component '{component}'"
         return None
+    if endpoint.project is not None and endpoint.project in project_repos and endpoint.repo is not None:
+        if endpoint.repo in project_repos[endpoint.project]:
+            return None
+        return _repo_not_in_project(prefix, endpoint, project_repos)
     if endpoint.project is not None:
         if endpoint.project not in project_repos:
-            return f"graph.relationships[{index}].{side}: unknown project '{endpoint.project}'"
+            return f"{prefix}: unknown project '{endpoint.project}'"
         if endpoint.repo is None and endpoint.identity is None:
-            return None
-        if endpoint.repo is not None and endpoint.repo in project_repos[endpoint.project]:
             return None
     if endpoint.repo is None and endpoint.identity is None:
         return None
 
     resolved = resolver.resolve_endpoint(endpoint)
     if isinstance(resolved, Exception):
-        return f"graph.relationships[{index}].{side}: {resolved}"
+        return f"{prefix}: {resolved}"
     if resolved is not None:
         return None
     if endpoint.identity:
-        return f"graph.relationships[{index}].{side}: unknown repository '{endpoint.identity}'"
+        return f"{prefix}: unknown repository '{endpoint.identity}'"
     if endpoint.repo is not None:
-        if endpoint.project is not None:
-            return (
-                f"graph.relationships[{index}].{side}: unknown repo '{endpoint.repo}' in project '{endpoint.project}'"
-            )
-        return f"graph.relationships[{index}].{side}: unknown repo '{endpoint.repo}'"
+        return f"{prefix}: unknown repo '{endpoint.repo}'"
     return None
 
 
@@ -107,8 +123,9 @@ def validate_graph_relationships(
     project_repos = _build_project_repos(config)
     active_resolver = resolver or RepositoryResolver(config, index_home=index_home)
     for index, relationship in enumerate(relationships):
+        label = _relationship_label(relationship.id, index)
         if not relationship.id or not relationship.id.strip():
-            issues.append(f"graph.relationships[{index}]: missing required 'id'")
+            issues.append(f"graph.relationships[{label}]: missing required 'id'")
 
         for side, endpoint in (("from", relationship.from_endpoint), ("to", relationship.to)):
             issue = _validate_endpoint(
@@ -116,7 +133,7 @@ def validate_graph_relationships(
                 project_repos,
                 config=config,
                 resolver=active_resolver,
-                index=index,
+                label=label,
                 side=side,
             )
             if issue:

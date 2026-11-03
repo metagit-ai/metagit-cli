@@ -11,6 +11,9 @@ from pydantic import BaseModel, Field
 from metagit.core.appconfig import load_config as load_appconfig
 from metagit.core.appconfig import save_config as save_appconfig
 from metagit.core.appconfig.models import AppConfig
+from metagit.core.config.component_validation import validate_components
+from metagit.core.config.duplicate_repos import find_duplicate_repo_warnings
+from metagit.core.config.graph_validation import validate_graph_relationships
 from metagit.core.config.manager import MetagitConfigManager
 from metagit.core.config.models import MetagitConfig
 from metagit.core.web.config_preview import (
@@ -117,7 +120,9 @@ class ConfigPatchService:
                 loaded,
                 model_class,
                 operations,
+                allow_default_append=False,
             )
+            validation_errors = [*validation_errors, *self._semantic_errors(target, config, resolved)]
         if style == "disk":
             yaml_text = read_disk_text(resolved)
         elif target == "metagit":
@@ -159,7 +164,13 @@ class ConfigPatchService:
             model_class = AppConfig
         if isinstance(loaded, Exception):
             return loaded
-        return self._schema.apply_operations(loaded, model_class, operations)
+        updated, validation_errors = self._schema.apply_operations(
+            loaded,
+            model_class,
+            operations,
+            allow_default_append=False,
+        )
+        return updated, [*validation_errors, *self._semantic_errors(target, updated, resolved)]
 
     def patch(
         self,
@@ -186,7 +197,9 @@ class ConfigPatchService:
             loaded,
             model_class,
             operations,
+            allow_default_append=False,
         )
+        validation_errors = [*validation_errors, *self._semantic_errors(target, updated, resolved)]
         saved = False
         if save and not validation_errors:
             if target == "metagit":
@@ -218,6 +231,22 @@ class ConfigPatchService:
             saved=saved,
             tree=tree,
         )
+
+    def _semantic_errors(self, target: ConfigTarget, updated: BaseModel, config_path: str) -> list[dict[str, str]]:
+        """Graph, component, and duplicate checks used by ``config validate``.
+
+        Duplicate-repo findings are warnings in normal validate, so they do not
+        fail a patch. The call still runs so a patch cannot skip that pass.
+        """
+        if target != "metagit" or not isinstance(updated, MetagitConfig):
+            return []
+        root = Path(config_path).resolve().parent
+        _ = find_duplicate_repo_warnings(updated, None, fallback_file=config_path)
+        messages = [
+            *validate_graph_relationships(updated),
+            *validate_components(updated, definition_root=root),
+        ]
+        return [{"path": "", "message": message} for message in messages]
 
     def _load_metagit(self, config_path: str) -> MetagitConfig | Exception:
         manager = MetagitConfigManager(config_path=config_path)

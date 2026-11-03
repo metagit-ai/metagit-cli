@@ -13,9 +13,11 @@ from pydantic import ValidationError
 
 from metagit import DATA_PATH, DEFAULT_CONFIG, __version__
 from metagit.cli.config_patch_ops import (
+    ResolvedOperations,
     emit_patch_result,
     emit_preview_result,
     emit_tree_result,
+    emit_usage_error,
     resolve_operations,
 )
 from metagit.cli.json_output import emit_json
@@ -23,6 +25,7 @@ from metagit.core.appconfig import get_config, load_config, save_config, set_con
 from metagit.core.appconfig.display import render_appconfig_show
 from metagit.core.appconfig.models import AppConfig
 from metagit.core.config.patch_service import ConfigPatchService
+from metagit.core.config.path_selector import PathSelectorError
 from metagit.core.utils.logging import LoggerConfig, UnifiedLogger
 
 
@@ -289,7 +292,7 @@ def appconfig_preview(
     """Preview app config after draft operations (secrets redacted in output)."""
     logger = ctx.obj["logger"]
     config_path = ctx.obj["config_path"]
-    operations = (
+    resolved = (
         resolve_operations(
             operations_file=operations_file,
             op=op,
@@ -297,14 +300,18 @@ def appconfig_preview(
             value=value,
         )
         if operations_file or op
-        else []
+        else ResolvedOperations([])
     )
-    result = ConfigPatchService().preview(
-        "appconfig",
-        config_path,
-        operations,
-        style=style,
-    )
+    try:
+        result = ConfigPatchService().preview(
+            "appconfig",
+            config_path,
+            resolved.operations,
+            style=style,
+        )
+    except (KeyError, PathSelectorError) as exc:
+        emit_usage_error(str(exc), as_json=as_json)
+        return
     if isinstance(result, Exception):
         logger.error(f"Failed to preview appconfig: {result}")
         ctx.abort()
@@ -372,21 +379,25 @@ def appconfig_patch(
     """
     logger = ctx.obj["logger"]
     config_path = ctx.obj["config_path"]
-    operations = resolve_operations(
+    resolved = resolve_operations(
         operations_file=operations_file,
         op=op,
         path=path,
         value=value,
     )
-    result = ConfigPatchService().patch(
-        "appconfig",
-        config_path,
-        operations,
-        save=save,
-        auto_format=not no_format,
-        include_tree=include_tree or as_json,
-        mask_secrets=True,
-    )
+    try:
+        result = ConfigPatchService().patch(
+            "appconfig",
+            config_path,
+            resolved.operations,
+            save=save or resolved.save,
+            auto_format=not no_format,
+            include_tree=include_tree or as_json,
+            mask_secrets=True,
+        )
+    except (KeyError, PathSelectorError) as exc:
+        emit_usage_error(str(exc), as_json=as_json)
+        return
     if isinstance(result, Exception):
         logger.error(f"Failed to patch appconfig: {result}")
         ctx.abort()
