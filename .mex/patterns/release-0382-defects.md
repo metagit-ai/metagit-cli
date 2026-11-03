@@ -11,7 +11,7 @@ edges:
     condition: when a graph edit must land in the fragment that owns the relationship
   - target: patterns/release-0381-defects.md
     condition: when the failure is split fidelity, worktree discovery, or pull-request lookup
-last_updated: 2026-11-02
+last_updated: 2026-11-03
 ---
 
 # 0.38.2 defect fixes
@@ -19,6 +19,8 @@ last_updated: 2026-11-02
 ## Context
 
 Regression coverage is `tests/cli/commands/test_0382_release.py`. The version comes from setuptools-scm. Do not edit `src/metagit/_version.py`.
+
+Release notes belong under `## Unreleased`. Semantic Release on `main` skips the tag when that section is empty, even if a `## [0.38.x]` heading is already present. A push that only touches `CHANGELOG.md` and `docs/changelog.md` is ignored by that workflow.
 
 ## Gotchas
 
