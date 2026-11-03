@@ -10,7 +10,7 @@ edges:
     condition: "before final verification to ensure required checks are run"
   - target: "ROUTER.md"
     condition: "after completing workflow changes to keep project state current"
-last_updated: 2026-05-08
+last_updated: 2026-11-03
 ---
 
 # Update Release Workflow
@@ -40,6 +40,8 @@ last_updated: 2026-05-08
 - Confirm no obsolete release workflow file remains active.
 
 ## Debug
+- Semantic Release tags only when `## Unreleased` has notes. A version heading written ahead of the release leaves that section empty, the job exits success, and no tag is pushed.
+- A push that changes only `CHANGELOG.md` and `docs/changelog.md` does not start the workflow (`paths-ignore`). Include another path, or run the workflow with `workflow_dispatch`, after the notes are on `main`.
 - If release automation fails immediately on merge, inspect missing secret or permissions scope first.
 - If publish never runs, inspect tag format mismatch versus `startsWith(github.ref, 'refs/tags/...')`.
 - If GitHub release creation fails, confirm release job has `contents: write`.
