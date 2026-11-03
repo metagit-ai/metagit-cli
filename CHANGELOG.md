@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+
+
+## [0.38.2] - 2026-11-03
+
+
+
 ### Fixed
 - `project repo move`, `project repo rename`, and `project rename` rewrite `graph.relationships` endpoints and `graph.nodes` identities that encode `project/name` in the same save as the catalog change. URL identities such as `github://org/name` stay. `--dry-run` and `--json` list each rewrite (`graph.relationships[id=<id>].from_endpoint.project: platform -> zz-probe`). A split manifest writes that rewrite into the fragment that owns the relationship. The 0.38.1 notes did not actually do this. Verify: `metagit project -p platform repo move -n admin-api --to-project zz-probe --manifest-only`, then `config validate`. Endpoints left on the old project: 0.
 - `config validate` rejects a `{project, repo}` endpoint when that repo is not in the named project. It no longer resolves the repo name through the global index. When the name exists in exactly one other project the message is `graph.relationships[id=<id>].from: repo 'admin-api' is not in project 'platform' (it is declared in 'zz-probe')`. Normal and `--strict` both exit 1. Verify: point one moved endpoint back at the old project and run `config validate` and `config validate --strict`.
